@@ -1,0 +1,326 @@
+<title>品言的出門清單</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root {
+    --bg: #FAF6F0;
+    --bg-2: #F3ECE2;
+    --surface: #FFFFFF;
+    --track: #EFE7DB;
+    --ink: #38312D;
+    --ink-soft: #7C7169;
+    --ink-faint: #A79C92;
+    --line: #EAE1D5;
+    --green: #4F9578;
+    --green-ink: #2F6B52;
+    --green-soft: #E7F1EB;
+    --amber: #E1954A;
+    --shadow: 0 1px 2px rgba(56,49,45,.05), 0 6px 18px rgba(56,49,45,.06);
+    --radius: 16px;
+    --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
+            "Microsoft JhengHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1D1A17;
+      --bg-2: #211D19;
+      --surface: #2A251F;
+      --track: #201C18;
+      --ink: #F1EBE2;
+      --ink-soft: #ADA298;
+      --ink-faint: #7E756C;
+      --line: #3A332C;
+      --green: #7FBE9C;
+      --green-ink: #A5D4BB;
+      --green-soft: rgba(127,190,156,.14);
+      --amber: #E6A75E;
+      --shadow: 0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #FAF6F0; --bg-2: #F3ECE2; --surface: #FFFFFF; --track: #EFE7DB;
+    --ink: #38312D; --ink-soft: #7C7169; --ink-faint: #A79C92; --line: #EAE1D5;
+    --green: #4F9578; --green-ink: #2F6B52; --green-soft: #E7F1EB; --amber: #E1954A;
+    --shadow: 0 1px 2px rgba(56,49,45,.05), 0 6px 18px rgba(56,49,45,.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #1D1A17; --bg-2: #211D19; --surface: #2A251F; --track: #201C18;
+    --ink: #F1EBE2; --ink-soft: #ADA298; --ink-faint: #7E756C; --line: #3A332C;
+    --green: #7FBE9C; --green-ink: #A5D4BB; --green-soft: rgba(127,190,156,.14); --amber: #E6A75E;
+    --shadow: 0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-text-size-adjust: 100%;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 96px; }
+
+  /* Sticky header */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding: env(safe-area-inset-top) 0 0;
+  }
+  .head-inner { max-width: 640px; margin: 0 auto; padding: 14px 16px 12px; }
+  .titlerow { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h1 { font-size: 1.3rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+  .sub { font-size: .8rem; color: var(--ink-soft); font-weight: 500; }
+
+  .meter { margin-top: 12px; display: flex; align-items: center; gap: 12px; }
+  .count { font-size: .9rem; font-weight: 700; white-space: nowrap;
+           font-variant-numeric: tabular-nums; color: var(--green-ink); }
+  .count b { font-size: 1.15rem; }
+  .count.done { color: var(--green-ink); }
+  .bar { flex: 1; height: 9px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .bar > i {
+    display: block; height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--green), var(--amber));
+    border-radius: 99px; transition: width .35s cubic-bezier(.4,0,.2,1);
+  }
+
+  .controls { margin-top: 12px; display: flex; gap: 8px; }
+  .btn {
+    font-family: inherit; font-size: .82rem; font-weight: 600;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 8px 14px; border-radius: 99px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .btn.on { background: var(--green); border-color: var(--green); color: #fff; }
+  :root[data-theme="dark"] .btn.on, @media (prefers-color-scheme: dark) { }
+  .btn .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--amber); }
+  .btn.on .dot { background: #fff; }
+  .btn.ghost { color: var(--ink-soft); }
+  .grow { flex: 1; }
+
+  /* Celebration banner */
+  .banner {
+    margin: 16px 0 0; padding: 14px 16px; border-radius: var(--radius);
+    background: var(--green-soft); border: 1px solid color-mix(in srgb, var(--green) 40%, transparent);
+    color: var(--green-ink); font-weight: 700; font-size: .95rem;
+    display: none; align-items: center; gap: 10px;
+  }
+  .banner.show { display: flex; }
+
+  /* Category cards */
+  .cat {
+    margin-top: 16px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .cat-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 16px; border-bottom: 1px solid var(--line);
+  }
+  .cat-ic { font-size: 1.15rem; line-height: 1; }
+  .cat-name { font-weight: 700; font-size: 1rem; flex: 1; }
+  .cat-count {
+    font-size: .78rem; font-weight: 700; color: var(--ink-soft);
+    font-variant-numeric: tabular-nums; background: var(--bg-2);
+    padding: 3px 9px; border-radius: 99px;
+  }
+  .cat-count.full { color: var(--green-ink); background: var(--green-soft); }
+
+  ul { list-style: none; margin: 0; padding: 4px; }
+  li { margin: 0; }
+  .item {
+    width: 100%; text-align: left; font-family: inherit; font-size: 1rem;
+    color: var(--ink); background: transparent; border: 0; cursor: pointer;
+    display: flex; align-items: center; gap: 13px;
+    padding: 12px; border-radius: 11px; min-height: 52px;
+    transition: background .15s;
+  }
+  .item:hover { background: var(--bg-2); }
+  .item:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+  .box {
+    flex: none; width: 24px; height: 24px; border-radius: 8px;
+    border: 2px solid var(--ink-faint); background: var(--surface);
+    display: grid; place-items: center; transition: background .18s, border-color .18s;
+  }
+  .box svg { width: 15px; height: 15px; stroke: #fff; stroke-width: 3.2;
+             fill: none; stroke-linecap: round; stroke-linejoin: round;
+             stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .22s ease; }
+  .label { flex: 1; }
+  .label .note { display: block; font-size: .76rem; color: var(--ink-faint); font-weight: 500; margin-top: 1px; }
+
+  .item.checked .box { background: var(--green); border-color: var(--green); }
+  .item.checked .box svg { stroke-dashoffset: 0; }
+  .item.checked .label > span:first-child { color: var(--ink-faint); text-decoration: line-through; }
+  .item.checked { opacity: .78; }
+
+  body.filter .item.checked { display: none; }
+  body.filter .cat.allpacked { display: none; }
+
+  footer { text-align: center; color: var(--ink-faint); font-size: .74rem; margin-top: 28px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, .bar > i, .box svg { transition: none !important; }
+  }
+</style>
+
+<header>
+  <div class="head-inner">
+    <div class="titlerow">
+      <h1>品言的出門清單</h1>
+      <span class="sub">寶寶過夜版 · 出門前打勾確認</span>
+    </div>
+    <div class="meter">
+      <span class="count" id="count">已帶 <b>0</b>／0</span>
+      <span class="bar"><i id="fill"></i></span>
+    </div>
+    <div class="controls">
+      <button class="btn" id="filterBtn" aria-pressed="false"><span class="dot"></span>只看未帶</button>
+      <span class="grow"></span>
+      <button class="btn ghost" id="resetBtn">重置</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="banner" id="banner">🎉 全部帶齊囉，可以出發！</div>
+  <main id="list"></main>
+  <footer>點項目打勾 · 進度會自動存在這台裝置 · 下次出門按「重置」即可重用</footer>
+</div>
+
+<script>
+  const CATEGORIES = [
+    { name: '吃喝', icon: '🍼', items: [
+      { label: '奶瓶・益生菌', note: '1 天 2 罐' },
+      { label: '水壺' },
+      { label: '零食' },
+      { label: '餐具、剪刀' },
+      { label: '圍兜兜' },
+    ]},
+    { name: '服裝', icon: '👕', items: [
+      { label: '衣服', note: '3 套' },
+      { label: '襪子' },
+      { label: '內褲' },
+      { label: '外套' },
+      { label: '帽子' },
+      { label: '拖鞋' },
+    ]},
+    { name: '盥洗・清潔', icon: '🧴', items: [
+      { label: '沐浴乳' },
+      { label: '浴巾或毛巾' },
+      { label: '牙刷牙膏' },
+      { label: '紗布巾' },
+      { label: '濕紙巾', note: '一天半包' },
+      { label: '尿布', note: '1 天 4 片・巧虎' },
+      { label: '尿桶', note: '車上尿壺' },
+    ]},
+    { name: '睡眠', icon: '🛏️', items: [
+      { label: '床上用品' },
+      { label: '棉被、小方巾' },
+      { label: '娃娃' },
+    ]},
+    { name: '車上・消毒', icon: '🚗', items: [
+      { label: '耳機' },
+      { label: 'iPad' },
+      { label: '病毒盾、酒精擦' },
+      { label: '紅外線溫度計' },
+      { label: '垃圾袋' },
+    ]},
+    { name: '藥品', icon: '💊', items: [
+      { label: '屁屁藥膏' },
+      { label: '防蚊液' },
+      { label: '蚊蟲叮咬藥膏' },
+      { label: '喜療瘀' },
+    ]},
+    { name: '視情況而定', icon: '🎒', items: [
+      { label: '泳衣' },
+      { label: '音響' },
+      { label: '嬰兒推車' },
+    ]},
+  ];
+
+  const KEY = 'pinyan-checklist-v1';
+  let checked = new Set();
+  try { checked = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...checked])); } catch (e) {} };
+
+  const CHECK = '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg>';
+  const list = document.getElementById('list');
+  const total = CATEGORIES.reduce((n, c) => n + c.items.length, 0);
+
+  CATEGORIES.forEach((cat, ci) => {
+    const sec = document.createElement('section');
+    sec.className = 'cat';
+    sec.dataset.ci = ci;
+    const ul = document.createElement('ul');
+    cat.items.forEach((it, ii) => {
+      const id = cat.name + '::' + it.label;
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'item' + (checked.has(id) ? ' checked' : '');
+      btn.setAttribute('aria-pressed', checked.has(id));
+      btn.dataset.id = id;
+      btn.innerHTML =
+        '<span class="box">' + CHECK + '</span>' +
+        '<span class="label"><span>' + it.label + '</span>' +
+        (it.note ? '<span class="note">' + it.note + '</span>' : '') + '</span>';
+      btn.addEventListener('click', () => toggle(id, btn));
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+    sec.innerHTML =
+      '<div class="cat-head"><span class="cat-ic">' + cat.icon + '</span>' +
+      '<span class="cat-name">' + cat.name + '</span>' +
+      '<span class="cat-count" data-cc="' + ci + '"></span></div>';
+    sec.appendChild(ul);
+    list.appendChild(sec);
+  });
+
+  function toggle(id, btn) {
+    if (checked.has(id)) checked.delete(id); else checked.add(id);
+    const on = checked.has(id);
+    btn.classList.toggle('checked', on);
+    btn.setAttribute('aria-pressed', on);
+    save();
+    render();
+  }
+
+  function render() {
+    let done = 0;
+    CATEGORIES.forEach((cat, ci) => {
+      const packed = cat.items.filter(it => checked.has(cat.name + '::' + it.label)).length;
+      done += packed;
+      const badge = document.querySelector('[data-cc="' + ci + '"]');
+      badge.textContent = packed + '／' + cat.items.length;
+      const full = packed === cat.items.length;
+      badge.classList.toggle('full', full);
+      document.querySelector('.cat[data-ci="' + ci + '"]').classList.toggle('allpacked', full);
+    });
+    document.getElementById('count').innerHTML = '已帶 <b>' + done + '</b>／' + total;
+    document.getElementById('count').classList.toggle('done', done === total);
+    document.getElementById('fill').style.width = (total ? done / total * 100 : 0) + '%';
+    document.getElementById('banner').classList.toggle('show', done === total && total > 0);
+  }
+
+  const filterBtn = document.getElementById('filterBtn');
+  filterBtn.addEventListener('click', () => {
+    const on = document.body.classList.toggle('filter');
+    filterBtn.classList.toggle('on', on);
+    filterBtn.setAttribute('aria-pressed', on);
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (!checked.size || confirm('要清空所有勾選、重新開始打包嗎？')) {
+      checked.clear(); save();
+      document.querySelectorAll('.item.checked').forEach(b => {
+        b.classList.remove('checked'); b.setAttribute('aria-pressed', 'false');
+      });
+      render();
+    }
+  });
+
+  render();
+</script>
