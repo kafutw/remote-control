@@ -24,21 +24,10 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #241A1E;
-      --bg-2: #2C2025;
-      --surface: #312329;
-      --track: #241A1E;
-      --ink: #F7E8ED;
-      --ink-soft: #CBA9B3;
-      --ink-faint: #927078;
-      --line: #46333B;
-      --box: #6E4E58;
-      --pink: #F49BB4;
-      --pink-deep: #F8B4C7;
-      --pink-soft: rgba(244,155,180,.16);
-      --mint: #7FD8BB;
-      --mint-ink: #A7E7D2;
-      --mint-soft: rgba(127,216,187,.16);
+      --bg: #241A1E; --bg-2: #2C2025; --surface: #312329; --track: #241A1E;
+      --ink: #F7E8ED; --ink-soft: #CBA9B3; --ink-faint: #927078; --line: #46333B; --box: #6E4E58;
+      --pink: #F49BB4; --pink-deep: #F8B4C7; --pink-soft: rgba(244,155,180,.16);
+      --mint: #7FD8BB; --mint-ink: #A7E7D2; --mint-soft: rgba(127,216,187,.16);
       --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.3);
     }
   }
@@ -59,44 +48,37 @@
 
   * { box-sizing: border-box; }
   body {
-    margin: 0;
-    font-family: var(--font);
-    color: var(--ink);
-    background:
-      radial-gradient(120% 60% at 50% -10%, var(--bg-2), transparent 60%),
-      var(--bg);
-    -webkit-text-size-adjust: 100%;
-    line-height: 1.5;
+    margin: 0; font-family: var(--font); color: var(--ink);
+    background: radial-gradient(120% 60% at 50% -10%, var(--bg-2), transparent 60%), var(--bg);
+    -webkit-text-size-adjust: 100%; line-height: 1.5;
   }
   .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 96px; }
 
-  /* Sticky header */
   header {
     position: sticky; top: 0; z-index: 20;
     background: color-mix(in srgb, var(--bg) 86%, transparent);
     backdrop-filter: saturate(1.5) blur(12px);
     -webkit-backdrop-filter: saturate(1.5) blur(12px);
-    border-bottom: 1px solid var(--line);
-    padding: env(safe-area-inset-top) 0 0;
+    border-bottom: 1px solid var(--line); padding: env(safe-area-inset-top) 0 0;
   }
   .head-inner { max-width: 640px; margin: 0 auto; padding: 14px 16px 13px; }
   .titlerow { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   h1 { font-size: 1.32rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
   .sub { font-size: .8rem; color: var(--pink-deep); font-weight: 600; }
 
-  .meter { margin-top: 13px; display: flex; align-items: center; gap: 12px; }
+  /* progress + controls: step 2 only */
+  .meter, .controls { display: none; }
+  body.step2 .meter { margin-top: 13px; display: flex; align-items: center; gap: 12px; }
+  body.step2 .controls { margin-top: 13px; display: flex; gap: 8px; }
   .count { font-size: .9rem; font-weight: 700; white-space: nowrap;
            font-variant-numeric: tabular-nums; color: var(--pink-deep); }
   .count b { font-size: 1.15rem; }
   .bar { flex: 1; height: 11px; border-radius: 99px; background: var(--track); overflow: hidden;
          box-shadow: inset 0 1px 2px rgba(219,104,141,.10); }
-  .bar > i {
-    display: block; height: 100%; width: 0;
+  .bar > i { display: block; height: 100%; width: 0;
     background: linear-gradient(90deg, var(--pink), var(--mint));
-    border-radius: 99px; transition: width .4s cubic-bezier(.34,1.3,.5,1);
-  }
+    border-radius: 99px; transition: width .4s cubic-bezier(.34,1.3,.5,1); }
 
-  .controls { margin-top: 13px; display: flex; gap: 8px; }
   .btn {
     font-family: inherit; font-size: .82rem; font-weight: 700;
     border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
@@ -112,13 +94,39 @@
   .btn.ghost { color: var(--ink-soft); }
   .grow { flex: 1; }
 
-  /* Scenario picker */
+  /* Screens */
+  .step2screen { display: none; }
+  body.step2 .step2screen { display: block; }
+  body.step2 .step1screen { display: none; }
+
+  /* Step 1 — scenario picker */
+  .q { font-size: 1.08rem; font-weight: 800; margin: 22px 0 0; }
+  .q .lead { display: block; font-size: .8rem; font-weight: 600; color: var(--ink-soft); margin-top: 4px; }
+  .trip-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .trip {
+    font-family: inherit; text-align: left; cursor: pointer; color: var(--ink);
+    background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius);
+    padding: 16px 15px; box-shadow: var(--shadow); position: relative;
+    display: flex; flex-direction: column; gap: 5px; min-height: 130px; transition: all .15s;
+  }
+  .trip:active { transform: translateY(1px); }
+  .trip:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
+  .trip .tj { font-size: 1.8rem; line-height: 1; }
+  .trip .tt { font-weight: 800; font-size: 1.06rem; }
+  .trip .td { font-size: .75rem; color: var(--ink-soft); font-weight: 500; line-height: 1.45; }
+  .trip.sel { border-color: var(--pink); background: var(--pink-soft); }
+  .trip.sel .td { color: var(--pink-deep); }
+  .trip.sel::after {
+    content: '✓'; position: absolute; top: 11px; right: 12px; color: #fff; background: var(--pink);
+    width: 22px; height: 22px; border-radius: 99px; display: grid; place-items: center;
+    font-size: .78rem; font-weight: 800;
+  }
+
   .scenes {
-    margin-top: 16px; background: var(--surface); border: 1.5px solid var(--line);
+    margin-top: 18px; background: var(--surface); border: 1.5px solid var(--line);
     border-radius: var(--radius); box-shadow: var(--shadow); padding: 15px 17px;
   }
   .scenes-head { font-weight: 800; font-size: .96rem; display: flex; align-items: center; gap: 7px; }
-  .scenes-head .k { font-size: 1.05rem; }
   .scenes-hint { margin: 8px 0 0; font-size: .78rem; color: var(--ink-faint); }
   .chips { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 12px; }
   .chip {
@@ -134,7 +142,19 @@
   .chip.on { background: var(--pink-soft); border-color: var(--pink); color: var(--pink-deep); }
   .chip.on .tick { width: 1em; opacity: 1; }
 
-  /* Celebration banner */
+  .go {
+    margin-top: 22px; width: 100%; font-family: inherit; font-size: 1.02rem; font-weight: 800;
+    color: #fff; background: var(--pink); border: 0; border-radius: 99px; padding: 16px;
+    cursor: pointer; box-shadow: var(--shadow); transition: opacity .15s, transform .1s;
+  }
+  .go:active { transform: translateY(1px); }
+  .go:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* Step 2 — list */
+  .tripsummary {
+    margin-top: 16px; font-size: .84rem; font-weight: 700; color: var(--pink-deep);
+    background: var(--pink-soft); border-radius: 99px; padding: 9px 16px; display: inline-block;
+  }
   .banner {
     margin: 16px 0 0; padding: 15px 17px; border-radius: var(--radius);
     background: var(--pink-soft); border: 1.5px solid color-mix(in srgb, var(--pink) 45%, transparent);
@@ -143,52 +163,39 @@
   }
   .banner.show { display: flex; }
 
-  /* Category cards */
   .cat {
     margin-top: 16px; background: var(--surface); border: 1.5px solid var(--line);
     border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
   }
-  .cat-head {
-    display: flex; align-items: center; gap: 10px;
-    padding: 13px 17px; border-bottom: 1.5px solid var(--line);
-  }
-  .cat-ic {
-    font-size: 1.05rem; line-height: 1; width: 34px; height: 34px; flex: none;
-    display: grid; place-items: center; border-radius: 12px; background: var(--pink-soft);
-  }
+  .cat-head { display: flex; align-items: center; gap: 10px; padding: 13px 17px; border-bottom: 1.5px solid var(--line); }
+  .cat-ic { font-size: 1.05rem; line-height: 1; width: 34px; height: 34px; flex: none;
+    display: grid; place-items: center; border-radius: 12px; background: var(--pink-soft); }
   .cat-name { font-weight: 800; font-size: 1rem; flex: 1; }
-  .cat-count {
-    font-size: .78rem; font-weight: 800; color: var(--ink-soft);
-    font-variant-numeric: tabular-nums; background: var(--bg-2);
-    padding: 3px 10px; border-radius: 99px;
-  }
+  .cat-count { font-size: .78rem; font-weight: 800; color: var(--ink-soft);
+    font-variant-numeric: tabular-nums; background: var(--bg-2); padding: 3px 10px; border-radius: 99px; }
   .cat-count.full { color: var(--mint-ink); background: var(--mint-soft); }
 
   ul { list-style: none; margin: 0; padding: 5px; }
   li { margin: 0; }
   .item {
-    width: 100%; text-align: left; font-family: inherit; font-size: 1rem;
-    color: var(--ink); background: transparent; border: 0; cursor: pointer;
-    display: flex; align-items: center; gap: 13px;
-    padding: 12px; border-radius: 14px; min-height: 52px;
-    transition: background .15s;
+    width: 100%; text-align: left; font-family: inherit; font-size: 1rem; color: var(--ink);
+    background: transparent; border: 0; cursor: pointer; display: flex; align-items: center; gap: 13px;
+    padding: 12px; border-radius: 14px; min-height: 52px; transition: background .15s;
   }
   .item:hover { background: var(--bg-2); }
   .item:focus-visible { outline: 2px solid var(--pink); outline-offset: -2px; }
   .box {
-    flex: none; width: 25px; height: 25px; border-radius: 9px;
-    border: 2.5px solid var(--box); background: var(--surface);
-    display: grid; place-items: center; transition: background .18s, border-color .18s, transform .18s;
+    flex: none; width: 25px; height: 25px; border-radius: 9px; border: 2.5px solid var(--box);
+    background: var(--surface); display: grid; place-items: center;
+    transition: background .18s, border-color .18s, transform .18s;
   }
-  .box svg { width: 15px; height: 15px; stroke: #fff; stroke-width: 3.4;
-             fill: none; stroke-linecap: round; stroke-linejoin: round;
-             stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .24s ease; }
+  .box svg { width: 15px; height: 15px; stroke: #fff; stroke-width: 3.4; fill: none;
+    stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 22; stroke-dashoffset: 22;
+    transition: stroke-dashoffset .24s ease; }
   .label { flex: 1; }
   .label .note { display: block; font-size: .76rem; color: var(--ink-faint); font-weight: 500; margin-top: 1px; }
-  .tagpill {
-    font-size: .68rem; font-weight: 800; color: var(--pink-deep);
-    background: var(--pink-soft); border-radius: 99px; padding: 3px 9px; flex: none;
-  }
+  .tagpill { font-size: .68rem; font-weight: 800; color: var(--pink-deep);
+    background: var(--pink-soft); border-radius: 99px; padding: 3px 9px; flex: none; }
 
   .item.checked .box { background: var(--mint); border-color: var(--mint); transform: scale(1.04); }
   .item.checked .box svg { stroke-dashoffset: 0; }
@@ -212,13 +219,14 @@
   <div class="head-inner">
     <div class="titlerow">
       <h1>品言的出門清單 🎀</h1>
-      <span class="sub">寶寶過夜版 · 帶妹妹出門玩 ♡</span>
+      <span class="sub">寶寶版 · 帶妹妹出門玩 ♡</span>
     </div>
     <div class="meter">
       <span class="count" id="count">已帶 <b>0</b>／0</span>
       <span class="bar"><i id="fill"></i></span>
     </div>
     <div class="controls">
+      <button class="btn ghost" id="backBtn">‹ 改情境</button>
       <button class="btn" id="filterBtn" aria-pressed="false"><span class="dot"></span>只看未帶</button>
       <span class="grow"></span>
       <button class="btn ghost" id="resetBtn">重置</button>
@@ -227,24 +235,49 @@
 </header>
 
 <div class="wrap">
-  <section class="scenes">
-    <div class="scenes-head"><span class="k">🧭</span>這趟的情境</div>
-    <div class="chips" id="chips"></div>
-    <p class="scenes-hint">先勾選這次的情境，對應的東西才會加進清單裡。</p>
+  <!-- STEP 1 -->
+  <section class="step1screen">
+    <div class="q">這趟怎麼出門？<span class="lead">先選一個，清單會自動調整要帶的東西</span></div>
+    <div class="trip-cards" id="tripCards">
+      <button class="trip" data-trip="overnight" aria-pressed="false">
+        <span class="tj">🌙</span>
+        <span class="tt">過夜</span>
+        <span class="td">在外面睡一晚，多帶衣服、睡衣和睡覺安撫用品</span>
+      </button>
+      <button class="trip" data-trip="day" aria-pressed="false">
+        <span class="tj">☀️</span>
+        <span class="tt">當天來回</span>
+        <span class="td">白天出門玩，晚上就回家睡</span>
+      </button>
+    </div>
+
+    <div class="scenes">
+      <div class="scenes-head"><span>🧭</span>還有這些情境嗎？</div>
+      <div class="chips" id="chips"></div>
+      <p class="scenes-hint">有的話勾起來，對應的東西會加進清單。</p>
+    </div>
+
+    <button class="go" id="goBtn" disabled>先選上面的出門方式</button>
   </section>
 
-  <div class="banner" id="banner">🎉 品言的東西都帶齊囉，可以出發！♡</div>
-  <main id="list"></main>
-  <footer>點項目打勾 · 進度會自動存在這台裝置 · 下次出門按「重置」即可重用<br><span class="hearts">♡ ♡ ♡</span></footer>
+  <!-- STEP 2 -->
+  <section class="step2screen">
+    <div class="tripsummary" id="tripSummary"></div>
+    <div class="banner" id="banner">🎉 品言的東西都帶齊囉，可以出發！♡</div>
+    <main id="list"></main>
+    <footer>點項目打勾 · 進度會自動存在這台裝置 · 下次出門按「重置」即可重用<br><span class="hearts">♡ ♡ ♡</span></footer>
+  </section>
 </div>
 
 <script>
-  // 情境：勾選後，帶有對應 scene 的東西才會出現
+  // 額外情境（可複選）—帶對應 scene 的東西才會出現，並顯示小標籤
   const SCENES = [
     { id: 'drive', label: '開車', icon: '🚗' },
     { id: 'swim',  label: '游泳', icon: '🏊' },
   ];
 
+  // scene: 'overnight' = 過夜才帶；'drive'/'swim' = 對應情境才帶
+  // noteOvernight：過夜時顯示的數量提示（否則用 note）
   const CATEGORIES = [
     { name: '吃喝', icon: '🍼', items: [
       { label: '奶瓶・益生菌', note: '1 天 2 罐' },
@@ -254,7 +287,8 @@
       { label: '圍兜兜' },
     ]},
     { name: '服裝', icon: '👗', items: [
-      { label: '衣服', note: '3 套' },
+      { label: '衣服', note: '1 套', noteOvernight: '3 套（過夜多帶）' },
+      { label: '睡衣', scene: 'overnight' },
       { label: '襪子' },
       { label: '內褲' },
       { label: '外套' },
@@ -270,10 +304,13 @@
       { label: '尿布', note: '1 天 4 片・巧虎' },
       { label: '尿桶', note: '車上尿壺' },
     ]},
-    { name: '睡眠', icon: '🛏️', items: [
-      { label: '床上用品' },
-      { label: '棉被、小方巾' },
-      { label: '娃娃' },
+    { name: '睡覺用品', icon: '🌙', items: [
+      { label: '安撫巾', scene: 'overnight' },
+      { label: '貓頭鷹', scene: 'overnight' },
+      { label: '海馬', scene: 'overnight' },
+      { label: '娃娃', scene: 'overnight' },
+      { label: '小棉被', scene: 'overnight' },
+      { label: '床上用品', scene: 'overnight' },
     ]},
     { name: '車上・消毒', icon: '🚗', items: [
       { label: '耳機' },
@@ -301,18 +338,40 @@
 
   const KEY = 'pinyan-checklist-v1';
   const SKEY = 'pinyan-scenes-v1';
+  const TKEY = 'pinyan-trip-v1';
   let checked = new Set();
   let scenes = new Set();
+  let tripType = null; // 'overnight' | 'day'
   try { checked = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) {}
   try { scenes = new Set(JSON.parse(localStorage.getItem(SKEY) || '[]')); } catch (e) {}
+  try { tripType = localStorage.getItem(TKEY) || null; } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...checked])); } catch (e) {} };
   const saveScenes = () => { try { localStorage.setItem(SKEY, JSON.stringify([...scenes])); } catch (e) {} };
+  const saveTrip = () => { try { localStorage.setItem(TKEY, tripType || ''); } catch (e) {} };
 
   const sceneLabel = id => (SCENES.find(s => s.id === id) || {}).label || '';
+  const isActive = scene => !scene || (scene === 'overnight' ? tripType === 'overnight' : scenes.has(scene));
   const CHECK = '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg>';
   const btnById = {};
 
-  // Scenario chips
+  // ---- Step 1: trip-type cards ----
+  const tripCards = document.getElementById('tripCards');
+  tripCards.querySelectorAll('.trip').forEach(card => {
+    if (card.dataset.trip === tripType) { card.classList.add('sel'); card.setAttribute('aria-pressed', 'true'); }
+    card.addEventListener('click', () => {
+      tripType = card.dataset.trip;
+      tripCards.querySelectorAll('.trip').forEach(c => {
+        const on = c === card;
+        c.classList.toggle('sel', on);
+        c.setAttribute('aria-pressed', on);
+      });
+      saveTrip();
+      updateGo();
+      render();
+    });
+  });
+
+  // ---- Step 1: scene chips ----
   const chips = document.getElementById('chips');
   SCENES.forEach(s => {
     const c = document.createElement('button');
@@ -330,7 +389,7 @@
     chips.appendChild(c);
   });
 
-  // Category cards
+  // ---- Build list ----
   const list = document.getElementById('list');
   CATEGORIES.forEach((cat, ci) => {
     const sec = document.createElement('section');
@@ -344,13 +403,14 @@
       btn.className = 'item' + (checked.has(id) ? ' checked' : '');
       btn.setAttribute('aria-pressed', checked.has(id));
       btn.dataset.id = id;
+      const hasNote = it.note || it.noteOvernight;
+      const pill = (it.scene && it.scene !== 'overnight') ? '<span class="tagpill">' + sceneLabel(it.scene) + '</span>' : '';
       btn.innerHTML =
         '<span class="box">' + CHECK + '</span>' +
         '<span class="label"><span>' + it.label + '</span>' +
-        (it.note ? '<span class="note">' + it.note + '</span>' : '') + '</span>' +
-        (it.scene ? '<span class="tagpill">' + sceneLabel(it.scene) + '</span>' : '');
+        (hasNote ? '<span class="note"></span>' : '') + '</span>' + pill;
       btn.addEventListener('click', () => toggle(id, btn));
-      btnById[id] = { btn, li, scene: it.scene };
+      btnById[id] = { btn, li, it, noteEl: btn.querySelector('.note') };
       li.appendChild(btn);
       ul.appendChild(li);
     });
@@ -378,8 +438,13 @@
       cat.items.forEach(it => {
         const id = cat.name + '::' + it.label;
         const ref = btnById[id];
-        const shown = !it.scene || scenes.has(it.scene);
+        const shown = isActive(it.scene);
         ref.li.classList.toggle('scene-off', !shown);
+        if (ref.noteEl) {
+          const txt = (tripType === 'overnight' && it.noteOvernight) ? it.noteOvernight : (it.note || '');
+          ref.noteEl.textContent = txt;
+          ref.noteEl.style.display = txt ? '' : 'none';
+        }
         if (shown) { vis++; if (checked.has(id)) packed++; }
       });
       total += vis; done += packed;
@@ -394,15 +459,33 @@
     document.getElementById('count').innerHTML = '已帶 <b>' + done + '</b>／' + total;
     document.getElementById('fill').style.width = (total ? done / total * 100 : 0) + '%';
     document.getElementById('banner').classList.toggle('show', done === total && total > 0);
+
+    const parts = [tripType === 'overnight' ? '🌙 過夜' : '☀️ 當天來回'];
+    SCENES.forEach(s => { if (scenes.has(s.id)) parts.push(s.icon + ' ' + s.label); });
+    document.getElementById('tripSummary').textContent = '這趟：' + parts.join('　·　');
   }
 
+  // ---- Steps ----
+  function updateGo() {
+    const go = document.getElementById('goBtn');
+    go.disabled = !tripType;
+    go.textContent = tripType ? '看打包清單 →' : '先選上面的出門方式';
+  }
+  function setStep(n) {
+    document.body.classList.toggle('step2', n === 2);
+    document.body.classList.toggle('step1', n === 1);
+    window.scrollTo(0, 0);
+  }
+  document.getElementById('goBtn').addEventListener('click', () => { if (tripType) setStep(2); });
+  document.getElementById('backBtn').addEventListener('click', () => setStep(1));
+
+  // ---- Controls ----
   const filterBtn = document.getElementById('filterBtn');
   filterBtn.addEventListener('click', () => {
     const on = document.body.classList.toggle('filter');
     filterBtn.classList.toggle('on', on);
     filterBtn.setAttribute('aria-pressed', on);
   });
-
   document.getElementById('resetBtn').addEventListener('click', () => {
     if (!checked.size || confirm('要清空所有勾選、重新開始打包嗎？（情境選擇會保留）')) {
       checked.clear(); save();
@@ -413,5 +496,7 @@
     }
   });
 
+  updateGo();
   render();
+  setStep(tripType ? 2 : 1);
 </script>
