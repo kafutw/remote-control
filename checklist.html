@@ -2,51 +2,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
   :root {
-    --bg: #FAF6F0;
-    --bg-2: #F3ECE2;
+    --bg: #FFF5F4;
+    --bg-2: #FDEAEA;
     --surface: #FFFFFF;
-    --track: #EFE7DB;
-    --ink: #38312D;
-    --ink-soft: #7C7169;
-    --ink-faint: #A79C92;
-    --line: #EAE1D5;
-    --green: #4F9578;
-    --green-ink: #2F6B52;
-    --green-soft: #E7F1EB;
-    --amber: #E1954A;
-    --shadow: 0 1px 2px rgba(56,49,45,.05), 0 6px 18px rgba(56,49,45,.06);
-    --radius: 16px;
+    --track: #FBDFE2;
+    --ink: #4C3A40;
+    --ink-soft: #9C7E86;
+    --ink-faint: #C6A9B0;
+    --line: #F7DCDF;
+    --box: #EFB7C5;
+    --pink: #EF87A7;
+    --pink-deep: #DB688D;
+    --pink-soft: #FCE4EC;
+    --mint: #5FC6A6;
+    --mint-ink: #3C9D80;
+    --mint-soft: #E4F5EE;
+    --shadow: 0 1px 2px rgba(219,104,141,.06), 0 8px 22px rgba(219,104,141,.10);
+    --radius: 20px;
     --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
             "Microsoft JhengHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1D1A17;
-      --bg-2: #211D19;
-      --surface: #2A251F;
-      --track: #201C18;
-      --ink: #F1EBE2;
-      --ink-soft: #ADA298;
-      --ink-faint: #7E756C;
-      --line: #3A332C;
-      --green: #7FBE9C;
-      --green-ink: #A5D4BB;
-      --green-soft: rgba(127,190,156,.14);
-      --amber: #E6A75E;
-      --shadow: 0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.28);
+      --bg: #241A1E;
+      --bg-2: #2C2025;
+      --surface: #312329;
+      --track: #241A1E;
+      --ink: #F7E8ED;
+      --ink-soft: #CBA9B3;
+      --ink-faint: #927078;
+      --line: #46333B;
+      --box: #6E4E58;
+      --pink: #F49BB4;
+      --pink-deep: #F8B4C7;
+      --pink-soft: rgba(244,155,180,.16);
+      --mint: #7FD8BB;
+      --mint-ink: #A7E7D2;
+      --mint-soft: rgba(127,216,187,.16);
+      --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.3);
     }
   }
   :root[data-theme="light"] {
-    --bg: #FAF6F0; --bg-2: #F3ECE2; --surface: #FFFFFF; --track: #EFE7DB;
-    --ink: #38312D; --ink-soft: #7C7169; --ink-faint: #A79C92; --line: #EAE1D5;
-    --green: #4F9578; --green-ink: #2F6B52; --green-soft: #E7F1EB; --amber: #E1954A;
-    --shadow: 0 1px 2px rgba(56,49,45,.05), 0 6px 18px rgba(56,49,45,.06);
+    --bg: #FFF5F4; --bg-2: #FDEAEA; --surface: #FFFFFF; --track: #FBDFE2;
+    --ink: #4C3A40; --ink-soft: #9C7E86; --ink-faint: #C6A9B0; --line: #F7DCDF; --box: #EFB7C5;
+    --pink: #EF87A7; --pink-deep: #DB688D; --pink-soft: #FCE4EC;
+    --mint: #5FC6A6; --mint-ink: #3C9D80; --mint-soft: #E4F5EE;
+    --shadow: 0 1px 2px rgba(219,104,141,.06), 0 8px 22px rgba(219,104,141,.10);
   }
   :root[data-theme="dark"] {
-    --bg: #1D1A17; --bg-2: #211D19; --surface: #2A251F; --track: #201C18;
-    --ink: #F1EBE2; --ink-soft: #ADA298; --ink-faint: #7E756C; --line: #3A332C;
-    --green: #7FBE9C; --green-ink: #A5D4BB; --green-soft: rgba(127,190,156,.14); --amber: #E6A75E;
-    --shadow: 0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.28);
+    --bg: #241A1E; --bg-2: #2C2025; --surface: #312329; --track: #241A1E;
+    --ink: #F7E8ED; --ink-soft: #CBA9B3; --ink-faint: #927078; --line: #46333B; --box: #6E4E58;
+    --pink: #F49BB4; --pink-deep: #F8B4C7; --pink-soft: rgba(244,155,180,.16);
+    --mint: #7FD8BB; --mint-ink: #A7E7D2; --mint-soft: rgba(127,216,187,.16);
+    --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.3);
   }
 
   * { box-sizing: border-box; }
@@ -54,7 +62,9 @@
     margin: 0;
     font-family: var(--font);
     color: var(--ink);
-    background: var(--bg);
+    background:
+      radial-gradient(120% 60% at 50% -10%, var(--bg-2), transparent 60%),
+      var(--bg);
     -webkit-text-size-adjust: 100%;
     line-height: 1.5;
   }
@@ -63,126 +73,127 @@
   /* Sticky header */
   header {
     position: sticky; top: 0; z-index: 20;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: saturate(1.4) blur(10px);
-    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: saturate(1.5) blur(12px);
+    -webkit-backdrop-filter: saturate(1.5) blur(12px);
     border-bottom: 1px solid var(--line);
     padding: env(safe-area-inset-top) 0 0;
   }
-  .head-inner { max-width: 640px; margin: 0 auto; padding: 14px 16px 12px; }
+  .head-inner { max-width: 640px; margin: 0 auto; padding: 14px 16px 13px; }
   .titlerow { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-  h1 { font-size: 1.3rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
-  .sub { font-size: .8rem; color: var(--ink-soft); font-weight: 500; }
+  h1 { font-size: 1.32rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+  .sub { font-size: .8rem; color: var(--pink-deep); font-weight: 600; }
 
-  .meter { margin-top: 12px; display: flex; align-items: center; gap: 12px; }
+  .meter { margin-top: 13px; display: flex; align-items: center; gap: 12px; }
   .count { font-size: .9rem; font-weight: 700; white-space: nowrap;
-           font-variant-numeric: tabular-nums; color: var(--green-ink); }
+           font-variant-numeric: tabular-nums; color: var(--pink-deep); }
   .count b { font-size: 1.15rem; }
-  .bar { flex: 1; height: 9px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .bar { flex: 1; height: 11px; border-radius: 99px; background: var(--track); overflow: hidden;
+         box-shadow: inset 0 1px 2px rgba(219,104,141,.10); }
   .bar > i {
     display: block; height: 100%; width: 0;
-    background: linear-gradient(90deg, var(--green), var(--amber));
-    border-radius: 99px; transition: width .35s cubic-bezier(.4,0,.2,1);
+    background: linear-gradient(90deg, var(--pink), var(--mint));
+    border-radius: 99px; transition: width .4s cubic-bezier(.34,1.3,.5,1);
   }
 
-  .controls { margin-top: 12px; display: flex; gap: 8px; }
+  .controls { margin-top: 13px; display: flex; gap: 8px; }
   .btn {
-    font-family: inherit; font-size: .82rem; font-weight: 600;
-    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
-    padding: 8px 14px; border-radius: 99px; cursor: pointer;
+    font-family: inherit; font-size: .82rem; font-weight: 700;
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 8px 15px; border-radius: 99px; cursor: pointer;
     display: inline-flex; align-items: center; gap: 6px; min-height: 40px;
     transition: background .15s, border-color .15s, color .15s;
   }
   .btn:active { transform: translateY(1px); }
-  .btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
-  .btn.on { background: var(--green); border-color: var(--green); color: #fff; }
-  .btn .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--amber); }
+  .btn:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
+  .btn.on { background: var(--pink); border-color: var(--pink); color: #fff; }
+  .btn .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--pink); }
   .btn.on .dot { background: #fff; }
   .btn.ghost { color: var(--ink-soft); }
   .grow { flex: 1; }
 
   /* Scenario picker */
   .scenes {
-    margin-top: 16px; background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius); box-shadow: var(--shadow); padding: 15px 16px;
+    margin-top: 16px; background: var(--surface); border: 1.5px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 15px 17px;
   }
-  .scenes-head { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: 7px; }
+  .scenes-head { font-weight: 800; font-size: .96rem; display: flex; align-items: center; gap: 7px; }
   .scenes-head .k { font-size: 1.05rem; }
   .scenes-hint { margin: 8px 0 0; font-size: .78rem; color: var(--ink-faint); }
   .chips { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 12px; }
   .chip {
-    font-family: inherit; font-size: .92rem; font-weight: 600;
+    font-family: inherit; font-size: .92rem; font-weight: 700;
     border: 1.5px solid var(--line); background: var(--bg-2); color: var(--ink-soft);
-    padding: 9px 15px; border-radius: 99px; cursor: pointer; min-height: 44px;
+    padding: 9px 16px; border-radius: 99px; cursor: pointer; min-height: 44px;
     display: inline-flex; align-items: center; gap: 7px; transition: all .15s;
   }
   .chip:active { transform: translateY(1px); }
-  .chip:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .chip:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
   .chip .em { font-size: 1.1rem; }
   .chip .tick { width: 0; overflow: hidden; opacity: 0; transition: width .18s, opacity .18s; font-weight: 800; }
-  .chip.on {
-    background: var(--green-soft); border-color: var(--green); color: var(--green-ink);
-  }
+  .chip.on { background: var(--pink-soft); border-color: var(--pink); color: var(--pink-deep); }
   .chip.on .tick { width: 1em; opacity: 1; }
 
   /* Celebration banner */
   .banner {
-    margin: 16px 0 0; padding: 14px 16px; border-radius: var(--radius);
-    background: var(--green-soft); border: 1px solid color-mix(in srgb, var(--green) 40%, transparent);
-    color: var(--green-ink); font-weight: 700; font-size: .95rem;
+    margin: 16px 0 0; padding: 15px 17px; border-radius: var(--radius);
+    background: var(--pink-soft); border: 1.5px solid color-mix(in srgb, var(--pink) 45%, transparent);
+    color: var(--pink-deep); font-weight: 800; font-size: .96rem;
     display: none; align-items: center; gap: 10px;
   }
   .banner.show { display: flex; }
 
   /* Category cards */
   .cat {
-    margin-top: 16px; background: var(--surface); border: 1px solid var(--line);
+    margin-top: 16px; background: var(--surface); border: 1.5px solid var(--line);
     border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
   }
   .cat-head {
     display: flex; align-items: center; gap: 10px;
-    padding: 13px 16px; border-bottom: 1px solid var(--line);
+    padding: 13px 17px; border-bottom: 1.5px solid var(--line);
   }
-  .cat-ic { font-size: 1.15rem; line-height: 1; }
-  .cat-name { font-weight: 700; font-size: 1rem; flex: 1; }
+  .cat-ic {
+    font-size: 1.05rem; line-height: 1; width: 34px; height: 34px; flex: none;
+    display: grid; place-items: center; border-radius: 12px; background: var(--pink-soft);
+  }
+  .cat-name { font-weight: 800; font-size: 1rem; flex: 1; }
   .cat-count {
-    font-size: .78rem; font-weight: 700; color: var(--ink-soft);
+    font-size: .78rem; font-weight: 800; color: var(--ink-soft);
     font-variant-numeric: tabular-nums; background: var(--bg-2);
-    padding: 3px 9px; border-radius: 99px;
+    padding: 3px 10px; border-radius: 99px;
   }
-  .cat-count.full { color: var(--green-ink); background: var(--green-soft); }
+  .cat-count.full { color: var(--mint-ink); background: var(--mint-soft); }
 
-  ul { list-style: none; margin: 0; padding: 4px; }
+  ul { list-style: none; margin: 0; padding: 5px; }
   li { margin: 0; }
   .item {
     width: 100%; text-align: left; font-family: inherit; font-size: 1rem;
     color: var(--ink); background: transparent; border: 0; cursor: pointer;
     display: flex; align-items: center; gap: 13px;
-    padding: 12px; border-radius: 11px; min-height: 52px;
+    padding: 12px; border-radius: 14px; min-height: 52px;
     transition: background .15s;
   }
   .item:hover { background: var(--bg-2); }
-  .item:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+  .item:focus-visible { outline: 2px solid var(--pink); outline-offset: -2px; }
   .box {
-    flex: none; width: 24px; height: 24px; border-radius: 8px;
-    border: 2px solid var(--ink-faint); background: var(--surface);
-    display: grid; place-items: center; transition: background .18s, border-color .18s;
+    flex: none; width: 25px; height: 25px; border-radius: 9px;
+    border: 2.5px solid var(--box); background: var(--surface);
+    display: grid; place-items: center; transition: background .18s, border-color .18s, transform .18s;
   }
-  .box svg { width: 15px; height: 15px; stroke: #fff; stroke-width: 3.2;
+  .box svg { width: 15px; height: 15px; stroke: #fff; stroke-width: 3.4;
              fill: none; stroke-linecap: round; stroke-linejoin: round;
-             stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .22s ease; }
+             stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .24s ease; }
   .label { flex: 1; }
   .label .note { display: block; font-size: .76rem; color: var(--ink-faint); font-weight: 500; margin-top: 1px; }
   .tagpill {
-    font-size: .68rem; font-weight: 700; color: var(--amber);
-    border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
-    border-radius: 99px; padding: 2px 8px; flex: none;
+    font-size: .68rem; font-weight: 800; color: var(--pink-deep);
+    background: var(--pink-soft); border-radius: 99px; padding: 3px 9px; flex: none;
   }
 
-  .item.checked .box { background: var(--green); border-color: var(--green); }
+  .item.checked .box { background: var(--mint); border-color: var(--mint); transform: scale(1.04); }
   .item.checked .box svg { stroke-dashoffset: 0; }
   .item.checked .label > span:first-child { color: var(--ink-faint); text-decoration: line-through; }
-  .item.checked { opacity: .78; }
+  .item.checked { opacity: .72; }
 
   li.scene-off { display: none; }
   .cat.cat-off { display: none; }
@@ -190,17 +201,18 @@
   body.filter .cat.allpacked { display: none; }
 
   footer { text-align: center; color: var(--ink-faint); font-size: .74rem; margin-top: 28px; }
+  footer .hearts { color: var(--pink); font-size: .9rem; }
 
   @media (prefers-reduced-motion: reduce) {
-    *, .bar > i, .box svg, .chip .tick { transition: none !important; }
+    *, .bar > i, .box, .box svg, .chip .tick { transition: none !important; }
   }
 </style>
 
 <header>
   <div class="head-inner">
     <div class="titlerow">
-      <h1>品言的出門清單</h1>
-      <span class="sub">寶寶過夜版 · 出門前打勾確認</span>
+      <h1>品言的出門清單 🎀</h1>
+      <span class="sub">寶寶過夜版 · 帶妹妹出門玩 ♡</span>
     </div>
     <div class="meter">
       <span class="count" id="count">已帶 <b>0</b>／0</span>
@@ -221,9 +233,9 @@
     <p class="scenes-hint">先勾選這次的情境，對應的東西才會加進清單裡。</p>
   </section>
 
-  <div class="banner" id="banner">🎉 這趟要帶的都帶齊囉，可以出發！</div>
+  <div class="banner" id="banner">🎉 品言的東西都帶齊囉，可以出發！♡</div>
   <main id="list"></main>
-  <footer>點項目打勾 · 進度會自動存在這台裝置 · 下次出門按「重置」即可重用</footer>
+  <footer>點項目打勾 · 進度會自動存在這台裝置 · 下次出門按「重置」即可重用<br><span class="hearts">♡ ♡ ♡</span></footer>
 </div>
 
 <script>
@@ -241,7 +253,7 @@
       { label: '餐具、剪刀' },
       { label: '圍兜兜' },
     ]},
-    { name: '服裝', icon: '👕', items: [
+    { name: '服裝', icon: '👗', items: [
       { label: '衣服', note: '3 套' },
       { label: '襪子' },
       { label: '內褲' },
@@ -281,7 +293,7 @@
       { label: '提籃' },
       { label: 'Isofix 底座', scene: 'drive' },
     ]},
-    { name: '視情況而定', icon: '🎒', items: [
+    { name: '視情況而定', icon: '🎀', items: [
       { label: '泳衣', scene: 'swim' },
       { label: '音響' },
     ]},
