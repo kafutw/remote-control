@@ -78,7 +78,6 @@
   .count { font-size: .9rem; font-weight: 700; white-space: nowrap;
            font-variant-numeric: tabular-nums; color: var(--green-ink); }
   .count b { font-size: 1.15rem; }
-  .count.done { color: var(--green-ink); }
   .bar { flex: 1; height: 9px; border-radius: 99px; background: var(--track); overflow: hidden; }
   .bar > i {
     display: block; height: 100%; width: 0;
@@ -97,11 +96,34 @@
   .btn:active { transform: translateY(1px); }
   .btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
   .btn.on { background: var(--green); border-color: var(--green); color: #fff; }
-  :root[data-theme="dark"] .btn.on, @media (prefers-color-scheme: dark) { }
   .btn .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--amber); }
   .btn.on .dot { background: #fff; }
   .btn.ghost { color: var(--ink-soft); }
   .grow { flex: 1; }
+
+  /* Scenario picker */
+  .scenes {
+    margin-top: 16px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 15px 16px;
+  }
+  .scenes-head { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: 7px; }
+  .scenes-head .k { font-size: 1.05rem; }
+  .scenes-hint { margin: 8px 0 0; font-size: .78rem; color: var(--ink-faint); }
+  .chips { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 12px; }
+  .chip {
+    font-family: inherit; font-size: .92rem; font-weight: 600;
+    border: 1.5px solid var(--line); background: var(--bg-2); color: var(--ink-soft);
+    padding: 9px 15px; border-radius: 99px; cursor: pointer; min-height: 44px;
+    display: inline-flex; align-items: center; gap: 7px; transition: all .15s;
+  }
+  .chip:active { transform: translateY(1px); }
+  .chip:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .chip .em { font-size: 1.1rem; }
+  .chip .tick { width: 0; overflow: hidden; opacity: 0; transition: width .18s, opacity .18s; font-weight: 800; }
+  .chip.on {
+    background: var(--green-soft); border-color: var(--green); color: var(--green-ink);
+  }
+  .chip.on .tick { width: 1em; opacity: 1; }
 
   /* Celebration banner */
   .banner {
@@ -151,19 +173,26 @@
              stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .22s ease; }
   .label { flex: 1; }
   .label .note { display: block; font-size: .76rem; color: var(--ink-faint); font-weight: 500; margin-top: 1px; }
+  .tagpill {
+    font-size: .68rem; font-weight: 700; color: var(--amber);
+    border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+    border-radius: 99px; padding: 2px 8px; flex: none;
+  }
 
   .item.checked .box { background: var(--green); border-color: var(--green); }
   .item.checked .box svg { stroke-dashoffset: 0; }
   .item.checked .label > span:first-child { color: var(--ink-faint); text-decoration: line-through; }
   .item.checked { opacity: .78; }
 
+  li.scene-off { display: none; }
+  .cat.cat-off { display: none; }
   body.filter .item.checked { display: none; }
   body.filter .cat.allpacked { display: none; }
 
   footer { text-align: center; color: var(--ink-faint); font-size: .74rem; margin-top: 28px; }
 
   @media (prefers-reduced-motion: reduce) {
-    *, .bar > i, .box svg { transition: none !important; }
+    *, .bar > i, .box svg, .chip .tick { transition: none !important; }
   }
 </style>
 
@@ -186,12 +215,24 @@
 </header>
 
 <div class="wrap">
-  <div class="banner" id="banner">🎉 全部帶齊囉，可以出發！</div>
+  <section class="scenes">
+    <div class="scenes-head"><span class="k">🧭</span>這趟的情境</div>
+    <div class="chips" id="chips"></div>
+    <p class="scenes-hint">先勾選這次的情境，對應的東西才會加進清單裡。</p>
+  </section>
+
+  <div class="banner" id="banner">🎉 這趟要帶的都帶齊囉，可以出發！</div>
   <main id="list"></main>
   <footer>點項目打勾 · 進度會自動存在這台裝置 · 下次出門按「重置」即可重用</footer>
 </div>
 
 <script>
+  // 情境：勾選後，帶有對應 scene 的東西才會出現
+  const SCENES = [
+    { id: 'drive', label: '開車', icon: '🚗' },
+    { id: 'swim',  label: '游泳', icon: '🏊' },
+  ];
+
   const CATEGORIES = [
     { name: '吃喝', icon: '🍼', items: [
       { label: '奶瓶・益生菌', note: '1 天 2 罐' },
@@ -238,29 +279,53 @@
     { name: '推車・汽座', icon: '🚼', items: [
       { label: '嬰兒推車' },
       { label: '提籃' },
-      { label: 'Isofix 底座' },
+      { label: 'Isofix 底座', scene: 'drive' },
     ]},
     { name: '視情況而定', icon: '🎒', items: [
-      { label: '泳衣' },
+      { label: '泳衣', scene: 'swim' },
       { label: '音響' },
     ]},
   ];
 
   const KEY = 'pinyan-checklist-v1';
+  const SKEY = 'pinyan-scenes-v1';
   let checked = new Set();
+  let scenes = new Set();
   try { checked = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) {}
+  try { scenes = new Set(JSON.parse(localStorage.getItem(SKEY) || '[]')); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...checked])); } catch (e) {} };
+  const saveScenes = () => { try { localStorage.setItem(SKEY, JSON.stringify([...scenes])); } catch (e) {} };
 
+  const sceneLabel = id => (SCENES.find(s => s.id === id) || {}).label || '';
   const CHECK = '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg>';
-  const list = document.getElementById('list');
-  const total = CATEGORIES.reduce((n, c) => n + c.items.length, 0);
+  const btnById = {};
 
+  // Scenario chips
+  const chips = document.getElementById('chips');
+  SCENES.forEach(s => {
+    const c = document.createElement('button');
+    c.className = 'chip' + (scenes.has(s.id) ? ' on' : '');
+    c.setAttribute('aria-pressed', scenes.has(s.id));
+    c.innerHTML = '<span class="em">' + s.icon + '</span>' + s.label + '<span class="tick">✓</span>';
+    c.addEventListener('click', () => {
+      if (scenes.has(s.id)) scenes.delete(s.id); else scenes.add(s.id);
+      const on = scenes.has(s.id);
+      c.classList.toggle('on', on);
+      c.setAttribute('aria-pressed', on);
+      saveScenes();
+      render();
+    });
+    chips.appendChild(c);
+  });
+
+  // Category cards
+  const list = document.getElementById('list');
   CATEGORIES.forEach((cat, ci) => {
     const sec = document.createElement('section');
     sec.className = 'cat';
     sec.dataset.ci = ci;
     const ul = document.createElement('ul');
-    cat.items.forEach((it, ii) => {
+    cat.items.forEach(it => {
       const id = cat.name + '::' + it.label;
       const li = document.createElement('li');
       const btn = document.createElement('button');
@@ -270,8 +335,10 @@
       btn.innerHTML =
         '<span class="box">' + CHECK + '</span>' +
         '<span class="label"><span>' + it.label + '</span>' +
-        (it.note ? '<span class="note">' + it.note + '</span>' : '') + '</span>';
+        (it.note ? '<span class="note">' + it.note + '</span>' : '') + '</span>' +
+        (it.scene ? '<span class="tagpill">' + sceneLabel(it.scene) + '</span>' : '');
       btn.addEventListener('click', () => toggle(id, btn));
+      btnById[id] = { btn, li, scene: it.scene };
       li.appendChild(btn);
       ul.appendChild(li);
     });
@@ -293,18 +360,26 @@
   }
 
   function render() {
-    let done = 0;
+    let total = 0, done = 0;
     CATEGORIES.forEach((cat, ci) => {
-      const packed = cat.items.filter(it => checked.has(cat.name + '::' + it.label)).length;
-      done += packed;
+      let vis = 0, packed = 0;
+      cat.items.forEach(it => {
+        const id = cat.name + '::' + it.label;
+        const ref = btnById[id];
+        const shown = !it.scene || scenes.has(it.scene);
+        ref.li.classList.toggle('scene-off', !shown);
+        if (shown) { vis++; if (checked.has(id)) packed++; }
+      });
+      total += vis; done += packed;
       const badge = document.querySelector('[data-cc="' + ci + '"]');
-      badge.textContent = packed + '／' + cat.items.length;
-      const full = packed === cat.items.length;
+      badge.textContent = packed + '／' + vis;
+      const full = vis > 0 && packed === vis;
       badge.classList.toggle('full', full);
-      document.querySelector('.cat[data-ci="' + ci + '"]').classList.toggle('allpacked', full);
+      const sec = document.querySelector('.cat[data-ci="' + ci + '"]');
+      sec.classList.toggle('allpacked', full);
+      sec.classList.toggle('cat-off', vis === 0);
     });
     document.getElementById('count').innerHTML = '已帶 <b>' + done + '</b>／' + total;
-    document.getElementById('count').classList.toggle('done', done === total);
     document.getElementById('fill').style.width = (total ? done / total * 100 : 0) + '%';
     document.getElementById('banner').classList.toggle('show', done === total && total > 0);
   }
@@ -317,7 +392,7 @@
   });
 
   document.getElementById('resetBtn').addEventListener('click', () => {
-    if (!checked.size || confirm('要清空所有勾選、重新開始打包嗎？')) {
+    if (!checked.size || confirm('要清空所有勾選、重新開始打包嗎？（情境選擇會保留）')) {
       checked.clear(); save();
       document.querySelectorAll('.item.checked').forEach(b => {
         b.classList.remove('checked'); b.setAttribute('aria-pressed', 'false');
