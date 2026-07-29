@@ -499,21 +499,27 @@
     voice = pickVoice();
     speechSynthesis.onvoiceschanged = () => { voice = pickVoice(); };
   }
-  // 把幾段話依序念出來，text 為字串陣列
-  function speak(parts, rate) {
+  // 語速：小朋友聽得清楚為主，字母又比單字再慢一點
+  const RATE_LETTER = .5, RATE_WORD = .62;
+  // 送進語音的字母一律用小寫：有些語音看到大寫會多念一句「大寫 B」
+  const spoken = i => LETTERS[i].c.toLowerCase();
+
+  // 把幾段話依序念出來，parts 為 [文字, 語速] 的陣列
+  function speak(parts) {
     if (!canSpeak) return;
     try {
       speechSynthesis.cancel();
-      parts.forEach(t => {
+      parts.forEach(([t, rate]) => {
         const u = new SpeechSynthesisUtterance(t);
-        u.lang = 'en-US'; u.rate = rate || .8; u.pitch = 1.15;
+        u.lang = 'en-US'; u.rate = rate; u.pitch = 1.15;
         if (voice) u.voice = voice;
         speechSynthesis.speak(u);
       });
     } catch (e) {}
   }
-  const sayLetter = i => speak([LETTERS[i].c], .7);
-  const sayFull = i => speak([LETTERS[i].c, LETTERS[i].word], .75);
+  const sayLetter = i => speak([[spoken(i), RATE_LETTER]]);
+  const sayWord = i => speak([[LETTERS[i].word, RATE_WORD]]);
+  const sayFull = i => speak([[spoken(i), RATE_LETTER], [LETTERS[i].word, RATE_WORD]]);
   if (!canSpeak) $('voiceHint').textContent = '💡 這個瀏覽器沒有內建語音，字母卡還是可以看，聲音的部分請換 Safari 或 Chrome。';
 
   // ── 首頁 ──────────────────────────────────────────────────────
@@ -703,7 +709,7 @@
         '<div class="qemoji">' + L.emoji + '</div>' +
         '<div class="qword"><span class="blank">＿</span>' + L.word.slice(1) + '</div>' +
         '<div class="qzh">' + L.zh + '</div>';
-      setTimeout(() => speak([L.word], .75), 260);
+      setTimeout(() => sayWord(target), 260);
     } else {
       card.innerHTML = '<div class="qkind">' + kind.label + '</div>' +
         '<div class="qbig">' + L.c + '</div>';
@@ -739,7 +745,7 @@
       if (first) score++; else if (missed.indexOf(L.c) < 0) missed.push(L.c);
       $('feedback').textContent = CHEER[rand(CHEER.length)] + ' ' + L.c + ' — ' + L.word + ' ' + L.emoji;
       $('feedback').classList.add('show');
-      speak([L.c, L.word], .75);
+      sayFull(question.target);
       if (first) burst(['🎈', '⭐', '🎉']);
       $('qn').textContent = '第 ' + qIndex + '／' + ROUND_LEN + ' 題　·　答對 ' + score;
       $('count').innerHTML = '答對 <b>' + score + '</b>／' + ROUND_LEN;
@@ -756,7 +762,7 @@
 
   $('repeatBtn').addEventListener('click', () => {
     if (!question) return;
-    if (question.kind === 'picture') speak([LETTERS[question.target].word], .75);
+    if (question.kind === 'picture') sayWord(question.target);
     else sayLetter(question.target);
   });
 
