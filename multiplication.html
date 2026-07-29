@@ -334,6 +334,7 @@
   .wrow .p.hi { color: var(--mint-ink); }
   .wrow .p.mid { color: var(--amber); }
   .wrow .p.thin { color: var(--ink-faint); }
+  .wrow .p small { display: block; font-weight: 700; color: var(--ink-faint); white-space: nowrap; }
 
   .foot { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
   .tiny { font-size: var(--fs-note); color: var(--ink-faint); text-align: center; margin-top: 16px; }
@@ -697,6 +698,14 @@
     return CN[Math.floor(n / 10)] + '十' + (n % 10 ? CN[n % 10] : '');
   }
 
+  // 公布答案念傳統口訣：九八七十二、二五一十、二三得六
+  function chant(a, b) {
+    var ans = a * b;
+    if (ans < 10) return cn(a) + cn(b) + '得' + cn(ans);
+    if (ans === 10) return cn(a) + cn(b) + '一十';   // 口訣念「一十」不念「十」
+    return cn(a) + cn(b) + cn(ans);
+  }
+
   var canSpeak = typeof window.speechSynthesis !== 'undefined' &&
                  typeof window.SpeechSynthesisUtterance !== 'undefined';
   var zhVoice = null;
@@ -1025,7 +1034,7 @@
     var ans = q.a * q.b;
     $('qtext').innerHTML = q.a + ' <em>×</em> ' + q.b + ' <em>=</em> <b class="ans">' + ans + '</b>';
     $('streakTxt').textContent = note;
-    say(cn(q.a) + '乘' + cn(q.b) + '等於' + cn(ans), 300);   // 讓答錯的音效先響完
+    say(chant(q.a, q.b), 300);   // 讓答錯的音效先響完
     S.canSkip = false;
     clearReveal();
     skipTimer = setTimeout(function () {
@@ -1274,7 +1283,7 @@
         row.innerHTML =
           '<span class="q">' + p[0] + ' × ' + p[1] + ' = ' + (p[0] * p[1]) + '</span>' +
           '<span class="t"><i style="width:' + Math.round(x.r * 100) + '%"></i></span>' +
-          '<span class="p">錯 ' + x.w + '/' + x.n + '</span>';
+          '<span class="p">錯 ' + x.w + ' 次<small>考過 ' + x.n + ' 次</small></span>';
         weak.appendChild(row);
       });
     }
@@ -1404,7 +1413,7 @@
   }
   $('speakBtn').addEventListener('click', function () {
     db.speak = !db.speak; save(); syncSpeak();
-    if (db.speak) say('二乘五等於十');
+    if (db.speak) say('九八七十二');
     else hushSpeech();
   });
 
