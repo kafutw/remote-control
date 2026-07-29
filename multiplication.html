@@ -723,6 +723,8 @@
       ? '錯題複習 ・ ' + total + ' 題'
       : tableLabel(tables) + ' 段 ・ ' + total + ' 題';
     renderDots();
+    $('qcard').className = 'qcard';
+    $('streakTxt').textContent = '';
     $('qnum').textContent = '1 / ' + total;
     $('clock').innerHTML = PER_Q + '<small>秒</small>';
     $('timeBar').style.width = '100%';
@@ -791,6 +793,7 @@
     S.q = q;
     S.qEndAt = Date.now() + PER_Q * 1000;
     $('qcard').className = 'qcard';
+    $('streakTxt').textContent = '';   // 上一題的正確答案絕對不能留到這一題
     $('qtext').innerHTML = q.a + ' <em>×</em> ' + q.b;
     $('qnum').textContent = S.idx + ' / ' + S.total;
     updateDots();
