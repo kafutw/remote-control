@@ -28,14 +28,15 @@
     --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
             "Microsoft JhengHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 
-    /* 字級一共七種，介面四種、數字三種。要調整只改這裡 */
+    /* 字級一共七種，要調整只改這裡。
+       規則：設定與歷史畫面的字一律不超過主標，只有作答用的那三級可以更大 */
     --fs-title: 1.5rem;    /* 24px  主標，全 App 只有一個 */
-    --fs-head:  1.125rem;  /* 18px  段落標題、主要按鈕 */
+    --fs-head:  1.25rem;   /* 20px  段落標題、主要按鈕、設定畫面的數字 */
     --fs-body:  .9375rem;  /* 15px  內文 */
     --fs-note:  .75rem;    /* 12px  說明、標籤 */
     --fs-mega:  4rem;      /* 64px  倒數、結算分數 */
     --fs-q:     2.75rem;   /* 44px  題目 */
-    --fs-num:   1.75rem;   /* 28px  選項、秒數、統計數字 */
+    --fs-opt:   1.75rem;   /* 28px  四個選項、剩餘秒數 */
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -153,7 +154,7 @@
   }
   .tile:active { transform: translateY(1px); }
   .tile:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-  .tile b { display: block; font-size: var(--fs-num); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .tile b { display: block; font-size: var(--fs-head); font-weight: 800; font-variant-numeric: tabular-nums; }
   .tile i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-faint); font-weight: 700; margin-top: 2px; }
   .tile.sel { border-color: var(--blue); background: var(--blue-soft); color: var(--blue-deep); }
   .tile.sel i { color: var(--blue-deep); }
@@ -167,7 +168,7 @@
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .modes.three { grid-template-columns: repeat(3, 1fr); }
   .modes.three .mode { text-align: center; padding: 13px 6px; }
-  .modes.three .mode b { font-size: var(--fs-num); font-variant-numeric: tabular-nums; }
+  .modes.three .mode b { font-size: var(--fs-head); font-variant-numeric: tabular-nums; }
   .mode {
     font-family: inherit; cursor: pointer; color: var(--ink); text-align: left;
     background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
@@ -181,7 +182,7 @@
   /* ── play ── */
   .hud { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
   .clock {
-    font-size: var(--fs-num); font-weight: 800; font-variant-numeric: tabular-nums;
+    font-size: var(--fs-opt); font-weight: 800; font-variant-numeric: tabular-nums;
     color: var(--blue-deep); min-width: 62px; letter-spacing: -.02em;
   }
   .clock.low { color: var(--coral-ink); animation: pulse .9s ease-in-out infinite; }
@@ -224,7 +225,7 @@
     font-family: inherit; cursor: pointer; color: var(--ink);
     background: var(--surface); border: 2px solid var(--line); border-radius: 18px;
     box-shadow: var(--shadow); padding: 18px 8px; min-height: 76px;
-    font-size: var(--fs-num); font-weight: 800; font-variant-numeric: tabular-nums;
+    font-size: var(--fs-opt); font-weight: 800; font-variant-numeric: tabular-nums;
     transition: transform .1s, background .15s, border-color .15s, color .15s;
   }
   .opt:active { transform: translateY(2px); }
@@ -234,7 +235,7 @@
   .opt.dim { opacity: .38; }
 
   .fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
-  .spark { position: absolute; font-size: var(--fs-num); animation: fly .9s ease-out forwards; }
+  .spark { position: absolute; font-size: var(--fs-opt); animation: fly .9s ease-out forwards; }
   @keyframes fly {
     from { opacity: 1; transform: translate(0,0) scale(.6) rotate(0deg); }
     to { opacity: 0; transform: translate(var(--dx), -120px) scale(1.4) rotate(var(--rot)); }
@@ -261,7 +262,7 @@
   }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .stat { background: var(--bg); border-radius: 14px; padding: 11px 6px; text-align: center; }
-  .stat b { display: block; font-size: var(--fs-num); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat b { display: block; font-size: var(--fs-head); font-weight: 800; font-variant-numeric: tabular-nums; }
   .stat b small { font-size: var(--fs-note); color: var(--ink-soft); }
   .stat i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
 
@@ -314,7 +315,7 @@
   }
   /* 小螢幕只調字級變數，不動個別元件，才不會又長出中間尺寸 */
   @media (max-width: 360px) {
-    :root { --fs-title: 1.32rem; --fs-q: 2.3rem; --fs-num: 1.5rem; --fs-mega: 3.4rem; }
+    :root { --fs-title: 1.32rem; --fs-head: 1.15rem; --fs-q: 2.3rem; --fs-opt: 1.5rem; --fs-mega: 3.4rem; }
     .opt { min-height: 68px; }
   }
 </style>
