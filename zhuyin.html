@@ -368,6 +368,35 @@
   .pcell:active { transform: translateY(1px); }
   .pcell:focus-visible { outline: 2px solid var(--grn); outline-offset: 2px; }
   .pcell.approx { border-color: var(--sun); border-width: 2px; }
+  .pcell.sel { background: var(--grn); border-color: var(--grn); color: #fff; }
+  .pcell.rec { position: relative; }
+  .pcell.rec::after {
+    content: '🎙'; position: absolute; top: 2px; right: 4px; font-size: .62rem;
+  }
+
+  /* 單一符號的發音微調面板 */
+  .tuner:empty { display: none; }
+  .tuner {
+    margin-top: 14px; padding: 14px; border-radius: 16px;
+    background: var(--grn-soft); border: 1.5px solid var(--grn);
+  }
+  .tuner .th { display: flex; align-items: center; gap: 10px; }
+  .tuner .ts { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+  .tuner .tinfo { flex: 1; font-size: .8rem; font-weight: 600; color: var(--grn-deep); }
+  .tuner .tlabel { font-size: .78rem; font-weight: 700; color: var(--ink-soft); margin: 12px 0 0; }
+  .tuner .talts { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
+  .talt {
+    font-family: inherit; font-size: 1.25rem; font-weight: 800; min-width: 52px; min-height: 48px;
+    border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface);
+    color: var(--ink); cursor: pointer;
+  }
+  .talt.on { background: var(--grn); border-color: var(--grn); color: #fff; }
+  .talt:focus-visible { outline: 2px solid var(--grn); outline-offset: 2px; }
+  .trow { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .trow .btn { flex: 1; min-width: 130px; }
+  .btn.rec-on { background: var(--no); border-color: var(--no); color: #fff; }
+  .recnote { font-size: .76rem; color: var(--ink-soft); font-weight: 600; margin-top: 9px; }
+  .recnote.err { color: var(--no); }
 
   /* ─────────────────────────────────────────────
      平板／桌機（主要使用情境）：整體放大、選項排成一列
@@ -554,9 +583,11 @@
     </div>
 
     <div class="card">
-      <div class="card-head">🔍 檢查 37 個發音</div>
-      <p class="card-hint">點任一個聽聽看念得準不準。橘色框的三個，中文裡沒有單獨的字可以表示這個音，只能念最接近的。</p>
+      <div class="card-head">🔍 逐一調整發音</div>
+      <p class="card-hint">點一個符號聽聽看。念得不對的話，可以換一個同音的字，或直接錄自己的聲音。
+        橘框的三個，中文裡沒有單獨的字能表示，用系統語音一定會有落差，建議直接錄音。</p>
       <div class="pgrid" id="pgrid"></div>
+      <div class="tuner" id="tuner"></div>
     </div>
 
     <div class="card">
@@ -597,7 +628,7 @@
   //   w/z/e = 例詞、例詞注音、圖示，答完之後拿來加深印象
   // ─────────────────────────────────────────────
   const DATA = [
-    { s:'ㄅ', g:'sheng', r:'玻', w:'爸爸', z:'ㄅㄚˋ˙ㄅㄚ',   e:'👨' },
+    { s:'ㄅ', g:'sheng', r:'波', w:'爸爸', z:'ㄅㄚˋ˙ㄅㄚ',   e:'👨' },
     { s:'ㄆ', g:'sheng', r:'坡', w:'皮球', z:'ㄆㄧˊㄑㄧㄡˊ', e:'⚽' },
     { s:'ㄇ', g:'sheng', r:'摸', w:'媽媽', z:'ㄇㄚ˙ㄇㄚ',     e:'👩' },
     { s:'ㄈ', g:'sheng', r:'佛', w:'飛機', z:'ㄈㄟㄐㄧ',       e:'✈️' },
@@ -640,6 +671,19 @@
 
   // 這三個音在國語裡沒有單獨成字的寫法，語音引擎只能念最接近的字，會有落差
   const APPROX = 'ㄝㄟㄥ';
+
+  // 每個符號的候選本音字：同一個音、不同的字，不同裝置的語音引擎念起來差很多，
+  // 家長可以在設定裡一個一個試聽，挑順耳的
+  const ALT = {
+    ㄅ:'波玻撥剝', ㄆ:'坡潑婆破', ㄇ:'摸摩磨麼', ㄈ:'佛彿否', ㄉ:'德得低',
+    ㄊ:'特忑他', ㄋ:'訥呢那', ㄌ:'勒樂了', ㄍ:'哥歌割', ㄎ:'科顆課棵',
+    ㄏ:'喝呵河和', ㄐ:'基機雞幾', ㄑ:'欺期七妻', ㄒ:'希西息稀', ㄓ:'知之支隻',
+    ㄔ:'吃痴癡池', ㄕ:'詩濕師施', ㄖ:'日入', ㄗ:'資姿滋茲', ㄘ:'雌疵詞辭',
+    ㄙ:'思私司絲', ㄧ:'衣一依醫', ㄨ:'烏屋污巫', ㄩ:'迂淤於魚', ㄚ:'啊阿呀',
+    ㄛ:'喔噢哦', ㄜ:'鵝額俄惡', ㄝ:'耶也欸', ㄞ:'哀埃唉挨', ㄟ:'欸誒',
+    ㄠ:'凹熬奧澳', ㄡ:'歐偶鷗藕', ㄢ:'安案按岸', ㄣ:'恩嗯摁', ㄤ:'昂骯',
+    ㄥ:'哼鞥', ㄦ:'兒而二耳',
+  };
 
   const GROUPS = {
     sheng: { name: '聲母', icon: '🅰️', desc: 'ㄅ 到 ㄙ，21 個' },
@@ -695,8 +739,11 @@
   let runs  = load(K_RUNS, 0);
   let hist  = load(K_HIST, []);
   let S = Object.assign(
-    { voiceURI: null, rate: .7, mute: false, auto: true, chime: true, showSym: false, vibrate: true },
+    { voiceURI: null, rate: .7, mute: false, auto: true, chime: true, showSym: false,
+      vibrate: true, reads: {} },
     load(K_SET, {}));
+  // 家長挑過的本音字優先，沒挑過就用預設的
+  const readOf = sym => (S.reads && S.reads[sym]) || bySym[sym].r;
   const saveSet = () => save(K_SET, S);
 
   const stOf = s => stats[s] || { r: 0, w: 0 };
@@ -793,8 +840,56 @@
       speechSynthesis.speak(u);
     } catch (e) { onEnd && onEnd(); }
   }
-  // 念出某個符號的音（餵語音引擎的是本音字，注音符號本身念不出來）
-  function saySymbol(sym, onEnd) { speak(bySym[sym].r, onEnd); }
+  // ── 家長自己錄的發音（存在裝置的 IndexedDB 裡）──
+  // 用漢字合成的發音一定會帶著念字的語氣，錄過的符號一律優先播錄音
+  const DB_NAME = 'zhuyin-rec', STORE = 'clips';
+  const recSet = new Set();       // 已經錄過的符號
+  const recUrl = {};              // Blob 的暫存網址
+  let dbp = null;
+  function db() {
+    if (!dbp) dbp = new Promise((res, rej) => {
+      let r;
+      try { r = indexedDB.open(DB_NAME, 1); } catch (e) { return rej(e); }
+      r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    }).catch(e => { dbp = null; throw e; });
+    return dbp;
+  }
+  const recTx = (mode, fn) => db().then(d => new Promise((res, rej) => {
+    const t = d.transaction(STORE, mode), q = fn(t.objectStore(STORE));
+    t.onerror = () => rej(t.error);
+    if (q) q.onsuccess = () => res(q.result); else t.oncomplete = () => res();
+  }));
+  const recPut = (sym, blob) => recTx('readwrite', s => { s.put(blob, sym); });
+  const recGet = sym => recTx('readonly', s => s.get(sym));
+  const recDel = sym => recTx('readwrite', s => { s.delete(sym); });
+  const recAllKeys = () => recTx('readonly', s => s.getAllKeys());
+  function loadRecKeys() {
+    return recAllKeys().then(keys => {
+      recSet.clear(); (keys || []).forEach(k => recSet.add(k));
+    }).catch(() => {});
+  }
+
+  function playRec(sym, onEnd) {
+    if (S.mute) { onEnd && onEnd(); return; }
+    const fallback = () => speak(readOf(sym), onEnd);
+    recGet(sym).then(blob => {
+      if (!blob) return fallback();
+      const url = recUrl[sym] || (recUrl[sym] = URL.createObjectURL(blob));
+      const a = new Audio(url);
+      a.onended = () => onEnd && onEnd();
+      a.onerror = fallback;
+      const pr = a.play();
+      if (pr && pr.catch) pr.catch(fallback);
+    }).catch(fallback);
+  }
+
+  // 念出某個符號的音：有錄音就播錄音，沒有才用語音引擎念本音字
+  function saySymbol(sym, onEnd) {
+    if (recSet.has(sym)) playRec(sym, onEnd);
+    else speak(readOf(sym), onEnd);
+  }
 
   function renderVoiceWarn() {
     const box = $('voiceWarn');
@@ -1087,6 +1182,107 @@
     b.title = S.mute ? '發音已關閉，點一下打開' : '發音開著，點一下關掉';
   }
 
+  // ── 逐一調整發音：換字 or 錄自己的聲音 ──
+  let tuneSym = null, mediaRec = null, recStream = null, recChunks = [], recNote = '';
+
+  function renderTuneGrid() {
+    const pg = $('pgrid');
+    pg.innerHTML = '';
+    DATA.forEach(d => {
+      const c = document.createElement('button');
+      c.className = 'pcell zy' + (APPROX.includes(d.s) ? ' approx' : '') +
+                    (recSet.has(d.s) ? ' rec' : '') + (tuneSym === d.s ? ' sel' : '');
+      c.type = 'button';
+      c.textContent = d.s;
+      c.title = recSet.has(d.s) ? '用你錄的聲音' : '念作「' + readOf(d.s) + '」';
+      c.addEventListener('click', () => { tuneSym = d.s; recNote = ''; renderTuneGrid(); renderTuner(); saySymbol(d.s); });
+      pg.appendChild(c);
+    });
+  }
+
+  function renderTuner() {
+    const box = $('tuner');
+    if (!tuneSym) { box.innerHTML = ''; return; }
+    const sym = tuneSym, hasRec = recSet.has(sym);
+    const alts = [...new Set([...(ALT[sym] || ''), bySym[sym].r])];
+    const cur = readOf(sym);
+    const recording = !!(mediaRec && mediaRec.state === 'recording');
+
+    box.innerHTML =
+      '<div class="th"><span class="ts zy">' + sym + '</span>' +
+      '<span class="tinfo">' + (hasRec ? '🎙️ 正在用你自己錄的聲音' : '目前念作「' + cur + '」') + '</span></div>' +
+      (hasRec ? '' :
+        '<p class="tlabel">換一個同音的字聽聽看：</p><div class="talts">' +
+        alts.map(a => '<button class="talt zy' + (a === cur ? ' on' : '') + '" type="button" data-alt="' + a + '">' +
+          a + '</button>').join('') + '</div>') +
+      '<div class="trow">' +
+        '<button class="btn" type="button" id="tPlay">▶ 試聽</button>' +
+        '<button class="btn' + (recording ? ' rec-on' : ' primary') + '" type="button" id="tRec">' +
+          (recording ? '⏹ 停止錄音' : '🎙️ 錄我的聲音') + '</button>' +
+        (hasRec ? '<button class="btn ghost" type="button" id="tDel">刪掉錄音</button>' : '') +
+      '</div>' +
+      (recNote ? '<p class="recnote' + (recNote[0] === '⚠' ? ' err' : '') + '">' + recNote + '</p>'
+               : '<p class="recnote">錄音只存在這台裝置裡，錄好之後這個符號就會用你的聲音。</p>');
+
+    box.querySelectorAll('[data-alt]').forEach(b => b.addEventListener('click', () => {
+      S.reads = S.reads || {};
+      S.reads[sym] = b.dataset.alt;
+      saveSet();
+      renderTuner(); renderTuneGrid();
+      speak(b.dataset.alt);
+    }));
+    $('tPlay').addEventListener('click', () => saySymbol(sym));
+    $('tRec').addEventListener('click', () => recording ? stopRec() : startRec(sym));
+    const del = $('tDel');
+    if (del) del.addEventListener('click', () => {
+      recDel(sym).then(() => {
+        recSet.delete(sym);
+        if (recUrl[sym]) { URL.revokeObjectURL(recUrl[sym]); delete recUrl[sym]; }
+        recNote = '錄音刪掉了，改回用系統語音。';
+        renderTuner(); renderTuneGrid();
+      }).catch(() => { recNote = '⚠️ 刪不掉，請再試一次。'; renderTuner(); });
+    });
+  }
+
+  function startRec(sym) {
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      recNote = '⚠️ 這個瀏覽器不支援錄音，用 Safari 或 Chrome 開這一頁試試看。';
+      return renderTuner();
+    }
+    const go = stream => {
+      recStream = stream;
+      recChunks = [];
+      try { mediaRec = new MediaRecorder(stream); }
+      catch (e) { recNote = '⚠️ 沒辦法開始錄音：' + e.message; return renderTuner(); }
+      mediaRec.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
+      mediaRec.onstop = () => {
+        const blob = new Blob(recChunks, { type: (mediaRec && mediaRec.mimeType) || 'audio/webm' });
+        if (!blob.size) { recNote = '⚠️ 沒有錄到聲音，再試一次。'; return renderTuner(); }
+        recPut(sym, blob).then(() => {
+          recSet.add(sym);
+          if (recUrl[sym]) { URL.revokeObjectURL(recUrl[sym]); delete recUrl[sym]; }
+          recNote = '錄好了！這個符號現在用你的聲音。';
+          renderTuner(); renderTuneGrid();
+          setTimeout(() => saySymbol(sym), 200);
+        }).catch(() => { recNote = '⚠️ 存不起來，可能是裝置空間不足。'; renderTuner(); });
+      };
+      mediaRec.start();
+      recNote = '錄音中…念一次「' + sym + '」，念完按停止。';
+      renderTuner();
+    };
+    if (recStream && recStream.active) return go(recStream);
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(go).catch(err => {
+      recNote = /NotAllowed|Permission/i.test(err && err.name || '')
+        ? '⚠️ 要先允許使用麥克風才能錄音。'
+        : '⚠️ 打不開麥克風：' + (err && err.message || '未知錯誤');
+      renderTuner();
+    });
+  }
+  function stopRec() {
+    try { if (mediaRec && mediaRec.state === 'recording') mediaRec.stop(); } catch (e) {}
+    renderTuner();
+  }
+
   function renderSettings() {
     const box = $('voiceList');
     box.innerHTML = '';
@@ -1102,7 +1298,7 @@
         b.innerHTML = (v.name || '').replace(/^Microsoft |^Google /, '') +
                       '<span class="n">' + regionOf(v) + '</span>';
         b.addEventListener('click', () => {
-          S.voiceURI = v.voiceURI; saveSet(); pickVoice(); renderSettings(); speak(bySym['ㄅ'].r);
+          S.voiceURI = v.voiceURI; saveSet(); pickVoice(); renderSettings(); saySymbol('ㄅ');
         });
         box.appendChild(b);
       });
@@ -1114,17 +1310,7 @@
           : '這是臺灣口音，選好可以按下面試聽。';
     }
 
-    const pg = $('pgrid');
-    pg.innerHTML = '';
-    DATA.forEach(d => {
-      const c = document.createElement('button');
-      c.className = 'pcell zy' + (APPROX.includes(d.s) ? ' approx' : '');
-      c.type = 'button';
-      c.textContent = d.s;
-      c.title = '念作「' + d.r + '」';
-      c.addEventListener('click', () => saySymbol(d.s));
-      pg.appendChild(c);
-    });
+    renderTuneGrid();
 
     $('rate').value = S.rate;
     $('rateVal').textContent = '目前速度 ' + Number(S.rate).toFixed(1) + ' 倍' +
@@ -1227,8 +1413,8 @@
     $('rateVal').textContent = '目前速度 ' + S.rate.toFixed(1) + ' 倍' +
       (S.rate <= .6 ? '（很慢，適合剛開始學）' : S.rate >= 1 ? '（正常語速）' : '（放慢一點）');
   });
-  $('rate').addEventListener('change', () => speak(bySym['ㄅ'].r));
-  $('testBtn').addEventListener('click', () => speak(bySym['ㄅ'].r));
+  $('rate').addEventListener('change', () => saySymbol('ㄅ'));
+  $('testBtn').addEventListener('click', () => saySymbol('ㄅ'));
   $('autoPlay').addEventListener('change', e => { S.auto = e.target.checked; saveSet(); });
   $('chimeOn').addEventListener('change', e => { S.chime = e.target.checked; saveSet(); if (S.chime) chime(true); });
   $('showSym').addEventListener('change', e => { S.showSym = e.target.checked; saveSet(); });
@@ -1261,4 +1447,5 @@
   renderMute();
   renderSetup();
   setScreen('setup');
+  loadRecKeys().then(() => { if (document.body.classList.contains('s-settings')) renderTuneGrid(); });
 </script>
