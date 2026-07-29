@@ -128,6 +128,39 @@ section{margin-top:22px}
 .qt tr.filled .nmc b{color:#fff}
 .qt-note{font-size:11px;color:var(--dim2);margin-top:10px;line-height:1.6}
 
+/* ---------- 領先指標卡片：跟持股控制表同一套視覺，但可以直接打字 ---------- */
+.lead-row{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-top:8px}
+.lead-row:first-child{margin-top:0}
+.lead-row.filled{border-color:var(--line2);background:#12262f}
+.lead-row .nm{flex:1 1 auto;min-width:0}
+.lead-row .nm .n{font-size:15px;display:block}
+.lead-row .nm .c{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lead-row .px{flex:0 0 72px;width:72px}
+.lead-row .pctbox{flex:0 0 114px;width:114px;min-width:0}
+.binp{
+  width:100%;min-width:0;background:transparent;border:0;border-bottom:1px dashed rgba(95,131,147,.45);
+  color:var(--txt);font-family:inherit;font-variant-numeric:tabular-nums;text-align:right;
+  font-size:20px;font-weight:800;padding:1px 0;border-radius:0
+}
+.binp:focus{outline:none;border-bottom:1px solid var(--gold)}
+.binp::placeholder{color:#3d5b68;font-weight:400;font-size:15px}
+.binp::-webkit-outer-spin-button,.binp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.binp[type=number]{-moz-appearance:textfield;appearance:textfield}
+
+.pctbox .pv,.pctbox .dv{display:flex;align-items:baseline;justify-content:flex-end;gap:3px}
+.pctbox .ar{font-size:15px;line-height:1}
+.pctbox .pv input,.pctbox .dv input{
+  flex:1 1 0;width:100%;min-width:0;background:transparent;border:0;border-bottom:1px dashed rgba(255,255,255,.22);
+  color:inherit;font-family:inherit;font-weight:inherit;font-size:inherit;text-align:right;
+  padding:1px 0;font-variant-numeric:tabular-nums;border-radius:0
+}
+.pctbox input:focus{outline:none;border-bottom:1px solid currentColor}
+.pctbox input::placeholder{color:currentColor;opacity:.35;font-weight:400}
+.pctbox input::-webkit-outer-spin-button,.pctbox input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pctbox input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.pctbox .u{font-size:14px;opacity:.85}
+.pctbox .dv .u{font-size:11px}
+
 .baseset{margin-top:12px;border:1px solid var(--line);border-radius:11px;background:var(--bg2);overflow:hidden}
 .baseset summary{
   padding:10px 12px;font-size:12.5px;color:var(--dim);cursor:pointer;list-style:none;
@@ -292,12 +325,8 @@ kbd{background:var(--bg2);border:1px solid var(--line2);border-radius:5px;paddin
   </div>
 
   <div class="card">
-    <table class="qt">
-      <colgroup><col style="width:33%"><col style="width:23%"><col style="width:20%"><col style="width:24%"></colgroup>
-      <thead><tr><th>商品</th><th>成交</th><th>漲跌</th><th>幅度 %</th></tr></thead>
-      <tbody id="leadRows"></tbody>
-    </table>
-    <div class="qt-note">填「成交」和「漲跌」，幅度會自己算；只知道幅度也可以直接填幅度。</div>
+    <div id="leadRows"></div>
+    <div class="qt-note">填「成交」和「漲跌」，幅度會自己算；只知道幅度（費半、日經、KOSPI 通常只看到 %）就直接填幅度那一格。</div>
 
     <details class="baseset" id="baseset">
       <summary>基準設定 · 昨收與匯率</summary>
@@ -431,16 +460,16 @@ var DEFAULT_HOLDINGS = [
 
 /* ============ 領先指標：一列一個商品，像自選報價 ============ */
 var LEAD_ROWS = [
-  {k:"fut",  n:"台指期夜盤", s:'點 · <a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener">期交所</a>',
-   dp:0, ph:["41100","-500"]},
-  {k:"adr",  n:"台積電 ADR", s:'美元 · <a href="https://tw.stock.yahoo.com/quote/TSM" target="_blank" rel="noopener">TSM</a>',
-   dp:2, ph:["360.00","-8.20"]},
-  {k:"sox",  n:"費城半導體", s:'<a href="https://tw.stock.yahoo.com/quote/%5ESOX" target="_blank" rel="noopener">^SOX</a>',
-   dp:2, ph:["—","—"]},
-  {k:"n225", n:"日經 225",   s:'<a href="https://tw.stock.yahoo.com/quote/%5EN225" target="_blank" rel="noopener">^N225</a> · 08:00 開',
-   dp:2, ph:["—","—"]},
-  {k:"kospi",n:"韓國 KOSPI", s:'<a href="https://tw.stock.yahoo.com/quote/%5EKS11" target="_blank" rel="noopener">^KS11</a> · 08:00 開',
-   dp:2, ph:["—","—"]}
+  {k:"fut",  n:"台指期夜盤", s:'<a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener">期交所</a> · 05:00',
+   dp:0, unit:"點", ph:["41100","-500"]},
+  {k:"adr",  n:"台積電 ADR", s:'<a href="https://tw.stock.yahoo.com/quote/TSM" target="_blank" rel="noopener">TSM</a> · 美元',
+   dp:2, unit:"美元", ph:["360.00","-8.20"]},
+  {k:"sox",  n:"費城半導體", s:'<a href="https://tw.stock.yahoo.com/quote/%5ESOX" target="_blank" rel="noopener">^SOX</a> · 美股',
+   dp:2, unit:"點", ph:["選填","選填"]},
+  {k:"n225", n:"日經 225",   s:'<a href="https://tw.stock.yahoo.com/quote/%5EN225" target="_blank" rel="noopener">^N225</a> · 08:00',
+   dp:2, unit:"點", ph:["選填","選填"]},
+  {k:"kospi",n:"韓國 KOSPI", s:'<a href="https://tw.stock.yahoo.com/quote/%5EKS11" target="_blank" rel="noopener">^KS11</a> · 08:00',
+   dp:2, unit:"點", ph:["選填","選填"]}
 ];
 
 var BASE_ROWS = [
@@ -596,17 +625,24 @@ function renderLeadTable(){
     var v = S.lead[r.k] || {p:"",d:"",pct:""};
     var pct = pctOf(r.k);
     var filled = (v.p!=="" || v.d!=="" || v.pct!=="");
-    function inp(f, ph, dp, k2){
-      return '<td><input type="number" step="'+(dp===0?"1":"0.01")+'" inputmode="decimal" '
-        + 'data-lead="'+r.k+'" data-f="'+f+'" placeholder="'+ph+'" value="'+esc(v[f]||"")+'" class="'+(k2||"")+'"></td>';
-    }
-    return '<tr class="'+(filled?"filled":"")+'">'
-      + '<td class="nmc"><b>'+esc(r.n)+'</b><small>'+r.s+'</small></td>'
-      + inp("p", r.ph[0], r.dp)
-      + inp("d", r.ph[1], r.dp, cls(num(v.d)))
-      + '<td><input type="number" step="0.01" inputmode="decimal" data-lead="'+r.k+'" data-f="pct" '
-      +   'placeholder="%" value="'+(pct===null||!isFinite(pct)?"":(+pct).toFixed(2))+'" class="'+cls(pct)+'"></td>'
-      + '</tr>';
+    var arrow = pct===null||!isFinite(pct)||pct===0 ? "－" : (pct>0 ? "▲" : "▼");
+    return '<div class="lead-row'+(filled?" filled":"")+'" data-row="'+r.k+'">'
+      + '<div class="row-top">'
+      +   '<div class="nm"><div class="n">'+esc(r.n)+'</div><div class="c">'+r.s+'</div></div>'
+      +   '<div class="px"><div class="lab">成交</div>'
+      +     '<input class="binp" type="number" step="'+(r.dp===0?"1":"0.01")+'" inputmode="decimal" '
+      +       'data-lead="'+r.k+'" data-f="p" placeholder="'+r.ph[0]+'" value="'+esc(v.p||"")+'"></div>'
+      +   '<div class="pctbox '+cls(pct)+'">'
+      +     '<div class="pv"><span class="ar">'+arrow+'</span>'
+      +       '<input type="number" step="0.01" inputmode="decimal" data-lead="'+r.k+'" data-f="pct" '
+      +         'placeholder="—" value="'+(pct===null||!isFinite(pct)?"":(+pct).toFixed(2))+'">'
+      +       '<span class="u">%</span></div>'
+      +     '<div class="dv">'
+      +       '<input type="number" step="'+(r.dp===0?"1":"0.01")+'" inputmode="decimal" data-lead="'+r.k+'" data-f="d" '
+      +         'placeholder="漲跌" value="'+esc(v.d||"")+'">'
+      +       '<span class="u">'+esc(r.unit)+'</span></div>'
+      +   '</div>'
+      + '</div></div>';
   }).join("");
 }
 function renderBaseTable(){
@@ -909,15 +945,17 @@ document.addEventListener("input", function(e){
 
 /* 只更新顏色與被連動的幅度格，不重繪整張表（避免打字時失焦） */
 function refreshLeadCells(k, changed){
-  var tr = document.querySelector('[data-lead="'+k+'"]');
-  if(!tr) return;
-  tr = tr.closest("tr");
-  tr.classList.toggle("filled", S.lead[k].p!=="" || S.lead[k].d!=="" || S.lead[k].pct!=="");
-  var dEl = tr.querySelector('[data-f="d"]'), pEl = tr.querySelector('[data-f="pct"]');
-  dEl.className = cls(num(S.lead[k].d));
-  var pct = pctOf(k);
-  if(changed!=="pct") pEl.value = (pct===null||!isFinite(pct)) ? "" : (+pct).toFixed(2);
-  pEl.className = cls(pct);
+  var row = document.querySelector('.lead-row[data-row="'+k+'"]');
+  if(!row) return;
+  var v = S.lead[k], pct = pctOf(k);
+  row.classList.toggle("filled", v.p!=="" || v.d!=="" || v.pct!=="");
+  row.querySelector(".pctbox").className = "pctbox " + cls(pct);
+  row.querySelector(".pctbox .ar").textContent =
+    (pct===null||!isFinite(pct)||pct===0) ? "－" : (pct>0 ? "▲" : "▼");
+  if(changed!=="pct"){
+    var pEl = row.querySelector('[data-f="pct"]');
+    pEl.value = (pct===null||!isFinite(pct)) ? "" : (+pct).toFixed(2);
+  }
 }
 
 function updateRowUI(i){
