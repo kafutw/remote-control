@@ -71,11 +71,10 @@ section{margin-top:22px}
 .card + .card{margin-top:10px}
 
 /* ---------- inputs ---------- */
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-@media(max-width:359px){.grid{grid-template-columns:1fr}}
-.f{display:flex;flex-direction:column;gap:4px}
-.f label{font-size:11.5px;color:var(--dim);display:flex;align-items:center;gap:5px}
-.f label a{color:var(--blue);text-decoration:none;font-size:10.5px;border-bottom:1px dotted var(--blue)}
+.grid{display:grid;grid-template-columns:1fr;gap:11px}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-size:12.5px;color:var(--dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.f label a{color:var(--blue);text-decoration:none;font-size:11px;border-bottom:1px dotted var(--blue)}
 .f input, .f select{
   background:var(--bg2);border:1px solid var(--line2);border-radius:9px;
   color:var(--txt);padding:9px 10px;font-size:15px;font-variant-numeric:tabular-nums;
@@ -102,12 +101,13 @@ section{margin-top:22px}
 .v-down{background:linear-gradient(160deg,#0f2a1c,#12262f);border-color:#2a6042}
 .v-strong-down{background:linear-gradient(160deg,#0d3322,#12262f);border-color:#2f7d51}
 
-.calc{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.calc{display:flex;flex-direction:column;gap:7px;margin-top:12px}
 .chip{
-  background:var(--bg2);border:1px solid var(--line);border-radius:9px;
-  padding:7px 10px;font-size:11.5px;color:var(--dim);flex:1 1 auto;min-width:calc(50% - 4px)
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+  padding:9px 12px;font-size:12.5px;color:var(--dim)
 }
-.chip b{display:block;font-size:15px;color:var(--txt);font-variant-numeric:tabular-nums;margin-top:1px;font-weight:700}
+.chip b{font-size:17px;color:var(--txt);font-variant-numeric:tabular-nums;font-weight:800;white-space:nowrap}
 .chip b.up{color:var(--up)} .chip b.down{color:var(--down)}
 
 /* ---------- alerts ---------- */
@@ -138,29 +138,47 @@ section{margin-top:22px}
 .row.hit-buy{border-color:#2f7d51;background:linear-gradient(100deg,#0e2a1e,#122a35 60%)}
 .row.hit-sell{border-color:#7a5b2b;background:linear-gradient(100deg,#2a2213,#122a35 60%)}
 .row.hit-stop{border-color:#8a3034;background:linear-gradient(100deg,#2c1519,#122a35 60%)}
-.row-top{display:flex;align-items:center;gap:9px;cursor:pointer}
+.hd{cursor:pointer}
+.row-top{display:flex;align-items:center;gap:10px}
 .nm{flex:1;min-width:0}
-.nm .n{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:6px}
-.nm .c{font-size:10.5px;color:var(--dim2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.nm .n{font-size:16px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nm .c{font-size:11px;color:var(--dim2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:1px}
 .px{text-align:right;font-variant-numeric:tabular-nums;flex:0 0 auto}
-.px .p{font-size:16px;font-weight:700}
-.px .d{font-size:11px}
-.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--flat)}
-.sig{
-  flex:0 0 auto;font-size:10.5px;font-weight:700;border-radius:7px;padding:4px 8px;
-  border:1px solid var(--line2);color:var(--dim);white-space:nowrap;min-width:58px;text-align:center
+.px .p{font-size:20px;font-weight:800;line-height:1.15}
+.px .lab{font-size:10px;color:var(--dim2)}
+
+/* 漲跌幅：整列最醒目的東西 */
+.pctbox{
+  flex:0 0 auto;min-width:96px;text-align:center;border-radius:10px;
+  padding:6px 8px;font-variant-numeric:tabular-nums;border:1px solid var(--line2);
+  background:rgba(201,216,222,.06);color:var(--flat)
 }
-.sig.buy{background:#0f3323;border-color:#2f7d51;color:#5ce69b}
-.sig.add{background:#0f2a33;border-color:#2a6478;color:#6fd2f5}
-.sig.sell{background:#332913;border-color:#7a5b2b;color:#ffc94d}
-.sig.stop{background:#331519;border-color:#8a3034;color:#ff8a8d}
-.sig.hold{background:#17313d}
+.pctbox .pv{font-size:19px;font-weight:800;line-height:1.15;white-space:nowrap}
+.pctbox .dv{font-size:11.5px;line-height:1.35;opacity:.9;white-space:nowrap}
+.pctbox.up{background:rgba(255,77,79,.15);border-color:rgba(255,77,79,.5);color:var(--up)}
+.pctbox.down{background:rgba(0,200,83,.13);border-color:rgba(0,200,83,.45);color:var(--down)}
+.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--flat)}
+
+.sigbar{
+  display:flex;align-items:center;gap:8px;margin-top:10px;padding:7px 11px;
+  border-radius:9px;background:var(--bg2);border:1px solid var(--line);
+  font-size:12.5px;color:var(--dim)
+}
+.sigbar .lab{font-size:11px;color:var(--dim2)}
+.sigbar .val{font-weight:800;font-size:14px;color:var(--txt)}
+.sigbar .warn{margin-left:auto;font-size:11.5px;color:var(--gold);text-align:right}
+.sigbar.buy{background:#0f3323;border-color:#2f7d51} .sigbar.buy .val{color:#5ce69b}
+.sigbar.add{background:#0f2a33;border-color:#2a6478} .sigbar.add .val{color:#6fd2f5}
+.sigbar.sell{background:#332913;border-color:#7a5b2b} .sigbar.sell .val{color:#ffc94d}
+.sigbar.stop{background:#331519;border-color:#8a3034} .sigbar.stop .val{color:#ff8a8d}
+
+.legend{display:flex;gap:14px;align-items:center;font-size:11.5px;color:var(--dim2);margin:2px 0 4px}
+.legend i{font-style:normal;font-weight:800}
 
 .detail{display:none;margin-top:11px;padding-top:11px;border-top:1px dashed var(--line2)}
 .row.open .detail{display:block}
-.detail .grid{grid-template-columns:repeat(3,1fr);gap:8px}
-@media(max-width:420px){.detail .grid{grid-template-columns:repeat(2,1fr)}}
-.detail .f input{font-size:14px;padding:7px 9px}
+.detail .grid{grid-template-columns:1fr;gap:10px}
+.detail .f input{font-size:15px;padding:9px 10px}
 .mini{font-size:11px;color:var(--dim2);margin-top:9px;line-height:1.6}
 
 /* ---------- checklist ---------- */
@@ -196,7 +214,7 @@ button:active{transform:scale(.97)}
 button.gold{background:var(--gold);color:#0a1a23;border-color:var(--gold);font-weight:700}
 button.ghost{background:transparent;color:var(--dim)}
 
-.links{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.links{display:grid;grid-template-columns:1fr;gap:8px}
 .links a{
   display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--line);
   border-radius:10px;padding:9px 11px;color:var(--txt);text-decoration:none;font-size:12.5px
@@ -320,6 +338,7 @@ kbd{background:var(--bg2);border:1px solid var(--line2);border-radius:5px;paddin
     <div class="no">3</div><h2>持股控制表</h2>
     <div class="hint">點一列展開設價位</div>
   </div>
+  <div class="legend"><span><i class="up">▲ 紅色＝上漲</i></span><span><i class="down">▼ 綠色＝下跌</i></span></div>
   <div id="holdings"></div>
   <div class="btns">
     <button class="ghost" id="btnRoll">收盤後：現價設為新昨收</button>
@@ -608,7 +627,7 @@ function renderLead(){
   }
 
   var c = [];
-  function chip(t,val,klass){ c.push('<div class="chip">'+t+'<b class="'+(klass||"")+'">'+val+'</b></div>'); }
+  function chip(t,val,klass){ c.push('<div class="chip"><span>'+t+'</span><b class="'+(klass||"")+'">'+val+'</b></div>'); }
   if(r.futPct!==null) chip("台指期夜盤", sgn(r.futPct,2,"%"), cls(r.futPct));
   if(r.basis!==null)  chip(r.basis<0?"逆價差":"正價差", fmt(Math.abs(r.basis),0)+" 點", r.basis<0?"down":"up");
   if(r.adrPrem!==null){
@@ -652,28 +671,10 @@ function renderHoldings(){
     out.push('<div class="grp-h">'+esc(g)+' <span class="tag">'+n+' 檔</span></div>');
     list.forEach(function(x){
       var i = S.h.indexOf(x);
-      var sig = signalOf(x);
-      var p = num(x.p), pct = num(x.pct);
-      var rowCls = "row" + (x.open?" open":"")
-        + (sig.k==="buy"||sig.k==="add"?" hit-buy":"")
-        + (sig.k==="sell"?" hit-sell":"")
-        + (sig.k==="stop"?" hit-stop":"");
-      var warn = [];
-      var ma60=num(x.ma60), ma20=num(x.ma20);
-      if(p!==null && ma60!==null && p<ma60) warn.push("破季線");
-      if(p!==null && ma20!==null && p<ma20) warn.push("破月線");
-
+      var rowCls = rowClass(i);
       out.push(
         '<div class="'+rowCls+'" data-i="'+i+'">'
-        + '<div class="row-top" data-toggle="'+i+'">'
-        +   '<div class="nm"><div class="n">'+esc(x.n)
-        +     (x.note?' <span style="font-size:10px;color:var(--down);border:1px solid var(--down);border-radius:4px;padding:0 4px">'+esc(x.note)+'</span>':'')
-        +     (warn.length?' <span style="font-size:10px;color:var(--gold)">⚠ '+warn.join("・")+'</span>':'')
-        +   '</div><div class="c">'+esc(x.c)+'</div></div>'
-        +   '<div class="px"><div class="p">'+fmt(p,p!==null&&p>=1000?0:2)+'</div>'
-        +     '<div class="d '+cls(pct)+'">'+sgn(num(x.d),2)+' ('+sgn(pct,2,"%")+')</div></div>'
-        +   '<div class="sig '+sig.k+'">'+sig.t+'</div>'
-        + '</div>'
+        + '<div class="hd" data-toggle="'+i+'">' + hdInner(i) + '</div>'
         + '<div class="detail">'
         +   '<div class="grid">'
         +     fld(i,"p","現價") + fld(i,"base","昨收（基準）") + fld(i,"cost","成本")
@@ -691,6 +692,42 @@ function renderHoldings(){
     });
   });
   $("holdings").innerHTML = out.join("");
+}
+function warnsOf(x){
+  var p=num(x.p), w=[];
+  if(p!==null && num(x.ma60)!==null && p<num(x.ma60)) w.push("破季線");
+  if(p!==null && num(x.ma20)!==null && p<num(x.ma20)) w.push("破月線");
+  return w;
+}
+function rowClass(i){
+  var x = S.h[i], k = signalOf(x).k;
+  return "row" + (x.open?" open":"")
+    + (k==="buy"||k==="add" ? " hit-buy" : "")
+    + (k==="sell" ? " hit-sell" : "")
+    + (k==="stop" ? " hit-stop" : "");
+}
+/* 一列的頭：名稱／現價／放大的漲跌幅／動作列 */
+function hdInner(i){
+  var x = S.h[i], sig = signalOf(x);
+  var p = num(x.p), pct = num(x.pct), d = num(x.d);
+  var k = cls(pct);
+  var arrow = pct===null||!isFinite(pct)||pct===0 ? "－" : (pct>0 ? "▲" : "▼");
+  var warn = warnsOf(x);
+
+  return '<div class="row-top">'
+    +   '<div class="nm"><div class="n">'+esc(x.n)
+    +     (x.note?' <span style="font-size:10.5px;color:var(--down);border:1px solid var(--down);border-radius:4px;padding:0 5px">'+esc(x.note)+'</span>':'')
+    +   '</div><div class="c">'+esc(x.c)+'</div></div>'
+    +   '<div class="px"><div class="lab">現價</div>'
+    +     '<div class="p">'+fmt(p, p!==null&&p>=1000?0:2)+'</div></div>'
+    +   '<div class="pctbox '+k+'">'
+    +     '<div class="pv">'+arrow+' '+(pct===null||!isFinite(pct)?"—":Math.abs(pct).toFixed(2)+"%")+'</div>'
+    +     '<div class="dv">'+(d===null||!isFinite(d)?"—":(d>0?"+":d<0?"−":"")+Math.abs(d).toFixed(2))+' 元</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="sigbar '+sig.k+'"><span class="lab">動作</span><span class="val">'+sig.t+'</span>'
+    +   (warn.length?'<span class="warn">⚠ '+warn.join("・")+'</span>':'')
+    + '</div>';
 }
 function fld(i,k,label){
   var v = S.h[i][k];
@@ -794,24 +831,9 @@ document.addEventListener("input", function(e){
 function updateRowUI(i){
   var row = document.querySelector('.row[data-i="'+i+'"]');
   if(!row) return;
-  var x = S.h[i], sig = signalOf(x), p = num(x.p);
-  var sEl = row.querySelector(".sig");
-  sEl.className = "sig "+sig.k; sEl.textContent = sig.t;
-  row.querySelector(".px .p").textContent = fmt(p, p!==null&&p>=1000?0:2);
-  var dEl = row.querySelector(".px .d"), pct = num(x.pct);
-  dEl.className = "d "+cls(pct);
-  dEl.textContent = sgn(num(x.d),2)+" ("+sgn(pct,2,"%")+")";
-  row.className = "row" + (x.open?" open":"")
-    + (sig.k==="buy"||sig.k==="add"?" hit-buy":"")
-    + (sig.k==="sell"?" hit-sell":"")
-    + (sig.k==="stop"?" hit-stop":"");
-  var ma60=num(x.ma60), ma20=num(x.ma20), warn=[];
-  if(p!==null&&ma60!==null&&p<ma60) warn.push("破季線");
-  if(p!==null&&ma20!==null&&p<ma20) warn.push("破月線");
-  var nEl = row.querySelector(".nm .n");
-  nEl.innerHTML = esc(x.n)
-    + (x.note?' <span style="font-size:10px;color:var(--down);border:1px solid var(--down);border-radius:4px;padding:0 4px">'+esc(x.note)+'</span>':'')
-    + (warn.length?' <span style="font-size:10px;color:var(--gold)">⚠ '+warn.join("・")+'</span>':'');
+  var x = S.h[i], p = num(x.p);
+  row.querySelector(".hd").innerHTML = hdInner(i);
+  row.className = rowClass(i);
   var mini = row.querySelector(".mini"), cost=num(x.cost);
   if(mini){
     if(cost===null||p===null||cost===0) mini.innerHTML = "填成本就會算報酬率。";
