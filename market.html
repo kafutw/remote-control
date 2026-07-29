@@ -251,7 +251,14 @@ section{margin-top:22px}
 .row.open .detail{display:block}
 .detail .grid{grid-template-columns:1fr;gap:10px}
 .detail .f input{font-size:15px;padding:9px 10px}
-.mini{font-size:11px;color:var(--dim2);margin-top:9px;line-height:1.6}
+.mini{font-size:11.5px;color:var(--dim2);margin-top:10px;line-height:1.8}
+.mini b{color:var(--txt)}
+.ladder{
+  display:block;margin-top:7px;padding:8px 10px;border-radius:9px;
+  background:#0f2a33;border:1px solid #2a6478;color:#6fd2f5;font-size:12px;font-weight:700;line-height:1.5
+}
+.ladder small{display:block;color:var(--dim);font-weight:400;font-size:11px;margin-top:3px}
+.ladder.stop{background:#331519;border-color:#8a3034;color:#ff8a8d}
 
 /* ---------- checklist ---------- */
 .ck{display:flex;align-items:flex-start;gap:10px;padding:9px 2px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(30,65,80,.5)}
@@ -381,7 +388,8 @@ kbd{background:var(--bg2);border:1px solid var(--line2);border-radius:5px;paddin
   </div>
   <div class="note">
     <b>燈號規則</b>：現價 ≤ <b>停損</b> → 🔴 停損；現價 ≤ <b>加碼價</b> → 🔵 加碼；現價 ≤ <b>買進價</b> → 🟢 買進區；現價 ≥ <b>停利</b> → 🟡 分批停利；此外 ⚪ 持有。<br>
-    另外會比對<b>季線</b>（跌破＝中期轉弱）與<b>月線</b>（跌破＝短線轉弱），有填才判斷。<br>
+    另外會比對<b>月線 / 季線 / 年線</b>，有填才判斷，並算出各自的<b>乖離率</b>。<br>
+    <b>分批進場階梯</b>（依季線負乖離）：0～−5% 第 1 批（30%）、−5～−10% 第 2 批（30%）、−10～−15% 第 3 批（40%）、超過 −15% 先確認年線。<b>跌破年線就整個停掉</b>，等站回再重啟。這是控制節奏用的紀律框架，不是回測出來的訊號，數字你可以自己改。<br>
     「自動帶價位」＝ 買進 −5%、加碼 −10%、停利 +20%、停損 −15%（高股息 ETF 不帶停損）。<b>這只是佔位數字，請改成你自己的計畫。</b>
   </div>
 </section>
@@ -546,7 +554,7 @@ function load(){
   return {lead:blankLead(), base:{twii:"",tsmc:"",fx:"",wt:""}, h:DEFAULT_HOLDINGS.map(function(x){
     return {c:x.c, n:x.n, g:x.g, div:!!x.div, note:x.note||"",
             p:x.p, base:+(x.p - x.d).toFixed(2), d:x.d, pct:x.pct,
-            buy:"", add:"", tp:"", sl:"", ma20:"", ma60:"", cost:"", open:false};
+            buy:"", add:"", tp:"", sl:"", ma20:"", ma60:"", ma240:"", cost:"", open:false};
   }), sop:{}, sopDate:""};
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -785,14 +793,9 @@ function renderHoldings(){
         +     fld(i,"p","現價") + fld(i,"base","昨收（基準）") + fld(i,"cost","成本")
         +     fld(i,"buy","買進價") + fld(i,"add","加碼價") + fld(i,"tp","停利價")
         +     fld(i,"sl","停損價") + fld(i,"ma20","月線 20MA") + fld(i,"ma60","季線 60MA")
+        +     fld(i,"ma240","年線 240MA")
         +   '</div>'
-        +   (function(){
-              var cost=num(x.cost);
-              if(cost===null||p===null||cost===0) return '<div class="mini">填成本就會算報酬率。</div>';
-              var ret=(p/cost-1)*100;
-              return '<div class="mini">目前報酬率 <b class="'+cls(ret)+'">'+sgn(ret,2,"%")+'</b>'
-                + ' · 成本 '+fmt(cost,2)+'</div>';
-            })()
+        +   detailInfo(i)
         + '</div></div>');
     });
   });
@@ -800,9 +803,61 @@ function renderHoldings(){
 }
 function warnsOf(x){
   var p=num(x.p), w=[];
+  if(p!==null && num(x.ma240)!==null && p<num(x.ma240)) w.push("破年線");
   if(p!==null && num(x.ma60)!==null && p<num(x.ma60)) w.push("破季線");
   if(p!==null && num(x.ma20)!==null && p<num(x.ma20)) w.push("破月線");
   return w;
+}
+
+/* 乖離率 = (現價 − 均線) / 均線。負乖離越深，代表離均線越遠 */
+function biasOf(x, k){
+  var p=num(x.p), m=num(x[k]);
+  if(p===null||m===null||m===0) return null;
+  return (p/m-1)*100;
+}
+/* 依季線負乖離決定分批進場的第幾批 —— 紀律用的階梯，不是回測出來的訊號 */
+var LADDER = [
+  {lo:-5,   hi:0,     n:"第 1 批", pctPos:"30%", t:"剛跌破季線，先試單。這一批就算之後更低也不心疼的量。"},
+  {lo:-10,  hi:-5,    n:"第 2 批", pctPos:"30%", t:"負乖離擴大到 5% 以上，通常已經不是一日情緒。"},
+  {lo:-15,  hi:-10,   n:"第 3 批", pctPos:"40%", t:"負乖離已經很深，這是最後一批，之後不再往下加。"},
+  {lo:-999, hi:-15,   n:"超跌區",  pctPos:"—",   t:"乖離超過 15%，先確認年線有沒有守住，守住才續買。"}
+];
+function ladderOf(bias){
+  if(bias===null) return null;
+  if(bias>=0) return {n:"站在季線上", pctPos:"—", t:"價格還在季線之上，不屬於這套「跌破後分批接」的進場區。"};
+  for(var i=0;i<LADDER.length;i++) if(bias>LADDER[i].lo && bias<=LADDER[i].hi) return LADDER[i];
+  return null;
+}
+
+function detailInfo(i){
+  var x = S.h[i], p = num(x.p), cost = num(x.cost), out = [];
+
+  if(cost!==null && p!==null && cost!==0){
+    var ret = (p/cost-1)*100;
+    out.push('目前報酬率 <b class="'+cls(ret)+'">'+sgn(ret,2,"%")+'</b> · 成本 '+fmt(cost,2));
+  }
+
+  var b20=biasOf(x,"ma20"), b60=biasOf(x,"ma60"), b240=biasOf(x,"ma240");
+  if(b20!==null||b60!==null||b240!==null){
+    var parts=[];
+    if(b20!==null)  parts.push('月線 <b class="'+cls(b20)+'">'+sgn(b20,2,"%")+'</b>');
+    if(b60!==null)  parts.push('季線 <b class="'+cls(b60)+'">'+sgn(b60,2,"%")+'</b>');
+    if(b240!==null) parts.push('年線 <b class="'+cls(b240)+'">'+sgn(b240,2,"%")+'</b>');
+    out.push('乖離率　'+parts.join('　'));
+  }
+
+  if(b60!==null){
+    var L = ladderOf(b60);
+    var below240 = (b240!==null && b240<0);
+    if(below240){
+      out.push('<span class="ladder stop">⛔ 已跌破年線 — 趨勢轉空，停止分批，等站回年線再重啟</span>');
+    }else if(L){
+      out.push('<span class="ladder">📥 '+L.n+(L.pctPos!=="—"?'（建議這一批放 '+L.pctPos+' 資金）':'')+'<small>'+L.t+'</small></span>');
+    }
+  }
+
+  if(!out.length) out.push('填成本、月線、季線、年線，這裡就會算報酬率、乖離率和分批進場的位階。');
+  return '<div class="mini">'+out.join('<br>')+'</div>';
 }
 function rowClass(i){
   var x = S.h[i], k = signalOf(x).k;
@@ -865,20 +920,22 @@ function renderAlerts(r){
     add("green","🇯🇵","<b>日經 "+sgn(r.n225,2,"%")+"</b>：日股重挫，亞股資金普遍撤退。");
 
   // 個股警示
-  var stop=[], buy=[], sell=[], ma=[];
+  var stop=[], buy=[], sell=[], ma=[], ma240=[];
   S.h.forEach(function(x){
     var s = signalOf(x), p=num(x.p);
     if(s.k==="stop") stop.push(x.n+" "+fmt(p,2));
     else if(s.k==="add") buy.push(x.n+" 加碼 "+fmt(p,2));
     else if(s.k==="buy") buy.push(x.n+" "+fmt(p,2));
     else if(s.k==="sell") sell.push(x.n+" "+fmt(p,2));
-    var m60=num(x.ma60);
-    if(p!==null && m60!==null && p<m60) ma.push(x.n);
+    var m60=num(x.ma60), m240=num(x.ma240), b=biasOf(x,"ma60");
+    if(p!==null && m60!==null && p<m60) ma.push(x.n + (b!==null?"（乖離 "+b.toFixed(1)+"%）":""));
+    if(p!==null && m240!==null && p<m240) ma240.push(x.n);
   });
   if(stop.length) add("red","🛑","<b>觸及停損</b>："+esc(stop.join("、"))+"。照計畫執行，不要凹單。");
   if(buy.length)  add("blue","🟢","<b>進入買進／加碼區</b>："+esc(buy.join("、"))+"。分批進場，一次只買一批。");
   if(sell.length) add("gold","🟡","<b>到達停利價</b>："+esc(sell.join("、"))+"。至少先減一半。");
-  if(ma.length)   add("gold","📉","<b>跌破季線</b>："+esc(ma.join("、"))+"。中期趨勢轉弱，新資金先觀望。");
+  if(ma.length)   add("gold","📉","<b>跌破季線</b>："+esc(ma.join("、"))+"。中期轉弱，先看是幾天內站回的假跌破，還是季線自己翻下的有效跌破。");
+  if(ma240.length)add("red","⛔","<b>跌破年線</b>："+esc(ma240.join("、"))+"。年線是多空分水嶺，跌破後停止分批進場，等站回年線再重啟。");
 
   var box = $("alerts");
   if(!a.length){ box.innerHTML = '<div class="empty">目前沒有觸發的警示</div>'; $("alertCount").textContent="0 則"; }
@@ -964,12 +1021,8 @@ function updateRowUI(i){
   var x = S.h[i], p = num(x.p);
   row.querySelector(".hd").innerHTML = hdInner(i);
   row.className = rowClass(i);
-  var mini = row.querySelector(".mini"), cost=num(x.cost);
-  if(mini){
-    if(cost===null||p===null||cost===0) mini.innerHTML = "填成本就會算報酬率。";
-    else { var ret=(p/cost-1)*100;
-      mini.innerHTML = '目前報酬率 <b class="'+cls(ret)+'">'+sgn(ret,2,"%")+'</b> · 成本 '+fmt(cost,2); }
-  }
+  var mini = row.querySelector(".mini");
+  if(mini) mini.outerHTML = detailInfo(i);
 }
 
 document.addEventListener("click", function(e){
