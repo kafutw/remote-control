@@ -607,8 +607,12 @@
   // ─────────────────────────────────────────────
   let run = null;   // { qs, i, score, wrong[], t0, timer, streak, bestStreak, locked }
 
+  const SCREENS = ['setup', 'quiz', 'result', 'chart'];
   function setScreen(name) {
-    document.body.className = 's-' + name;
+    // 只動自己的 class，不要整個蓋掉 body.className（外層可能有別人的 class）
+    SCREENS.forEach(s => document.body.classList.remove('s-' + s));
+    document.body.classList.remove('locked');
+    document.body.classList.add('s-' + name);
     window.scrollTo(0, 0);
   }
 
