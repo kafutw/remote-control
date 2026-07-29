@@ -287,6 +287,30 @@
     to { opacity: 0; transform: translate(var(--dx), -120px) scale(1.4) rotate(var(--rot)); }
   }
 
+  /* 用眼休息：整片蓋住，倒數完才放行 */
+  .breakscreen {
+    position: fixed; inset: 0; z-index: 80; overflow: auto;
+    background: radial-gradient(120% 70% at 50% 0%, var(--mint-soft), transparent 60%), var(--bg);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .breakbox { max-width: 460px; width: 100%; text-align: center; }
+  .bemoji { font-size: var(--fs-mega); line-height: 1; }
+  .breakbox h2 { font-size: var(--fs-title); font-weight: 800; margin: 14px 0 0; }
+  .bclock {
+    font-size: var(--fs-mega); font-weight: 800; color: var(--mint-ink);
+    font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 6px;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+  }
+  .btips {
+    list-style: none; margin: 18px auto 0; padding: 16px; max-width: 320px;
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
+    display: flex; flex-direction: column; gap: 10px; text-align: left;
+    font-size: var(--fs-body); font-weight: 700; box-shadow: var(--shadow);
+  }
+  .breakbox .btn.big { margin-top: 18px; }
+  .bhint { font-size: var(--fs-note); color: var(--ink-soft); margin: 14px 0 0; line-height: 1.8; }
+  .bhint .bparent { color: var(--ink-faint); }
+
   .countdown {
     position: fixed; inset: 0; z-index: 70; display: flex;
     align-items: center; justify-content: center;
@@ -641,6 +665,16 @@
       <div class="weak" id="weak"></div>
     </div>
 
+    <div class="card">
+      <h2>用眼提醒</h2>
+      <div class="modes three" id="limits">
+        <button class="mode" data-limit="20"><b>20 分</b><i>練 20 分休息</i></button>
+        <button class="mode" data-limit="30"><b>30 分</b><i>練 30 分休息</i></button>
+        <button class="mode" data-limit="0"><b>關閉</b><i>不提醒</i></button>
+      </div>
+      <p class="hint" id="useHint"></p>
+    </div>
+
     <div class="foot">
       <button class="btn primary big" id="hBackBtn">回到首頁</button>
       <button class="btn ghost" id="clearBtn">清除所有紀錄</button>
@@ -651,6 +685,21 @@
 
 <div class="fx" id="fx"></div>
 
+<div class="breakscreen" id="breakScreen" hidden>
+  <div class="breakbox">
+    <div class="bemoji">🌿</div>
+    <h2 id="breakTitle">眼睛休息一下</h2>
+    <div class="bclock" id="breakClock">5:00</div>
+    <ul class="btips">
+      <li>👀 看看窗外或遠一點的地方</li>
+      <li>💧 喝一口水</li>
+      <li>🙆 站起來動一動</li>
+    </ul>
+    <button class="btn primary big" id="breakDone" hidden>休息好了，繼續 🚀</button>
+    <p class="bhint" id="breakHint">練了 20 分鐘囉，休息 5 分鐘再回來</p>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict';
@@ -659,6 +708,7 @@
   var TABLES = [2, 3, 4, 5, 6, 7, 8, 9];   // 1 的乘法太簡單，不列入練習
   var KEY = 'mtq_v2', OLD_KEY = 'mtq_v1';
   var DEF = { sound: true, speak: true, tables: TABLES.slice(), mode: 'smart', count: 10,
+              limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               perQ: {}, recent: {}, runs: [], quits: [], best: {}, lastWrong: [] };
   var WINDOW = 20;      // 熟練度只看每一段最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 5;   // 視窗裡至少要有這麼多題才給評價
@@ -676,6 +726,11 @@
     return '';
   }
   var DAILY_MIN_RATE = 0.8;   // 今天任何一輪正確率到這個標準就算達標
+
+  /* 用眼提醒：練滿一段時間就休息一下 */
+  var BREAK_MS = 5 * 60 * 1000;    // 休息多久
+  var IDLE_MS = 3 * 60 * 1000;     // 超過這麼久沒動作就不算在練習
+  var TICK_MS = 5000;
   var MOOD = { ok: '😀', meh: '😐', hard: '😣', cry: '😭' };
   var db;
 
@@ -710,6 +765,10 @@
     if (!Array.isArray(db.quits)) db.quits = [];
     if (!db.recent || typeof db.recent !== 'object') db.recent = {};
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
+    if ([0, 20, 30, 40].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
+    if (typeof db.useMs !== 'number' || db.useMs < 0) db.useMs = 0;
+    if (typeof db.useAt !== 'number') db.useAt = 0;
+    if (typeof db.breakUntil !== 'number') db.breakUntil = 0;
     // 最佳紀錄要照題數分開存，10 題和 20 題的成績沒得比
     if (db.best && db.best.correct !== undefined) {
       var b = db.best; db.best = {}; db.best[b.total || 10] = b;
@@ -990,6 +1049,16 @@
   }
   segment('counts', function (m) { db.count = Number(m.dataset.count); syncStart(); });
   segment('modes', function (m) { db.mode = m.dataset.mode; });
+  segment('limits', function (m) { db.limitMin = Number(m.dataset.limit); renderUseHint(); });
+
+  function renderUseHint() {
+    var mins = Math.floor(db.useMs / 60000), secs = Math.floor(db.useMs % 60000 / 1000);
+    $('useHint').textContent = db.limitMin
+      ? '目前累計練習 ' + (mins ? mins + ' 分 ' : '') + secs + ' 秒。滿 ' + db.limitMin +
+        ' 分鐘會在一輪結束後請他休息 ' + Math.round(BREAK_MS / 60000) +
+        ' 分鐘；閒置超過 3 分鐘不計時，自然休息夠久也會歸零。'
+      : '已關閉用眼提醒，不會要求休息。';
+  }
 
   /* ────────── 出題 ────────── */
   var PER_Q = 30;    // 每題可以想幾秒
@@ -1336,6 +1405,7 @@
 
     renderResult(isRecord, completed);
     show('result');
+    maybeBreak();
   }
 
   $('quitBtn').addEventListener('click', function () { endGame(false); });
@@ -1460,6 +1530,7 @@
 
     renderDays();
     renderTables();
+    renderUseHint();
 
     var list = [];
     Object.keys(db.perQ).forEach(function (k) {
@@ -1630,6 +1701,94 @@
     else hushSpeech();
   });
 
+  /* ────────── 用眼時間與休息 ────────── */
+  var lastAct = Date.now(), saveTick = 0, breakTimer = null;
+  ['pointerdown', 'keydown'].forEach(function (ev) {
+    document.addEventListener(ev, function () { lastAct = Date.now(); }, true);
+  });
+
+  // 只累積「畫面在前景而且最近有動作」的時間
+  setInterval(function () {
+    var now = Date.now();
+    if (document.hidden || now - lastAct > IDLE_MS) return;   // 保留 useAt，回來時用間隔判斷
+    if (db.useAt) {
+      var gap = now - db.useAt;
+      if (gap > BREAK_MS) db.useMs = 0;                       // 已經自然休息夠久了，重新計算
+      else db.useMs += Math.min(gap, TICK_MS + 1000);         // 只採信一個 tick 的量
+    }
+    db.useAt = now;
+    if (++saveTick % 6 === 0) save();                         // 每 30 秒才寫一次
+  }, TICK_MS);
+
+  function fmtClock(ms) {
+    var s = Math.max(0, Math.ceil(ms / 1000));
+    return Math.floor(s / 60) + ':' + pad(s % 60);
+  }
+
+  function startBreak() {
+    db.breakUntil = Date.now() + BREAK_MS;
+    save();
+    showBreak();
+  }
+
+  function showBreak() {
+    var el = $('breakScreen');
+    el.hidden = false;
+    $('breakDone').hidden = true;
+    $('breakTitle').textContent = '眼睛休息一下';
+    $('breakHint').innerHTML = '練了 ' + db.limitMin + ' 分鐘囉，休息 ' +
+      Math.round(BREAK_MS / 60000) + ' 分鐘再回來' +
+      '<br><span class="bparent">家長：長按上面的倒數 3 秒可以跳過</span>';
+    hushSpeech();
+    clearInterval(breakTimer);
+    breakTimer = setInterval(tickBreak, 250);
+    tickBreak();
+  }
+
+  function tickBreak() {
+    var left = db.breakUntil - Date.now();
+    if (left <= 0) {
+      clearInterval(breakTimer); breakTimer = null;
+      $('breakClock').textContent = '0:00';
+      $('breakTitle').textContent = '休息好了！';
+      $('breakDone').hidden = false;
+      return;
+    }
+    $('breakClock').textContent = fmtClock(left);
+  }
+
+  function endBreak() {
+    clearInterval(breakTimer); breakTimer = null;
+    db.breakUntil = 0; db.useMs = 0; db.useAt = Date.now();
+    save();
+    $('breakScreen').hidden = true;
+  }
+
+  $('breakDone').addEventListener('click', endBreak);
+
+  // 家長長按倒數 3 秒可以強制跳過
+  (function () {
+    var hold = null;
+    var clock = $('breakClock');
+    var start = function () {
+      clearTimeout(hold);
+      hold = setTimeout(function () { endBreak(); }, 3000);
+    };
+    var cancel = function () { clearTimeout(hold); };
+    ['pointerdown'].forEach(function (e) { clock.addEventListener(e, start); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (e) {
+      clock.addEventListener(e, cancel);
+    });
+  })();
+
+  // 一輪結束才提醒，不會打斷作答
+  function maybeBreak() {
+    if (!db.limitMin) return;
+    if (db.breakUntil > Date.now()) { showBreak(); return; }
+    if (db.useMs < db.limitMin * 60000) return;
+    setTimeout(startBreak, 2600);   // 先讓他看到自己的成績
+  }
+
   /* ────────── 啟動 ────────── */
   document.documentElement.lang = 'zh-Hant';
   document.documentElement.style.setProperty('--reveal', (REVEAL_MS / 1000) + 's');
@@ -1684,6 +1843,9 @@
   document.querySelectorAll('#counts .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.count) === db.count);
   });
+  document.querySelectorAll('#limits .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.limit) === db.limitMin);
+  });
   syncSound();
 
   var speechUnlocked = false;
@@ -1702,6 +1864,7 @@
   }
 
   refreshSetup();
+  if (db.breakUntil > Date.now()) showBreak();   // 關掉重開也繞不過去
 })();
 </script>
 </body>
