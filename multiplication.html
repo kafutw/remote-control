@@ -80,7 +80,11 @@
     display: flex; align-items: center; gap: 8px;
   }
   h1 { font-size: 1.16rem; font-weight: 800; margin: 0; letter-spacing: -.01em; flex: 1; }
-  h1 span { font-size: .74rem; font-weight: 600; color: var(--blue-deep); display: block; margin-top: 1px; }
+  h1 { min-width: 0; }
+  h1 span {
+    font-size: .74rem; font-weight: 600; color: var(--blue-deep); display: block; margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
 
   .icobtn {
     font-family: inherit; font-size: 1.02rem; line-height: 1;
@@ -166,7 +170,13 @@
   .bar { flex: 1; height: 12px; border-radius: 99px; background: var(--track); overflow: hidden; }
   .bar > i { display: block; height: 100%; width: 100%; background: var(--blue); border-radius: 99px; }
   .bar > i.low { background: var(--coral); }
-  .score { font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--mint-ink); }
+  .qnum { font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink-soft); min-width: 52px; text-align: right; }
+
+  .dots { display: flex; gap: 5px; margin-top: 10px; }
+  .dots i { flex: 1; height: 8px; border-radius: 99px; background: var(--track); transition: background .2s; }
+  .dots i.ok { background: var(--mint); }
+  .dots i.no { background: var(--coral); }
+  .dots i.now { background: var(--blue); }
 
   .qcard {
     background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
@@ -270,7 +280,7 @@
 
 <header>
   <div class="head-inner">
-    <h1>九九乘法表<span id="subtitle">60 秒挑戰</span></h1>
+    <h1>九九乘法表<span id="subtitle">每題 30 秒 ・ 10 題</span></h1>
     <button class="icobtn" id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
     <button class="icobtn" id="histBtn" title="歷史紀錄" aria-label="歷史紀錄">📊</button>
   </div>
@@ -304,7 +314,7 @@
     </div>
 
     <div class="foot">
-      <button class="btn primary big" id="startBtn">開始 60 秒挑戰 🚀</button>
+      <button class="btn primary big" id="startBtn">開始測驗（10 題）🚀</button>
       <button class="btn" id="reviewBtn" hidden>只練上次的錯題 🔁</button>
     </div>
     <p class="tiny">紀錄只存在這台裝置的瀏覽器裡，不會上傳。</p>
@@ -313,10 +323,11 @@
   <!-- ══ 作答 ══ -->
   <section class="screen" id="play">
     <div class="hud">
-      <div class="clock" id="clock">60<small>秒</small></div>
+      <div class="clock" id="clock">30<small>秒</small></div>
       <div class="bar"><i id="timeBar"></i></div>
-      <div class="score" id="score">0 分</div>
+      <div class="qnum" id="qnum">1 / 10</div>
     </div>
+    <div class="dots" id="dots"></div>
 
     <div class="qcard" id="qcard">
       <div class="qtext" id="qtext">7 <em>×</em> 8</div>
@@ -339,14 +350,14 @@
   <section class="screen" id="result">
     <div class="card">
       <div class="bigscore">
-        <div class="n" id="rScore">0<small>題</small></div>
+        <div class="n" id="rScore">0<small>/ 10</small></div>
         <div class="msg" id="rMsg"></div>
         <div id="rRec"></div>
       </div>
       <div class="stats">
         <div class="stat"><b id="rAcc">0%</b><i>正確率</i></div>
         <div class="stat"><b id="rWrong">0</b><i>答錯</i></div>
-        <div class="stat"><b id="rStreak">0</b><i>最長連對</i></div>
+        <div class="stat"><b id="rTime">0秒</b><i>總花費時間</i></div>
       </div>
     </div>
 
@@ -356,7 +367,7 @@
     </div>
 
     <div class="foot">
-      <button class="btn primary big" id="againBtn">再玩一次 🚀</button>
+      <button class="btn primary big" id="againBtn">再來一輪 🚀</button>
       <button class="btn" id="againWrongBtn" hidden>只練這次的錯題 🔁</button>
       <button class="btn ghost" id="backBtn">回去換段數</button>
     </div>
@@ -369,7 +380,7 @@
       <div class="chart" id="chart"></div>
       <div class="stats" style="margin-top:14px">
         <div class="stat"><b id="hBest">0</b><i>最佳紀錄</i></div>
-        <div class="stat"><b id="hAvg">0</b><i>平均題數</i></div>
+        <div class="stat"><b id="hAvg">0</b><i>平均答對</i></div>
         <div class="stat"><b id="hRuns">0</b><i>總共練習</i></div>
       </div>
     </div>
@@ -394,18 +405,37 @@
   'use strict';
 
   /* ────────── 資料儲存 ────────── */
-  var KEY = 'mtq_v1';
-  var DEF = { sound: true, tables: [2,3,4,5,6,7,8,9], mode: 'smart', perQ: {}, runs: [], best: 0 };
+  var KEY = 'mtq_v2', OLD_KEY = 'mtq_v1';
+  var DEF = { sound: true, tables: [2,3,4,5,6,7,8,9], mode: 'smart', perQ: {}, runs: [], best: null, lastWrong: [] };
   var db;
 
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
-      db = raw ? Object.assign({}, DEF, JSON.parse(raw)) : Object.assign({}, DEF);
+      if (raw) {
+        db = Object.assign({}, DEF, JSON.parse(raw));
+      } else {
+        db = Object.assign({}, DEF);
+        // 舊版是 60 秒不限題數，成績無法跟現在互相比較，只帶過設定與弱點統計
+        var old = localStorage.getItem(OLD_KEY);
+        if (old) {
+          var o = JSON.parse(old);
+          if (o.perQ && typeof o.perQ === 'object') db.perQ = o.perQ;
+          if (typeof o.sound === 'boolean') db.sound = o.sound;
+          if (Array.isArray(o.tables) && o.tables.length) db.tables = o.tables;
+          if (o.mode) db.mode = o.mode;
+        }
+      }
     } catch (e) { db = Object.assign({}, DEF); }
     if (!Array.isArray(db.tables) || !db.tables.length) db.tables = DEF.tables.slice();
     if (!db.perQ || typeof db.perQ !== 'object') db.perQ = {};
     if (!Array.isArray(db.runs)) db.runs = [];
+    if (db.best && typeof db.best !== 'object') db.best = null;
+  }
+
+  function fmtTime(ms) {
+    var s = Math.round(ms / 1000);
+    return s < 60 ? s + '秒' : Math.floor(s / 60) + '分' + (s % 60) + '秒';
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
@@ -421,6 +451,18 @@
     }
     return arr;
   }
+  // 2,3,4,7 → 「2–4、7」，段數選很多時標題才不會爆掉
+  function tableLabel(list) {
+    var out = [], i = 0;
+    while (i < list.length) {
+      var j = i;
+      while (j + 1 < list.length && list[j + 1] === list[j] + 1) j++;
+      out.push(j - i >= 2 ? list[i] + '–' + list[j] : list.slice(i, j + 1).join('、'));
+      i = j + 1;
+    }
+    return out.join('、');
+  }
+
   function stat(a, b) {
     var s = db.perQ[key(a, b)];
     return s || { n: 0, w: 0 };
@@ -528,7 +570,8 @@
   });
 
   /* ────────── 出題 ────────── */
-  var TOTAL_TIME = 60;
+  var PER_Q = 30;    // 每題可以想幾秒
+  var Q_COUNT = 10;  // 一輪幾題
   var S = null;
 
   function buildPool(tables) {
@@ -583,18 +626,41 @@
 
   function startGame(tables, opts) {
     opts = opts || {};
+    var review = !!opts.pool;
+    // 錯題只有一兩題時不用硬湊滿 10 題，免得一直重複同一題
+    var total = review ? Math.min(Q_COUNT, Math.max(4, opts.pool.length * 3)) : Q_COUNT;
     S = {
-      pool: opts.pool || buildPool(tables),
+      pool: review ? opts.pool : buildPool(tables),
       tables: tables.slice(),
-      mode: opts.pool ? 'even' : db.mode,
+      mode: review ? 'even' : db.mode,
+      total: total, idx: 0, results: [],
       correct: 0, wrong: 0, streak: 0, bestStreak: 0,
       wrongList: [], recentWrong: {}, last: null,
-      answers: [], reviewMode: !!opts.pool,
-      endAt: 0, running: false
+      reviewMode: review,
+      qEndAt: 0, startedAt: 0, finishedAt: 0, running: false
     };
-    $('subtitle').textContent = S.reviewMode ? '錯題複習' : (tables.join('、') + ' 段 ・ 60 秒');
+    $('subtitle').textContent = review
+      ? '錯題複習 ・ ' + total + ' 題'
+      : tableLabel(tables) + ' 段 ・ ' + total + ' 題';
+    renderDots();
+    $('qnum').textContent = '1 / ' + total;
+    $('clock').innerHTML = PER_Q + '<small>秒</small>';
+    $('timeBar').style.width = '100%';
     show('play');
     countdown(3);
+  }
+
+  function renderDots() {
+    var box = $('dots');
+    box.innerHTML = '';
+    for (var i = 0; i < S.total; i++) box.appendChild(document.createElement('i'));
+  }
+
+  function updateDots() {
+    var els = $('dots').children;
+    for (var i = 0; i < els.length; i++) {
+      els[i].className = S.results[i] || (i === S.idx - 1 ? 'now' : '');
+    }
   }
 
   function countdown(n) {
@@ -614,9 +680,8 @@
         setTimeout(function () {
           el.remove();
           S.running = true;
-          S.endAt = Date.now() + TOTAL_TIME * 1000;
+          S.startedAt = Date.now();
           timer = setInterval(tickClock, 100);
-          tickClock();
           nextQuestion();
         }, 550);
       }
@@ -625,24 +690,30 @@
   }
 
   function tickClock() {
-    var left = Math.max(0, S.endAt - Date.now()) / 1000;
+    if (!S || !S.running || lock) return;   // 對答案的空檔先把計時凍住
+    var left = Math.max(0, S.qEndAt - Date.now()) / 1000;
     var secs = Math.ceil(left);
     $('clock').innerHTML = secs + '<small>秒</small>';
     $('clock').classList.toggle('low', secs <= 10);
     var bar = $('timeBar');
-    bar.style.width = (left / TOTAL_TIME * 100) + '%';
+    bar.style.width = (left / PER_Q * 100) + '%';
     bar.classList.toggle('low', secs <= 10);
-    if (left <= 0) endGame();
+    if (left <= 0) timeUp();
   }
 
   function nextQuestion() {
     if (!S.running) return;
+    if (S.idx >= S.total) { endGame(true); return; }
+    S.idx++;
     lock = false;
     var q = pickQuestion();
     S.last = q;
     S.q = q;
+    S.qEndAt = Date.now() + PER_Q * 1000;
     $('qcard').className = 'qcard';
     $('qtext').innerHTML = q.a + ' <em>×</em> ' + q.b;
+    $('qnum').textContent = S.idx + ' / ' + S.total;
+    updateDots();
     var opts = makeOptions(q.a, q.b);
     document.querySelectorAll('.opt').forEach(function (btn, i) {
       btn.className = 'opt';
@@ -650,6 +721,43 @@
       btn.dataset.val = opts[i];
       btn.disabled = false;
     });
+    tickClock();
+  }
+
+  // 答錯或時間到：把正確答案亮出來給他看
+  function revealAnswer(ans, chosen) {
+    document.querySelectorAll('.opt').forEach(function (o) {
+      if (Number(o.dataset.val) === ans) o.classList.add('good');
+      else if (o !== chosen) o.classList.add('dim');
+      o.disabled = true;
+    });
+  }
+
+  function markWrong(q, note) {
+    var k = key(q.a, q.b);
+    S.wrong++; S.streak = 0;
+    S.recentWrong[k] = true;
+    S.results[S.idx - 1] = 'no';
+    if (!S.wrongList.some(function (x) { return x.a === q.a && x.b === q.b; })) {
+      S.wrongList.push({ a: q.a, b: q.b });
+    }
+    S.finishedAt = Date.now();
+    $('qcard').classList.add('bad');
+    $('streakTxt').textContent = note;
+    SFX.wrong();
+    updateDots();
+  }
+
+  function timeUp() {
+    if (lock) return;
+    lock = true;
+    var q = S.q, ans = q.a * q.b, k = key(q.a, q.b);
+    var rec = db.perQ[k] || (db.perQ[k] = { n: 0, w: 0 });
+    rec.n++; rec.w++;
+    markWrong(q, '時間到！正確答案是 ' + ans);
+    revealAnswer(ans, null);
+    save();
+    setTimeout(nextQuestion, 1600);
   }
 
   function answer(val, btn) {
@@ -663,6 +771,8 @@
       S.correct++; S.streak++;
       if (S.streak > S.bestStreak) S.bestStreak = S.streak;
       delete S.recentWrong[k];
+      S.results[S.idx - 1] = 'ok';
+      S.finishedAt = Date.now();
       btn.classList.add('good');
       $('qcard').classList.add('good');
       SFX.right();
@@ -673,24 +783,14 @@
       } else {
         $('streakTxt').textContent = S.streak >= 2 ? '連對 ' + S.streak : '';
       }
-      $('score').textContent = S.correct + ' 分';
-      setTimeout(nextQuestion, 320);
+      updateDots();
+      setTimeout(nextQuestion, 420);
     } else {
-      S.wrong++; S.streak = 0; rec.w++;
-      S.recentWrong[k] = true;
-      if (!S.wrongList.some(function (x) { return x.a === q.a && x.b === q.b; })) {
-        S.wrongList.push({ a: q.a, b: q.b });
-      }
+      rec.w++;
+      markWrong(q, '正確答案是 ' + ans);
       btn.classList.add('bad');
-      $('qcard').classList.add('bad');
-      $('streakTxt').textContent = '正確答案是 ' + ans;
-      SFX.wrong();
-      document.querySelectorAll('.opt').forEach(function (o) {
-        if (Number(o.dataset.val) === ans) o.classList.add('good');
-        else if (o !== btn) o.classList.add('dim');
-        o.disabled = true;
-      });
-      setTimeout(nextQuestion, 1150);
+      revealAnswer(ans, btn);
+      setTimeout(nextQuestion, 1400);
     }
     save();
   }
@@ -724,50 +824,62 @@
     }
   }
 
-  function endGame() {
+  function endGame(completed) {
     if (!S || !S.running) return;
     S.running = false;
+    lock = true;
     clearInterval(timer); timer = null;
     SFX.end();
+    S.ms = S.startedAt ? Math.max(0, (S.finishedAt || Date.now()) - S.startedAt) : 0;
 
+    // 中途按結束的不記錄，免得半途而廢的分數污染歷史成績
     var isRecord = false;
-    if (!S.reviewMode) {
+    if (completed && !S.reviewMode) {
       db.runs.push({
         t: Date.now(), tables: S.tables, correct: S.correct,
-        wrong: S.wrong, streak: S.bestStreak
+        wrong: S.wrong, total: S.total, ms: S.ms
       });
       if (db.runs.length > 60) db.runs = db.runs.slice(-60);
-      if (S.correct > (db.best || 0)) { db.best = S.correct; isRecord = db.runs.length > 1; }
+      var b = db.best;
+      // 同樣答對題數時，比誰花的時間短
+      if (!b || S.correct > b.correct || (S.correct === b.correct && S.ms < b.ms)) {
+        isRecord = !!b;
+        db.best = { correct: S.correct, ms: S.ms, total: S.total };
+      }
       save();
     }
-    renderResult(isRecord);
+    renderResult(isRecord, completed);
     show('result');
   }
 
-  $('quitBtn').addEventListener('click', endGame);
+  $('quitBtn').addEventListener('click', function () { endGame(false); });
 
   /* ────────── 結果畫面 ────────── */
-  function renderResult(isRecord) {
-    var total = S.correct + S.wrong;
-    var acc = total ? Math.round(S.correct / total * 100) : 0;
-    $('rScore').innerHTML = S.correct + '<small>題</small>';
+  function renderResult(isRecord, completed) {
+    var done = S.correct + S.wrong;
+    var acc = done ? Math.round(S.correct / done * 100) : 0;
+    $('rScore').innerHTML = S.correct + '<small>/ ' + S.total + '</small>';
     $('rAcc').textContent = acc + '%';
     $('rWrong').textContent = S.wrong;
-    $('rStreak').textContent = S.bestStreak;
+    $('rTime').textContent = fmtTime(S.ms);
 
     var msg;
-    if (total === 0) msg = '這次沒有作答，再來一次！';
-    else if (acc === 100 && S.correct >= 15) msg = '太厲害了，全對！🏆';
-    else if (acc >= 90) msg = '好棒！幾乎都對了 🎉';
-    else if (acc >= 70) msg = '不錯喔，再加油 💪';
+    if (done === 0) msg = '這次沒有作答，再來一次！';
+    else if (!completed) msg = '這輪提早結束了，只做了 ' + done + ' 題';
+    else if (acc === 100) msg = '太厲害了，全部答對！🏆';
+    else if (acc >= 80) msg = '好棒！只差一點點 🎉';
+    else if (acc >= 60) msg = '不錯喔，再加油 💪';
     else msg = '有進步空間，我們一起複習 📚';
     $('rMsg').textContent = msg;
-    $('rRec').innerHTML = isRecord ? '<span class="rec">🏅 破紀錄！最佳 ' + db.best + ' 題</span>' : '';
+    $('rRec').innerHTML = isRecord
+      ? '<span class="rec">🏅 破紀錄！' + db.best.correct + ' / ' + db.best.total +
+        ' 題・' + fmtTime(db.best.ms) + '</span>'
+      : '';
 
     var box = $('rWrongs');
     box.innerHTML = '';
     if (!S.wrongList.length) {
-      box.innerHTML = '<div class="empty">' + (total ? '這一輪沒有答錯，太棒了！🎊' : '還沒有作答紀錄') + '</div>';
+      box.innerHTML = '<div class="empty">' + (done ? '這一輪沒有答錯，太棒了！🎊' : '還沒有作答紀錄') + '</div>';
     } else {
       S.wrongList.forEach(function (q) {
         var el = document.createElement('span');
@@ -787,7 +899,7 @@
   });
   $('backBtn').addEventListener('click', function () {
     db.tables = picked.slice(); save();
-    $('subtitle').textContent = '60 秒挑戰';
+    $('subtitle').textContent = '每題 30 秒 ・ 10 題';
     refreshSetup(); show('setup');
   });
 
@@ -799,21 +911,24 @@
     if (!runs.length) {
       chart.innerHTML = '<div class="empty" style="margin:auto">還沒有練習紀錄，先玩一輪吧！</div>';
     } else {
-      var max = Math.max.apply(null, runs.map(function (r) { return r.correct; })) || 1;
       runs.forEach(function (r) {
         var d = new Date(r.t);
         var col = document.createElement('div');
         col.className = 'col';
+        col.title = fmtTime(r.ms || 0);
         col.innerHTML = '<u>' + r.correct + '</u>' +
-          '<b style="height:' + Math.max(4, r.correct / max * 74) + 'px"></b>' +
+          '<b style="height:' + Math.max(4, r.correct / (r.total || Q_COUNT) * 74) + 'px"></b>' +
           '<em>' + (d.getMonth() + 1) + '/' + d.getDate() + '</em>';
         chart.appendChild(col);
       });
     }
     var all = db.runs;
-    $('hBest').textContent = db.best || 0;
+    $('hBest').innerHTML = db.best
+      ? db.best.correct + '<small style="font-size:.7rem;color:var(--ink-soft)"> / ' + db.best.total + '</small>'
+      : '—';
+    $('hBest').nextElementSibling.textContent = db.best ? '最佳 ・ ' + fmtTime(db.best.ms) : '最佳紀錄';
     $('hAvg').textContent = all.length
-      ? Math.round(all.reduce(function (s, r) { return s + r.correct; }, 0) / all.length) : 0;
+      ? (all.reduce(function (s, r) { return s + r.correct; }, 0) / all.length).toFixed(1) : 0;
     $('hRuns').textContent = all.length;
 
     var list = [];
