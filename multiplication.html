@@ -148,6 +148,9 @@
   .hint { font-size: .78rem; color: var(--ink-soft); margin: 10px 2px 0; line-height: 1.55; }
 
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modes.three { grid-template-columns: repeat(3, 1fr); }
+  .modes.three .mode { text-align: center; padding: 13px 6px; }
+  .modes.three .mode b { font-size: 1.24rem; font-variant-numeric: tabular-nums; }
   .mode {
     font-family: inherit; cursor: pointer; color: var(--ink); text-align: left;
     background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
@@ -302,8 +305,18 @@
     </div>
 
     <div class="card">
+      <h2>一輪幾題？</h2>
+      <div class="modes three" id="counts">
+        <button class="mode sel" data-count="10"><b>10 題</b><i>約 1 分鐘</i></button>
+        <button class="mode" data-count="15"><b>15 題</b><i>約 2 分鐘</i></button>
+        <button class="mode" data-count="20"><b>20 題</b><i>約 3 分鐘</i></button>
+      </div>
+      <p class="hint">每題都有 30 秒可以想，時間到才算答錯。</p>
+    </div>
+
+    <div class="card">
       <h2>出題方式</h2>
-      <div class="modes">
+      <div class="modes" id="modes">
         <button class="mode sel" data-mode="smart">
           <b>聰明出題</b><i>常錯的題目會多出現</i>
         </button>
@@ -380,7 +393,7 @@
       <div class="chart" id="chart"></div>
       <div class="stats" style="margin-top:14px">
         <div class="stat"><b id="hBest">0</b><i>最佳紀錄</i></div>
-        <div class="stat"><b id="hAvg">0</b><i>平均答對</i></div>
+        <div class="stat"><b id="hAvg">—</b><i>整體正確率</i></div>
         <div class="stat"><b id="hRuns">0</b><i>總共練習</i></div>
       </div>
     </div>
@@ -406,16 +419,20 @@
 
   /* ────────── 資料儲存 ────────── */
   var KEY = 'mtq_v2', OLD_KEY = 'mtq_v1';
-  var DEF = { sound: true, tables: [2,3,4,5,6,7,8,9], mode: 'smart', perQ: {}, runs: [], best: null, lastWrong: [] };
+  var DEF = { sound: true, tables: [2,3,4,5,6,7,8,9], mode: 'smart', count: 10,
+              perQ: {}, runs: [], best: {}, lastWrong: [] };
   var db;
+
+  // DEF 裡有物件跟陣列，一定要複製一份，不然會被改到預設值本身
+  function blank() { return JSON.parse(JSON.stringify(DEF)); }
 
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
       if (raw) {
-        db = Object.assign({}, DEF, JSON.parse(raw));
+        db = Object.assign(blank(), JSON.parse(raw));
       } else {
-        db = Object.assign({}, DEF);
+        db = blank();
         // 舊版是 60 秒不限題數，成績無法跟現在互相比較，只帶過設定與弱點統計
         var old = localStorage.getItem(OLD_KEY);
         if (old) {
@@ -426,11 +443,16 @@
           if (o.mode) db.mode = o.mode;
         }
       }
-    } catch (e) { db = Object.assign({}, DEF); }
+    } catch (e) { db = blank(); }
     if (!Array.isArray(db.tables) || !db.tables.length) db.tables = DEF.tables.slice();
     if (!db.perQ || typeof db.perQ !== 'object') db.perQ = {};
     if (!Array.isArray(db.runs)) db.runs = [];
-    if (db.best && typeof db.best !== 'object') db.best = null;
+    if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
+    // 最佳紀錄要照題數分開存，10 題和 20 題的成績沒得比
+    if (db.best && db.best.correct !== undefined) {
+      var b = db.best; db.best = {}; db.best[b.total || 10] = b;
+    }
+    if (!db.best || typeof db.best !== 'object') db.best = {};
   }
 
   function fmtTime(ms) {
@@ -537,6 +559,7 @@
 
   function syncStart() {
     $('startBtn').disabled = picked.length === 0;
+    $('startBtn').textContent = '開始測驗（' + db.count + ' 題）🚀';
     $('tileHint').textContent = picked.length === 0
       ? '至少要選一段才能開始喔。'
       : '已選 ' + picked.join('、') + ' 段，共 ' + (picked.length * 9) + ' 種題目。紅點代表以前比較常錯的那一段。';
@@ -561,17 +584,21 @@
     buildTiles(); syncStart();
   });
 
-  document.querySelectorAll('.mode').forEach(function (m) {
-    m.addEventListener('click', function () {
-      document.querySelectorAll('.mode').forEach(function (x) { x.classList.remove('sel'); });
-      m.classList.add('sel');
-      db.mode = m.dataset.mode; save();
+  function segment(boxId, apply) {
+    var box = $(boxId);
+    box.querySelectorAll('.mode').forEach(function (m) {
+      m.addEventListener('click', function () {
+        box.querySelectorAll('.mode').forEach(function (x) { x.classList.remove('sel'); });
+        m.classList.add('sel');
+        apply(m); save();
+      });
     });
-  });
+  }
+  segment('counts', function (m) { db.count = Number(m.dataset.count); syncStart(); });
+  segment('modes', function (m) { db.mode = m.dataset.mode; });
 
   /* ────────── 出題 ────────── */
   var PER_Q = 30;    // 每題可以想幾秒
-  var Q_COUNT = 10;  // 一輪幾題
   var S = null;
 
   function buildPool(tables) {
@@ -627,8 +654,8 @@
   function startGame(tables, opts) {
     opts = opts || {};
     var review = !!opts.pool;
-    // 錯題只有一兩題時不用硬湊滿 10 題，免得一直重複同一題
-    var total = review ? Math.min(Q_COUNT, Math.max(4, opts.pool.length * 3)) : Q_COUNT;
+    // 錯題只有一兩題時不用硬湊滿一輪，免得一直重複同一題
+    var total = review ? Math.min(db.count, Math.max(4, opts.pool.length * 3)) : db.count;
     S = {
       pool: review ? opts.pool : buildPool(tables),
       tables: tables.slice(),
@@ -840,11 +867,11 @@
         wrong: S.wrong, total: S.total, ms: S.ms
       });
       if (db.runs.length > 60) db.runs = db.runs.slice(-60);
-      var b = db.best;
+      var b = db.best[S.total];
       // 同樣答對題數時，比誰花的時間短
       if (!b || S.correct > b.correct || (S.correct === b.correct && S.ms < b.ms)) {
         isRecord = !!b;
-        db.best = { correct: S.correct, ms: S.ms, total: S.total };
+        db.best[S.total] = { correct: S.correct, ms: S.ms, total: S.total };
       }
       save();
     }
@@ -871,9 +898,10 @@
     else if (acc >= 60) msg = '不錯喔，再加油 💪';
     else msg = '有進步空間，我們一起複習 📚';
     $('rMsg').textContent = msg;
-    $('rRec').innerHTML = isRecord
-      ? '<span class="rec">🏅 破紀錄！' + db.best.correct + ' / ' + db.best.total +
-        ' 題・' + fmtTime(db.best.ms) + '</span>'
+    var best = db.best[S.total];
+    $('rRec').innerHTML = isRecord && best
+      ? '<span class="rec">🏅 破紀錄！' + best.correct + ' / ' + best.total +
+        ' 題・' + fmtTime(best.ms) + '</span>'
       : '';
 
     var box = $('rWrongs');
@@ -899,7 +927,7 @@
   });
   $('backBtn').addEventListener('click', function () {
     db.tables = picked.slice(); save();
-    $('subtitle').textContent = '每題 30 秒 ・ 10 題';
+    $('subtitle').textContent = '每題 30 秒 ・ ' + db.count + ' 題';
     refreshSetup(); show('setup');
   });
 
@@ -913,22 +941,28 @@
     } else {
       runs.forEach(function (r) {
         var d = new Date(r.t);
+        var tot = r.total || 10;
         var col = document.createElement('div');
         col.className = 'col';
-        col.title = fmtTime(r.ms || 0);
+        col.title = r.correct + ' / ' + tot + ' 題・' + fmtTime(r.ms || 0);
+        // 長度不同的回合用「答對比例」比高矮，才不會 20 題那輪看起來永遠比較好
         col.innerHTML = '<u>' + r.correct + '</u>' +
-          '<b style="height:' + Math.max(4, r.correct / (r.total || Q_COUNT) * 74) + 'px"></b>' +
+          '<b style="height:' + Math.max(4, r.correct / tot * 74) + 'px"></b>' +
           '<em>' + (d.getMonth() + 1) + '/' + d.getDate() + '</em>';
         chart.appendChild(col);
       });
     }
     var all = db.runs;
-    $('hBest').innerHTML = db.best
-      ? db.best.correct + '<small style="font-size:.7rem;color:var(--ink-soft)"> / ' + db.best.total + '</small>'
+    var best = db.best[db.count];
+    $('hBest').innerHTML = best
+      ? best.correct + '<small style="font-size:.7rem;color:var(--ink-soft)"> / ' + best.total + '</small>'
       : '—';
-    $('hBest').nextElementSibling.textContent = db.best ? '最佳 ・ ' + fmtTime(db.best.ms) : '最佳紀錄';
-    $('hAvg').textContent = all.length
-      ? (all.reduce(function (s, r) { return s + r.correct; }, 0) / all.length).toFixed(1) : 0;
+    $('hBest').nextElementSibling.textContent = best
+      ? db.count + ' 題最佳 ・ ' + fmtTime(best.ms)
+      : db.count + ' 題最佳';
+    var got = all.reduce(function (s, r) { return s + r.correct; }, 0);
+    var asked = all.reduce(function (s, r) { return s + (r.total || 10); }, 0);
+    $('hAvg').textContent = asked ? Math.round(got / asked * 100) + '%' : '—';
     $('hRuns').textContent = all.length;
 
     var list = [];
@@ -962,9 +996,9 @@
   $('hBackBtn').addEventListener('click', function () { refreshSetup(); show('setup'); });
   $('clearBtn').addEventListener('click', function () {
     if (!confirm('確定要清除所有練習紀錄嗎？這個動作無法復原。')) return;
-    var keepSound = db.sound, keepTables = db.tables;
-    db = Object.assign({}, DEF, { sound: keepSound, tables: keepTables });
-    save(); renderHistory(); buildTiles();
+    var keep = { sound: db.sound, tables: db.tables.slice(), mode: db.mode, count: db.count };
+    db = Object.assign(blank(), keep);
+    save(); renderHistory(); buildTiles(); syncStart();
   });
 
   /* ────────── 音效開關 ────────── */
@@ -998,8 +1032,12 @@
 
   load();
   picked = db.tables.slice();
-  document.querySelectorAll('.mode').forEach(function (m) {
+  $('subtitle').textContent = '每題 30 秒 ・ ' + db.count + ' 題';
+  document.querySelectorAll('#modes .mode').forEach(function (m) {
     m.classList.toggle('sel', m.dataset.mode === db.mode);
+  });
+  document.querySelectorAll('#counts .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.count) === db.count);
   });
   syncSound();
   refreshSetup();
