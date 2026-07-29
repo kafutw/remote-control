@@ -47,6 +47,8 @@
     --fs-mega:  4rem;      /* 64px  倒數、結算分數 */
     --fs-q:     2.75rem;   /* 44px  題目 */
     --fs-opt:   1.75rem;   /* 28px  四個選項、剩餘秒數 */
+
+    --icon-medal: 26px;    /* 獎牌是圖示不是文字，不走上面的字級 */
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -183,19 +185,19 @@
   .tile.sel i { color: var(--blue-deep); }
   .tile .mark { position: absolute; top: 4px; right: 6px; font-size: var(--fs-note); line-height: 1; }
   .tile .warn { color: var(--coral-ink); font-weight: 800; }
-  .tile .cup { font-size: var(--fs-body); top: 3px; right: 4px; }
+  .tile .cup { font-size: var(--icon-medal); top: -10px; right: -8px; filter: drop-shadow(0 2px 3px rgba(47,111,220,.22)); }
 
   /* 獎牌說明：讓孩子自己看得懂現在是什麼水準 */
   .legend {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px;
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 12px;
     margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
   }
-  .legend > div { display: flex; align-items: center; gap: 9px; }
-  .legend b { font-size: var(--fs-head); line-height: 1; flex: 0 0 auto; }
+  .legend > div { display: flex; align-items: center; gap: 6px; }
+  /* 說明區的圖示比段數按鈕上的小一點，四項才排得進同一行 */
+  .legend b { font-size: calc(var(--icon-medal) * .8); line-height: 1; flex: 0 0 auto; }
   .legend b.reddot { color: var(--coral-ink); font-size: var(--fs-body); }
-  .legend span { font-size: var(--fs-body); font-weight: 800; line-height: 1.15; }
-  .legend i { display: block; font-style: normal; font-size: var(--fs-note);
-              font-weight: 700; color: var(--ink-soft); margin-top: 3px; }
+  .legend span { font-size: var(--fs-note); font-weight: 800; white-space: nowrap; }
+  .legend i { font-style: normal; font-weight: 700; color: var(--ink-soft); margin-left: 5px; }
 
   .row { display: flex; gap: 8px; align-items: center; }
   .row.mt { margin-top: 12px; }
@@ -310,7 +312,7 @@
     font-size: var(--fs-body); font-weight: 800; color: var(--amber);
     text-align: center; line-height: 1.5;
   }
-  .levelup em { font-style: normal; font-size: var(--fs-head); }
+  .levelup em { font-style: normal; font-size: var(--icon-medal); vertical-align: -6px; }
 
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .stat { background: var(--bg); border-radius: 14px; padding: 11px 6px; text-align: center; }
@@ -432,6 +434,8 @@
     .opt { min-height: 116px; border-radius: 22px; }
     .stat { padding: 16px 8px; border-radius: 16px; }
     .chart { height: 140px; }
+    :root { --icon-medal: 34px; }
+    .tile .cup { top: -13px; right: -10px; }
   }
 
   /* 桌機／大平板：主要使用場景，再放大一級。
@@ -502,13 +506,13 @@
         <button class="btn ghost grow" id="selNone">全部清除</button>
         <button class="btn ghost grow" id="selWeak">我的弱點</button>
       </div>
-      <div class="legend bpmf">
-        <div><b>🥇</b><span><ruby>金<rt>ㄐㄧㄣ</rt></ruby><ruby>牌<rt>ㄆㄞˊ</rt></ruby><i>10 題對 9 題</i></span></div>
-        <div><b>🥈</b><span><ruby>銀<rt>ㄧㄣˊ</rt></ruby><ruby>牌<rt>ㄆㄞˊ</rt></ruby><i>10 題對 8 題</i></span></div>
-        <div><b>🥉</b><span><ruby>銅<rt>ㄊㄨㄥˊ</rt></ruby><ruby>牌<rt>ㄆㄞˊ</rt></ruby><i>10 題對 7 題</i></span></div>
-        <div><b class="reddot">●</b><span><ruby>加<rt>ㄐㄧㄚ</rt></ruby><ruby>油<rt>ㄧㄡˊ</rt></ruby><i>再多練幾次</i></span></div>
+      <div class="legend">
+        <div><b>🥇</b><span>金牌<i>10 題對 9 題</i></span></div>
+        <div><b>🥈</b><span>銀牌<i>10 題對 8 題</i></span></div>
+        <div><b>🥉</b><span>銅牌<i>10 題對 7 題</i></span></div>
+        <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
       </div>
-      <p class="hint" id="tileHint">選好段數後就可以開始。獎牌看的是最近 20 題。</p>
+      <p class="hint" id="tileHint">選好段數後就可以開始。獎牌看的是最近 20 題的表現。</p>
     </div>
 
     <div class="card">
@@ -910,6 +914,16 @@
       var tot = r.total || 10;
       return dayKey(r.t) === today && tot && r.correct / tot >= DAILY_MIN_RATE;
     });
+  }
+
+  // 一共有幾天達成過目標，讓每天的努力累積下來
+  function goalDays() {
+    var days = {};
+    db.runs.forEach(function (r) {
+      var tot = r.total || 10;
+      if (tot && r.correct / tot >= DAILY_MIN_RATE) days[dayKey(r.t)] = 1;
+    });
+    return Object.keys(days).length;
   }
 
   function buildTiles() {
@@ -1634,11 +1648,13 @@
     var best = Math.max.apply(null, todayRuns.map(function (r) {
       return Math.round(r.correct / (r.total || 10) * 100);
     }));
+    var days = goalDays();
     el.innerHTML = hit
       ? '<span class="star">⭐</span><span class="txt">今天達成目標了！' +
-        '<small>今天最好的一輪答對 ' + best + '%</small></span>'
+        '<small>今天最好的一輪答對 ' + best + '%　・　到目前為止已經達標 ' + days + ' 天</small></span>'
       : '<span class="star">🎯</span><span class="txt">今天還差一點點' +
-        '<small>今天最好的一輪答對 ' + best + '%，答對 80% 就達標</small></span>';
+        '<small>今天最好的一輪答對 ' + best + '%，答對 80% 就達標' +
+        (days ? '　・　已經達標 ' + days + ' 天' : '') + '</small></span>';
   }
 
   function refreshSetup() {
