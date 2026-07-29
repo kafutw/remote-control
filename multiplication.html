@@ -297,7 +297,8 @@
     background: var(--bg); border-radius: 9px; padding: 4px 9px;
     font-variant-numeric: tabular-nums;
   }
-  .sess b { color: var(--mint-ink); margin-left: 5px; }
+  .sess u { text-decoration: none; color: var(--blue-deep); margin-left: 6px; }
+  .sess b { color: var(--mint-ink); margin-left: 6px; }
   .sess.miss b { color: var(--coral-ink); }
 
   .weak { display: flex; flex-direction: column; gap: 8px; }
@@ -1072,8 +1073,10 @@
       row.className = 'dayrow';
       var sess = runs.map(function (r) {
         var tot = r.total || 10;
+        var tb = Array.isArray(r.tables) && r.tables.length ? tableLabel(r.tables) + ' 段' : '';
         return '<span class="sess' + (r.correct < tot ? ' miss' : '') + '">' +
-          clockOf(r.t) + '<b>' + r.correct + '/' + tot + '</b></span>';
+          clockOf(r.t) + (tb ? '<u>' + tb + '</u>' : '') +
+          '<b>' + r.correct + '/' + tot + '</b></span>';
       }).join('');
       row.innerHTML =
         '<span class="d">' + label + (tag ? '<em>' + tag + '</em>' : '') + '</span>' +
