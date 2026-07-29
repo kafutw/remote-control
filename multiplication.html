@@ -185,6 +185,18 @@
   .tile .warn { color: var(--coral-ink); font-weight: 800; }
   .tile .cup { font-size: var(--fs-body); top: 3px; right: 4px; }
 
+  /* 獎牌說明：讓孩子自己看得懂現在是什麼水準 */
+  .legend {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px;
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
+  }
+  .legend > div { display: flex; align-items: center; gap: 9px; }
+  .legend b { font-size: var(--fs-head); line-height: 1; flex: 0 0 auto; }
+  .legend b.reddot { color: var(--coral-ink); font-size: var(--fs-body); }
+  .legend span { font-size: var(--fs-body); font-weight: 800; line-height: 1.15; }
+  .legend i { display: block; font-style: normal; font-size: var(--fs-note);
+              font-weight: 700; color: var(--ink-soft); margin-top: 3px; }
+
   .row { display: flex; gap: 8px; align-items: center; }
   .row.mt { margin-top: 12px; }
   .grow { flex: 1; }
@@ -292,6 +304,14 @@
     display: inline-block; margin-top: 10px; font-size: var(--fs-note); font-weight: 800;
     background: var(--amber-soft); color: var(--amber); padding: 5px 12px; border-radius: 99px;
   }
+  .levelup {
+    margin-top: 14px; padding: 14px 16px; border-radius: 16px;
+    background: var(--amber-soft); border: 1.5px solid var(--amber);
+    font-size: var(--fs-body); font-weight: 800; color: var(--amber);
+    text-align: center; line-height: 1.5;
+  }
+  .levelup em { font-style: normal; font-size: var(--fs-head); }
+
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .stat { background: var(--bg); border-radius: 14px; padding: 11px 6px; text-align: center; }
   .stat b { display: block; font-size: var(--fs-head); font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -311,8 +331,8 @@
   .mood i { display: block; font-style: normal; font-size: var(--fs-opt);
             color: var(--ink); font-weight: 700; margin-top: 6px; white-space: nowrap; }
   /* 注音直排在字的右邊，跟課本一樣。用 flex 自己排，不倚賴瀏覽器的 ruby 排版 */
-  .mood ruby { display: inline-flex; align-items: flex-start; }
-  .mood rt {
+  .bpmf ruby { display: inline-flex; align-items: flex-start; }
+  .bpmf rt {
     writing-mode: vertical-rl; text-orientation: upright;
     font-size: .4em; font-weight: 700; color: var(--ink-faint);
     line-height: 1.05; letter-spacing: 0; margin-left: 1px;
@@ -482,7 +502,13 @@
         <button class="btn ghost grow" id="selNone">全部清除</button>
         <button class="btn ghost grow" id="selWeak">我的弱點</button>
       </div>
-      <p class="hint" id="tileHint">選好段數後就可以開始。紅點代表這一段以前比較常錯。</p>
+      <div class="legend bpmf">
+        <div><b>🥇</b><span><ruby>金<rt>ㄐㄧㄣ</rt></ruby><ruby>牌<rt>ㄆㄞˊ</rt></ruby><i>10 題對 9 題</i></span></div>
+        <div><b>🥈</b><span><ruby>銀<rt>ㄧㄣˊ</rt></ruby><ruby>牌<rt>ㄆㄞˊ</rt></ruby><i>10 題對 8 題</i></span></div>
+        <div><b>🥉</b><span><ruby>銅<rt>ㄊㄨㄥˊ</rt></ruby><ruby>牌<rt>ㄆㄞˊ</rt></ruby><i>10 題對 7 題</i></span></div>
+        <div><b class="reddot">●</b><span><ruby>加<rt>ㄐㄧㄚ</rt></ruby><ruby>油<rt>ㄧㄡˊ</rt></ruby><i>再多練幾次</i></span></div>
+      </div>
+      <p class="hint" id="tileHint">選好段數後就可以開始。獎牌看的是最近 20 題。</p>
     </div>
 
     <div class="card">
@@ -549,6 +575,7 @@
         <div class="msg" id="rMsg"></div>
         <div id="rRec"></div>
       </div>
+      <div class="levelup" id="rLevel" hidden></div>
       <div class="stats">
         <div class="stat"><b id="rAcc">0%</b><i>正確率</i></div>
         <div class="stat"><b id="rWrong">0</b><i>答錯</i></div>
@@ -559,13 +586,13 @@
     <div class="card" id="moodCard" hidden>
       <h2>剛剛練得順利嗎？</h2>
       <div class="moods" id="moods">
-        <button class="mood" data-mood="ok"><b>😀</b><i
+        <button class="mood bpmf" data-mood="ok"><b>😀</b><i
           ><ruby>順<rt>ㄕㄨㄣˋ</rt></ruby><ruby>利<rt>ㄌㄧˋ</rt></ruby></i></button>
-        <button class="mood" data-mood="meh"><b>😐</b><i
+        <button class="mood bpmf" data-mood="meh"><b>😐</b><i
           ><ruby>普<rt>ㄆㄨˇ</rt></ruby><ruby>通<rt>ㄊㄨㄥ</rt></ruby></i></button>
-        <button class="mood" data-mood="hard"><b>😣</b><i
+        <button class="mood bpmf" data-mood="hard"><b>😣</b><i
           ><ruby>好<rt>ㄏㄠˇ</rt></ruby><ruby>難<rt>ㄋㄢˊ</rt></ruby></i></button>
-        <button class="mood" data-mood="cry"><b>😭</b><i
+        <button class="mood bpmf" data-mood="cry"><b>😭</b><i
           ><ruby>哭<rt>ㄎㄨ</rt></ruby><ruby>了<rt>ㄌㄜ˙</rt></ruby></i></button>
       </div>
       <p class="hint">點一下就記錄起來，在歷史紀錄裡看得到。不點也沒關係。</p>
@@ -632,10 +659,18 @@
   var WINDOW = 20;      // 熟練度只看每一段最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 5;   // 視窗裡至少要有這麼多題才給評價
   var MEDALS = [
-    { at: 0.9,  icon: '🏆' },
-    { at: 0.8,  icon: '🥈' },
-    { at: 0.7,  icon: '🥉' }
+    { at: 0.9, icon: '🥇', name: '金牌', rank: 3 },
+    { at: 0.8, icon: '🥈', name: '銀牌', rank: 2 },
+    { at: 0.7, icon: '🥉', name: '銅牌', rank: 1 }
   ];
+  function rankOf(icon) {
+    for (var i = 0; i < MEDALS.length; i++) if (MEDALS[i].icon === icon) return MEDALS[i].rank;
+    return 0;
+  }
+  function medalName(icon) {
+    for (var i = 0; i < MEDALS.length; i++) if (MEDALS[i].icon === icon) return MEDALS[i].name;
+    return '';
+  }
   var DAILY_MIN_RATE = 0.8;   // 今天任何一輪正確率到這個標準就算達標
   var MOOD = { ok: '😀', meh: '😐', hard: '😣', cry: '😭' };
   var db;
@@ -907,7 +942,7 @@
     $('tileHint').textContent = picked.length === 0
       ? '至少要選一段才能開始喔。'
       : '已選 ' + picked.join('、') + ' 段，共 ' + (picked.length * 8) + ' 種題目。' +
-        '獎章看最近 20 題的答對率：🥉70%、🥈80%、🏆90%，紅點代表比較常錯。';
+        '獎牌看最近 20 題的答對率，紅點代表比較常錯。';
   }
 
   $('selAll').addEventListener('click', function () {
@@ -1013,6 +1048,9 @@
       reviewMode: review,
       qEndAt: 0, startedAt: 0, finishedAt: 0, running: false
     };
+    // 先記下開始前的獎牌，結算時才知道這一輪升了哪幾段
+    S.medalsBefore = {};
+    TABLES.forEach(function (t) { S.medalsBefore[t] = medalOf(t); });
     $('subtitle').textContent = review
       ? '錯題複習 ・ ' + total + ' 題'
       : tableLabel(tables) + ' 段 ・ ' + total + ' 題';
@@ -1299,6 +1337,26 @@
     });
   });
 
+  // 這一輪有哪幾段拿到更高一級的獎牌
+  function renderLevelUp() {
+    var el = $('rLevel');
+    var ups = [];
+    TABLES.forEach(function (t) {
+      var before = (S.medalsBefore || {})[t] || '';
+      var now = medalOf(t);
+      if (rankOf(now) > rankOf(before)) ups.push({ t: t, icon: now });
+    });
+    if (!ups.length) { el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = ups.map(function (u) {
+      return '<em>' + u.icon + '</em> ' + u.t + ' 段拿到' + medalName(u.icon) + '了！';
+    }).join('<br>');
+    if (S.correct > 0) {
+      SFX.end();
+      setTimeout(function () { sparkle(el); }, 120);
+    }
+  }
+
   /* ────────── 結果畫面 ────────── */
   function renderResult(isRecord, completed) {
     var done = S.correct + S.wrong;
@@ -1321,6 +1379,8 @@
       ? '<span class="rec">🏅 破紀錄！' + best.correct + ' / ' + best.total +
         ' 題・' + fmtTime(best.ms) + '</span>'
       : '';
+
+    renderLevelUp();
 
     var box = $('rWrongs');
     box.innerHTML = '';
@@ -1448,7 +1508,7 @@
     var note = document.createElement('p');
     note.className = 'hint';
     note.textContent = '只看每一段最近 ' + WINDOW + ' 題，以前的錯誤會慢慢淡出。' +
-      '🥉70%、🥈80%、🏆90%。';
+      '🥉 銅牌 70%、🥈 銀牌 80%、🥇 金牌 90%。';
     box.appendChild(note);
 
     var solid = list.filter(function (x) { return x.n >= MIN_WINDOW; });
