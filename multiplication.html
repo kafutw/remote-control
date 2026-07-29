@@ -655,7 +655,7 @@
     $('startBtn').textContent = '開始測驗（' + db.count + ' 題）🚀';
     $('tileHint').textContent = picked.length === 0
       ? '至少要選一段才能開始喔。'
-      : '已選 ' + picked.join('、') + ' 段，共 ' + (picked.length * 9) + ' 種題目。紅點代表以前比較常錯的那一段。';
+      : '已選 ' + picked.join('、') + ' 段，共 ' + (picked.length * 8) + ' 種題目。紅點代表以前比較常錯的那一段。';
   }
 
   $('selAll').addEventListener('click', function () {
@@ -697,7 +697,8 @@
   function buildPool(tables) {
     var pool = [];
     tables.forEach(function (t) {
-      for (var b = 1; b <= 9; b++) pool.push({ a: t, b: b });
+      // 從 ×2 開始：乘以 1 是送分題，會稀釋掉練習量也會把答對率篩高
+      for (var b = 2; b <= 9; b++) pool.push({ a: t, b: b });
     });
     return pool;
   }
