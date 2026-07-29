@@ -101,6 +101,45 @@ section{margin-top:22px}
 .v-down{background:linear-gradient(160deg,#0f2a1c,#12262f);border-color:#2a6042}
 .v-strong-down{background:linear-gradient(160deg,#0d3322,#12262f);border-color:#2f7d51}
 
+/* ---------- 報價表（仿看盤 App 自選報價） ---------- */
+.qt{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums}
+.qt th{
+  font-size:11px;color:var(--dim2);font-weight:600;text-align:right;
+  padding:0 7px 8px;border-bottom:1px solid var(--line2);letter-spacing:.04em
+}
+.qt th:first-child{text-align:left}
+.qt td{padding:0;border-bottom:1px solid rgba(30,65,80,.65);vertical-align:middle}
+.qt tbody tr:last-child td{border-bottom:none}
+.qt .nmc{padding:10px 7px;line-height:1.3}
+.qt .nmc b{font-size:13.5px;font-weight:700;display:block}
+.qt .nmc small{display:block;font-size:10px;color:var(--dim2);margin-top:1px}
+.qt .nmc a{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+.qt input{
+  width:100%;background:transparent;border:0;border-bottom:1px dashed rgba(95,131,147,.35);
+  color:var(--txt);text-align:right;font-size:15.5px;font-weight:700;
+  padding:11px 7px;font-family:inherit;font-variant-numeric:tabular-nums;border-radius:0
+}
+.qt input:focus{outline:none;background:#0b232e;border-bottom:1px solid var(--gold)}
+.qt input::-webkit-outer-spin-button,.qt input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.qt input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.qt input::placeholder{color:#3d5b68;font-weight:400;font-size:14px}
+.qt input.up{color:var(--up)} .qt input.down{color:var(--down)}
+.qt input[readonly]{border-bottom-color:transparent;cursor:default}
+.qt tr.filled .nmc b{color:#fff}
+.qt-note{font-size:11px;color:var(--dim2);margin-top:10px;line-height:1.6}
+
+.baseset{margin-top:12px;border:1px solid var(--line);border-radius:11px;background:var(--bg2);overflow:hidden}
+.baseset summary{
+  padding:10px 12px;font-size:12.5px;color:var(--dim);cursor:pointer;list-style:none;
+  display:flex;align-items:center;gap:7px
+}
+.baseset summary::-webkit-details-marker{display:none}
+.baseset summary::before{content:"▸";color:var(--gold);font-size:11px;transition:.15s}
+.baseset[open] summary::before{transform:rotate(90deg)}
+.baseset .qt{padding:0 6px 6px}
+.baseset .qt .nmc{font-size:12.5px}
+.baseset .qt .nmc b{font-size:12.5px;font-weight:600;color:var(--dim)}
+
 .calc{display:flex;flex-direction:column;gap:7px;margin-top:12px}
 .chip{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -253,56 +292,20 @@ kbd{background:var(--bg2);border:1px solid var(--line2);border-radius:5px;paddin
   </div>
 
   <div class="card">
-    <div class="grid">
-      <div class="f">
-        <label>加權指數昨收（點）</label>
-        <input id="i_twii" type="number" step="0.01" inputmode="decimal" placeholder="41603">
-      </div>
-      <div class="f">
-        <label>台積電昨收（元）</label>
-        <input id="i_tsmc" type="number" step="0.01" inputmode="decimal" placeholder="2280">
-      </div>
-    </div>
+    <table class="qt">
+      <colgroup><col style="width:33%"><col style="width:23%"><col style="width:20%"><col style="width:24%"></colgroup>
+      <thead><tr><th>商品</th><th>成交</th><th>漲跌</th><th>幅度 %</th></tr></thead>
+      <tbody id="leadRows"></tbody>
+    </table>
+    <div class="qt-note">填「成交」和「漲跌」，幅度會自己算；只知道幅度也可以直接填幅度。</div>
 
-    <div class="grp-h">夜盤 / 美盤 <span class="tag">台灣時間 04:00–05:00 收</span></div>
-    <div class="grid">
-      <div class="f">
-        <label>台指期夜盤收盤（點）<a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener">期交所</a></label>
-        <input id="i_futp" type="number" step="1" inputmode="decimal" placeholder="41500">
-      </div>
-      <div class="f">
-        <label>夜盤漲跌（點，跌用負號）</label>
-        <input id="i_futc" type="number" step="1" inputmode="decimal" placeholder="-380">
-      </div>
-      <div class="f">
-        <label>台積電 ADR 收盤（美元）<a href="https://tw.stock.yahoo.com/quote/TSM" target="_blank" rel="noopener">TSM</a></label>
-        <input id="i_adr" type="number" step="0.01" inputmode="decimal" placeholder="380.00">
-      </div>
-      <div class="f">
-        <label>美元／台幣匯率</label>
-        <input id="i_fx" type="number" step="0.01" inputmode="decimal" placeholder="30.5">
-      </div>
-      <div class="f">
-        <label>費城半導體 漲跌%<a href="https://tw.stock.yahoo.com/quote/%5ESOX" target="_blank" rel="noopener">^SOX</a></label>
-        <input id="i_sox" type="number" step="0.01" inputmode="decimal" placeholder="-5.12">
-      </div>
-      <div class="f">
-        <label>台積電權重（%，估）</label>
-        <input id="i_wt" type="number" step="0.1" inputmode="decimal" placeholder="40">
-      </div>
-    </div>
-
-    <div class="grp-h">亞股即時 <span class="tag">台灣時間 08:00 開盤，比台股早 1 小時</span></div>
-    <div class="grid">
-      <div class="f">
-        <label>日經 225 漲跌%<a href="https://tw.stock.yahoo.com/quote/%5EN225" target="_blank" rel="noopener">^N225</a></label>
-        <input id="i_n225" type="number" step="0.01" inputmode="decimal" placeholder="-2.10">
-      </div>
-      <div class="f">
-        <label>韓國 KOSPI 漲跌%<a href="https://tw.stock.yahoo.com/quote/%5EKS11" target="_blank" rel="noopener">^KS11</a></label>
-        <input id="i_kospi" type="number" step="0.01" inputmode="decimal" placeholder="-3.40">
-      </div>
-    </div>
+    <details class="baseset" id="baseset">
+      <summary>基準設定 · 昨收與匯率</summary>
+      <table class="qt">
+        <colgroup><col style="width:56%"><col style="width:44%"></colgroup>
+        <tbody id="baseRows"></tbody>
+      </table>
+    </details>
 
     <div class="verdict" id="verdict">
       <div class="lamp">⚪</div>
@@ -426,6 +429,27 @@ var DEFAULT_HOLDINGS = [
   {g:"防禦／內需",     c:"2646",   n:"星宇航空",       p:21.80,  d:0.20,   pct:0.93}
 ];
 
+/* ============ 領先指標：一列一個商品，像自選報價 ============ */
+var LEAD_ROWS = [
+  {k:"fut",  n:"台指期夜盤", s:'點 · <a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener">期交所</a>',
+   dp:0, ph:["41100","-500"]},
+  {k:"adr",  n:"台積電 ADR", s:'美元 · <a href="https://tw.stock.yahoo.com/quote/TSM" target="_blank" rel="noopener">TSM</a>',
+   dp:2, ph:["360.00","-8.20"]},
+  {k:"sox",  n:"費城半導體", s:'<a href="https://tw.stock.yahoo.com/quote/%5ESOX" target="_blank" rel="noopener">^SOX</a>',
+   dp:2, ph:["—","—"]},
+  {k:"n225", n:"日經 225",   s:'<a href="https://tw.stock.yahoo.com/quote/%5EN225" target="_blank" rel="noopener">^N225</a> · 08:00 開',
+   dp:2, ph:["—","—"]},
+  {k:"kospi",n:"韓國 KOSPI", s:'<a href="https://tw.stock.yahoo.com/quote/%5EKS11" target="_blank" rel="noopener">^KS11</a> · 08:00 開',
+   dp:2, ph:["—","—"]}
+];
+
+var BASE_ROWS = [
+  {k:"twii", n:"加權指數昨收", s:"點",   ph:"41603"},
+  {k:"tsmc", n:"台積電昨收",   s:"元",   ph:"2280"},
+  {k:"fx",   n:"美元／台幣",   s:"匯率", ph:"30.5"},
+  {k:"wt",   n:"台積電權重",   s:"%",    ph:"40"}
+];
+
 var SOP_ITEMS = [
   {t:"04:05", x:"看費半 ＋ 台積電 ADR 收多少",  s:"晶片股是台股的火車頭，先定調今天的基調"},
   {t:"05:05", x:"看台指期夜盤收盤與基差",        s:"夜盤跟昨收差多少點＝法人隔夜的態度"},
@@ -453,6 +477,11 @@ var TIMELINE = [
 
 /* ============ storage ============ */
 var KEY = "premarket-v1";
+function blankLead(){
+  var o = {};
+  LEAD_ROWS.forEach(function(r){ o[r.k] = {p:"", d:"", pct:""}; });
+  return o;
+}
 var S = load();
 
 function load(){
@@ -468,12 +497,24 @@ function load(){
           }
         });
         if(!o.sop) o.sop = {};
-        if(!o.lead) o.lead = {};
+        // 從舊版（i_xxx 平鋪欄位）搬到新的報價表結構
+        if(!o.lead || o.lead.i_twii!==undefined || !o.lead.fut){
+          var old = o.lead || {};
+          o.lead = blankLead();
+          o.lead.fut.p   = old.i_futp || "";
+          o.lead.fut.d   = old.i_futc || "";
+          o.lead.adr.p   = old.i_adr  || "";
+          o.lead.sox.pct = old.i_sox  || "";
+          o.lead.n225.pct= old.i_n225 || "";
+          o.lead.kospi.pct=old.i_kospi|| "";
+          o.base = {twii:old.i_twii||"", tsmc:old.i_tsmc||"", fx:old.i_fx||"", wt:old.i_wt||""};
+        }
+        if(!o.base) o.base = {twii:"",tsmc:"",fx:"",wt:""};
         return o;
       }
     }
   }catch(e){}
-  return {lead:{}, h:DEFAULT_HOLDINGS.map(function(x){
+  return {lead:blankLead(), base:{twii:"",tsmc:"",fx:"",wt:""}, h:DEFAULT_HOLDINGS.map(function(x){
     return {c:x.c, n:x.n, g:x.g, div:!!x.div, note:x.note||"",
             p:x.p, base:+(x.p - x.d).toFixed(2), d:x.d, pct:x.pct,
             buy:"", add:"", tp:"", sl:"", ma20:"", ma60:"", cost:"", open:false};
@@ -540,19 +581,48 @@ function mmToGo(mm){
 }
 
 /* ============ 領先指標計算 ============ */
-var LEAD_IDS = ["i_twii","i_tsmc","i_futp","i_futc","i_adr","i_fx","i_sox","i_wt","i_n225","i_kospi"];
-
-function readLead(){
-  var o = {};
-  LEAD_IDS.forEach(function(id){ o[id] = $(id).value; });
-  return o;
+/* 每一列：成交(p) + 漲跌(d) → 幅度(pct) 自動算；只填幅度也可以 */
+function pctOf(k){
+  var r = S.lead[k] || {}, p = num(r.p), d = num(r.d);
+  if(p!==null && d!==null && (p-d)!==0) return d/(p-d)*100;
+  return num(r.pct);
 }
+function syncPct(k){
+  var r = S.lead[k], p = num(r.p), d = num(r.d);
+  if(p!==null && d!==null && (p-d)!==0) r.pct = (d/(p-d)*100).toFixed(2);
+}
+function renderLeadTable(){
+  $("leadRows").innerHTML = LEAD_ROWS.map(function(r){
+    var v = S.lead[r.k] || {p:"",d:"",pct:""};
+    var pct = pctOf(r.k);
+    var filled = (v.p!=="" || v.d!=="" || v.pct!=="");
+    function inp(f, ph, dp, k2){
+      return '<td><input type="number" step="'+(dp===0?"1":"0.01")+'" inputmode="decimal" '
+        + 'data-lead="'+r.k+'" data-f="'+f+'" placeholder="'+ph+'" value="'+esc(v[f]||"")+'" class="'+(k2||"")+'"></td>';
+    }
+    return '<tr class="'+(filled?"filled":"")+'">'
+      + '<td class="nmc"><b>'+esc(r.n)+'</b><small>'+r.s+'</small></td>'
+      + inp("p", r.ph[0], r.dp)
+      + inp("d", r.ph[1], r.dp, cls(num(v.d)))
+      + '<td><input type="number" step="0.01" inputmode="decimal" data-lead="'+r.k+'" data-f="pct" '
+      +   'placeholder="%" value="'+(pct===null||!isFinite(pct)?"":(+pct).toFixed(2))+'" class="'+cls(pct)+'"></td>'
+      + '</tr>';
+  }).join("");
+}
+function renderBaseTable(){
+  $("baseRows").innerHTML = BASE_ROWS.map(function(r){
+    return '<tr><td class="nmc"><b>'+esc(r.n)+'</b><small>'+esc(r.s)+'</small></td>'
+      + '<td><input type="number" step="0.01" inputmode="decimal" data-base="'+r.k+'" '
+      +   'placeholder="'+r.ph+'" value="'+esc(S.base[r.k]||"")+'"></td></tr>';
+  }).join("");
+}
+
 function computeLead(){
-  var twii=num($("i_twii").value), tsmc=num($("i_tsmc").value),
-      futp=num($("i_futp").value), futc=num($("i_futc").value),
-      adr=num($("i_adr").value),  fx=num($("i_fx").value),
-      sox=num($("i_sox").value),  wt=num($("i_wt").value),
-      n225=num($("i_n225").value),kospi=num($("i_kospi").value);
+  var twii=num(S.base.twii), tsmc=num(S.base.tsmc),
+      fx=num(S.base.fx),     wt=num(S.base.wt),
+      futp=num(S.lead.fut.p),
+      adr=num(S.lead.adr.p),
+      sox=pctOf("sox"), n225=pctOf("n225"), kospi=pctOf("kospi");
   if(wt===null) wt=40;
   if(fx===null) fx=30.5;
 
@@ -560,8 +630,7 @@ function computeLead(){
            adrImplied:null, adrPts:null, sox:sox, n225:n225, kospi:kospi};
 
   // 夜盤漲跌%
-  if(futc!==null && futp!==null && (futp-futc)!==0) r.futPct = futc/(futp-futc)*100;
-  else if(futc!==null && twii!==null && twii!==0)   r.futPct = futc/twii*100;
+  r.futPct = pctOf("fut");
   // 基差（夜盤 vs 現貨昨收）
   if(futp!==null && twii!==null) r.basis = futp - twii;
 
@@ -575,7 +644,7 @@ function computeLead(){
   // 加權綜合
   var parts = [
     {v:r.futPct,  w:55},
-    {v:r.adrPrem, w:20},
+    {v:(r.adrPrem!==null ? r.adrPrem : pctOf("adr")), w:20},
     {v:sox,       w:10},
     {v:n225,      w:7.5},
     {v:kospi,     w:7.5}
@@ -822,11 +891,34 @@ document.addEventListener("input", function(e){
     renderAlerts(r);
     return;
   }
-  if(LEAD_IDS.indexOf(el.id) >= 0){
-    S.lead = readLead(); save();
+  if(el.dataset && el.dataset.lead){
+    var kk = el.dataset.lead, ff = el.dataset.f;
+    S.lead[kk][ff] = el.value;
+    if(ff==="p" || ff==="d") syncPct(kk);
+    save();
+    refreshLeadCells(kk, ff);
     renderAlerts(renderLead());
+    return;
+  }
+  if(el.dataset && el.dataset.base){
+    S.base[el.dataset.base] = el.value; save();
+    renderAlerts(renderLead());
+    return;
   }
 });
+
+/* 只更新顏色與被連動的幅度格，不重繪整張表（避免打字時失焦） */
+function refreshLeadCells(k, changed){
+  var tr = document.querySelector('[data-lead="'+k+'"]');
+  if(!tr) return;
+  tr = tr.closest("tr");
+  tr.classList.toggle("filled", S.lead[k].p!=="" || S.lead[k].d!=="" || S.lead[k].pct!=="");
+  var dEl = tr.querySelector('[data-f="d"]'), pEl = tr.querySelector('[data-f="pct"]');
+  dEl.className = cls(num(S.lead[k].d));
+  var pct = pctOf(k);
+  if(changed!=="pct") pEl.value = (pct===null||!isFinite(pct)) ? "" : (+pct).toFixed(2);
+  pEl.className = cls(pct);
+}
 
 function updateRowUI(i){
   var row = document.querySelector('.row[data-i="'+i+'"]');
@@ -859,8 +951,8 @@ document.addEventListener("click", function(e){
 });
 
 $("btnClearLead").addEventListener("click", function(){
-  LEAD_IDS.forEach(function(id){ $(id).value = ""; });
-  S.lead = {}; save(); renderAlerts(renderLead());
+  S.lead = blankLead(); save();
+  renderLeadTable(); renderAlerts(renderLead());
 });
 
 $("btnRoll").addEventListener("click", function(){
@@ -912,7 +1004,8 @@ $("btnReset").addEventListener("click", function(){
 
 /* ============ boot ============ */
 function boot(){
-  LEAD_IDS.forEach(function(id){ if(S.lead && S.lead[id]!==undefined) $(id).value = S.lead[id]; });
+  renderLeadTable();
+  renderBaseTable();
   renderHoldings();
   renderSOP();
   renderTL();
