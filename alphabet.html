@@ -1,0 +1,818 @@
+<!doctype html>
+<title>ABC 字母樂園</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root {
+    --bg: #FFF9F0;
+    --bg-2: #FFEFD9;
+    --surface: #FFFFFF;
+    --track: #FFE6C7;
+    --ink: #3F3730;
+    --ink-soft: #8C7B6B;
+    --ink-faint: #BFAE9C;
+    --line: #F3E2CC;
+    --sun: #FFB23F;
+    --sun-deep: #E8912A;
+    --sun-soft: #FFF1DC;
+    --grass: #4EBE87;
+    --grass-ink: #2F9A67;
+    --grass-soft: #E4F7EC;
+    --berry: #FF7591;
+    --berry-soft: #FFE9EE;
+    --sky: #56AEE8;
+    --shadow: 0 1px 2px rgba(184,124,42,.07), 0 8px 22px rgba(184,124,42,.12);
+    --radius: 22px;
+    --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
+            "Microsoft JhengHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    /* 給小朋友看的字母：單層 a、筆畫單純，接近手寫體 */
+    --abc: "Comic Sans MS", "Chalkboard SE", "Comic Neue", "Trebuchet MS",
+           "Century Gothic", Verdana, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #241E19; --bg-2: #2E2620; --surface: #332B24; --track: #241E19;
+      --ink: #F8EDE0; --ink-soft: #C7B29B; --ink-faint: #8D7A66; --line: #47392E;
+      --sun: #FFC266; --sun-deep: #FFD08A; --sun-soft: rgba(255,194,102,.16);
+      --grass: #6FD5A3; --grass-ink: #9DE7C4; --grass-soft: rgba(111,213,163,.16);
+      --berry: #FF9AAF; --berry-soft: rgba(255,154,175,.16);
+      --sky: #7CC6F2;
+      --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.32);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #FFF9F0; --bg-2: #FFEFD9; --surface: #FFFFFF; --track: #FFE6C7;
+    --ink: #3F3730; --ink-soft: #8C7B6B; --ink-faint: #BFAE9C; --line: #F3E2CC;
+    --sun: #FFB23F; --sun-deep: #E8912A; --sun-soft: #FFF1DC;
+    --grass: #4EBE87; --grass-ink: #2F9A67; --grass-soft: #E4F7EC;
+    --berry: #FF7591; --berry-soft: #FFE9EE; --sky: #56AEE8;
+    --shadow: 0 1px 2px rgba(184,124,42,.07), 0 8px 22px rgba(184,124,42,.12);
+  }
+  :root[data-theme="dark"] {
+    --bg: #241E19; --bg-2: #2E2620; --surface: #332B24; --track: #241E19;
+    --ink: #F8EDE0; --ink-soft: #C7B29B; --ink-faint: #8D7A66; --line: #47392E;
+    --sun: #FFC266; --sun-deep: #FFD08A; --sun-soft: rgba(255,194,102,.16);
+    --grass: #6FD5A3; --grass-ink: #9DE7C4; --grass-soft: rgba(111,213,163,.16);
+    --berry: #FF9AAF; --berry-soft: rgba(255,154,175,.16); --sky: #7CC6F2;
+    --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.32);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; font-family: var(--font); color: var(--ink);
+    background: radial-gradient(120% 60% at 50% -10%, var(--bg-2), transparent 62%), var(--bg);
+    -webkit-text-size-adjust: 100%; line-height: 1.5;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 110px; }
+
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: saturate(1.5) blur(12px);
+    -webkit-backdrop-filter: saturate(1.5) blur(12px);
+    border-bottom: 1px solid var(--line); padding: env(safe-area-inset-top) 0 0;
+  }
+  .head-inner { max-width: 640px; margin: 0 auto; padding: 13px 16px 12px; }
+  .titlerow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  h1 { font-size: 1.3rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+  .sub { font-size: .8rem; color: var(--sun-deep); font-weight: 700; }
+  .grow { flex: 1; }
+
+  /* 進度條：只在遊玩畫面顯示 */
+  .meter { display: none; }
+  body.playing .meter { margin-top: 12px; display: flex; align-items: center; gap: 12px; }
+  .count { font-size: .9rem; font-weight: 800; white-space: nowrap;
+           font-variant-numeric: tabular-nums; color: var(--sun-deep); }
+  .count b { font-size: 1.15rem; }
+  .bar { flex: 1; height: 11px; border-radius: 99px; background: var(--track); overflow: hidden;
+         box-shadow: inset 0 1px 2px rgba(184,124,42,.12); }
+  .bar > i { display: block; height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--sun), var(--grass));
+    border-radius: 99px; transition: width .4s cubic-bezier(.34,1.3,.5,1); }
+
+  .btn {
+    font-family: inherit; font-size: .85rem; font-weight: 800;
+    border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 8px 16px; border-radius: 99px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px; transition: background .15s, border-color .15s, color .15s, transform .1s;
+  }
+  .btn[hidden] { display: none; }
+  .btn:active { transform: translateY(1px) scale(.98); }
+  .btn:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+  .btn.on { background: var(--sun); border-color: var(--sun); color: #4A2F00; }
+  .btn.ghost { color: var(--ink-soft); border-color: transparent; }
+  .btn.big { font-size: 1.05rem; min-height: 56px; padding: 12px 26px; border-radius: var(--radius); }
+  .btn.primary { background: var(--sun); border-color: var(--sun); color: #4A2F00;
+                 box-shadow: var(--shadow); }
+  .btn.primary:disabled { background: var(--track); border-color: var(--track);
+                          color: var(--ink-faint); box-shadow: none; cursor: default; }
+
+  /* ── 畫面切換 ───────────────────────────── */
+  .screen { display: none; }
+  body.s-home .screen-home,
+  body.s-learn .screen-learn,
+  body.s-quiz .screen-quiz,
+  body.s-done .screen-done { display: block; }
+
+  .q { font-size: 1.1rem; font-weight: 800; margin: 24px 0 0; }
+  .q .lead { display: block; font-size: .8rem; font-weight: 600; color: var(--ink-soft); margin-top: 5px; }
+
+  /* ── 首頁：玩法卡片 ─────────────────────── */
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .mode {
+    font-family: inherit; text-align: left; cursor: pointer; color: var(--ink);
+    background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius);
+    padding: 16px 15px; box-shadow: var(--shadow); position: relative;
+    display: flex; flex-direction: column; gap: 5px; min-height: 138px; transition: all .15s;
+  }
+  .mode:active { transform: translateY(1px); }
+  .mode:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+  .mode .mj { font-size: 1.9rem; line-height: 1; }
+  .mode .mt { font-weight: 800; font-size: 1.08rem; }
+  .mode .md { font-size: .76rem; color: var(--ink-soft); font-weight: 500; line-height: 1.45; }
+  .mode.sel { border-color: var(--sun); background: var(--sun-soft); }
+  .mode.sel .md { color: var(--sun-deep); }
+  .mode.sel::after {
+    content: '✓'; position: absolute; top: 11px; right: 12px; color: #4A2F00; background: var(--sun);
+    width: 24px; height: 24px; border-radius: 99px; display: grid; place-items: center;
+    font-size: .82rem; font-weight: 900;
+  }
+
+  /* 範圍 chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+  .chip {
+    font-family: inherit; font-size: .92rem; font-weight: 800; cursor: pointer;
+    background: var(--surface); color: var(--ink); border: 2px solid var(--line);
+    border-radius: 99px; padding: 9px 16px; min-height: 46px;
+    display: inline-flex; align-items: center; gap: 7px; transition: all .15s;
+  }
+  .chip .em { font-size: 1.05rem; }
+  .chip.on { background: var(--grass-soft); border-color: var(--grass); color: var(--grass-ink); }
+  .chip:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+  .chip .rng { font-family: var(--abc); letter-spacing: .02em; }
+
+  .go-wrap { margin-top: 22px; }
+  .go-wrap .btn { width: 100%; }
+
+  .hint { font-size: .78rem; color: var(--ink-soft); margin-top: 14px; line-height: 1.6; }
+  .hint code { font-family: var(--abc); font-weight: 800; color: var(--sun-deep); }
+
+  /* 首頁小統計 */
+  .stats { display: flex; gap: 10px; margin-top: 20px; }
+  .stat {
+    flex: 1; background: var(--surface); border: 2px solid var(--line); border-radius: 18px;
+    padding: 13px 12px; text-align: center; box-shadow: var(--shadow);
+  }
+  .stat .n { font-size: 1.45rem; font-weight: 900; color: var(--sun-deep); font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: .72rem; color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
+
+  /* ── 學習模式：字母格 ───────────────────── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+          gap: 10px; margin-top: 16px; }
+  .cell {
+    font-family: inherit; cursor: pointer; position: relative; aspect-ratio: 1 / 1;
+    background: var(--surface); border: 2px solid var(--line); border-radius: 18px;
+    box-shadow: var(--shadow); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1px; color: var(--ink);
+    transition: transform .12s, border-color .15s, background .15s;
+  }
+  .cell:active { transform: scale(.95); }
+  .cell:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+  .cell .cap { font-family: var(--abc); font-size: 1.9rem; font-weight: 700; line-height: 1;
+               color: var(--hue); }
+  .cell .low { font-family: var(--abc); font-size: .92rem; font-weight: 700; line-height: 1;
+               color: var(--ink-soft); }
+  .cell .star { position: absolute; top: 5px; right: 6px; font-size: .78rem; opacity: 0; transition: opacity .2s; }
+  .cell.known { border-color: var(--grass); background: var(--grass-soft); }
+  .cell.known .star { opacity: 1; }
+  .cell.known .low { color: var(--grass-ink); }
+
+  /* 字母詳細卡（底部彈出） */
+  .sheet-bg {
+    position: fixed; inset: 0; background: rgba(40,28,14,.42); z-index: 40;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  }
+  body.card-open .sheet-bg { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+    background: var(--surface); border-radius: 28px 28px 0 0;
+    box-shadow: 0 -8px 40px rgba(40,28,14,.22);
+    padding: 8px 18px calc(22px + env(safe-area-inset-bottom));
+    transform: translateY(102%); transition: transform .28s cubic-bezier(.3,1.1,.5,1);
+    max-width: 640px; margin: 0 auto; max-height: 94vh; overflow-y: auto;
+  }
+  body.card-open .sheet { transform: translateY(0); }
+  .handle { width: 44px; height: 5px; border-radius: 99px; background: var(--line); margin: 4px auto 6px; }
+  .card-letter {
+    font-family: var(--abc); font-weight: 700; text-align: center; line-height: 1;
+    font-size: clamp(4.4rem, 24vw, 7rem); color: var(--hue); margin: 6px 0 2px;
+    letter-spacing: .04em;
+  }
+  .phon { text-align: center; font-size: .95rem; font-weight: 800; color: var(--ink-soft); }
+  .word-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 14px 0 4px; }
+  .word-emoji { font-size: 3.1rem; line-height: 1; }
+  .word-en { font-family: var(--abc); font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+  .word-en .first { color: var(--hue); }
+  .word-zh { font-size: .88rem; color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
+  .word-note { text-align: center; font-size: .74rem; color: var(--ink-faint); margin-top: 8px; }
+  .sheet-actions { display: flex; gap: 9px; margin-top: 16px; align-items: center; }
+  .sheet-actions .btn { flex: 1; }
+  .navbtn { width: 52px; min-width: 52px; flex: none !important; font-size: 1.2rem; padding: 0; }
+  .btn.known-on { background: var(--grass-soft); border-color: var(--grass); color: var(--grass-ink); }
+
+  /* ── 測驗模式 ───────────────────────────── */
+  .qcard {
+    background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 22px 18px; margin-top: 16px; text-align: center;
+  }
+  .qkind { font-size: .8rem; font-weight: 800; color: var(--sun-deep); }
+  .qbig { font-family: var(--abc); font-size: clamp(3.6rem, 20vw, 5.6rem); font-weight: 700;
+          line-height: 1.05; margin: 10px 0 2px; color: var(--hue); }
+  .qemoji { font-size: clamp(3.4rem, 18vw, 5rem); line-height: 1.1; margin: 6px 0 0; }
+  .qword { font-family: var(--abc); font-size: 1.6rem; font-weight: 700; margin-top: 6px; letter-spacing: .06em; }
+  .qword .blank { color: var(--berry); }
+  .qzh { font-size: .84rem; color: var(--ink-soft); font-weight: 700; margin-top: 4px; }
+  .speaker {
+    font-family: inherit; cursor: pointer; border: none; background: var(--sun-soft);
+    color: var(--sun-deep); width: 108px; height: 108px; border-radius: 99px; font-size: 2.8rem;
+    display: grid; place-items: center; margin: 8px auto 0; transition: transform .12s;
+  }
+  .speaker:active { transform: scale(.94); }
+  .speaker:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
+  .speaker.pulse { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+  .opt {
+    font-family: var(--abc); font-size: 2.4rem; font-weight: 700; cursor: pointer;
+    background: var(--surface); border: 3px solid var(--line); border-radius: 20px;
+    min-height: 92px; color: var(--ink); box-shadow: var(--shadow);
+    display: grid; place-items: center; transition: transform .12s, background .15s, border-color .15s;
+  }
+  .opt:active { transform: scale(.96); }
+  .opt:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+  .opt.right { background: var(--grass-soft); border-color: var(--grass); color: var(--grass-ink); }
+  .opt.wrong { background: var(--berry-soft); border-color: var(--berry); color: var(--berry);
+               opacity: .65; animation: shake .38s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); } 20% { transform: translateX(-7px); }
+    40% { transform: translateX(7px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); }
+  }
+  .feedback { text-align: center; font-size: 1rem; font-weight: 800; margin-top: 16px; min-height: 26px;
+              color: var(--grass-ink); opacity: 0; transition: opacity .18s; }
+  .feedback.show { opacity: 1; }
+  .qmeta { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .qmeta .n { font-size: .82rem; font-weight: 800; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  /* ── 結算畫面 ───────────────────────────── */
+  .result { text-align: center; padding: 30px 18px 26px; margin-top: 20px;
+            background: var(--surface); border: 2px solid var(--line);
+            border-radius: var(--radius); box-shadow: var(--shadow); }
+  .result .rj { font-size: 3.6rem; line-height: 1; }
+  .result .rt { font-size: 1.5rem; font-weight: 900; margin-top: 10px; }
+  .result .rs { font-size: 2.3rem; margin-top: 12px; letter-spacing: .1em; }
+  .result .rn { font-size: .95rem; color: var(--ink-soft); font-weight: 700; margin-top: 10px; }
+  .missed { margin-top: 16px; font-size: .84rem; color: var(--ink-soft); font-weight: 700; }
+  .missed .ms { font-family: var(--abc); font-size: 1.25rem; color: var(--berry); font-weight: 700;
+                letter-spacing: .12em; display: block; margin-top: 4px; }
+  .result-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .result-actions .btn { flex: 1; }
+
+  /* 慶祝 */
+  .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+  .confetti span { position: absolute; top: -8%; font-size: 1.5rem; animation: fall linear forwards; }
+  @keyframes fall {
+    to { transform: translateY(112vh) rotate(560deg); opacity: .15; }
+  }
+
+  footer { text-align: center; font-size: .74rem; color: var(--ink-faint); margin-top: 30px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+
+<header>
+  <div class="head-inner">
+    <div class="titlerow">
+      <h1>ABC 字母樂園</h1>
+      <span class="sub" id="crumb">A～Z 一起念</span>
+      <span class="grow"></span>
+      <button class="btn ghost" id="homeBtn" hidden>← 回首頁</button>
+    </div>
+    <div class="meter">
+      <span class="count" id="count"></span>
+      <span class="bar"><i id="fill"></i></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ── 首頁 ─────────────────────────────── -->
+  <div class="screen screen-home">
+    <p class="q">要玩哪一種？<span class="lead">點一下選玩法</span></p>
+    <div class="modes" id="modeCards">
+      <button class="mode" data-mode="learn" aria-pressed="false">
+        <span class="mj">🔤</span>
+        <span class="mt">認識字母</span>
+        <span class="md">點字母就會念給你聽，看看它的單字和圖片</span>
+      </button>
+      <button class="mode" data-mode="quiz" aria-pressed="false">
+        <span class="mj">🎯</span>
+        <span class="mt">字母大挑戰</span>
+        <span class="md">聽聲音、看圖片，選出正確的字母，10 題拿星星</span>
+      </button>
+    </div>
+
+    <p class="q">練哪幾個字母？<span class="lead">先從幾個開始，熟了再玩全部</span></p>
+    <div class="chips" id="rangeChips"></div>
+
+    <div class="go-wrap">
+      <button class="btn primary big" id="goBtn" disabled>先選上面的玩法</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n" id="stKnown">0</div><div class="l">學會的字母</div></div>
+      <div class="stat"><div class="n" id="stBest">—</div><div class="l">最佳成績</div></div>
+      <div class="stat"><div class="n" id="stRounds">0</div><div class="l">玩過幾回</div></div>
+    </div>
+
+    <p class="hint" id="voiceHint">
+      💡 聲音用的是裝置內建的英文語音。手機請把靜音鍵關掉，第一次點聲音按鈕才會開始發音。
+    </p>
+  </div>
+
+  <!-- ── 學習模式 ─────────────────────────── -->
+  <div class="screen screen-learn">
+    <p class="q">點一個字母 <span class="lead">學會了就按 ⭐，會記在這台裝置上</span></p>
+    <div class="grid" id="grid"></div>
+    <footer>大寫在上、小寫在下 ・ 有鍵盤的話直接按鍵盤上的字母也可以</footer>
+  </div>
+
+  <!-- ── 測驗模式 ─────────────────────────── -->
+  <div class="screen screen-quiz">
+    <div class="qcard" id="qcard"></div>
+    <div class="opts" id="opts"></div>
+    <p class="feedback" id="feedback"></p>
+    <div class="qmeta">
+      <span class="n" id="qn"></span>
+      <span class="grow"></span>
+      <button class="btn ghost" id="repeatBtn">🔊 再念一次</button>
+    </div>
+  </div>
+
+  <!-- ── 結算 ─────────────────────────────── -->
+  <div class="screen screen-done">
+    <div class="result">
+      <div class="rj" id="rj">🎉</div>
+      <div class="rt" id="rt"></div>
+      <div class="rs" id="rs"></div>
+      <div class="rn" id="rn"></div>
+      <div class="missed" id="missed"></div>
+      <div class="result-actions">
+        <button class="btn big" id="againBtn">再玩一次</button>
+        <button class="btn big primary" id="backHomeBtn">回首頁</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="字母卡">
+  <div class="handle"></div>
+  <div class="card-letter" id="cardLetter"></div>
+  <div class="phon" id="cardPhon"></div>
+  <div class="word-row">
+    <span class="word-emoji" id="cardEmoji"></span>
+    <span>
+      <span class="word-en" id="cardEn"></span>
+      <span class="word-zh" id="cardZh" style="display:block"></span>
+    </span>
+  </div>
+  <div class="word-note" id="cardNote"></div>
+  <div class="sheet-actions">
+    <button class="btn navbtn" id="prevBtn" aria-label="上一個字母">‹</button>
+    <button class="btn primary" id="sayBtn">🔊 念一次</button>
+    <button class="btn navbtn" id="nextBtn" aria-label="下一個字母">›</button>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn" id="knownBtn">⭐ 我學會了</button>
+    <button class="btn ghost" id="closeBtn">關起來</button>
+  </div>
+</div>
+
+<script>
+  // ── 資料：26 個字母 ────────────────────────────────────────────
+  // phon = 這個字母常見的發音（自然發音法），word/emoji/zh = 代表單字
+  const LETTERS = [
+    { c: 'A', phon: '/æ/',  word: 'apple',      zh: '蘋果',   emoji: '🍎' },
+    { c: 'B', phon: '/b/',  word: 'bear',       zh: '熊',     emoji: '🐻' },
+    { c: 'C', phon: '/k/',  word: 'cat',        zh: '貓',     emoji: '🐱' },
+    { c: 'D', phon: '/d/',  word: 'dog',        zh: '狗',     emoji: '🐶' },
+    { c: 'E', phon: '/e/',  word: 'egg',        zh: '蛋',     emoji: '🥚' },
+    { c: 'F', phon: '/f/',  word: 'fish',       zh: '魚',     emoji: '🐟' },
+    { c: 'G', phon: '/g/',  word: 'grape',      zh: '葡萄',   emoji: '🍇' },
+    { c: 'H', phon: '/h/',  word: 'hat',        zh: '帽子',   emoji: '🎩' },
+    { c: 'I', phon: '/ɪ/',  word: 'ice cream',  zh: '冰淇淋', emoji: '🍦' },
+    { c: 'J', phon: '/dʒ/', word: 'juice',      zh: '果汁',   emoji: '🧃' },
+    { c: 'K', phon: '/k/',  word: 'key',        zh: '鑰匙',   emoji: '🔑' },
+    { c: 'L', phon: '/l/',  word: 'lion',       zh: '獅子',   emoji: '🦁' },
+    { c: 'M', phon: '/m/',  word: 'milk',       zh: '牛奶',   emoji: '🥛' },
+    { c: 'N', phon: '/n/',  word: 'nose',       zh: '鼻子',   emoji: '👃' },
+    { c: 'O', phon: '/ɒ/',  word: 'orange',     zh: '柳橙',   emoji: '🍊' },
+    { c: 'P', phon: '/p/',  word: 'pig',        zh: '豬',     emoji: '🐷' },
+    { c: 'Q', phon: '/kw/', word: 'queen',      zh: '皇后',   emoji: '👑' },
+    { c: 'R', phon: '/r/',  word: 'rabbit',     zh: '兔子',   emoji: '🐰' },
+    { c: 'S', phon: '/s/',  word: 'sun',        zh: '太陽',   emoji: '☀️' },
+    { c: 'T', phon: '/t/',  word: 'tiger',      zh: '老虎',   emoji: '🐯' },
+    { c: 'U', phon: '/ʌ/',  word: 'umbrella',   zh: '雨傘',   emoji: '☂️' },
+    { c: 'V', phon: '/v/',  word: 'violin',     zh: '小提琴', emoji: '🎻' },
+    { c: 'W', phon: '/w/',  word: 'watermelon', zh: '西瓜',   emoji: '🍉' },
+    { c: 'X', phon: '/ks/', word: 'box',        zh: '盒子',   emoji: '📦',
+      note: 'x 通常出現在字尾，像 box、fox、six' },
+    { c: 'Y', phon: '/j/',  word: 'yo-yo',      zh: '溜溜球', emoji: '🪀' },
+    { c: 'Z', phon: '/z/',  word: 'zebra',      zh: '斑馬',   emoji: '🦓' },
+  ];
+
+  const RANGES = [
+    { id: 'af',  label: 'A–F', em: '🌱', from: 0,  to: 5  },
+    { id: 'gl',  label: 'G–L', em: '🌿', from: 6,  to: 11 },
+    { id: 'mr',  label: 'M–R', em: '🌳', from: 12, to: 17 },
+    { id: 'sz',  label: 'S–Z', em: '🌵', from: 18, to: 25 },
+    { id: 'all', label: 'A–Z', em: '🌈', from: 0,  to: 25 },
+  ];
+
+  const ROUND_LEN = 10;
+
+  // ── 儲存 ──────────────────────────────────────────────────────
+  const KKEY = 'abc-known-v1';    // 學會的字母
+  const RKEY = 'abc-range-v1';    // 上次選的範圍
+  const BKEY = 'abc-best-v1';     // 最佳成績
+  const NKEY = 'abc-rounds-v1';   // 玩過幾回
+  let known = new Set();
+  let rangeId = 'af';
+  let best = null;
+  let rounds = 0;
+  try { known = new Set(JSON.parse(localStorage.getItem(KKEY) || '[]')); } catch (e) {}
+  try { rangeId = localStorage.getItem(RKEY) || 'af'; } catch (e) {}
+  try { best = JSON.parse(localStorage.getItem(BKEY) || 'null'); } catch (e) {}
+  try { rounds = parseInt(localStorage.getItem(NKEY) || '0', 10) || 0; } catch (e) {}
+  const saveKnown  = () => { try { localStorage.setItem(KKEY, JSON.stringify([...known])); } catch (e) {} };
+  const saveRange  = () => { try { localStorage.setItem(RKEY, rangeId); } catch (e) {} };
+  const saveBest   = () => { try { localStorage.setItem(BKEY, JSON.stringify(best)); } catch (e) {} };
+  const saveRounds = () => { try { localStorage.setItem(NKEY, String(rounds)); } catch (e) {} };
+
+  // ── 小工具 ────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  const isDark = () => (document.documentElement.dataset.theme || '') === 'dark' ||
+    (!document.documentElement.dataset.theme &&
+     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  // 每個字母一個色相；黃綠色本來就亮，亮度往下壓一點才看得清楚
+  function colorOf(i) {
+    const h = i * 360 / 26;
+    const k = Math.cos((h - 60) * Math.PI / 180);
+    const l = isDark() ? 68 - 6 * k : 43 - 8 * k;
+    return 'hsl(' + Math.round(h) + ' 72% ' + Math.round(l) + '%)';
+  }
+  const rand = n => Math.floor(Math.random() * n);
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) {
+    const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const rangeOf = id => RANGES.find(r => r.id === id) || RANGES[0];
+  const poolOf = id => { const r = rangeOf(id); const out = [];
+    for (let i = r.from; i <= r.to; i++) out.push(i); return out; };
+
+  // ── 發音（裝置內建語音）────────────────────────────────────────
+  const canSpeak = 'speechSynthesis' in window;
+  let voice = null;
+  function pickVoice() {
+    if (!canSpeak) return null;
+    const vs = speechSynthesis.getVoices().filter(v => /^en(-|_)?/i.test(v.lang));
+    if (!vs.length) return null;
+    const nice = ['Samantha', 'Karen', 'Moira', 'Google US English', 'Microsoft Zira', 'Aria'];
+    for (const n of nice) { const v = vs.find(v => v.name.indexOf(n) >= 0); if (v) return v; }
+    return vs.find(v => /en[-_]US/i.test(v.lang)) || vs[0];
+  }
+  if (canSpeak) {
+    voice = pickVoice();
+    speechSynthesis.onvoiceschanged = () => { voice = pickVoice(); };
+  }
+  // 把幾段話依序念出來，text 為字串陣列
+  function speak(parts, rate) {
+    if (!canSpeak) return;
+    try {
+      speechSynthesis.cancel();
+      parts.forEach(t => {
+        const u = new SpeechSynthesisUtterance(t);
+        u.lang = 'en-US'; u.rate = rate || .8; u.pitch = 1.15;
+        if (voice) u.voice = voice;
+        speechSynthesis.speak(u);
+      });
+    } catch (e) {}
+  }
+  const sayLetter = i => speak([LETTERS[i].c], .7);
+  const sayFull = i => speak([LETTERS[i].c, LETTERS[i].word], .75);
+  if (!canSpeak) $('voiceHint').textContent = '💡 這個瀏覽器沒有內建語音，字母卡還是可以看，聲音的部分請換 Safari 或 Chrome。';
+
+  // ── 首頁 ──────────────────────────────────────────────────────
+  let mode = null;   // 'learn' | 'quiz'
+
+  $('modeCards').querySelectorAll('.mode').forEach(card => {
+    card.addEventListener('click', () => {
+      mode = card.dataset.mode;
+      $('modeCards').querySelectorAll('.mode').forEach(c => {
+        const on = c === card;
+        c.classList.toggle('sel', on);
+        c.setAttribute('aria-pressed', on);
+      });
+      updateGo();
+    });
+  });
+
+  const chipBox = $('rangeChips');
+  RANGES.forEach(r => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (r.id === rangeId ? ' on' : '');
+    b.setAttribute('aria-pressed', r.id === rangeId);
+    b.innerHTML = '<span class="em">' + r.em + '</span><span class="rng">' + r.label + '</span>';
+    b.addEventListener('click', () => {
+      rangeId = r.id; saveRange();
+      chipBox.querySelectorAll('.chip').forEach(c => {
+        const on = c === b; c.classList.toggle('on', on); c.setAttribute('aria-pressed', on);
+      });
+      updateGo();
+    });
+    chipBox.appendChild(b);
+  });
+
+  function updateGo() {
+    const go = $('goBtn');
+    go.disabled = !mode;
+    go.textContent = !mode ? '先選上面的玩法'
+      : (mode === 'learn' ? '開始認識 ' + rangeOf(rangeId).label + ' →'
+                          : '開始挑戰 ' + rangeOf(rangeId).label + ' →');
+  }
+
+  function renderStats() {
+    $('stKnown').textContent = known.size;
+    $('stBest').textContent = best == null ? '—' : best + '／' + ROUND_LEN;
+    $('stRounds').textContent = rounds;
+  }
+
+  // ── 畫面切換 ──────────────────────────────────────────────────
+  function setScreen(name) {
+    document.body.className = 's-' + name + (name === 'learn' || name === 'quiz' ? ' playing' : '');
+    $('homeBtn').hidden = (name === 'home');
+    window.scrollTo(0, 0);
+    if (name === 'home') { renderStats(); updateGo(); $('crumb').textContent = 'A～Z 一起念'; }
+  }
+  $('homeBtn').addEventListener('click', () => { closeSheet(); stopSpeak(); setScreen('home'); });
+  $('goBtn').addEventListener('click', () => {
+    if (!mode) return;
+    if (mode === 'learn') startLearn(); else startQuiz();
+  });
+  function stopSpeak() { if (canSpeak) { try { speechSynthesis.cancel(); } catch (e) {} } }
+
+  // ── 學習模式 ──────────────────────────────────────────────────
+  const grid = $('grid');
+  const cells = [];
+  LETTERS.forEach((L, i) => {
+    const b = document.createElement('button');
+    b.className = 'cell';
+    b.dataset.i = i;
+    b.setAttribute('aria-label', L.c + ' ' + L.word);
+    b.innerHTML = '<span class="star">⭐</span>' +
+      '<span class="cap">' + L.c + '</span>' +
+      '<span class="low">' + L.c.toLowerCase() + '</span>';
+    b.addEventListener('click', () => openSheet(i));
+    grid.appendChild(b);
+    cells.push(b);
+  });
+
+  function paintGrid() {
+    const pool = new Set(poolOf(rangeId));
+    let inPool = 0, gotPool = 0;
+    cells.forEach((b, i) => {
+      b.style.setProperty('--hue', colorOf(i));
+      b.classList.toggle('known', known.has(LETTERS[i].c));
+      const on = pool.has(i);
+      b.style.display = on ? '' : 'none';
+      if (on) { inPool++; if (known.has(LETTERS[i].c)) gotPool++; }
+    });
+    $('count').innerHTML = '學會 <b>' + gotPool + '</b>／' + inPool;
+    $('fill').style.width = (inPool ? gotPool / inPool * 100 : 0) + '%';
+  }
+
+  function startLearn() {
+    setScreen('learn');
+    $('crumb').textContent = rangeOf(rangeId).label + ' 認識字母';
+    paintGrid();
+  }
+
+  // 字母卡
+  let cur = 0;
+  function openSheet(i) {
+    cur = i;
+    const L = LETTERS[i];
+    const col = colorOf(i);
+    const sheet = $('sheet');
+    sheet.style.setProperty('--hue', col);
+    $('cardLetter').textContent = L.c + ' ' + L.c.toLowerCase();
+    $('cardPhon').textContent = L.c + ' 唸 ' + L.phon;
+    $('cardEmoji').textContent = L.emoji;
+    $('cardEn').innerHTML = '<span class="first">' + L.word[0] + '</span>' + L.word.slice(1);
+    $('cardZh').textContent = L.zh;
+    $('cardNote').textContent = L.note || '';
+    syncKnownBtn();
+    document.body.classList.add('card-open');
+    sayFull(i);
+  }
+  function closeSheet() { document.body.classList.remove('card-open'); stopSpeak(); }
+  function syncKnownBtn() {
+    const on = known.has(LETTERS[cur].c);
+    const b = $('knownBtn');
+    b.classList.toggle('known-on', on);
+    b.textContent = on ? '⭐ 已經學會了' : '⭐ 我學會了';
+    b.setAttribute('aria-pressed', on);
+  }
+  function step(d) {
+    const pool = poolOf(rangeId);
+    const at = pool.indexOf(cur);
+    const next = pool[(at + d + pool.length) % pool.length];
+    openSheet(next);
+  }
+  $('sheetBg').addEventListener('click', closeSheet);
+  $('closeBtn').addEventListener('click', closeSheet);
+  $('sayBtn').addEventListener('click', () => sayFull(cur));
+  $('prevBtn').addEventListener('click', () => step(-1));
+  $('nextBtn').addEventListener('click', () => step(1));
+  $('knownBtn').addEventListener('click', () => {
+    const c = LETTERS[cur].c;
+    if (known.has(c)) known.delete(c); else { known.add(c); burst(['⭐', '✨', '🌟']); }
+    saveKnown(); syncKnownBtn(); paintGrid();
+  });
+
+  // ── 測驗模式 ──────────────────────────────────────────────────
+  const ALL_KINDS = [
+    { id: 'listen',  label: '🔊 聽聲音，這是哪個字母？' },
+    { id: 'picture', label: '🖼️ 這個字缺了第一個字母' },
+    { id: 'case',    label: '🔠 大寫的朋友是哪個小寫？' },
+  ];
+  // 沒有語音的裝置就別出「聽聲音」，不然會卡住
+  const KINDS = ALL_KINDS.filter(k => k.id !== 'listen' || canSpeak);
+  let qIndex = 0, score = 0, answered = false, question = null, missed = [];
+
+  function startQuiz() {
+    qIndex = 0; score = 0; missed = [];
+    setScreen('quiz');
+    $('crumb').textContent = rangeOf(rangeId).label + ' 大挑戰';
+    nextQuestion();
+  }
+
+  function nextQuestion() {
+    if (qIndex >= ROUND_LEN) return finishQuiz();
+    qIndex++;
+    answered = false;
+    $('feedback').classList.remove('show');
+
+    const pool = poolOf(rangeId);
+    const target = pool[rand(pool.length)];
+    const kind = KINDS[rand(KINDS.length)];
+    // 干擾選項：範圍內不夠 4 個就從全部字母補
+    let bag = pool.filter(i => i !== target);
+    if (bag.length < 3) bag = LETTERS.map((_, i) => i).filter(i => i !== target);
+    const options = shuffle([target, ...shuffle(bag).slice(0, 3)]);
+    question = { target, kind: kind.id, options };
+
+    const L = LETTERS[target];
+    const card = $('qcard');
+    card.style.setProperty('--hue', colorOf(target));
+    if (kind.id === 'listen') {
+      card.innerHTML = '<div class="qkind">' + kind.label + '</div>' +
+        '<button class="speaker pulse" id="playBtn" aria-label="再聽一次">🔊</button>';
+      $('playBtn').addEventListener('click', () => sayLetter(target));
+      setTimeout(() => sayLetter(target), 260);
+    } else if (kind.id === 'picture') {
+      card.innerHTML = '<div class="qkind">' + kind.label + '</div>' +
+        '<div class="qemoji">' + L.emoji + '</div>' +
+        '<div class="qword"><span class="blank">＿</span>' + L.word.slice(1) + '</div>' +
+        '<div class="qzh">' + L.zh + '</div>';
+      setTimeout(() => speak([L.word], .75), 260);
+    } else {
+      card.innerHTML = '<div class="qkind">' + kind.label + '</div>' +
+        '<div class="qbig">' + L.c + '</div>';
+      setTimeout(() => sayLetter(target), 260);
+    }
+
+    const box = $('opts');
+    box.innerHTML = '';
+    options.forEach(i => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.dataset.i = i;
+      const face = kind.id === 'case' ? LETTERS[i].c.toLowerCase() : LETTERS[i].c;
+      b.textContent = face;
+      b.setAttribute('aria-label', LETTERS[i].c);
+      b.addEventListener('click', () => answer(i, b));
+      box.appendChild(b);
+    });
+
+    $('qn').textContent = '第 ' + qIndex + '／' + ROUND_LEN + ' 題　·　答對 ' + score;
+    $('count').innerHTML = '答對 <b>' + score + '</b>／' + ROUND_LEN;
+    $('fill').style.width = ((qIndex - 1) / ROUND_LEN * 100) + '%';
+  }
+
+  const CHEER = ['太棒了！', '答對了！', '你好厲害！', '就是它！', '完全正確！'];
+  function answer(i, btn) {
+    if (answered) return;
+    const L = LETTERS[question.target];
+    if (i === question.target) {
+      answered = true;
+      btn.classList.add('right');
+      const first = !document.querySelector('.opt.wrong');   // 這題沒按錯過才算分
+      if (first) score++; else if (missed.indexOf(L.c) < 0) missed.push(L.c);
+      $('feedback').textContent = CHEER[rand(CHEER.length)] + ' ' + L.c + ' — ' + L.word + ' ' + L.emoji;
+      $('feedback').classList.add('show');
+      speak([L.c, L.word], .75);
+      if (first) burst(['🎈', '⭐', '🎉']);
+      $('qn').textContent = '第 ' + qIndex + '／' + ROUND_LEN + ' 題　·　答對 ' + score;
+      $('count').innerHTML = '答對 <b>' + score + '</b>／' + ROUND_LEN;
+      setTimeout(nextQuestion, 1500);
+    } else {
+      // 答錯不扣關卡，讓小朋友再試一次
+      btn.classList.add('wrong');
+      btn.disabled = true;
+      if (missed.indexOf(L.c) < 0) missed.push(L.c);
+      $('feedback').textContent = '再試試看 💪';
+      $('feedback').classList.add('show');
+    }
+  }
+
+  $('repeatBtn').addEventListener('click', () => {
+    if (!question) return;
+    if (question.kind === 'picture') speak([LETTERS[question.target].word], .75);
+    else sayLetter(question.target);
+  });
+
+  function finishQuiz() {
+    rounds++; saveRounds();
+    if (best == null || score > best) { best = score; saveBest(); }
+    const stars = score >= 9 ? 3 : score >= 6 ? 2 : 1;
+    $('rj').textContent = stars === 3 ? '🏆' : stars === 2 ? '🎉' : '💪';
+    $('rt').textContent = stars === 3 ? '滿分小天才！' : stars === 2 ? '做得很好！' : '有進步喔！';
+    $('rs').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    $('rn').textContent = '一次就答對 ' + score + ' 題（共 ' + ROUND_LEN + ' 題）';
+    $('missed').innerHTML = missed.length
+      ? '這幾個字母再多看幾次：<span class="ms">' + missed.join(' ') + '</span>'
+      : '每一題都一次就答對，太厲害了！';
+    setScreen('done');
+    if (stars === 3) burst(['🎊', '🎉', '⭐', '🏆'], 26);
+  }
+  $('againBtn').addEventListener('click', startQuiz);
+  $('backHomeBtn').addEventListener('click', () => setScreen('home'));
+
+  // ── 慶祝小動畫 ────────────────────────────────────────────────
+  function burst(chars, n) {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const box = document.createElement('div');
+    box.className = 'confetti';
+    const total = n || 14;
+    for (let k = 0; k < total; k++) {
+      const s = document.createElement('span');
+      s.textContent = chars[rand(chars.length)];
+      s.style.left = rand(100) + '%';
+      s.style.animationDuration = (1.5 + Math.random() * 1.1) + 's';
+      s.style.animationDelay = (Math.random() * .35) + 's';
+      s.style.fontSize = (1.1 + Math.random() * 1.3) + 'rem';
+      box.appendChild(s);
+    }
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 3200);
+  }
+
+  // ── 鍵盤 ──────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeSheet(); return; }
+    if (document.body.classList.contains('card-open')) {
+      if (e.key === 'ArrowLeft') { step(-1); return; }
+      if (e.key === 'ArrowRight') { step(1); return; }
+      if (e.key === ' ') { e.preventDefault(); sayFull(cur); return; }
+    }
+    if (!/^[a-zA-Z]$/.test(e.key)) return;
+    const i = e.key.toUpperCase().charCodeAt(0) - 65;
+    if (document.body.classList.contains('s-learn')) {
+      if (poolOf(rangeId).indexOf(i) >= 0) openSheet(i);
+    } else if (document.body.classList.contains('s-quiz') && question) {
+      const btn = [...document.querySelectorAll('.opt')].find(b => +b.dataset.i === i);
+      if (btn && !btn.disabled) answer(i, btn);
+    }
+  });
+
+  // ── 起手 ──────────────────────────────────────────────────────
+  renderStats();
+  updateGo();
+  paintGrid();
+  setScreen('home');
+</script>
