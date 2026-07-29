@@ -158,6 +158,17 @@
   }
 
   /* ── setup ── */
+  .goal {
+    margin-top: 14px; padding: 14px 16px; border-radius: var(--radius);
+    background: var(--mint-soft); border: 1.5px solid var(--mint);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .goal .star { font-size: var(--fs-head); line-height: 1; }
+  .goal .txt { font-size: var(--fs-body); font-weight: 800; color: var(--mint-ink); }
+  .goal .txt small { display: block; font-weight: 700; color: var(--ink-soft); font-size: var(--fs-note); margin-top: 2px; }
+  .goal.todo { background: var(--amber-soft); border-color: var(--amber); }
+  .goal.todo .txt { color: var(--amber); }
+
   .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .tile {
     font-family: inherit; cursor: pointer; color: var(--ink);
@@ -287,6 +298,29 @@
   .stat b small { font-size: var(--fs-note); color: var(--ink-soft); }
   .stat i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
 
+  .moods { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 520px) { .moods { grid-template-columns: 1fr 1fr; } }
+  .mood {
+    font-family: inherit; cursor: pointer; color: var(--ink);
+    background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
+    padding: 12px 4px; text-align: center; transition: all .14s;
+  }
+  .mood:active { transform: translateY(1px); }
+  .mood:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .mood b { display: block; font-size: var(--fs-head); line-height: 1.2; }
+  .mood i { display: block; font-style: normal; font-size: var(--fs-opt);
+            color: var(--ink); font-weight: 700; margin-top: 6px; white-space: nowrap; }
+  /* 注音直排在字的右邊，跟課本一樣。用 flex 自己排，不倚賴瀏覽器的 ruby 排版 */
+  .mood ruby { display: inline-flex; align-items: flex-start; }
+  .mood rt {
+    writing-mode: vertical-rl; text-orientation: upright;
+    font-size: .4em; font-weight: 700; color: var(--ink-faint);
+    line-height: 1.05; letter-spacing: 0; margin-left: 1px;
+  }
+  .mood.sel { border-color: var(--blue); background: var(--blue-soft); }
+  .mood.sel i { color: var(--blue-deep); }
+  .mood.sel rt { color: var(--blue-deep); }
+
   .wrongs { display: flex; flex-wrap: wrap; gap: 8px; }
   .wchip {
     background: var(--coral-soft); color: var(--coral-ink); border-radius: 12px;
@@ -321,6 +355,11 @@
   .sess u { text-decoration: none; color: var(--blue-deep); margin-left: 6px; }
   .sess b { color: var(--mint-ink); margin-left: 6px; }
   .sess.miss b { color: var(--coral-ink); }
+  .sess s { text-decoration: none; margin-left: 6px; }
+  .dayrow .flags {
+    flex: 1 1 100%; margin-top: 2px;
+    font-size: var(--fs-note); font-weight: 700; color: var(--coral-ink);
+  }
 
   .weak { display: flex; flex-direction: column; gap: 8px; }
   .wrow { display: flex; align-items: center; gap: 10px; }
@@ -411,6 +450,7 @@
     .opt { min-height: 68px; }
     .tiles { gap: 7px; }
     .tile { padding: 12px 3px; }
+    .moods { grid-template-columns: 1fr 1fr; }
     .btn { padding: 10px 8px; }
     .icobtn { width: 38px; height: 38px; }   /* 三個圖示按鈕才擠得下標題 */
     .head-inner { gap: 6px; }
@@ -432,6 +472,8 @@
 
   <!-- ══ 設定 ══ -->
   <section class="screen on" id="setup">
+    <div class="goal" id="goal" hidden></div>
+
     <div class="card">
       <h2><span class="n">1</span>今天要練哪幾段？</h2>
       <div class="tiles" id="tiles"></div>
@@ -514,6 +556,21 @@
       </div>
     </div>
 
+    <div class="card" id="moodCard" hidden>
+      <h2>剛剛練得順利嗎？</h2>
+      <div class="moods" id="moods">
+        <button class="mood" data-mood="ok"><b>😀</b><i
+          ><ruby>順<rt>ㄕㄨㄣˋ</rt></ruby><ruby>利<rt>ㄌㄧˋ</rt></ruby></i></button>
+        <button class="mood" data-mood="meh"><b>😐</b><i
+          ><ruby>普<rt>ㄆㄨˇ</rt></ruby><ruby>通<rt>ㄊㄨㄥ</rt></ruby></i></button>
+        <button class="mood" data-mood="hard"><b>😣</b><i
+          ><ruby>好<rt>ㄏㄠˇ</rt></ruby><ruby>難<rt>ㄋㄢˊ</rt></ruby></i></button>
+        <button class="mood" data-mood="cry"><b>😭</b><i
+          ><ruby>哭<rt>ㄎㄨ</rt></ruby><ruby>了<rt>ㄌㄜ˙</rt></ruby></i></button>
+      </div>
+      <p class="hint">點一下就記錄起來，在歷史紀錄裡看得到。不點也沒關係。</p>
+    </div>
+
     <div class="card">
       <h2>要複習的題目</h2>
       <div class="wrongs" id="rWrongs"></div>
@@ -571,7 +628,16 @@
   var TABLES = [2, 3, 4, 5, 6, 7, 8, 9];   // 1 的乘法太簡單，不列入練習
   var KEY = 'mtq_v2', OLD_KEY = 'mtq_v1';
   var DEF = { sound: true, speak: true, tables: TABLES.slice(), mode: 'smart', count: 10,
-              perQ: {}, runs: [], best: {}, lastWrong: [] };
+              perQ: {}, recent: {}, runs: [], quits: [], best: {}, lastWrong: [] };
+  var WINDOW = 20;      // 熟練度只看每一段最近這麼多題，以前的錯誤會慢慢淡出
+  var MIN_WINDOW = 5;   // 視窗裡至少要有這麼多題才給評價
+  var MEDALS = [
+    { at: 0.9,  icon: '🏆' },
+    { at: 0.8,  icon: '🥈' },
+    { at: 0.7,  icon: '🥉' }
+  ];
+  var DAILY_MIN_RATE = 0.8;   // 今天任何一輪正確率到這個標準就算達標
+  var MOOD = { ok: '😀', meh: '😐', hard: '😣', cry: '😭' };
   var db;
 
   // DEF 裡有物件跟陣列，一定要複製一份，不然會被改到預設值本身
@@ -602,6 +668,8 @@
     if (!db.tables.length) db.tables = TABLES.slice();
     if (!db.perQ || typeof db.perQ !== 'object') db.perQ = {};
     if (!Array.isArray(db.runs)) db.runs = [];
+    if (!Array.isArray(db.quits)) db.quits = [];
+    if (!db.recent || typeof db.recent !== 'object') db.recent = {};
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     // 最佳紀錄要照題數分開存，10 題和 20 題的成績沒得比
     if (db.best && db.best.correct !== undefined) {
@@ -770,21 +838,43 @@
   /* ────────── 設定畫面 ────────── */
   var picked = [];
 
-  var MASTER_RATE = 0.9;   // 答對率到這個門檻就給獎盃
-  var MIN_TRIES = 5;       // 但至少要練過這麼多題，不然一題全對就拿獎盃了
+  function logRecent(t, ok) {
+    var r = db.recent[t] || (db.recent[t] = []);
+    r.push(ok ? 1 : 0);
+    if (r.length > WINDOW) db.recent[t] = r.slice(-WINDOW);
+  }
 
+  // 熟練度看最近 WINDOW 題；還沒累積夠就先用全部紀錄頂著
   function tableStat(t) {
+    var r = db.recent[t];
+    if (r && r.length >= MIN_WINDOW) {
+      var ok = r.reduce(function (s, v) { return s + v; }, 0);
+      return { n: r.length, w: r.length - ok, rate: ok / r.length, fresh: true };
+    }
     var n = 0, w = 0;
     for (var b = 1; b <= 9; b++) { var s = stat(t, b); n += s.n; w += s.w; }
-    return { n: n, w: w, rate: n ? (n - w) / n : 0 };
+    return { n: n, w: w, rate: n ? (n - w) / n : 0, fresh: false };
   }
   function tableRisk(t) {
     var s = tableStat(t);
     return s.n >= 4 ? s.w / s.n : 0;
   }
-  function mastered(t) {
+  function medalOf(t) {
     var s = tableStat(t);
-    return s.n >= MIN_TRIES && s.rate >= MASTER_RATE;
+    if (s.n < MIN_WINDOW) return '';
+    for (var i = 0; i < MEDALS.length; i++) {
+      if (s.rate >= MEDALS[i].at) return MEDALS[i].icon;
+    }
+    return '';
+  }
+
+  // 今天只要有一輪正確率達標就算今天達成目標
+  function goalHitToday() {
+    var today = dayKey(Date.now());
+    return db.runs.some(function (r) {
+      var tot = r.total || 10;
+      return dayKey(r.t) === today && tot && r.correct / tot >= DAILY_MIN_RATE;
+    });
   }
 
   function buildTiles() {
@@ -796,7 +886,8 @@
         var el = document.createElement('button');
         el.className = 'tile' + (picked.indexOf(t) >= 0 ? ' sel' : '');
         el.setAttribute('aria-pressed', picked.indexOf(t) >= 0 ? 'true' : 'false');
-        var mark = mastered(t) ? '<span class="mark cup" title="答對率 90% 以上">🏆</span>'
+        var medal = medalOf(t);
+        var mark = medal ? '<span class="mark cup">' + medal + '</span>'
                  : (risk >= 0.2 ? '<span class="mark warn">●</span>' : '');
         el.innerHTML = '<b>' + t + '</b><i>' + t + ' 的乘法</i>' + mark;
         el.addEventListener('click', function () {
@@ -816,7 +907,7 @@
     $('tileHint').textContent = picked.length === 0
       ? '至少要選一段才能開始喔。'
       : '已選 ' + picked.join('、') + ' 段，共 ' + (picked.length * 8) + ' 種題目。' +
-        '🏆 代表那一段答對率已經 90% 以上，紅點代表比較常錯。';
+        '獎章看最近 20 題的答對率：🥉70%、🥈80%、🏆90%，紅點代表比較常錯。';
   }
 
   $('selAll').addEventListener('click', function () {
@@ -917,6 +1008,7 @@
       mode: review ? 'even' : db.mode,
       total: total, idx: 0, results: [],
       correct: 0, wrong: 0, streak: 0, bestStreak: 0,
+      timeouts: 0, wrongRun: 0, worstRun: 0,
       wrongList: [], recentWrong: {}, last: null,
       reviewMode: review,
       qEndAt: 0, startedAt: 0, finishedAt: 0, running: false
@@ -1047,6 +1139,9 @@
   function markWrong(q, note) {
     var k = key(q.a, q.b);
     S.wrong++; S.streak = 0;
+    S.wrongRun++;                                        // 連續答錯幾題，卡住的訊號
+    if (S.wrongRun > S.worstRun) S.worstRun = S.wrongRun;
+    logRecent(q.a, 0);
     S.recentWrong[k] = true;
     S.results[S.idx - 1] = 'no';
     if (!S.wrongList.some(function (x) { return x.a === q.a && x.b === q.b; })) {
@@ -1065,6 +1160,7 @@
     var q = S.q, k = key(q.a, q.b);
     var rec = db.perQ[k] || (db.perQ[k] = { n: 0, w: 0 });
     rec.n++; rec.w++;
+    S.timeouts++;
     markWrong(q, '時間到！');
     revealAnswer(q.a * q.b, null);
     save();
@@ -1082,6 +1178,8 @@
       if (S.streak > S.bestStreak) S.bestStreak = S.streak;
       delete S.recentWrong[k];
       S.results[S.idx - 1] = 'ok';
+      S.wrongRun = 0;
+      logRecent(q.a, 1);
       S.finishedAt = Date.now();
       btn.classList.add('good');
       $('qcard').classList.add('good');
@@ -1157,10 +1255,17 @@
 
     // 中途按結束的不記錄，免得半途而廢的分數污染歷史成績
     var isRecord = false;
+    // 中途離開也記一筆，這是「練不下去」最直接的訊號
+    if (!completed && !S.reviewMode && S.idx > 0) {
+      db.quits.push({ t: Date.now(), done: S.idx - 1, total: S.total });
+      if (db.quits.length > 60) db.quits = db.quits.slice(-60);
+      save();
+    }
     if (completed && !S.reviewMode) {
       db.runs.push({
         t: Date.now(), tables: S.tables, correct: S.correct,
-        wrong: S.wrong, total: S.total, ms: S.ms
+        wrong: S.wrong, total: S.total, ms: S.ms,
+        timeouts: S.timeouts, worstRun: S.worstRun
       });
       if (db.runs.length > 60) db.runs = db.runs.slice(-60);
       var b = db.best[S.total];
@@ -1171,11 +1276,28 @@
       }
       save();
     }
+    // 只有真的存進歷史的那一輪才問心情，不然沒有地方可以記
+    var moodable = completed && !S.reviewMode && db.runs.length > 0;
+    moodRunIndex = moodable ? db.runs.length - 1 : -1;
+    $('moodCard').hidden = !moodable;
+    document.querySelectorAll('.mood').forEach(function (m) { m.classList.remove('sel'); });
+
     renderResult(isRecord, completed);
     show('result');
   }
 
   $('quitBtn').addEventListener('click', function () { endGame(false); });
+
+  var moodRunIndex = -1;
+  document.querySelectorAll('.mood').forEach(function (m) {
+    m.addEventListener('click', function () {
+      if (moodRunIndex < 0 || !db.runs[moodRunIndex]) return;
+      document.querySelectorAll('.mood').forEach(function (x) { x.classList.remove('sel'); });
+      m.classList.add('sel');
+      db.runs[moodRunIndex].mood = m.dataset.mood;
+      save();
+    });
+  });
 
   /* ────────── 結果畫面 ────────── */
   function renderResult(isRecord, completed) {
@@ -1270,20 +1392,22 @@
       var s = db.perQ[k];
       if (s.w > 0) list.push({ k: k, n: s.n, w: s.w, r: s.w / s.n });
     });
-    list.sort(function (x, y) { return (y.r - x.r) || (y.w - x.w); });
+    // 純粹看錯幾次，錯最多次的排最前面
+    list.sort(function (x, y) { return (y.w - x.w) || (y.r - x.r); });
     var weak = $('weak');
     weak.innerHTML = '';
     if (!list.length) {
       weak.innerHTML = '<div class="empty">目前沒有常錯的題目，很棒！👍</div>';
     } else {
+      var most = list[0].w;
       list.slice(0, 6).forEach(function (x) {
         var p = x.k.split('x');
         var row = document.createElement('div');
         row.className = 'wrow';
         row.innerHTML =
           '<span class="q">' + p[0] + ' × ' + p[1] + ' = ' + (p[0] * p[1]) + '</span>' +
-          '<span class="t"><i style="width:' + Math.round(x.r * 100) + '%"></i></span>' +
-          '<span class="p">錯 ' + x.w + ' 次<small>考過 ' + x.n + ' 次</small></span>';
+          '<span class="t"><i style="width:' + Math.round(x.w / most * 100) + '%"></i></span>' +
+          '<span class="p">錯 ' + x.w + ' 次</span>';
         weak.appendChild(row);
       });
     }
@@ -1293,39 +1417,41 @@
   function renderTables() {
     var box = $('tables');
     box.innerHTML = '';
-    var agg = {};
-    Object.keys(db.perQ).forEach(function (k) {
-      var t = Number(k.split('x')[0]), s = db.perQ[k];
-      var a = agg[t] || (agg[t] = { n: 0, w: 0 });
-      a.n += s.n; a.w += s.w;
-    });
-    var list = Object.keys(agg).map(function (t) {
-      var a = agg[t];
-      return { t: Number(t), n: a.n, ok: a.n - a.w, rate: (a.n - a.w) / a.n };
+    // 跟段數按鈕上的獎章用同一套資料：每一段最近 WINDOW 題
+    var list = [];
+    TABLES.forEach(function (t) {
+      var s = tableStat(t);
+      if (s.n > 0) list.push({ t: t, n: s.n, ok: s.n - s.w, rate: s.rate });
     });
     if (!list.length) {
       box.innerHTML = '<div class="empty">還沒有練習紀錄</div>';
       return;
     }
-    // 題數太少的排到後面，免得「練 1 題全對」看起來比「練 40 題錯 2 題」還熟
+    // 題數太少的排到後面，免得「練 1 題全對」看起來比「練 20 題錯 2 題」還熟
     list.sort(function (x, y) {
-      if ((x.n < 5) !== (y.n < 5)) return x.n < 5 ? 1 : -1;
+      if ((x.n < MIN_WINDOW) !== (y.n < MIN_WINDOW)) return x.n < MIN_WINDOW ? 1 : -1;
       return y.rate - x.rate;
     });
     list.forEach(function (x) {
       var pct = Math.round(x.rate * 100);
-      var thin = x.n < 5;
+      var thin = x.n < MIN_WINDOW;
       var level = thin ? 'thin' : (pct >= 90 ? 'hi' : (pct >= 70 ? 'mid' : ''));
       var row = document.createElement('div');
       row.className = 'wrow';
       row.innerHTML =
-        '<span class="q">' + x.t + ' 段' + (!thin && pct >= 90 ? ' 🏆' : '') + '</span>' +
+        '<span class="q">' + x.t + ' 段' + (thin ? '' : ' ' + medalOf(x.t)) + '</span>' +
         '<span class="t"><i class="' + level + '" style="width:' + pct + '%"></i></span>' +
         '<span class="p ' + level + '">' + pct + '%<small style="font-weight:700;opacity:.7"> ' +
         x.ok + '/' + x.n + '</small></span>';
       box.appendChild(row);
     });
-    var solid = list.filter(function (x) { return x.n >= 5; });
+    var note = document.createElement('p');
+    note.className = 'hint';
+    note.textContent = '只看每一段最近 ' + WINDOW + ' 題，以前的錯誤會慢慢淡出。' +
+      '🥉70%、🥈80%、🏆90%。';
+    box.appendChild(note);
+
+    var solid = list.filter(function (x) { return x.n >= MIN_WINDOW; });
     if (solid.length >= 2) {
       var best = solid[0], worst = solid[solid.length - 1];
       var p = document.createElement('p');
@@ -1334,10 +1460,10 @@
         worst.t + ' 段最需要練（' + Math.round(worst.rate * 100) + '%）。';
       box.appendChild(p);
     }
-    if (list.some(function (x) { return x.n < 5; })) {
+    if (list.some(function (x) { return x.n < MIN_WINDOW; })) {
       var q = document.createElement('p');
       q.className = 'hint';
-      q.textContent = '灰色的那幾段練不到 5 題，資料還不夠準。';
+      q.textContent = '灰色的那幾段練不到 ' + MIN_WINDOW + ' 題，資料還不夠準。';
       box.appendChild(q);
     }
   }
@@ -1370,12 +1496,24 @@
         var tb = Array.isArray(r.tables) && r.tables.length ? tableLabel(r.tables) + ' 段' : '';
         return '<span class="sess' + (r.correct < tot ? ' miss' : '') + '">' +
           clockOf(r.t) + (tb ? '<u>' + tb + '</u>' : '') +
-          '<b>' + r.correct + '/' + tot + '</b></span>';
+          '<b>' + r.correct + '/' + tot + '</b>' +
+          (r.mood && MOOD[r.mood] ? '<s>' + MOOD[r.mood] + '</s>' : '') + '</span>';
       }).join('');
+
+      // 卡住的訊號：時間到沒作答、連續答錯、中途離開
+      var to = runs.reduce(function (s, r) { return s + (r.timeouts || 0); }, 0);
+      var worst = runs.reduce(function (s, r) { return Math.max(s, r.worstRun || 0); }, 0);
+      var quits = db.quits.filter(function (x) { return dayKey(x.t) === k; }).length;
+      var flags = [];
+      if (to) flags.push('⏱ 逾時 ' + to + ' 題');
+      if (worst >= 3) flags.push('😖 連錯 ' + worst + ' 題');
+      if (quits) flags.push('🚪 中途離開 ' + quits + ' 次');
+
       row.innerHTML =
         '<span class="d">' + label + (tag ? '<em>' + tag + '</em>' : '') + '</span>' +
         '<span class="c">' + runs.length + ' 次</span>' +
-        '<span class="ts">' + sess + '</span>';
+        '<span class="ts">' + sess + '</span>' +
+        (flags.length ? '<span class="flags">' + flags.join('　') + '</span>' : '');
       box.appendChild(row);
     });
   }
@@ -1387,7 +1525,8 @@
   $('hBackBtn').addEventListener('click', function () { refreshSetup(); show('setup'); });
   $('clearBtn').addEventListener('click', function () {
     if (!confirm('確定要清除所有練習紀錄嗎？這個動作無法復原。')) return;
-    var keep = { sound: db.sound, tables: db.tables.slice(), mode: db.mode, count: db.count };
+    var keep = { sound: db.sound, speak: db.speak, tables: db.tables.slice(),
+                 mode: db.mode, count: db.count };
     db = Object.assign(blank(), keep);
     save(); renderHistory(); buildTiles(); syncStart();
   });
@@ -1421,7 +1560,29 @@
   document.documentElement.lang = 'zh-Hant';
   document.documentElement.style.setProperty('--reveal', (REVEAL_MS / 1000) + 's');
 
+  function renderGoal() {
+    var el = $('goal');
+    var today = dayKey(Date.now());
+    var todayRuns = db.runs.filter(function (r) { return dayKey(r.t) === today; });
+    if (!todayRuns.length) {          // 今天還沒開始，先不要擺一個沒達成的目標在那裡
+      el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+    var hit = goalHitToday();
+    el.className = 'goal' + (hit ? '' : ' todo');
+    var best = Math.max.apply(null, todayRuns.map(function (r) {
+      return Math.round(r.correct / (r.total || 10) * 100);
+    }));
+    el.innerHTML = hit
+      ? '<span class="star">⭐</span><span class="txt">今天達成目標了！' +
+        '<small>今天最好的一輪答對 ' + best + '%</small></span>'
+      : '<span class="star">🎯</span><span class="txt">今天還差一點點' +
+        '<small>今天最好的一輪答對 ' + best + '%，答對 80% 就達標</small></span>';
+  }
+
   function refreshSetup() {
+    renderGoal();
     buildTiles(); syncStart();
     $('reviewBtn').hidden = !(db.lastWrong && db.lastWrong.length);
   }
