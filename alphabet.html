@@ -562,8 +562,12 @@
   }
 
   // ── 畫面切換 ──────────────────────────────────────────────────
+  const SCREEN_CLASSES = ['s-home', 's-learn', 's-quiz', 's-done', 'playing', 'card-open'];
   function setScreen(name) {
-    document.body.className = 's-' + name + (name === 'learn' || name === 'quiz' ? ' playing' : '');
+    const b = document.body;
+    b.classList.remove(...SCREEN_CLASSES);   // 只動自己的 class，別動到別人加的
+    b.classList.add('s-' + name);
+    if (name === 'learn' || name === 'quiz') b.classList.add('playing');
     $('homeBtn').hidden = (name === 'home');
     window.scrollTo(0, 0);
     if (name === 'home') { renderStats(); updateGo(); $('crumb').textContent = 'A～Z 一起念'; }
