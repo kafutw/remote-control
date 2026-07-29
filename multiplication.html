@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>九九乘法表 60 秒挑戰</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F7FF">
+<style>
+  :root {
+    --bg: #F2F7FF;
+    --bg-2: #E2EDFF;
+    --surface: #FFFFFF;
+    --track: #DDE8FA;
+    --ink: #26354C;
+    --ink-soft: #6C819F;
+    --ink-faint: #A2B3C9;
+    --line: #DFE9F7;
+    --blue: #4A8CF7;
+    --blue-deep: #2F6FDC;
+    --blue-soft: #E7F0FF;
+    --mint: #35BE96;
+    --mint-ink: #1E9C79;
+    --mint-soft: #E1F7F0;
+    --coral: #F2705C;
+    --coral-ink: #D64B36;
+    --coral-soft: #FFE9E5;
+    --amber: #F5A623;
+    --amber-soft: #FFF2DA;
+    --shadow: 0 1px 2px rgba(47,111,220,.06), 0 8px 22px rgba(47,111,220,.10);
+    --radius: 20px;
+    --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
+            "Microsoft JhengHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161E2B; --bg-2: #1D2837; --surface: #212D3F; --track: #161E2B;
+      --ink: #E9F1FB; --ink-soft: #A6BAD4; --ink-faint: #71879F; --line: #33445C;
+      --blue: #6EA6FF; --blue-deep: #9CC3FF; --blue-soft: rgba(110,166,255,.16);
+      --mint: #57D6B0; --mint-ink: #86E7C9; --mint-soft: rgba(87,214,176,.16);
+      --coral: #FF8C79; --coral-ink: #FFA695; --coral-soft: rgba(255,140,121,.16);
+      --amber: #FFC15E; --amber-soft: rgba(255,193,94,.16);
+      --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F2F7FF; --bg-2: #E2EDFF; --surface: #FFFFFF; --track: #DDE8FA;
+    --ink: #26354C; --ink-soft: #6C819F; --ink-faint: #A2B3C9; --line: #DFE9F7;
+    --blue: #4A8CF7; --blue-deep: #2F6FDC; --blue-soft: #E7F0FF;
+    --mint: #35BE96; --mint-ink: #1E9C79; --mint-soft: #E1F7F0;
+    --coral: #F2705C; --coral-ink: #D64B36; --coral-soft: #FFE9E5;
+    --amber: #F5A623; --amber-soft: #FFF2DA;
+    --shadow: 0 1px 2px rgba(47,111,220,.06), 0 8px 22px rgba(47,111,220,.10);
+  }
+  :root[data-theme="dark"] {
+    --bg: #161E2B; --bg-2: #1D2837; --surface: #212D3F; --track: #161E2B;
+    --ink: #E9F1FB; --ink-soft: #A6BAD4; --ink-faint: #71879F; --line: #33445C;
+    --blue: #6EA6FF; --blue-deep: #9CC3FF; --blue-soft: rgba(110,166,255,.16);
+    --mint: #57D6B0; --mint-ink: #86E7C9; --mint-soft: rgba(87,214,176,.16);
+    --coral: #FF8C79; --coral-ink: #FFA695; --coral-soft: rgba(255,140,121,.16);
+    --amber: #FFC15E; --amber-soft: rgba(255,193,94,.16);
+    --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; font-family: var(--font); color: var(--ink);
+    background: radial-gradient(120% 60% at 50% -10%, var(--bg-2), transparent 60%), var(--bg);
+    -webkit-text-size-adjust: 100%; line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 40px; }
+
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(1.5) blur(12px);
+    -webkit-backdrop-filter: saturate(1.5) blur(12px);
+    border-bottom: 1px solid var(--line); padding: env(safe-area-inset-top) 0 0;
+  }
+  .head-inner {
+    max-width: 560px; margin: 0 auto; padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  h1 { font-size: 1.16rem; font-weight: 800; margin: 0; letter-spacing: -.01em; flex: 1; }
+  h1 span { font-size: .74rem; font-weight: 600; color: var(--blue-deep); display: block; margin-top: 1px; }
+
+  .icobtn {
+    font-family: inherit; font-size: 1.02rem; line-height: 1;
+    width: 40px; height: 40px; flex: 0 0 auto;
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 99px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .15s, border-color .15s;
+  }
+  .icobtn:active { transform: translateY(1px); }
+  .icobtn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .icobtn.off { color: var(--ink-faint); }
+
+  .btn {
+    font-family: inherit; font-size: .9rem; font-weight: 700;
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 10px 18px; border-radius: 99px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px; transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.big { width: 100%; font-size: 1.08rem; padding: 16px; min-height: 58px; border-radius: 18px; }
+  .btn.ghost { color: var(--ink-soft); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* screens */
+  .screen { display: none; }
+  .screen.on { display: block; animation: fade .22s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: var(--surface); border: 1.5px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; margin-top: 14px;
+  }
+  .card h2 {
+    font-size: .82rem; font-weight: 800; margin: 0 0 12px; color: var(--ink-soft);
+    letter-spacing: .04em;
+  }
+
+  /* ── setup ── */
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tile {
+    font-family: inherit; cursor: pointer; color: var(--ink);
+    background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
+    padding: 12px 6px; text-align: center; transition: all .14s; position: relative;
+  }
+  .tile:active { transform: translateY(1px); }
+  .tile:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .tile b { display: block; font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .tile i { display: block; font-style: normal; font-size: .68rem; color: var(--ink-faint); font-weight: 700; margin-top: 2px; }
+  .tile.sel { border-color: var(--blue); background: var(--blue-soft); color: var(--blue-deep); }
+  .tile.sel i { color: var(--blue-deep); }
+  .tile .warn { position: absolute; top: 5px; right: 7px; font-size: .62rem; color: var(--coral-ink); font-weight: 800; }
+
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row.mt { margin-top: 12px; }
+  .grow { flex: 1; }
+  .hint { font-size: .78rem; color: var(--ink-soft); margin: 10px 2px 0; line-height: 1.55; }
+
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mode {
+    font-family: inherit; cursor: pointer; color: var(--ink); text-align: left;
+    background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
+    padding: 12px 13px; transition: all .14s;
+  }
+  .mode.sel { border-color: var(--blue); background: var(--blue-soft); }
+  .mode b { display: block; font-size: .95rem; font-weight: 800; }
+  .mode i { display: block; font-style: normal; font-size: .72rem; color: var(--ink-soft); margin-top: 2px; }
+  .mode.sel i { color: var(--blue-deep); }
+
+  /* ── play ── */
+  .hud { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .clock {
+    font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums;
+    color: var(--blue-deep); min-width: 62px; letter-spacing: -.02em;
+  }
+  .clock.low { color: var(--coral-ink); animation: pulse .9s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+  .clock small { font-size: .74rem; font-weight: 700; color: var(--ink-faint); margin-left: 2px; }
+  .bar { flex: 1; height: 12px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 100%; background: var(--blue); border-radius: 99px; }
+  .bar > i.low { background: var(--coral); }
+  .score { font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--mint-ink); }
+
+  .qcard {
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-top: 12px; padding: 30px 16px 26px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .qcard.good { border-color: var(--mint); background: var(--mint-soft); }
+  .qcard.bad  { border-color: var(--coral); background: var(--coral-soft); animation: shake .32s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); } 25% { transform: translateX(-7px); }
+    50% { transform: translateX(6px); } 75% { transform: translateX(-4px); }
+  }
+  .qtext {
+    font-size: 2.9rem; font-weight: 800; letter-spacing: .02em;
+    font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .qtext em { font-style: normal; color: var(--ink-faint); margin: 0 .1em; }
+  .streak {
+    font-size: .8rem; font-weight: 800; color: var(--amber);
+    height: 20px; margin-top: 6px;
+  }
+
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .opt {
+    font-family: inherit; cursor: pointer; color: var(--ink);
+    background: var(--surface); border: 2px solid var(--line); border-radius: 18px;
+    box-shadow: var(--shadow); padding: 18px 8px; min-height: 76px;
+    font-size: 1.85rem; font-weight: 800; font-variant-numeric: tabular-nums;
+    transition: transform .1s, background .15s, border-color .15s, color .15s;
+  }
+  .opt:active { transform: translateY(2px); }
+  .opt:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .opt.good { background: var(--mint); border-color: var(--mint); color: #fff; }
+  .opt.bad { background: var(--coral); border-color: var(--coral); color: #fff; }
+  .opt.dim { opacity: .38; }
+
+  .fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+  .spark { position: absolute; font-size: 1.5rem; animation: fly .9s ease-out forwards; }
+  @keyframes fly {
+    from { opacity: 1; transform: translate(0,0) scale(.6) rotate(0deg); }
+    to { opacity: 0; transform: translate(var(--dx), -120px) scale(1.4) rotate(var(--rot)); }
+  }
+
+  .countdown {
+    position: fixed; inset: 0; z-index: 70; display: flex;
+    align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    font-size: 6rem; font-weight: 800; color: var(--blue-deep);
+  }
+  .countdown b { animation: pop .7s ease; display: block; }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } 45% { transform: scale(1.12); opacity: 1; } to { transform: scale(1); opacity: 1; } }
+
+  /* ── result ── */
+  .bigscore { text-align: center; padding: 8px 0 4px; }
+  .bigscore .n { font-size: 4.2rem; font-weight: 800; line-height: 1; color: var(--mint-ink); font-variant-numeric: tabular-nums; }
+  .bigscore .n small { font-size: 1.1rem; color: var(--ink-soft); font-weight: 700; margin-left: 4px; }
+  .bigscore .msg { font-size: 1.05rem; font-weight: 800; margin-top: 8px; }
+  .bigscore .rec {
+    display: inline-block; margin-top: 8px; font-size: .78rem; font-weight: 800;
+    background: var(--amber-soft); color: var(--amber); padding: 5px 12px; border-radius: 99px;
+  }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .stat { background: var(--bg); border-radius: 14px; padding: 11px 6px; text-align: center; }
+  .stat b { display: block; font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat i { display: block; font-style: normal; font-size: .7rem; color: var(--ink-soft); font-weight: 700; margin-top: 1px; }
+
+  .wrongs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wchip {
+    background: var(--coral-soft); color: var(--coral-ink); border-radius: 12px;
+    padding: 8px 12px; font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  }
+  .wchip small { font-weight: 700; opacity: .7; margin-left: 4px; font-size: .74rem; }
+  .empty { color: var(--ink-soft); font-size: .86rem; text-align: center; padding: 8px 0; }
+
+  /* ── history ── */
+  .chart { display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: 110px; padding-top: 6px; }
+  .chart .col { flex: 1; max-width: 42px; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .chart .col u { font-style: normal; text-decoration: none; font-size: .66rem; font-weight: 800; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .chart .col b { display: block; width: 100%; background: var(--blue); border-radius: 6px; min-height: 4px; }
+  .chart .col:last-child b { background: var(--mint); }
+  .chart .col em { font-style: normal; font-size: .6rem; color: var(--ink-faint); }
+
+  .weak { display: flex; flex-direction: column; gap: 8px; }
+  .wrow { display: flex; align-items: center; gap: 10px; }
+  .wrow .q { font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 88px; }
+  .wrow .t { flex: 1; height: 9px; background: var(--track); border-radius: 99px; overflow: hidden; }
+  .wrow .t i { display: block; height: 100%; background: var(--coral); border-radius: 99px; }
+  .wrow .p { font-size: .74rem; font-weight: 800; color: var(--coral-ink); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+
+  .foot { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .tiny { font-size: .72rem; color: var(--ink-faint); text-align: center; margin-top: 16px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+  @media (max-width: 360px) {
+    .qtext { font-size: 2.4rem; }
+    .opt { font-size: 1.6rem; min-height: 68px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <h1>九九乘法表<span id="subtitle">60 秒挑戰</span></h1>
+    <button class="icobtn" id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
+    <button class="icobtn" id="histBtn" title="歷史紀錄" aria-label="歷史紀錄">📊</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ══ 設定 ══ -->
+  <section class="screen on" id="setup">
+    <div class="card">
+      <h2>今天要練哪幾段？</h2>
+      <div class="tiles" id="tiles"></div>
+      <div class="row mt">
+        <button class="btn ghost grow" id="selAll">全選</button>
+        <button class="btn ghost grow" id="selNone">全部清除</button>
+        <button class="btn ghost grow" id="selWeak">我的弱點</button>
+      </div>
+      <p class="hint" id="tileHint">選好段數後就可以開始。紅點代表這一段以前比較常錯。</p>
+    </div>
+
+    <div class="card">
+      <h2>出題方式</h2>
+      <div class="modes">
+        <button class="mode sel" data-mode="smart">
+          <b>聰明出題</b><i>常錯的題目會多出現</i>
+        </button>
+        <button class="mode" data-mode="even">
+          <b>平均出題</b><i>每題機會都一樣</i>
+        </button>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button class="btn primary big" id="startBtn">開始 60 秒挑戰 🚀</button>
+      <button class="btn" id="reviewBtn" hidden>只練上次的錯題 🔁</button>
+    </div>
+    <p class="tiny">紀錄只存在這台裝置的瀏覽器裡，不會上傳。</p>
+  </section>
+
+  <!-- ══ 作答 ══ -->
+  <section class="screen" id="play">
+    <div class="hud">
+      <div class="clock" id="clock">60<small>秒</small></div>
+      <div class="bar"><i id="timeBar"></i></div>
+      <div class="score" id="score">0 分</div>
+    </div>
+
+    <div class="qcard" id="qcard">
+      <div class="qtext" id="qtext">7 <em>×</em> 8</div>
+      <div class="streak" id="streakTxt"></div>
+    </div>
+
+    <div class="opts" id="opts">
+      <button class="opt" data-i="0"></button>
+      <button class="opt" data-i="1"></button>
+      <button class="opt" data-i="2"></button>
+      <button class="opt" data-i="3"></button>
+    </div>
+
+    <div class="foot">
+      <button class="btn ghost" id="quitBtn">結束這一輪</button>
+    </div>
+  </section>
+
+  <!-- ══ 結果 ══ -->
+  <section class="screen" id="result">
+    <div class="card">
+      <div class="bigscore">
+        <div class="n" id="rScore">0<small>題</small></div>
+        <div class="msg" id="rMsg"></div>
+        <div id="rRec"></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="rAcc">0%</b><i>正確率</i></div>
+        <div class="stat"><b id="rWrong">0</b><i>答錯</i></div>
+        <div class="stat"><b id="rStreak">0</b><i>最長連對</i></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>要複習的題目</h2>
+      <div class="wrongs" id="rWrongs"></div>
+    </div>
+
+    <div class="foot">
+      <button class="btn primary big" id="againBtn">再玩一次 🚀</button>
+      <button class="btn" id="againWrongBtn" hidden>只練這次的錯題 🔁</button>
+      <button class="btn ghost" id="backBtn">回去換段數</button>
+    </div>
+  </section>
+
+  <!-- ══ 歷史 ══ -->
+  <section class="screen" id="history">
+    <div class="card">
+      <h2>最近 12 次成績</h2>
+      <div class="chart" id="chart"></div>
+      <div class="stats" style="margin-top:14px">
+        <div class="stat"><b id="hBest">0</b><i>最佳紀錄</i></div>
+        <div class="stat"><b id="hAvg">0</b><i>平均題數</i></div>
+        <div class="stat"><b id="hRuns">0</b><i>總共練習</i></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>最需要加強的題目</h2>
+      <div class="weak" id="weak"></div>
+    </div>
+
+    <div class="foot">
+      <button class="btn primary big" id="hBackBtn">回到首頁</button>
+      <button class="btn ghost" id="clearBtn">清除所有紀錄</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="fx" id="fx"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ────────── 資料儲存 ────────── */
+  var KEY = 'mtq_v1';
+  var DEF = { sound: true, tables: [2,3,4,5,6,7,8,9], mode: 'smart', perQ: {}, runs: [], best: 0 };
+  var db;
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      db = raw ? Object.assign({}, DEF, JSON.parse(raw)) : Object.assign({}, DEF);
+    } catch (e) { db = Object.assign({}, DEF); }
+    if (!Array.isArray(db.tables) || !db.tables.length) db.tables = DEF.tables.slice();
+    if (!db.perQ || typeof db.perQ !== 'object') db.perQ = {};
+    if (!Array.isArray(db.runs)) db.runs = [];
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
+  }
+
+  /* ────────── 小工具 ────────── */
+  var $ = function (id) { return document.getElementById(id); };
+  function key(a, b) { return a + 'x' + b; }
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  function stat(a, b) {
+    var s = db.perQ[key(a, b)];
+    return s || { n: 0, w: 0 };
+  }
+
+  /* ────────── 音效 ────────── */
+  var ac = null;
+  function beep(freq, dur, type, vol, delay) {
+    if (!db.sound) return;
+    try {
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      var t0 = ac.currentTime + (delay || 0);
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol || 0.16, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0); o.stop(t0 + dur + 0.02);
+    } catch (e) {}
+  }
+  var SFX = {
+    right: function () { beep(880, 0.10, 'sine', 0.14, 0); beep(1320, 0.14, 'sine', 0.12, 0.07); },
+    wrong: function () { beep(240, 0.20, 'triangle', 0.13, 0); beep(180, 0.24, 'triangle', 0.11, 0.11); },
+    tick:  function () { beep(620, 0.08, 'sine', 0.10, 0); },
+    go:    function () { beep(990, 0.20, 'sine', 0.14, 0); },
+    combo: function () { beep(1050, 0.09, 'sine', 0.12, 0); beep(1400, 0.12, 'sine', 0.10, 0.08); },
+    end:   function () {
+      [660, 830, 990, 1320].forEach(function (f, i) { beep(f, 0.18, 'sine', 0.12, i * 0.11); });
+    }
+  };
+
+  /* ────────── 畫面切換 ────────── */
+  var SCREENS = ['setup', 'play', 'result', 'history'];
+  function show(name) {
+    SCREENS.forEach(function (s) { $(s).classList.toggle('on', s === name); });
+    window.scrollTo(0, 0);
+  }
+
+  /* ────────── 設定畫面 ────────── */
+  var picked = [];
+
+  function tableRisk(t) {
+    var n = 0, w = 0;
+    for (var b = 1; b <= 9; b++) { var s = stat(t, b); n += s.n; w += s.w; }
+    return n >= 4 ? w / n : 0;
+  }
+
+  function buildTiles() {
+    var box = $('tiles');
+    box.innerHTML = '';
+    for (var t = 1; t <= 9; t++) {
+      (function (t) {
+        var risk = tableRisk(t);
+        var el = document.createElement('button');
+        el.className = 'tile' + (picked.indexOf(t) >= 0 ? ' sel' : '');
+        el.setAttribute('aria-pressed', picked.indexOf(t) >= 0 ? 'true' : 'false');
+        el.innerHTML = '<b>' + t + '</b><i>' + t + ' 的乘法</i>' +
+          (risk >= 0.2 ? '<span class="warn">●</span>' : '');
+        el.addEventListener('click', function () {
+          var i = picked.indexOf(t);
+          if (i >= 0) picked.splice(i, 1); else picked.push(t);
+          picked.sort(function (a, b) { return a - b; });
+          buildTiles(); syncStart();
+        });
+        box.appendChild(el);
+      })(t);
+    }
+  }
+
+  function syncStart() {
+    $('startBtn').disabled = picked.length === 0;
+    $('tileHint').textContent = picked.length === 0
+      ? '至少要選一段才能開始喔。'
+      : '已選 ' + picked.join('、') + ' 段，共 ' + (picked.length * 9) + ' 種題目。紅點代表以前比較常錯的那一段。';
+  }
+
+  $('selAll').addEventListener('click', function () {
+    picked = [1,2,3,4,5,6,7,8,9]; buildTiles(); syncStart();
+  });
+  $('selNone').addEventListener('click', function () {
+    picked = []; buildTiles(); syncStart();
+  });
+  $('selWeak').addEventListener('click', function () {
+    var ranked = [];
+    for (var t = 1; t <= 9; t++) ranked.push({ t: t, r: tableRisk(t) });
+    ranked.sort(function (a, b) { return b.r - a.r; });
+    var weak = ranked.filter(function (x) { return x.r > 0; }).slice(0, 3).map(function (x) { return x.t; });
+    if (!weak.length) {
+      $('tileHint').textContent = '還沒有足夠的練習紀錄，先隨便選幾段玩玩看吧！';
+      return;
+    }
+    picked = weak.sort(function (a, b) { return a - b; });
+    buildTiles(); syncStart();
+  });
+
+  document.querySelectorAll('.mode').forEach(function (m) {
+    m.addEventListener('click', function () {
+      document.querySelectorAll('.mode').forEach(function (x) { x.classList.remove('sel'); });
+      m.classList.add('sel');
+      db.mode = m.dataset.mode; save();
+    });
+  });
+
+  /* ────────── 出題 ────────── */
+  var TOTAL_TIME = 60;
+  var S = null;
+
+  function buildPool(tables) {
+    var pool = [];
+    tables.forEach(function (t) {
+      for (var b = 1; b <= 9; b++) pool.push({ a: t, b: b });
+    });
+    return pool;
+  }
+
+  function pickQuestion() {
+    var pool = S.pool;
+    if (pool.length === 1) return pool[0];
+    var cands = pool.filter(function (q) {
+      return !S.last || q.a !== S.last.a || q.b !== S.last.b;
+    });
+    if (!cands.length) cands = pool;
+    if (S.mode === 'even') return cands[Math.floor(Math.random() * cands.length)];
+
+    var weights = cands.map(function (q) {
+      var s = stat(q.a, q.b);
+      var w = 1 + s.w * 2;                       // 以前錯過 → 更常出現
+      if (s.n === 0) w += 1.2;                   // 沒練過的也多給機會
+      if (S.recentWrong[key(q.a, q.b)]) w += 4;  // 這一輪剛剛才錯 → 馬上再考
+      return Math.min(w, 9);
+    });
+    var sum = weights.reduce(function (x, y) { return x + y; }, 0);
+    var r = Math.random() * sum;
+    for (var i = 0; i < cands.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return cands[i];
+    }
+    return cands[cands.length - 1];
+  }
+
+  function makeOptions(a, b) {
+    var ans = a * b;
+    var set = [];
+    function add(v) {
+      if (v > 0 && v !== ans && set.indexOf(v) < 0) set.push(v);
+    }
+    // 最像的錯法：少加一次 / 多加一次、鄰近的乘法答案
+    shuffle([ans + a, ans - a, ans + b, ans - b, a * (b + 1), a * (b - 1), (a + 1) * b, (a - 1) * b])
+      .forEach(add);
+    shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10]).forEach(add);
+    for (var k = 1; set.length < 3; k++) { add(ans + k); add(ans - k); }
+    return shuffle([ans, set[0], set[1], set[2]]);
+  }
+
+  /* ────────── 遊戲流程 ────────── */
+  var timer = null, lock = false;
+
+  function startGame(tables, opts) {
+    opts = opts || {};
+    S = {
+      pool: opts.pool || buildPool(tables),
+      tables: tables.slice(),
+      mode: opts.pool ? 'even' : db.mode,
+      correct: 0, wrong: 0, streak: 0, bestStreak: 0,
+      wrongList: [], recentWrong: {}, last: null,
+      answers: [], reviewMode: !!opts.pool,
+      endAt: 0, running: false
+    };
+    $('subtitle').textContent = S.reviewMode ? '錯題複習' : (tables.join('、') + ' 段 ・ 60 秒');
+    show('play');
+    countdown(3);
+  }
+
+  function countdown(n) {
+    var el = document.createElement('div');
+    el.className = 'countdown';
+    document.body.appendChild(el);
+    var i = n;
+    function step() {
+      if (i > 0) {
+        el.innerHTML = '<b>' + i + '</b>';
+        SFX.tick();
+        i--;
+        setTimeout(step, 700);
+      } else {
+        el.innerHTML = '<b style="font-size:3.4rem">開始！</b>';
+        SFX.go();
+        setTimeout(function () {
+          el.remove();
+          S.running = true;
+          S.endAt = Date.now() + TOTAL_TIME * 1000;
+          timer = setInterval(tickClock, 100);
+          tickClock();
+          nextQuestion();
+        }, 550);
+      }
+    }
+    step();
+  }
+
+  function tickClock() {
+    var left = Math.max(0, S.endAt - Date.now()) / 1000;
+    var secs = Math.ceil(left);
+    $('clock').innerHTML = secs + '<small>秒</small>';
+    $('clock').classList.toggle('low', secs <= 10);
+    var bar = $('timeBar');
+    bar.style.width = (left / TOTAL_TIME * 100) + '%';
+    bar.classList.toggle('low', secs <= 10);
+    if (left <= 0) endGame();
+  }
+
+  function nextQuestion() {
+    if (!S.running) return;
+    lock = false;
+    var q = pickQuestion();
+    S.last = q;
+    S.q = q;
+    $('qcard').className = 'qcard';
+    $('qtext').innerHTML = q.a + ' <em>×</em> ' + q.b;
+    var opts = makeOptions(q.a, q.b);
+    document.querySelectorAll('.opt').forEach(function (btn, i) {
+      btn.className = 'opt';
+      btn.textContent = opts[i];
+      btn.dataset.val = opts[i];
+      btn.disabled = false;
+    });
+  }
+
+  function answer(val, btn) {
+    if (lock || !S.running) return;
+    lock = true;
+    var q = S.q, ans = q.a * q.b, k = key(q.a, q.b);
+    var rec = db.perQ[k] || (db.perQ[k] = { n: 0, w: 0 });
+    rec.n++;
+
+    if (val === ans) {
+      S.correct++; S.streak++;
+      if (S.streak > S.bestStreak) S.bestStreak = S.streak;
+      delete S.recentWrong[k];
+      btn.classList.add('good');
+      $('qcard').classList.add('good');
+      SFX.right();
+      sparkle(btn);
+      if (S.streak > 0 && S.streak % 5 === 0) {
+        $('streakTxt').textContent = '🔥 連續答對 ' + S.streak + ' 題！';
+        SFX.combo();
+      } else {
+        $('streakTxt').textContent = S.streak >= 2 ? '連對 ' + S.streak : '';
+      }
+      $('score').textContent = S.correct + ' 分';
+      setTimeout(nextQuestion, 320);
+    } else {
+      S.wrong++; S.streak = 0; rec.w++;
+      S.recentWrong[k] = true;
+      if (!S.wrongList.some(function (x) { return x.a === q.a && x.b === q.b; })) {
+        S.wrongList.push({ a: q.a, b: q.b });
+      }
+      btn.classList.add('bad');
+      $('qcard').classList.add('bad');
+      $('streakTxt').textContent = '正確答案是 ' + ans;
+      SFX.wrong();
+      document.querySelectorAll('.opt').forEach(function (o) {
+        if (Number(o.dataset.val) === ans) o.classList.add('good');
+        else if (o !== btn) o.classList.add('dim');
+        o.disabled = true;
+      });
+      setTimeout(nextQuestion, 1150);
+    }
+    save();
+  }
+
+  document.querySelectorAll('.opt').forEach(function (btn) {
+    btn.addEventListener('click', function () { answer(Number(btn.dataset.val), btn); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!$('play').classList.contains('on') || !S || !S.running) return;
+    var i = ['1', '2', '3', '4'].indexOf(e.key);
+    if (i >= 0) {
+      var btn = document.querySelectorAll('.opt')[i];
+      if (btn) answer(Number(btn.dataset.val), btn);
+    }
+  });
+
+  function sparkle(btn) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var r = btn.getBoundingClientRect();
+    var icons = ['✨', '⭐️', '🌟', '💫'];
+    for (var i = 0; i < 5; i++) {
+      var s = document.createElement('span');
+      s.className = 'spark';
+      s.textContent = icons[Math.floor(Math.random() * icons.length)];
+      s.style.left = (r.left + r.width * (0.2 + Math.random() * 0.6)) + 'px';
+      s.style.top = (r.top + r.height * 0.4) + 'px';
+      s.style.setProperty('--dx', (Math.random() * 100 - 50) + 'px');
+      s.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+      $('fx').appendChild(s);
+      (function (el) { setTimeout(function () { el.remove(); }, 950); })(s);
+    }
+  }
+
+  function endGame() {
+    if (!S || !S.running) return;
+    S.running = false;
+    clearInterval(timer); timer = null;
+    SFX.end();
+
+    var isRecord = false;
+    if (!S.reviewMode) {
+      db.runs.push({
+        t: Date.now(), tables: S.tables, correct: S.correct,
+        wrong: S.wrong, streak: S.bestStreak
+      });
+      if (db.runs.length > 60) db.runs = db.runs.slice(-60);
+      if (S.correct > (db.best || 0)) { db.best = S.correct; isRecord = db.runs.length > 1; }
+      save();
+    }
+    renderResult(isRecord);
+    show('result');
+  }
+
+  $('quitBtn').addEventListener('click', endGame);
+
+  /* ────────── 結果畫面 ────────── */
+  function renderResult(isRecord) {
+    var total = S.correct + S.wrong;
+    var acc = total ? Math.round(S.correct / total * 100) : 0;
+    $('rScore').innerHTML = S.correct + '<small>題</small>';
+    $('rAcc').textContent = acc + '%';
+    $('rWrong').textContent = S.wrong;
+    $('rStreak').textContent = S.bestStreak;
+
+    var msg;
+    if (total === 0) msg = '這次沒有作答，再來一次！';
+    else if (acc === 100 && S.correct >= 15) msg = '太厲害了，全對！🏆';
+    else if (acc >= 90) msg = '好棒！幾乎都對了 🎉';
+    else if (acc >= 70) msg = '不錯喔，再加油 💪';
+    else msg = '有進步空間，我們一起複習 📚';
+    $('rMsg').textContent = msg;
+    $('rRec').innerHTML = isRecord ? '<span class="rec">🏅 破紀錄！最佳 ' + db.best + ' 題</span>' : '';
+
+    var box = $('rWrongs');
+    box.innerHTML = '';
+    if (!S.wrongList.length) {
+      box.innerHTML = '<div class="empty">' + (total ? '這一輪沒有答錯，太棒了！🎊' : '還沒有作答紀錄') + '</div>';
+    } else {
+      S.wrongList.forEach(function (q) {
+        var el = document.createElement('span');
+        el.className = 'wchip';
+        el.innerHTML = q.a + ' × ' + q.b + ' = ' + (q.a * q.b);
+        box.appendChild(el);
+      });
+    }
+    $('againWrongBtn').hidden = S.wrongList.length === 0;
+    db.lastWrong = S.wrongList.slice();
+    save();
+  }
+
+  $('againBtn').addEventListener('click', function () { startGame(S.tables); });
+  $('againWrongBtn').addEventListener('click', function () {
+    startGame(S.tables, { pool: S.wrongList.slice() });
+  });
+  $('backBtn').addEventListener('click', function () {
+    db.tables = picked.slice(); save();
+    $('subtitle').textContent = '60 秒挑戰';
+    refreshSetup(); show('setup');
+  });
+
+  /* ────────── 歷史畫面 ────────── */
+  function renderHistory() {
+    var runs = db.runs.slice(-12);
+    var chart = $('chart');
+    chart.innerHTML = '';
+    if (!runs.length) {
+      chart.innerHTML = '<div class="empty" style="margin:auto">還沒有練習紀錄，先玩一輪吧！</div>';
+    } else {
+      var max = Math.max.apply(null, runs.map(function (r) { return r.correct; })) || 1;
+      runs.forEach(function (r) {
+        var d = new Date(r.t);
+        var col = document.createElement('div');
+        col.className = 'col';
+        col.innerHTML = '<u>' + r.correct + '</u>' +
+          '<b style="height:' + Math.max(4, r.correct / max * 74) + 'px"></b>' +
+          '<em>' + (d.getMonth() + 1) + '/' + d.getDate() + '</em>';
+        chart.appendChild(col);
+      });
+    }
+    var all = db.runs;
+    $('hBest').textContent = db.best || 0;
+    $('hAvg').textContent = all.length
+      ? Math.round(all.reduce(function (s, r) { return s + r.correct; }, 0) / all.length) : 0;
+    $('hRuns').textContent = all.length;
+
+    var list = [];
+    Object.keys(db.perQ).forEach(function (k) {
+      var s = db.perQ[k];
+      if (s.w > 0) list.push({ k: k, n: s.n, w: s.w, r: s.w / s.n });
+    });
+    list.sort(function (x, y) { return (y.r - x.r) || (y.w - x.w); });
+    var weak = $('weak');
+    weak.innerHTML = '';
+    if (!list.length) {
+      weak.innerHTML = '<div class="empty">目前沒有常錯的題目，很棒！👍</div>';
+    } else {
+      list.slice(0, 6).forEach(function (x) {
+        var p = x.k.split('x');
+        var row = document.createElement('div');
+        row.className = 'wrow';
+        row.innerHTML =
+          '<span class="q">' + p[0] + ' × ' + p[1] + ' = ' + (p[0] * p[1]) + '</span>' +
+          '<span class="t"><i style="width:' + Math.round(x.r * 100) + '%"></i></span>' +
+          '<span class="p">錯 ' + x.w + '/' + x.n + '</span>';
+        weak.appendChild(row);
+      });
+    }
+  }
+
+  $('histBtn').addEventListener('click', function () {
+    if ($('play').classList.contains('on')) return;
+    renderHistory(); show('history');
+  });
+  $('hBackBtn').addEventListener('click', function () { refreshSetup(); show('setup'); });
+  $('clearBtn').addEventListener('click', function () {
+    if (!confirm('確定要清除所有練習紀錄嗎？這個動作無法復原。')) return;
+    var keepSound = db.sound, keepTables = db.tables;
+    db = Object.assign({}, DEF, { sound: keepSound, tables: keepTables });
+    save(); renderHistory(); buildTiles();
+  });
+
+  /* ────────── 音效開關 ────────── */
+  function syncSound() {
+    var b = $('soundBtn');
+    b.textContent = db.sound ? '🔊' : '🔇';
+    b.classList.toggle('off', !db.sound);
+    b.setAttribute('aria-pressed', db.sound ? 'true' : 'false');
+  }
+  $('soundBtn').addEventListener('click', function () {
+    db.sound = !db.sound; save(); syncSound();
+    if (db.sound) SFX.tick();
+  });
+
+  /* ────────── 啟動 ────────── */
+  function refreshSetup() {
+    buildTiles(); syncStart();
+    $('reviewBtn').hidden = !(db.lastWrong && db.lastWrong.length);
+  }
+
+  $('startBtn').addEventListener('click', function () {
+    if (!picked.length) return;
+    db.tables = picked.slice(); save();
+    startGame(picked);
+  });
+  $('reviewBtn').addEventListener('click', function () {
+    startGame(picked.length ? picked : db.tables, { pool: db.lastWrong.slice() });
+  });
+
+  load();
+  picked = db.tables.slice();
+  document.querySelectorAll('.mode').forEach(function (m) {
+    m.classList.toggle('sel', m.dataset.mode === db.mode);
+  });
+  syncSound();
+  refreshSetup();
+})();
+</script>
+</body>
+</html>
