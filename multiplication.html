@@ -337,6 +337,69 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
+  /* 平板：欄寬和字級一起放大，不然在 iPad 上會是小小一坨浮在畫面中間 */
+  @media (min-width: 700px) {
+    :root {
+      --fs-title: 1.85rem;   /* 30px */
+      --fs-head:  1.5rem;    /* 24px */
+      --fs-body:  1.0625rem; /* 17px */
+      --fs-note:  .85rem;    /* 13.6px */
+      --fs-mega:  5.5rem;    /* 88px */
+      --fs-q:     4rem;      /* 64px */
+      --fs-opt:   2.6rem;    /* 42px */
+    }
+    .wrap { max-width: 720px; padding-bottom: 56px; }
+    .head-inner { max-width: 720px; padding: 16px; }
+    .icobtn { width: 48px; height: 48px; }
+    .card { padding: 22px; border-radius: 24px; margin-top: 18px; }
+    .card h2 { margin-bottom: 18px; gap: 12px; }
+    .card h2 .n { width: 36px; height: 36px; }
+    .tiles { gap: 12px; }
+    .tile { padding: 16px 6px; border-radius: 18px; }
+    .mode { padding: 16px; border-radius: 18px; }
+    .btn { min-height: 50px; padding: 12px 22px; }
+    .btn.big { min-height: 72px; border-radius: 22px; }
+    .hud { gap: 14px; margin-top: 18px; }
+    .bar { height: 14px; }
+    .dots { gap: 7px; }
+    .dots i { height: 10px; }
+    .qcard { padding: 40px 20px 34px; border-radius: 24px; }
+    .opts { gap: 14px; margin-top: 16px; }
+    .opt { min-height: 116px; border-radius: 22px; }
+    .stat { padding: 16px 8px; border-radius: 16px; }
+    .chart { height: 140px; }
+  }
+
+  /* 桌機／大平板：主要使用場景，再放大一級。
+     也要求夠高，否則放大後作答畫面會被擠出一屏之外 */
+  @media (min-width: 1100px) and (min-height: 900px) {
+    :root {
+      --fs-title: 2.1rem;   /* 34px */
+      --fs-head:  1.7rem;   /* 27px */
+      --fs-body:  1.15rem;  /* 18px */
+      --fs-note:  .92rem;   /* 15px */
+      --fs-mega:  6.5rem;   /* 104px */
+      --fs-q:     4.75rem;  /* 76px */
+      --fs-opt:   3rem;     /* 48px */
+    }
+    .wrap { max-width: 840px; }
+    .head-inner { max-width: 840px; padding: 18px 16px; }
+    .icobtn { width: 54px; height: 54px; }
+    .card h2 .n { width: 40px; height: 40px; }
+    .qcard { padding: 52px 20px 44px; }
+    .opt { min-height: 140px; }
+    .btn.big { min-height: 78px; }
+  }
+
+  /* 又寬又矮的筆電螢幕：收斂一點，讓作答畫面不用捲動就看得完 */
+  @media (min-width: 700px) and (max-height: 750px) {
+    :root { --fs-q: 3.2rem; --fs-opt: 2.2rem; --fs-mega: 4.5rem; --fs-title: 1.6rem; }
+    .card { margin-top: 12px; }
+    .qcard { padding: 26px 20px 22px; }
+    .opt { min-height: 94px; }
+    .wrap { padding-bottom: 24px; }
+  }
+
   /* 小螢幕只調字級變數，不動個別元件，才不會又長出中間尺寸 */
   @media (max-width: 360px) {
     :root { --fs-title: 1.32rem; --fs-head: 1.15rem; --fs-q: 2.3rem; --fs-opt: 1.5rem; --fs-mega: 3.4rem; }
@@ -584,31 +647,49 @@
   }
 
   /* ────────── 音效 ────────── */
-  var ac = null;
+  var ac = null, master = null;
+
+  // iOS 只允許在使用者手勢裡建立／喚醒 AudioContext，
+  // 所以按下按鈕的當下就先開起來，不然第一次的音效會整個沒聲音
+  function initAudio() {
+    try {
+      if (!ac) {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        var comp = ac.createDynamicsCompressor();   // 音量拉高後壓一下，避免破音
+        comp.threshold.setValueAtTime(-14, ac.currentTime);
+        comp.ratio.setValueAtTime(6, ac.currentTime);
+        master = ac.createGain();
+        master.gain.setValueAtTime(1, ac.currentTime);
+        master.connect(comp); comp.connect(ac.destination);
+      }
+      if (ac.state === 'suspended') ac.resume();
+    } catch (e) {}
+  }
+
   function beep(freq, dur, type, vol, delay) {
     if (!db.sound) return;
     try {
-      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
-      if (ac.state === 'suspended') ac.resume();
+      initAudio();
+      if (!ac) return;
       var t0 = ac.currentTime + (delay || 0);
       var o = ac.createOscillator(), g = ac.createGain();
       o.type = type || 'sine';
       o.frequency.setValueAtTime(freq, t0);
       g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(vol || 0.16, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(vol || 0.4, t0 + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-      o.connect(g); g.connect(ac.destination);
+      o.connect(g); g.connect(master);
       o.start(t0); o.stop(t0 + dur + 0.02);
     } catch (e) {}
   }
   var SFX = {
-    right: function () { beep(880, 0.10, 'sine', 0.14, 0); beep(1320, 0.14, 'sine', 0.12, 0.07); },
-    wrong: function () { beep(240, 0.20, 'triangle', 0.13, 0); beep(180, 0.24, 'triangle', 0.11, 0.11); },
-    tick:  function () { beep(620, 0.08, 'sine', 0.10, 0); },
-    go:    function () { beep(990, 0.20, 'sine', 0.14, 0); },
-    combo: function () { beep(1050, 0.09, 'sine', 0.12, 0); beep(1400, 0.12, 'sine', 0.10, 0.08); },
+    right: function () { beep(880, 0.11, 'sine', 0.46, 0); beep(1320, 0.15, 'sine', 0.40, 0.07); },
+    wrong: function () { beep(240, 0.22, 'triangle', 0.42, 0); beep(180, 0.26, 'triangle', 0.36, 0.11); },
+    tick:  function () { beep(620, 0.09, 'sine', 0.34, 0); },
+    go:    function () { beep(990, 0.22, 'sine', 0.48, 0); },
+    combo: function () { beep(1050, 0.10, 'sine', 0.42, 0); beep(1400, 0.13, 'sine', 0.36, 0.08); },
     end:   function () {
-      [660, 830, 990, 1320].forEach(function (f, i) { beep(f, 0.18, 'sine', 0.12, i * 0.11); });
+      [660, 830, 990, 1320].forEach(function (f, i) { beep(f, 0.20, 'sine', 0.40, i * 0.11); });
     }
   };
 
@@ -1237,7 +1318,7 @@
   }
   $('soundBtn').addEventListener('click', function () {
     db.sound = !db.sound; save(); syncSound();
-    if (db.sound) SFX.tick();
+    if (db.sound) { initAudio(); SFX.right(); }   // 開啟時放一聲，順便當音量試聽
   });
 
   /* ────────── 啟動 ────────── */
@@ -1250,6 +1331,7 @@
   }
 
   $('startBtn').addEventListener('click', function () {
+    if (db.sound) initAudio();   // 趁著這個手勢把音訊解鎖
     if (!picked.length) return;
     if (picked.length) db.tables = picked.slice();
     save();
