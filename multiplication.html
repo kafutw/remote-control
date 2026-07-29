@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>九九乘法表 60 秒挑戰</title>
+<title>乘法表大考驗遊戲</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2F7FF">
 <style>
@@ -27,6 +27,15 @@
     --radius: 20px;
     --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
             "Microsoft JhengHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+    /* 字級一共七種，介面四種、數字三種。要調整只改這裡 */
+    --fs-title: 1.5rem;    /* 24px  主標，全 App 只有一個 */
+    --fs-head:  1.125rem;  /* 18px  段落標題、主要按鈕 */
+    --fs-body:  .9375rem;  /* 15px  內文 */
+    --fs-note:  .75rem;    /* 12px  說明、標籤 */
+    --fs-mega:  4rem;      /* 64px  倒數、結算分數 */
+    --fs-q:     2.75rem;   /* 44px  題目 */
+    --fs-num:   1.75rem;   /* 28px  選項、秒數、統計數字 */
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -79,15 +88,17 @@
     max-width: 560px; margin: 0 auto; padding: 12px 16px;
     display: flex; align-items: center; gap: 8px;
   }
-  h1 { font-size: 1.16rem; font-weight: 800; margin: 0; letter-spacing: -.01em; flex: 1; }
-  h1 { min-width: 0; }
+  h1 {
+    font-size: var(--fs-title); font-weight: 800; margin: 0; flex: 1; min-width: 0;
+    letter-spacing: -.02em; line-height: 1.15;
+  }
   h1 span {
-    font-size: .74rem; font-weight: 600; color: var(--blue-deep); display: block; margin-top: 1px;
+    font-size: var(--fs-note); font-weight: 600; color: var(--blue-deep); display: block; margin-top: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
   .icobtn {
-    font-family: inherit; font-size: 1.02rem; line-height: 1;
+    font-family: inherit; font-size: var(--fs-body); line-height: 1;
     width: 40px; height: 40px; flex: 0 0 auto;
     border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
     border-radius: 99px; cursor: pointer;
@@ -99,7 +110,7 @@
   .icobtn.off { color: var(--ink-faint); }
 
   .btn {
-    font-family: inherit; font-size: .9rem; font-weight: 700;
+    font-family: inherit; font-size: var(--fs-body); font-weight: 700;
     border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
     padding: 10px 18px; border-radius: 99px; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -108,7 +119,7 @@
   .btn:active { transform: translateY(1px); }
   .btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
-  .btn.big { width: 100%; font-size: 1.08rem; padding: 16px; min-height: 58px; border-radius: 18px; }
+  .btn.big { width: 100%; font-size: var(--fs-head); padding: 16px; min-height: 58px; border-radius: 18px; }
   .btn.ghost { color: var(--ink-soft); }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
 
@@ -123,8 +134,14 @@
     padding: 16px; margin-top: 14px;
   }
   .card h2 {
-    font-size: .82rem; font-weight: 800; margin: 0 0 12px; color: var(--ink-soft);
-    letter-spacing: .04em;
+    font-size: var(--fs-head); font-weight: 800; margin: 0 0 14px; color: var(--ink);
+    letter-spacing: -.01em; display: flex; align-items: center; gap: 10px;
+  }
+  .card h2 .n {
+    flex: 0 0 auto; width: 30px; height: 30px; border-radius: 99px;
+    background: var(--blue); color: #fff; font-size: var(--fs-body);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
   }
 
   /* ── setup ── */
@@ -136,44 +153,44 @@
   }
   .tile:active { transform: translateY(1px); }
   .tile:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-  .tile b { display: block; font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .tile i { display: block; font-style: normal; font-size: .68rem; color: var(--ink-faint); font-weight: 700; margin-top: 2px; }
+  .tile b { display: block; font-size: var(--fs-num); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .tile i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-faint); font-weight: 700; margin-top: 2px; }
   .tile.sel { border-color: var(--blue); background: var(--blue-soft); color: var(--blue-deep); }
   .tile.sel i { color: var(--blue-deep); }
-  .tile .warn { position: absolute; top: 5px; right: 7px; font-size: .62rem; color: var(--coral-ink); font-weight: 800; }
+  .tile .warn { position: absolute; top: 4px; right: 7px; font-size: var(--fs-note); color: var(--coral-ink); font-weight: 800; }
 
   .row { display: flex; gap: 8px; align-items: center; }
   .row.mt { margin-top: 12px; }
   .grow { flex: 1; }
-  .hint { font-size: .78rem; color: var(--ink-soft); margin: 10px 2px 0; line-height: 1.55; }
+  .hint { font-size: var(--fs-note); color: var(--ink-soft); margin: 10px 2px 0; line-height: 1.6; }
 
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .modes.three { grid-template-columns: repeat(3, 1fr); }
   .modes.three .mode { text-align: center; padding: 13px 6px; }
-  .modes.three .mode b { font-size: 1.24rem; font-variant-numeric: tabular-nums; }
+  .modes.three .mode b { font-size: var(--fs-num); font-variant-numeric: tabular-nums; }
   .mode {
     font-family: inherit; cursor: pointer; color: var(--ink); text-align: left;
     background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
     padding: 12px 13px; transition: all .14s;
   }
   .mode.sel { border-color: var(--blue); background: var(--blue-soft); }
-  .mode b { display: block; font-size: .95rem; font-weight: 800; }
-  .mode i { display: block; font-style: normal; font-size: .72rem; color: var(--ink-soft); margin-top: 2px; }
+  .mode b { display: block; font-size: var(--fs-body); font-weight: 800; }
+  .mode i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); margin-top: 3px; }
   .mode.sel i { color: var(--blue-deep); }
 
   /* ── play ── */
   .hud { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
   .clock {
-    font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums;
+    font-size: var(--fs-num); font-weight: 800; font-variant-numeric: tabular-nums;
     color: var(--blue-deep); min-width: 62px; letter-spacing: -.02em;
   }
   .clock.low { color: var(--coral-ink); animation: pulse .9s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: .45; } }
-  .clock small { font-size: .74rem; font-weight: 700; color: var(--ink-faint); margin-left: 2px; }
+  .clock small { font-size: var(--fs-note); font-weight: 700; color: var(--ink-faint); margin-left: 2px; }
   .bar { flex: 1; height: 12px; border-radius: 99px; background: var(--track); overflow: hidden; }
   .bar > i { display: block; height: 100%; width: 100%; background: var(--blue); border-radius: 99px; }
   .bar > i.low { background: var(--coral); }
-  .qnum { font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink-soft); min-width: 52px; text-align: right; }
+  .qnum { font-size: var(--fs-body); font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink-soft); min-width: 52px; text-align: right; }
 
   .dots { display: flex; gap: 5px; margin-top: 10px; }
   .dots i { flex: 1; height: 8px; border-radius: 99px; background: var(--track); transition: background .2s; }
@@ -193,13 +210,13 @@
     50% { transform: translateX(6px); } 75% { transform: translateX(-4px); }
   }
   .qtext {
-    font-size: 2.9rem; font-weight: 800; letter-spacing: .02em;
+    font-size: var(--fs-q); font-weight: 800; letter-spacing: .02em;
     font-variant-numeric: tabular-nums; line-height: 1.1;
   }
   .qtext em { font-style: normal; color: var(--ink-faint); margin: 0 .1em; }
   .streak {
-    font-size: .8rem; font-weight: 800; color: var(--amber);
-    height: 20px; margin-top: 6px;
+    font-size: var(--fs-note); font-weight: 800; color: var(--amber);
+    height: 20px; margin-top: 8px;
   }
 
   .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
@@ -207,7 +224,7 @@
     font-family: inherit; cursor: pointer; color: var(--ink);
     background: var(--surface); border: 2px solid var(--line); border-radius: 18px;
     box-shadow: var(--shadow); padding: 18px 8px; min-height: 76px;
-    font-size: 1.85rem; font-weight: 800; font-variant-numeric: tabular-nums;
+    font-size: var(--fs-num); font-weight: 800; font-variant-numeric: tabular-nums;
     transition: transform .1s, background .15s, border-color .15s, color .15s;
   }
   .opt:active { transform: translateY(2px); }
@@ -217,7 +234,7 @@
   .opt.dim { opacity: .38; }
 
   .fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
-  .spark { position: absolute; font-size: 1.5rem; animation: fly .9s ease-out forwards; }
+  .spark { position: absolute; font-size: var(--fs-num); animation: fly .9s ease-out forwards; }
   @keyframes fly {
     from { opacity: 1; transform: translate(0,0) scale(.6) rotate(0deg); }
     to { opacity: 0; transform: translate(var(--dx), -120px) scale(1.4) rotate(var(--rot)); }
@@ -227,63 +244,84 @@
     position: fixed; inset: 0; z-index: 70; display: flex;
     align-items: center; justify-content: center;
     background: color-mix(in srgb, var(--bg) 90%, transparent);
-    font-size: 6rem; font-weight: 800; color: var(--blue-deep);
+    font-size: var(--fs-mega); font-weight: 800; color: var(--blue-deep);
   }
   .countdown b { animation: pop .7s ease; display: block; }
+  .countdown b.go { font-size: var(--fs-q); }
   @keyframes pop { from { transform: scale(.4); opacity: 0; } 45% { transform: scale(1.12); opacity: 1; } to { transform: scale(1); opacity: 1; } }
 
   /* ── result ── */
   .bigscore { text-align: center; padding: 8px 0 4px; }
-  .bigscore .n { font-size: 4.2rem; font-weight: 800; line-height: 1; color: var(--mint-ink); font-variant-numeric: tabular-nums; }
-  .bigscore .n small { font-size: 1.1rem; color: var(--ink-soft); font-weight: 700; margin-left: 4px; }
-  .bigscore .msg { font-size: 1.05rem; font-weight: 800; margin-top: 8px; }
+  .bigscore .n { font-size: var(--fs-mega); font-weight: 800; line-height: 1; color: var(--mint-ink); font-variant-numeric: tabular-nums; }
+  .bigscore .n small { font-size: var(--fs-body); color: var(--ink-soft); font-weight: 700; margin-left: 4px; }
+  .bigscore .msg { font-size: var(--fs-head); font-weight: 800; margin-top: 10px; }
   .bigscore .rec {
-    display: inline-block; margin-top: 8px; font-size: .78rem; font-weight: 800;
+    display: inline-block; margin-top: 10px; font-size: var(--fs-note); font-weight: 800;
     background: var(--amber-soft); color: var(--amber); padding: 5px 12px; border-radius: 99px;
   }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .stat { background: var(--bg); border-radius: 14px; padding: 11px 6px; text-align: center; }
-  .stat b { display: block; font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .stat i { display: block; font-style: normal; font-size: .7rem; color: var(--ink-soft); font-weight: 700; margin-top: 1px; }
+  .stat b { display: block; font-size: var(--fs-num); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat b small { font-size: var(--fs-note); color: var(--ink-soft); }
+  .stat i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
 
   .wrongs { display: flex; flex-wrap: wrap; gap: 8px; }
   .wchip {
     background: var(--coral-soft); color: var(--coral-ink); border-radius: 12px;
-    padding: 8px 12px; font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums;
+    padding: 9px 13px; font-size: var(--fs-body); font-weight: 800; font-variant-numeric: tabular-nums;
   }
-  .wchip small { font-weight: 700; opacity: .7; margin-left: 4px; font-size: .74rem; }
-  .empty { color: var(--ink-soft); font-size: .86rem; text-align: center; padding: 8px 0; }
+  .wchip small { font-weight: 700; opacity: .7; margin-left: 4px; font-size: var(--fs-note); }
+  .empty { color: var(--ink-soft); font-size: var(--fs-body); text-align: center; padding: 8px 0; }
 
   /* ── history ── */
   .chart { display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: 110px; padding-top: 6px; }
   .chart .col { flex: 1; max-width: 42px; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-  .chart .col u { font-style: normal; text-decoration: none; font-size: .66rem; font-weight: 800; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .chart .col u { font-style: normal; text-decoration: none; font-size: var(--fs-note); font-weight: 800; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
   .chart .col b { display: block; width: 100%; background: var(--blue); border-radius: 6px; min-height: 4px; }
   .chart .col:last-child b { background: var(--mint); }
-  .chart .col em { font-style: normal; font-size: .6rem; color: var(--ink-faint); }
+  .chart .col em { font-style: normal; font-size: var(--fs-note); color: var(--ink-faint); }
+
+  .days { display: flex; flex-direction: column; }
+  .dayrow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .dayrow:first-child { border-top: 0; padding-top: 2px; }
+  .dayrow .d { font-size: var(--fs-body); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .dayrow .d em { font-style: normal; color: var(--blue-deep); margin-left: 5px; }
+  .dayrow .c {
+    font-size: var(--fs-note); font-weight: 800; color: #fff; background: var(--blue);
+    border-radius: 99px; padding: 3px 10px; margin-left: auto;
+  }
+  .dayrow .ts { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+  .sess {
+    font-size: var(--fs-note); font-weight: 700; color: var(--ink-soft);
+    background: var(--bg); border-radius: 9px; padding: 4px 9px;
+    font-variant-numeric: tabular-nums;
+  }
+  .sess b { color: var(--mint-ink); margin-left: 5px; }
+  .sess.miss b { color: var(--coral-ink); }
 
   .weak { display: flex; flex-direction: column; gap: 8px; }
   .wrow { display: flex; align-items: center; gap: 10px; }
-  .wrow .q { font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 88px; }
+  .wrow .q { font-size: var(--fs-body); font-weight: 800; font-variant-numeric: tabular-nums; min-width: 92px; }
   .wrow .t { flex: 1; height: 9px; background: var(--track); border-radius: 99px; overflow: hidden; }
   .wrow .t i { display: block; height: 100%; background: var(--coral); border-radius: 99px; }
-  .wrow .p { font-size: .74rem; font-weight: 800; color: var(--coral-ink); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+  .wrow .p { font-size: var(--fs-note); font-weight: 800; color: var(--coral-ink); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
 
   .foot { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
-  .tiny { font-size: .72rem; color: var(--ink-faint); text-align: center; margin-top: 16px; }
+  .tiny { font-size: var(--fs-note); color: var(--ink-faint); text-align: center; margin-top: 16px; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
+  /* 小螢幕只調字級變數，不動個別元件，才不會又長出中間尺寸 */
   @media (max-width: 360px) {
-    .qtext { font-size: 2.4rem; }
-    .opt { font-size: 1.6rem; min-height: 68px; }
+    :root { --fs-title: 1.32rem; --fs-q: 2.3rem; --fs-num: 1.5rem; --fs-mega: 3.4rem; }
+    .opt { min-height: 68px; }
   }
 </style>
 
 <header>
   <div class="head-inner">
-    <h1>九九乘法表<span id="subtitle">每題 30 秒 ・ 10 題</span></h1>
+    <h1>乘法表大考驗遊戲<span id="subtitle">每題 30 秒 ・ 10 題</span></h1>
     <button class="icobtn" id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
     <button class="icobtn" id="histBtn" title="歷史紀錄" aria-label="歷史紀錄">📊</button>
   </div>
@@ -294,7 +332,7 @@
   <!-- ══ 設定 ══ -->
   <section class="screen on" id="setup">
     <div class="card">
-      <h2>今天要練哪幾段？</h2>
+      <h2><span class="n">1</span>今天要練哪幾段？</h2>
       <div class="tiles" id="tiles"></div>
       <div class="row mt">
         <button class="btn ghost grow" id="selAll">全選</button>
@@ -305,7 +343,7 @@
     </div>
 
     <div class="card">
-      <h2>一輪幾題？</h2>
+      <h2><span class="n">2</span>一輪幾題？</h2>
       <div class="modes three" id="counts">
         <button class="mode sel" data-count="10"><b>10 題</b><i>約 1 分鐘</i></button>
         <button class="mode" data-count="15"><b>15 題</b><i>約 2 分鐘</i></button>
@@ -315,7 +353,7 @@
     </div>
 
     <div class="card">
-      <h2>出題方式</h2>
+      <h2><span class="n">3</span>出題方式</h2>
       <div class="modes" id="modes">
         <button class="mode sel" data-mode="smart">
           <b>聰明出題</b><i>常錯的題目會多出現</i>
@@ -399,6 +437,11 @@
     </div>
 
     <div class="card">
+      <h2>每天練習幾次</h2>
+      <div class="days" id="days"></div>
+    </div>
+
+    <div class="card">
       <h2>最需要加強的題目</h2>
       <div class="weak" id="weak"></div>
     </div>
@@ -458,6 +501,15 @@
   function fmtTime(ms) {
     var s = Math.round(ms / 1000);
     return s < 60 ? s + '秒' : Math.floor(s / 60) + '分' + (s % 60) + '秒';
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function clockOf(ts) {
+    var d = new Date(ts);
+    return d.getHours() + ':' + pad(d.getMinutes());
+  }
+  function dayKey(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
@@ -702,7 +754,7 @@
         i--;
         setTimeout(step, 700);
       } else {
-        el.innerHTML = '<b style="font-size:3.4rem">開始！</b>';
+        el.innerHTML = '<b class="go">開始！</b>';
         SFX.go();
         setTimeout(function () {
           el.remove();
@@ -955,7 +1007,7 @@
     var all = db.runs;
     var best = db.best[db.count];
     $('hBest').innerHTML = best
-      ? best.correct + '<small style="font-size:.7rem;color:var(--ink-soft)"> / ' + best.total + '</small>'
+      ? best.correct + '<small> / ' + best.total + '</small>'
       : '—';
     $('hBest').nextElementSibling.textContent = best
       ? db.count + ' 題最佳 ・ ' + fmtTime(best.ms)
@@ -964,6 +1016,8 @@
     var asked = all.reduce(function (s, r) { return s + (r.total || 10); }, 0);
     $('hAvg').textContent = asked ? Math.round(got / asked * 100) + '%' : '—';
     $('hRuns').textContent = all.length;
+
+    renderDays();
 
     var list = [];
     Object.keys(db.perQ).forEach(function (k) {
@@ -987,6 +1041,42 @@
         weak.appendChild(row);
       });
     }
+  }
+
+  // 每天練了幾次、分別是幾點練的
+  function renderDays() {
+    var box = $('days');
+    box.innerHTML = '';
+    if (!db.runs.length) {
+      box.innerHTML = '<div class="empty">還沒有練習紀錄</div>';
+      return;
+    }
+    var order = [], byDay = {};
+    db.runs.forEach(function (r) {
+      var k = dayKey(r.t);
+      if (!byDay[k]) { byDay[k] = []; order.push(k); }
+      byDay[k].push(r);
+    });
+    var today = dayKey(Date.now());
+    var yesterday = dayKey(Date.now() - 86400000);
+    order.slice(-7).reverse().forEach(function (k) {
+      var runs = byDay[k];
+      var d = new Date(runs[0].t);
+      var label = (d.getMonth() + 1) + '/' + d.getDate();
+      var tag = k === today ? '今天' : (k === yesterday ? '昨天' : '');
+      var row = document.createElement('div');
+      row.className = 'dayrow';
+      var sess = runs.map(function (r) {
+        var tot = r.total || 10;
+        return '<span class="sess' + (r.correct < tot ? ' miss' : '') + '">' +
+          clockOf(r.t) + '<b>' + r.correct + '/' + tot + '</b></span>';
+      }).join('');
+      row.innerHTML =
+        '<span class="d">' + label + (tag ? '<em>' + tag + '</em>' : '') + '</span>' +
+        '<span class="c">' + runs.length + ' 次</span>' +
+        '<span class="ts">' + sess + '</span>';
+      box.appendChild(row);
+    });
   }
 
   $('histBtn').addEventListener('click', function () {
