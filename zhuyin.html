@@ -13,7 +13,7 @@
     --blue: #4C8DF6;
     --blue-deep: #2E6FD9;
     --blue-soft: #E8F1FF;
-    --sun: #FFA33D;
+    --sun: #FF9A2E;
     --sun-soft: #FFF1E0;
     --ok: #2FBE7E;
     --ok-soft: #E3F7EE;
@@ -39,7 +39,7 @@
     --bg: #F2F7FF; --bg-2: #E2EDFF; --surface: #FFFFFF; --track: #DCE7F8;
     --ink: #2A3550; --ink-soft: #6E7C99; --ink-faint: #A3AFC6; --line: #E1E9F6;
     --blue: #4C8DF6; --blue-deep: #2E6FD9; --blue-soft: #E8F1FF;
-    --sun: #FFA33D; --sun-soft: #FFF1E0;
+    --sun: #FF9A2E; --sun-soft: #FFF1E0;
     --ok: #2FBE7E; --ok-soft: #E3F7EE; --no: #F0656C; --no-soft: #FEE9EA;
     --shadow: 0 1px 2px rgba(46,111,217,.06), 0 8px 22px rgba(46,111,217,.10);
   }
@@ -61,6 +61,7 @@
   }
   .wrap { max-width: 600px; margin: 0 auto; padding: 0 16px 90px; }
   .zy { font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", var(--font); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
   header {
     position: sticky; top: 0; z-index: 20;
@@ -70,11 +71,24 @@
     border-bottom: 1px solid var(--line); padding: env(safe-area-inset-top) 0 0;
   }
   .head-inner { max-width: 600px; margin: 0 auto; padding: 13px 16px 12px; }
-  .titlerow { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-  h1 { font-size: 1.28rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+  .head-top { display: flex; align-items: center; gap: 10px; }
+  .titlerow { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0; }
+  h1 { font-size: 1.24rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
   .sub { font-size: .8rem; color: var(--blue-deep); font-weight: 600; }
+  @media (max-width: 400px) { .sub { display: none; } }
 
-  /* quiz-only header bits */
+  /* 家長用的三顆控制鈕 */
+  .tools { display: flex; gap: 7px; flex: none; }
+  .iconbtn {
+    font-family: inherit; width: 42px; height: 42px; border-radius: 99px; font-size: 1.2rem;
+    background: var(--surface); border: 1.5px solid var(--line); cursor: pointer;
+    display: grid; place-items: center; transition: all .15s; padding: 0; line-height: 1;
+  }
+  .iconbtn:active { transform: translateY(1px); }
+  .iconbtn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .iconbtn.on { background: var(--blue-soft); border-color: var(--blue); }
+  .iconbtn.off { opacity: .55; }
+
   .runbar { display: none; }
   body.s-quiz .runbar { display: flex; align-items: center; gap: 11px; margin-top: 12px; }
   .qcount { font-size: .86rem; font-weight: 700; white-space: nowrap;
@@ -100,41 +114,20 @@
   .btn:disabled { color: var(--ink-faint); cursor: default; opacity: .6; }
   .btn.primary:disabled { background: var(--track); border-color: var(--track); color: var(--ink-faint); opacity: 1; }
   .btn.wide { width: 100%; }
+  .btn.danger { color: var(--no); border-color: var(--no-soft); }
 
-  /* ---- screens ---- */
   .screen { display: none; }
   body.s-setup  .screen.setup  { display: block; }
   body.s-quiz   .screen.quiz   { display: block; }
   body.s-result .screen.result { display: block; }
-  body.s-chart  .screen.chart  { display: block; }
+  body.s-stats  .screen.stats  { display: block; }
+  body.s-settings .screen.settings { display: block; }
 
   .q { font-size: 1.02rem; font-weight: 800; margin: 20px 0 0; }
   .q .lead { display: block; font-size: .78rem; font-weight: 600; color: var(--ink-soft); margin-top: 3px; }
 
-  /* mode cards */
-  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 13px; }
-  .mode {
-    font-family: inherit; text-align: left; cursor: pointer; color: var(--ink);
-    background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius);
-    padding: 14px 14px; box-shadow: var(--shadow); position: relative;
-    display: flex; flex-direction: column; gap: 4px; min-height: 116px; transition: all .15s;
-  }
-  .mode:active { transform: translateY(1px); }
-  .mode:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-  .mode .mj { font-size: 1.6rem; line-height: 1; }
-  .mode .mt { font-weight: 800; font-size: 1rem; }
-  .mode .md { font-size: .74rem; color: var(--ink-soft); font-weight: 500; line-height: 1.45; }
-  .mode.sel { border-color: var(--blue); background: var(--blue-soft); }
-  .mode.sel .md { color: var(--blue-deep); }
-  .mode.sel::after {
-    content: '✓'; position: absolute; top: 10px; right: 11px; color: #fff; background: var(--blue);
-    width: 21px; height: 21px; border-radius: 99px; display: grid; place-items: center;
-    font-size: .74rem; font-weight: 800;
-  }
-  .mode[disabled] { opacity: .45; cursor: default; box-shadow: none; }
-
   .card {
-    margin-top: 16px; background: var(--surface); border: 1.5px solid var(--line);
+    margin-top: 14px; background: var(--surface); border: 1.5px solid var(--line);
     border-radius: var(--radius); box-shadow: var(--shadow); padding: 15px 16px;
   }
   .card-head { font-weight: 800; font-size: .94rem; display: flex; align-items: center; gap: 7px; }
@@ -149,57 +142,77 @@
   .chip:active { transform: translateY(1px); }
   .chip:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   .chip.on { background: var(--blue); border-color: var(--blue); color: #fff; }
-  .chip[disabled] { opacity: .4; cursor: default; }
+  .chip:disabled { opacity: .4; cursor: default; }
   .chip .n { font-size: .74rem; opacity: .75; font-weight: 600; }
 
-  .weak { margin-top: 11px; display: flex; flex-wrap: wrap; gap: 7px; }
+  /* 開場說明 */
+  .how {
+    margin-top: 16px; background: var(--blue-soft); border: 1.5px solid transparent;
+    border-radius: var(--radius); padding: 15px 17px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .how .hicon { font-size: 2.1rem; line-height: 1; }
+  .how .htxt { font-size: .88rem; font-weight: 600; color: var(--blue-deep); }
+  .how .htxt b { display: block; font-size: 1.02rem; font-weight: 800; color: var(--ink); margin-bottom: 2px; }
+
+  .warn {
+    margin-top: 14px; background: var(--sun-soft); border: 1.5px solid transparent;
+    border-radius: var(--radius); padding: 14px 16px; font-size: .82rem;
+    color: var(--ink); font-weight: 600; line-height: 1.55;
+  }
+  .warn b { display: block; margin-bottom: 3px; font-size: .9rem; }
+  .warn.bad { background: var(--no-soft); }
+
+  .weak { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
   .weak .w {
-    display: inline-flex; align-items: center; gap: 5px; font-size: .92rem; font-weight: 800;
-    background: var(--no-soft); color: var(--no); border-radius: 11px; padding: 5px 10px;
+    display: inline-flex; align-items: center; gap: 5px; font-size: 1rem; font-weight: 800;
+    background: var(--no-soft); color: var(--no); border-radius: 11px; padding: 5px 11px;
   }
   .weak .w small { font-size: .68rem; font-weight: 600; opacity: .85; }
 
   .go { position: sticky; bottom: 0; padding: 14px 0 calc(14px + env(safe-area-inset-bottom));
         background: linear-gradient(to top, var(--bg) 62%, transparent); margin-top: 18px; }
+  .go .row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 9px; }
 
-  /* ---- quiz ---- */
+  /* ---- 答題 ---- */
   .stage {
     margin-top: 18px; background: var(--surface); border: 1.5px solid var(--line);
-    border-radius: 24px; box-shadow: var(--shadow); padding: 24px 18px;
-    text-align: center; min-height: 190px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    border-radius: 24px; box-shadow: var(--shadow); padding: 26px 18px 22px;
+    text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;
   }
-  .ask { font-size: .84rem; font-weight: 700; color: var(--ink-soft); }
-  .big { font-size: 4.6rem; line-height: 1.1; font-weight: 800; letter-spacing: .04em; }
-  .big.small { font-size: 3rem; }
-  .bigword { font-size: 1.9rem; font-weight: 800; letter-spacing: .06em; }
-  .bigemoji { font-size: 3.4rem; line-height: 1.1; }
-  .say {
-    font-family: inherit; border: none; cursor: pointer; background: var(--sun-soft); color: var(--sun);
-    width: 92px; height: 92px; border-radius: 99px; font-size: 2.5rem; display: grid; place-items: center;
-    transition: transform .12s;
+  .ask { font-size: .86rem; font-weight: 700; color: var(--ink-soft); }
+  /* 題目的大符號：看得到、也點得下去聽發音 */
+  .symbtn {
+    position: relative; font-family: inherit; cursor: pointer; color: var(--ink);
+    background: var(--blue-soft); border: 3px solid var(--blue);
+    width: 168px; height: 168px; border-radius: 36px;
+    display: grid; place-items: center;
+    box-shadow: 0 8px 22px rgba(46,111,217,.18); transition: transform .12s;
   }
-  .say:active { transform: scale(.94); }
-  .say:focus-visible { outline: 2px solid var(--sun); outline-offset: 3px; }
-  .say.playing { animation: pulse .7s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
-  .reveal { font-size: .95rem; font-weight: 700; color: var(--ink-faint); min-height: 1.5em; }
-  .reveal.show { color: var(--blue-deep); }
+  .symbtn .sym { font-size: 6.4rem; font-weight: 800; line-height: 1; }
+  .symbtn .spkbadge {
+    position: absolute; right: -6px; bottom: -6px; width: 46px; height: 46px;
+    border-radius: 99px; background: var(--blue); color: #fff; font-size: 1.35rem;
+    display: grid; place-items: center; box-shadow: 0 4px 12px rgba(46,111,217,.32);
+  }
+  .symbtn:active { transform: scale(.96); }
+  .symbtn:focus-visible { outline: 3px solid var(--sun); outline-offset: 4px; }
+  .symbtn.playing { animation: pulse .8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  .again { font-size: .82rem; font-weight: 700; color: var(--blue-deep); }
+  .reveal { min-height: 1.6em; font-size: 1rem; font-weight: 700; color: var(--ink-soft); }
 
   .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 14px; }
   .opt {
     font-family: inherit; cursor: pointer; color: var(--ink);
     background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius);
-    box-shadow: var(--shadow); padding: 16px 10px; min-height: 96px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    box-shadow: var(--shadow); padding: 18px 10px; min-height: 108px;
+    display: flex; align-items: center; justify-content: center;
     transition: all .14s; position: relative;
   }
   .opt:active { transform: translateY(1px); }
   .opt:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-  .opt .oe { font-size: 2rem; line-height: 1; }
-  .opt .ot { font-size: 1.5rem; font-weight: 800; letter-spacing: .04em; }
-  .opt .ot.sym { font-size: 2.6rem; }
-  .opt .ot.spell { font-size: 1.65rem; }
+  .opt .ot { font-size: 3.2rem; font-weight: 800; line-height: 1; }
   .opt .ok-mark, .opt .no-mark { display: none; position: absolute; top: 8px; right: 9px;
     width: 22px; height: 22px; border-radius: 99px; place-items: center; font-size: .78rem;
     font-weight: 800; color: #fff; }
@@ -210,15 +223,15 @@
   .opt.dim { opacity: .45; }
   body.locked .opt { cursor: default; }
 
-  .verdict { margin-top: 14px; text-align: center; min-height: 62px; }
+  .verdict { margin-top: 14px; text-align: center; min-height: 54px; }
   .verdict .vtxt { font-size: 1.05rem; font-weight: 800; }
   .verdict .vtxt.good { color: var(--ok); }
   .verdict .vtxt.bad { color: var(--no); }
-  .verdict .vsub { font-size: .86rem; color: var(--ink-soft); font-weight: 600; margin-top: 3px; }
+  .verdict .vsub { font-size: .88rem; color: var(--ink-soft); font-weight: 600; margin-top: 3px; }
   .verdict .vsub b { color: var(--ink); }
-  .streak { display: inline-flex; gap: 3px; margin-left: 7px; }
+  .streak { margin-left: 6px; }
 
-  /* ---- result ---- */
+  /* ---- 成績單 ---- */
   .score-card {
     margin-top: 20px; background: var(--surface); border: 1.5px solid var(--line);
     border-radius: 24px; box-shadow: var(--shadow); padding: 24px 18px; text-align: center;
@@ -237,46 +250,194 @@
 
   .wrongs { margin-top: 16px; }
   .wrongs h2 { font-size: .94rem; margin: 0 0 10px; display: flex; align-items: center; gap: 7px; }
-  .wrow {
-    display: flex; align-items: center; gap: 12px; background: var(--surface);
-    border: 1.5px solid var(--line); border-radius: 16px; padding: 11px 13px; margin-bottom: 8px;
-  }
-  .wrow .ws { font-size: 2rem; font-weight: 800; width: 46px; text-align: center; color: var(--no); }
-  .wrow .wb { flex: 1; min-width: 0; }
-  .wrow .ww { font-weight: 800; font-size: 1rem; }
-  .wrow .wz { font-size: .82rem; color: var(--ink-soft); font-weight: 600; letter-spacing: .03em; }
-  .wrow .wsay { border: none; background: var(--blue-soft); color: var(--blue-deep); cursor: pointer;
-    width: 42px; height: 42px; border-radius: 99px; font-size: 1.1rem; flex: none; }
-  .wrow .wsay:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   .acts { display: grid; gap: 9px; margin-top: 18px; }
   .acts .two { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 
-  /* ---- chart (符號表) ---- */
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 9px; margin-top: 12px; }
-  .cell {
-    font-family: inherit; cursor: pointer; background: var(--surface); border: 1.5px solid var(--line);
-    border-radius: 16px; padding: 11px 6px 9px; text-align: center; color: var(--ink); box-shadow: var(--shadow);
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  /* 符號列（成績單、統計共用） */
+  .srow {
+    display: flex; align-items: center; gap: 12px; background: var(--surface);
+    border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 13px; margin-bottom: 8px;
+    width: 100%; text-align: left; font-family: inherit; color: var(--ink); cursor: pointer;
   }
-  .cell:active { transform: translateY(1px); }
-  .cell:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-  .cell .cs { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
-  .cell .ce { font-size: 1.2rem; line-height: 1.2; }
-  .cell .cw { font-size: .72rem; color: var(--ink-soft); font-weight: 700; }
-  .cell .cz { font-size: .64rem; color: var(--ink-faint); font-weight: 600; letter-spacing: .02em; }
-  .cell.hot { border-color: var(--no); }
-  .gsec { margin-top: 18px; }
-  .gsec h2 { font-size: .92rem; margin: 0; display: flex; align-items: center; gap: 7px; }
-  .gsec h2 small { font-weight: 600; color: var(--ink-faint); font-size: .74rem; }
+  .srow:active { transform: translateY(1px); }
+  .srow:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .srow .ss { font-size: 2.1rem; font-weight: 800; width: 44px; text-align: center; flex: none; }
+  .srow.miss .ss { color: var(--no); }
+  /* 這些列包在 <button> 裡，只能用 span，所以要自己指定 block */
+  .srow .sb { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .srow .sw { display: block; font-weight: 700; font-size: .92rem; }
+  .srow .sm { display: block; font-size: .76rem; color: var(--ink-soft); font-weight: 600;
+              font-variant-numeric: tabular-nums; }
+  .srow .sm .bad { color: var(--no); font-weight: 800; }
+  .srow .sm .good { color: var(--ok); font-weight: 800; }
+  .srow .spk { font-size: 1.2rem; color: var(--blue-deep); flex: none;
+               background: var(--blue-soft); width: 40px; height: 40px; border-radius: 99px;
+               display: grid; place-items: center; }
+  .ratebar { display: block; height: 6px; border-radius: 99px; background: var(--track);
+             overflow: hidden; margin-top: 3px; }
+  .ratebar > i { display: block; height: 100%; border-radius: 99px; background: var(--ok); }
+  .ratebar > i.low { background: var(--no); }
+  .ratebar > i.mid { background: var(--sun); }
 
+  /* ---- 統計 ---- */
+  .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 14px; }
+  .tot {
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: 16px;
+    padding: 13px 8px; text-align: center; box-shadow: var(--shadow);
+  }
+  .tot b { display: block; font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .tot span { font-size: .72rem; color: var(--ink-soft); font-weight: 600; }
+  .ssec { margin-top: 20px; }
+  .ssec h2 { font-size: .96rem; margin: 0 0 10px; display: flex; align-items: baseline; gap: 7px; }
+  .ssec h2 small { font-weight: 600; color: var(--ink-faint); font-size: .74rem; }
+  .empty { font-size: .84rem; color: var(--ink-faint); font-weight: 600;
+           background: var(--surface); border: 1.5px dashed var(--line);
+           border-radius: 16px; padding: 18px; text-align: center; }
+
+  /* 各類熟練度 */
+  .grow {
+    display: flex; align-items: center; gap: 12px; background: var(--surface);
+    border: 1.5px solid var(--line); border-radius: 16px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .grow .gi { font-size: 1.3rem; flex: none; }
+  .grow .gb { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .grow .gn { display: block; font-weight: 800; font-size: .92rem; }
+  .grow .gn small { font-weight: 600; color: var(--ink-faint); font-size: .74rem; }
+  .grow .gm { display: block; font-size: .74rem; color: var(--ink-soft); font-weight: 600;
+              font-variant-numeric: tabular-nums; }
+  .grow .gp { font-size: 1.15rem; font-weight: 800; flex: none;
+              font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  /* 歷次紀錄 */
+  .hrow {
+    display: flex; align-items: center; gap: 11px; background: var(--surface);
+    border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 13px; margin-bottom: 7px;
+    font-size: .82rem;
+  }
+  .hrow .hd { color: var(--ink-faint); font-weight: 600; font-variant-numeric: tabular-nums;
+              white-space: nowrap; }
+  .hrow .hs { flex: 1; color: var(--ink-soft); font-weight: 700; }
+  .hrow .hv { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .hrow .hv.good { color: var(--ok); }
+  .hrow .hv.mid { color: var(--sun); }
+  .hrow .hv.low { color: var(--no); }
+  .hrow .ht { color: var(--ink-faint); font-weight: 600; font-variant-numeric: tabular-nums;
+              white-space: nowrap; }
   .foot { margin-top: 26px; text-align: center; font-size: .74rem; color: var(--ink-faint); }
+
+  /* 語音設定 */
+  .raterow { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  /* 自己畫滑桿：預設的軌道在深色下會變成一條黑的，而且對平板來說太細 */
+  .raterow input[type="range"] {
+    flex: 1; -webkit-appearance: none; appearance: none;
+    background: transparent; height: 34px; margin: 0; cursor: pointer;
+  }
+  .raterow input[type="range"]::-webkit-slider-runnable-track {
+    height: 10px; border-radius: 99px; background: var(--track);
+  }
+  .raterow input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 30px; height: 30px; margin-top: -10px;
+    border-radius: 99px; background: var(--blue); border: 3px solid var(--surface);
+    box-shadow: 0 2px 6px rgba(46,111,217,.35);
+  }
+  .raterow input[type="range"]::-moz-range-track {
+    height: 10px; border-radius: 99px; background: var(--track);
+  }
+  .raterow input[type="range"]::-moz-range-thumb {
+    width: 24px; height: 24px; border-radius: 99px; background: var(--blue);
+    border: 3px solid var(--surface); box-shadow: 0 2px 6px rgba(46,111,217,.35);
+  }
+  .raterow input[type="range"]:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+  .ratetag { font-size: .76rem; color: var(--ink-faint); font-weight: 700; flex: none; }
+  .rateval { text-align: center; font-size: .82rem; color: var(--ink-soft); font-weight: 700; }
+  .toggle { display: flex; align-items: center; gap: 11px; padding: 12px 0; cursor: pointer;
+            font-size: .92rem; font-weight: 600; }
+  .toggle input { width: 22px; height: 22px; accent-color: var(--blue); flex: none; margin: 0; }
+  .toggle + .toggle { border-top: 1px solid var(--line); }
+
+  /* ─────────────────────────────────────────────
+     平板／桌機（主要使用情境）：整體放大、選項排成一列
+     ───────────────────────────────────────────── */
+  @media (min-width: 720px) {
+    .wrap, .head-inner { max-width: 880px; }
+    .wrap { padding-bottom: 110px; }
+    h1 { font-size: 1.6rem; }
+    .sub { font-size: .95rem; }
+    .iconbtn { width: 52px; height: 52px; font-size: 1.45rem; }
+    .q { font-size: 1.25rem; margin-top: 26px; }
+    .q .lead { font-size: .9rem; }
+    .card { padding: 20px 22px; }
+    .card-head { font-size: 1.06rem; }
+    .chip { font-size: 1rem; padding: 11px 19px; min-height: 50px; }
+    .btn { font-size: .95rem; min-height: 50px; }
+    .btn.primary { font-size: 1.15rem; min-height: 58px; }
+
+    .stage { padding: 34px 24px 30px; gap: 16px; }
+    .ask { font-size: 1.1rem; }
+    .symbtn { width: 224px; height: 224px; border-radius: 46px; }
+    .symbtn .sym { font-size: 9rem; }
+    .symbtn .spkbadge { width: 58px; height: 58px; font-size: 1.7rem; right: -8px; bottom: -8px; }
+    .again { font-size: .95rem; }
+    .reveal { font-size: 1.2rem; }
+
+    .opts { grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 20px; }
+    .opt { min-height: 168px; border-radius: 26px; }
+    .opt .ot { font-size: 4.8rem; }
+    .opt .ok-mark, .opt .no-mark { width: 28px; height: 28px; font-size: .95rem; top: 11px; right: 12px; }
+    .verdict { margin-top: 20px; min-height: 66px; }
+    .verdict .vtxt { font-size: 1.3rem; }
+    .verdict .vsub { font-size: 1rem; }
+
+    .big-score { font-size: 4rem; }
+    .stars { font-size: 2.8rem; }
+    .tot b { font-size: 1.8rem; }
+    .tot span { font-size: .82rem; }
+    .srow { padding: 13px 16px; }
+    .srow .ss { font-size: 2.6rem; width: 56px; }
+    .srow .sw { font-size: 1rem; }
+    .srow .sm { font-size: .84rem; }
+    /* 符號列排成兩欄，一頁看得完 */
+    .listgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  }
+
+  @media (min-width: 1080px) and (min-height: 900px) {
+    .wrap, .head-inner { max-width: 1000px; }
+    .symbtn { width: 260px; height: 260px; }
+    .symbtn .sym { font-size: 10.5rem; }
+    .opt { min-height: 196px; }
+    .opt .ot { font-size: 5.6rem; }
+    .opts { gap: 20px; }
+  }
+
+  /* 螢幕矮但寬（筆電、平板橫放）：縮一點，讓題目和四個選項同時看得到，不用捲 */
+  @media (min-width: 720px) and (max-height: 900px) {
+    .stage { margin-top: 12px; padding: 18px 20px 16px; gap: 10px; }
+    .symbtn { width: 150px; height: 150px; border-radius: 34px; }
+    .symbtn .sym { font-size: 5.8rem; }
+    .symbtn .spkbadge { width: 46px; height: 46px; font-size: 1.35rem; right: -6px; bottom: -6px; }
+    .ask { font-size: 1rem; }
+    .again { font-size: .84rem; }
+    .reveal { font-size: 1rem; min-height: 1.4em; }
+    .opts { margin-top: 12px; gap: 12px; }
+    .opt { min-height: 118px; }
+    .opt .ot { font-size: 3.6rem; }
+    .verdict { margin-top: 12px; min-height: 52px; }
+    .verdict .vtxt { font-size: 1.15rem; }
+  }
 </style>
 
 <header>
   <div class="head-inner">
-    <div class="titlerow">
-      <h1>注音 ㄅㄆㄇ 練習</h1>
-      <span class="sub" id="sub">選模式，開始闖關</span>
+    <div class="head-top">
+      <div class="titlerow">
+        <h1>注音 ㄅㄆㄇ 練習</h1>
+        <span class="sub">看符號、聽發音、找一樣的</span>
+      </div>
+      <div class="tools">
+        <button class="iconbtn" type="button" id="voiceBtn" aria-label="語音設定" title="語音設定">🗣️</button>
+        <button class="iconbtn" type="button" id="muteBtn" aria-label="發音開關" title="發音開關">🔊</button>
+        <button class="iconbtn" type="button" id="statsTopBtn" aria-label="統計後台" title="統計後台">📊</button>
+      </div>
     </div>
     <div class="runbar">
       <span class="qcount" id="qcount">第 <b>1</b>／10</span>
@@ -290,8 +451,12 @@
 
   <!-- ============ 設定 ============ -->
   <section class="screen setup">
-    <p class="q">要玩哪一種？<span class="lead">四種玩法，隨時可以換</span></p>
-    <div class="modes" id="modes"></div>
+    <div class="how">
+      <span class="hicon">👀</span>
+      <span class="htxt"><b>怎麼玩</b>上面會出現一個注音符號，同時把它的音念出來；小朋友從下面四個裡面，找出一樣的那一個。</span>
+    </div>
+
+    <div id="voiceWarn"></div>
 
     <div class="card">
       <div class="card-head">🎯 練哪些符號</div>
@@ -305,20 +470,28 @@
     </div>
 
     <div class="card" id="weakCard" style="display:none">
-      <div class="card-head">🩹 最近容易錯的</div>
+      <div class="card-head">🩹 最常錯的</div>
       <div class="weak" id="weakList"></div>
       <p class="card-hint">選上面的「只練錯的」就會加強這幾個。</p>
     </div>
 
     <div class="go">
       <button class="btn primary wide" id="startBtn">開始練習 →</button>
-      <button class="btn ghost wide" id="chartBtn" style="margin-top:9px">📖 先看注音符號表</button>
+      <button class="btn ghost wide" id="statsBtn" style="margin-top:9px">📊 看統計紀錄</button>
     </div>
   </section>
 
   <!-- ============ 答題 ============ -->
   <section class="screen quiz">
-    <div class="stage" id="stage"></div>
+    <div class="stage">
+      <div class="ask">聽聽看，下面哪一個跟它一樣？</div>
+      <button class="symbtn zy" type="button" id="sayBtn" aria-label="再念一次">
+        <span class="sym" id="bigSym"></span>
+        <span class="spkbadge">🔊</span>
+      </button>
+      <div class="again">點符號再聽一次</div>
+      <div class="reveal" id="reveal"></div>
+    </div>
     <div class="opts" id="opts"></div>
     <div class="verdict" id="verdict"></div>
     <button class="btn ghost wide" id="quitBtn" style="margin-top:6px">結束這回合</button>
@@ -338,18 +511,57 @@
       <button class="btn primary wide" id="againBtn">再玩一次</button>
       <div class="two">
         <button class="btn" id="retryWrongBtn">只練錯的</button>
-        <button class="btn ghost" id="backSetupBtn">換玩法</button>
+        <button class="btn ghost" id="resultStatsBtn">看統計</button>
       </div>
+      <button class="btn ghost wide" id="backSetupBtn">回到設定</button>
     </div>
-    <p class="foot">每天玩一點點，ㄅㄆㄇ 就記起來了 ✨</p>
+    <p class="foot">每天玩一點點，ㄅㄆㄇ 就聽得出來了 ✨</p>
   </section>
 
-  <!-- ============ 符號表 ============ -->
-  <section class="screen chart">
-    <p class="q">注音符號表<span class="lead">點一下聽發音，紅框是最近容易錯的</span></p>
-    <div id="chartBody"></div>
+  <!-- ============ 語音設定（家長用） ============ -->
+  <section class="screen settings">
+    <p class="q">語音設定<span class="lead">調整念注音的聲音和速度，設定會記住</span></p>
+
+    <div class="card">
+      <div class="card-head">🗣️ 用哪個聲音念</div>
+      <div class="chips" id="voiceList"></div>
+      <p class="card-hint" id="voiceHint"></p>
+    </div>
+
+    <div class="card">
+      <div class="card-head">🐢 念多快</div>
+      <div class="raterow">
+        <span class="ratetag">慢</span>
+        <input type="range" id="rate" min="0.4" max="1.1" step="0.1" aria-label="念的速度">
+        <span class="ratetag">快</span>
+      </div>
+      <div class="rateval" id="rateVal"></div>
+      <button class="btn wide" type="button" id="testBtn" style="margin-top:12px">🔊 試聽「ㄅ」</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head">⚙️ 其他</div>
+      <label class="toggle"><input type="checkbox" id="autoPlay"><span>出題時自動念一次</span></label>
+      <label class="toggle"><input type="checkbox" id="sayWord"><span>答完念一次例詞（爸爸、皮球…）</span></label>
+      <label class="toggle"><input type="checkbox" id="vibr"><span>答題時震動回饋</span></label>
+    </div>
+
     <div class="go">
-      <button class="btn primary wide" id="chartBackBtn">← 回去練習</button>
+      <button class="btn primary wide" type="button" id="setBackBtn">← 回去練習</button>
+    </div>
+  </section>
+
+  <!-- ============ 統計 ============ -->
+  <section class="screen stats">
+    <p class="q">統計紀錄<span class="lead">每個符號答對答錯都會累積，點一下可以聽發音</span></p>
+    <div class="totals" id="totals"></div>
+    <div class="ssec" id="groupSec"></div>
+    <div class="ssec" id="rankSec"></div>
+    <div class="ssec" id="histSec"></div>
+    <div class="ssec" id="allSec"></div>
+    <div class="go">
+      <button class="btn primary wide" id="statsBackBtn">← 回去練習</button>
+      <button class="btn danger wide" id="clearBtn" style="margin-top:9px">清除所有紀錄</button>
     </div>
   </section>
 
@@ -357,119 +569,117 @@
 
 <script>
   // ─────────────────────────────────────────────
-  // 37 個注音符號 + 生活例詞
-  // s=符號 g=分類 w=語詞 z=語詞注音 c=代表字 cz=代表字注音 e=圖示
+  // 37 個注音符號
+  //   s  = 符號
+  //   r  = 本音字：語音引擎念這個漢字，聽起來就是這個符號的音
+  //        （注音符號本身餵給語音引擎多半不會出聲，所以改念本音字）
+  //   w/z/e = 例詞、例詞注音、圖示，答完之後拿來加深印象
   // ─────────────────────────────────────────────
   const DATA = [
-    { s:'ㄅ', g:'sheng', w:'爸爸', z:'ㄅㄚˋ˙ㄅㄚ',   c:'爸', cz:'ㄅㄚˋ',   e:'👨' },
-    { s:'ㄆ', g:'sheng', w:'皮球', z:'ㄆㄧˊㄑㄧㄡˊ', c:'皮', cz:'ㄆㄧˊ',   e:'⚽' },
-    { s:'ㄇ', g:'sheng', w:'媽媽', z:'ㄇㄚ˙ㄇㄚ',     c:'媽', cz:'ㄇㄚ',     e:'👩' },
-    { s:'ㄈ', g:'sheng', w:'飛機', z:'ㄈㄟㄐㄧ',       c:'飛', cz:'ㄈㄟ',     e:'✈️' },
-    { s:'ㄉ', g:'sheng', w:'電話', z:'ㄉㄧㄢˋㄏㄨㄚˋ', c:'電', cz:'ㄉㄧㄢˋ', e:'☎️' },
-    { s:'ㄊ', g:'sheng', w:'兔子', z:'ㄊㄨˋ˙ㄗ',       c:'兔', cz:'ㄊㄨˋ',   e:'🐰' },
-    { s:'ㄋ', g:'sheng', w:'牛奶', z:'ㄋㄧㄡˊㄋㄞˇ',   c:'牛', cz:'ㄋㄧㄡˊ', e:'🥛' },
-    { s:'ㄌ', g:'sheng', w:'老虎', z:'ㄌㄠˇㄏㄨˇ',     c:'老', cz:'ㄌㄠˇ',   e:'🐯' },
-    { s:'ㄍ', g:'sheng', w:'哥哥', z:'ㄍㄜ˙ㄍㄜ',       c:'哥', cz:'ㄍㄜ',     e:'👦' },
-    { s:'ㄎ', g:'sheng', w:'咖啡', z:'ㄎㄚㄈㄟ',         c:'咖', cz:'ㄎㄚ',     e:'☕' },
-    { s:'ㄏ', g:'sheng', w:'花',   z:'ㄏㄨㄚ',           c:'花', cz:'ㄏㄨㄚ',   e:'🌸' },
-    { s:'ㄐ', g:'sheng', w:'雞蛋', z:'ㄐㄧㄉㄢˋ',       c:'雞', cz:'ㄐㄧ',     e:'🥚' },
-    { s:'ㄑ', g:'sheng', w:'汽車', z:'ㄑㄧˋㄔㄜ',       c:'汽', cz:'ㄑㄧˋ',   e:'🚗' },
-    { s:'ㄒ', g:'sheng', w:'西瓜', z:'ㄒㄧㄍㄨㄚ',       c:'西', cz:'ㄒㄧ',     e:'🍉' },
-    { s:'ㄓ', g:'sheng', w:'蜘蛛', z:'ㄓㄓㄨ',           c:'蜘', cz:'ㄓ',       e:'🕷️' },
-    { s:'ㄔ', g:'sheng', w:'吃飯', z:'ㄔㄈㄢˋ',         c:'吃', cz:'ㄔ',       e:'🍚' },
-    { s:'ㄕ', g:'sheng', w:'獅子', z:'ㄕ˙ㄗ',           c:'獅', cz:'ㄕ',       e:'🦁' },
-    { s:'ㄖ', g:'sheng', w:'熱狗', z:'ㄖㄜˋㄍㄡˇ',       c:'熱', cz:'ㄖㄜˋ',   e:'🌭' },
-    { s:'ㄗ', g:'sheng', w:'走路', z:'ㄗㄡˇㄌㄨˋ',       c:'走', cz:'ㄗㄡˇ',   e:'🚶' },
-    { s:'ㄘ', g:'sheng', w:'草莓', z:'ㄘㄠˇㄇㄟˊ',       c:'草', cz:'ㄘㄠˇ',   e:'🍓' },
-    { s:'ㄙ', g:'sheng', w:'雨傘', z:'ㄩˇㄙㄢˇ',         c:'傘', cz:'ㄙㄢˇ',   e:'☂️' },
+    { s:'ㄅ', g:'sheng', r:'玻', w:'爸爸', z:'ㄅㄚˋ˙ㄅㄚ',   e:'👨' },
+    { s:'ㄆ', g:'sheng', r:'坡', w:'皮球', z:'ㄆㄧˊㄑㄧㄡˊ', e:'⚽' },
+    { s:'ㄇ', g:'sheng', r:'摸', w:'媽媽', z:'ㄇㄚ˙ㄇㄚ',     e:'👩' },
+    { s:'ㄈ', g:'sheng', r:'佛', w:'飛機', z:'ㄈㄟㄐㄧ',       e:'✈️' },
+    { s:'ㄉ', g:'sheng', r:'得', w:'電話', z:'ㄉㄧㄢˋㄏㄨㄚˋ', e:'☎️' },
+    { s:'ㄊ', g:'sheng', r:'特', w:'兔子', z:'ㄊㄨˋ˙ㄗ',       e:'🐰' },
+    { s:'ㄋ', g:'sheng', r:'訥', w:'牛奶', z:'ㄋㄧㄡˊㄋㄞˇ',   e:'🥛' },
+    { s:'ㄌ', g:'sheng', r:'勒', w:'老虎', z:'ㄌㄠˇㄏㄨˇ',     e:'🐯' },
+    { s:'ㄍ', g:'sheng', r:'哥', w:'哥哥', z:'ㄍㄜ˙ㄍㄜ',       e:'👦' },
+    { s:'ㄎ', g:'sheng', r:'科', w:'咖啡', z:'ㄎㄚㄈㄟ',         e:'☕' },
+    { s:'ㄏ', g:'sheng', r:'喝', w:'花',   z:'ㄏㄨㄚ',           e:'🌸' },
+    { s:'ㄐ', g:'sheng', r:'基', w:'雞蛋', z:'ㄐㄧㄉㄢˋ',       e:'🥚' },
+    { s:'ㄑ', g:'sheng', r:'欺', w:'汽車', z:'ㄑㄧˋㄔㄜ',       e:'🚗' },
+    { s:'ㄒ', g:'sheng', r:'希', w:'西瓜', z:'ㄒㄧㄍㄨㄚ',       e:'🍉' },
+    { s:'ㄓ', g:'sheng', r:'知', w:'蜘蛛', z:'ㄓㄓㄨ',           e:'🕷️' },
+    { s:'ㄔ', g:'sheng', r:'吃', w:'吃飯', z:'ㄔㄈㄢˋ',         e:'🍚' },
+    { s:'ㄕ', g:'sheng', r:'詩', w:'獅子', z:'ㄕ˙ㄗ',           e:'🦁' },
+    { s:'ㄖ', g:'sheng', r:'日', w:'熱狗', z:'ㄖㄜˋㄍㄡˇ',       e:'🌭' },
+    { s:'ㄗ', g:'sheng', r:'資', w:'走路', z:'ㄗㄡˇㄌㄨˋ',       e:'🚶' },
+    { s:'ㄘ', g:'sheng', r:'雌', w:'草莓', z:'ㄘㄠˇㄇㄟˊ',       e:'🍓' },
+    { s:'ㄙ', g:'sheng', r:'思', w:'雨傘', z:'ㄩˇㄙㄢˇ',         e:'☂️' },
 
-    { s:'ㄧ', g:'jie',   w:'衣服', z:'ㄧ˙ㄈㄨ',          c:'衣', cz:'ㄧ',       e:'👕' },
-    { s:'ㄨ', g:'jie',   w:'烏龜', z:'ㄨㄍㄨㄟ',          c:'烏', cz:'ㄨ',       e:'🐢' },
-    { s:'ㄩ', g:'jie',   w:'魚',   z:'ㄩˊ',              c:'魚', cz:'ㄩˊ',     e:'🐟' },
+    { s:'ㄧ', g:'jie',   r:'衣', w:'衣服', z:'ㄧ˙ㄈㄨ',          e:'👕' },
+    { s:'ㄨ', g:'jie',   r:'烏', w:'烏龜', z:'ㄨㄍㄨㄟ',          e:'🐢' },
+    { s:'ㄩ', g:'jie',   r:'迂', w:'魚',   z:'ㄩˊ',              e:'🐟' },
 
-    { s:'ㄚ', g:'yun',   w:'鴨子', z:'ㄧㄚ˙ㄗ',          c:'鴨', cz:'ㄧㄚ',     e:'🦆' },
-    { s:'ㄛ', g:'yun',   w:'陀螺', z:'ㄊㄨㄛˊㄌㄨㄛˊ',   c:'螺', cz:'ㄌㄨㄛˊ', e:'🪀' },
-    { s:'ㄜ', g:'yun',   w:'鵝',   z:'ㄜˊ',              c:'鵝', cz:'ㄜˊ',     e:'🦢' },
-    { s:'ㄝ', g:'yun',   w:'謝謝', z:'ㄒㄧㄝˋ˙ㄒㄧㄝ',   c:'謝', cz:'ㄒㄧㄝˋ', e:'🙏' },
-    { s:'ㄞ', g:'yun',   w:'白雲', z:'ㄅㄞˊㄩㄣˊ',       c:'白', cz:'ㄅㄞˊ',   e:'☁️' },
-    { s:'ㄟ', g:'yun',   w:'妹妹', z:'ㄇㄟˋ˙ㄇㄟ',       c:'妹', cz:'ㄇㄟˋ',   e:'👧' },
-    { s:'ㄠ', g:'yun',   w:'貓咪', z:'ㄇㄠㄇㄧ',          c:'貓', cz:'ㄇㄠ',     e:'🐱' },
-    { s:'ㄡ', g:'yun',   w:'狗狗', z:'ㄍㄡˇ˙ㄍㄡ',       c:'狗', cz:'ㄍㄡˇ',   e:'🐶' },
-    { s:'ㄢ', g:'yun',   w:'高山', z:'ㄍㄠㄕㄢ',          c:'山', cz:'ㄕㄢ',     e:'⛰️' },
-    { s:'ㄣ', g:'yun',   w:'大門', z:'ㄉㄚˋㄇㄣˊ',       c:'門', cz:'ㄇㄣˊ',   e:'🚪' },
-    { s:'ㄤ', g:'yun',   w:'糖果', z:'ㄊㄤˊㄍㄨㄛˇ',     c:'糖', cz:'ㄊㄤˊ',   e:'🍬' },
-    { s:'ㄥ', g:'yun',   w:'星星', z:'ㄒㄧㄥ˙ㄒㄧㄥ',     c:'星', cz:'ㄒㄧㄥ',   e:'⭐' },
-    { s:'ㄦ', g:'yun',   w:'耳朵', z:'ㄦˇ˙ㄉㄨㄛ',       c:'耳', cz:'ㄦˇ',     e:'👂' },
+    { s:'ㄚ', g:'yun',   r:'啊', w:'鴨子', z:'ㄧㄚ˙ㄗ',          e:'🦆' },
+    { s:'ㄛ', g:'yun',   r:'喔', w:'陀螺', z:'ㄊㄨㄛˊㄌㄨㄛˊ',   e:'🪀' },
+    { s:'ㄜ', g:'yun',   r:'鵝', w:'鵝',   z:'ㄜˊ',              e:'🦢' },
+    { s:'ㄝ', g:'yun',   r:'耶', w:'謝謝', z:'ㄒㄧㄝˋ˙ㄒㄧㄝ',   e:'🙏' },
+    { s:'ㄞ', g:'yun',   r:'哀', w:'白雲', z:'ㄅㄞˊㄩㄣˊ',       e:'☁️' },
+    { s:'ㄟ', g:'yun',   r:'欸', w:'妹妹', z:'ㄇㄟˋ˙ㄇㄟ',       e:'👧' },
+    { s:'ㄠ', g:'yun',   r:'熬', w:'貓咪', z:'ㄇㄠㄇㄧ',          e:'🐱' },
+    { s:'ㄡ', g:'yun',   r:'歐', w:'狗狗', z:'ㄍㄡˇ˙ㄍㄡ',       e:'🐶' },
+    { s:'ㄢ', g:'yun',   r:'安', w:'高山', z:'ㄍㄠㄕㄢ',          e:'⛰️' },
+    { s:'ㄣ', g:'yun',   r:'恩', w:'大門', z:'ㄉㄚˋㄇㄣˊ',       e:'🚪' },
+    { s:'ㄤ', g:'yun',   r:'昂', w:'糖果', z:'ㄊㄤˊㄍㄨㄛˇ',     e:'🍬' },
+    { s:'ㄥ', g:'yun',   r:'哼', w:'星星', z:'ㄒㄧㄥ˙ㄒㄧㄥ',     e:'⭐' },
+    { s:'ㄦ', g:'yun',   r:'兒', w:'耳朵', z:'ㄦˇ˙ㄉㄨㄛ',       e:'👂' },
   ];
 
   const GROUPS = {
-    sheng: { name: '聲母',     icon: '🅰️', desc: 'ㄅ 到 ㄙ，21 個' },
-    jie:   { name: '介音',     icon: '🔗', desc: 'ㄧㄨㄩ，3 個' },
-    yun:   { name: '韻母',     icon: '🎵', desc: 'ㄚ 到 ㄦ，13 個' },
+    sheng: { name: '聲母', icon: '🅰️', desc: 'ㄅ 到 ㄙ，21 個' },
+    jie:   { name: '介音', icon: '🔗', desc: 'ㄧㄨㄩ，3 個' },
+    yun:   { name: '韻母', icon: '🎵', desc: 'ㄚ 到 ㄦ，13 個' },
   };
 
-  const MODES = [
-    { id:'sym2word', j:'👂', t:'找聲音', d:'看符號，選出有這個音的語詞' },
-    { id:'word2sym', j:'🔤', t:'找符號', d:'看圖和語詞，選出正確的符號' },
-    { id:'listen',   j:'🔊', t:'聽聲音', d:'聽念一次，選出開頭的符號', needVoice:true },
-    { id:'spell',    j:'✏️', t:'拼拼看', d:'看國字，選出正確的拼音和聲調' },
-  ];
+  // 注音符號表的「行」— 選項優先從同一行挑（ㄅ 的選項就是 ㄅㄆㄇㄈ），
+  // 跟牆上那張表一樣，孩子比較好對照
+  const ROWS = ['ㄅㄆㄇㄈ', 'ㄉㄊㄋㄌ', 'ㄍㄎㄏ', 'ㄐㄑㄒ', 'ㄓㄔㄕㄖ', 'ㄗㄘㄙ',
+                'ㄧㄨㄩ', 'ㄚㄛㄜㄝ', 'ㄞㄟㄠㄡ', 'ㄢㄣㄤㄥㄦ'];
+  const ROW_OF = {};
+  ROWS.forEach(row => { [...row].forEach(s => { ROW_OF[s] = row; }); });
+
+  // 同一行湊不滿 4 個時，再從這裡補容易混的
+  const CONFUSE = {
+    ㄅ:'ㄆㄇㄉ', ㄆ:'ㄅㄈㄊ', ㄇ:'ㄋㄅㄈ', ㄈ:'ㄏㄆㄇ', ㄉ:'ㄊㄅㄍ', ㄊ:'ㄉㄆㄎ',
+    ㄋ:'ㄌㄇㄉ', ㄌ:'ㄋㄖㄉ', ㄍ:'ㄎㄉㄏ', ㄎ:'ㄍㄊㄏ', ㄏ:'ㄈㄎㄍ', ㄐ:'ㄑㄒㄓ',
+    ㄑ:'ㄐㄒㄔ', ㄒ:'ㄕㄐㄑ', ㄓ:'ㄔㄕㄗ', ㄔ:'ㄓㄕㄘ', ㄕ:'ㄒㄓㄔ', ㄖ:'ㄌㄕㄓ',
+    ㄗ:'ㄘㄙㄓ', ㄘ:'ㄗㄙㄔ', ㄙ:'ㄕㄗㄘ',
+    ㄧ:'ㄩㄨㄝ', ㄨ:'ㄩㄧㄛ', ㄩ:'ㄧㄨㄜ',
+    ㄚ:'ㄜㄛㄤ', ㄛ:'ㄡㄜㄨ', ㄜ:'ㄛㄚㄦ', ㄝ:'ㄟㄞㄜ', ㄞ:'ㄟㄝㄠ', ㄟ:'ㄞㄝㄧ',
+    ㄠ:'ㄡㄞㄤ', ㄡ:'ㄠㄛㄨ', ㄢ:'ㄤㄣㄚ', ㄣ:'ㄥㄢㄜ', ㄤ:'ㄢㄥㄠ', ㄥ:'ㄣㄤㄦ', ㄦ:'ㄜㄥㄣ',
+  };
 
   const SCOPES = [
-    { id:'all',   label:'全部',       pick: () => DATA },
-    { id:'sheng', label:'只練聲母',   pick: () => DATA.filter(d => d.g === 'sheng') },
-    { id:'yun',   label:'介音＋韻母', pick: () => DATA.filter(d => d.g !== 'sheng') },
-    { id:'weak',  label:'只練錯的',   pick: () => DATA.filter(d => wrongSet().has(d.s)) },
+    { id:'all',   label:'全部',       hint:'聲母、介音、韻母全部混在一起出題。', pick: () => DATA },
+    { id:'sheng', label:'只練聲母',   hint: GROUPS.sheng.desc, pick: () => DATA.filter(d => d.g === 'sheng') },
+    { id:'yun',   label:'介音＋韻母', hint:'ㄧㄨㄩ 和 ㄚ 到 ㄦ，共 16 個。',    pick: () => DATA.filter(d => d.g !== 'sheng') },
+    { id:'weak',  label:'只練錯的',   hint:'從答錯紀錄挑出來的，練到會了就會自動消失。',
+      pick: () => DATA.filter(d => weakSet().has(d.s)) },
   ];
-
-  const COUNTS = [10, 20, 0]; // 0 = 全部
-
-  const TONES = ['', 'ˊ', 'ˇ', 'ˋ'];
-  const INITIALS = 'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ';
-  const MEDIALS = 'ㄧㄨㄩ';
-  const SIM_I = { ㄅ:'ㄆ', ㄆ:'ㄅ', ㄉ:'ㄊ', ㄊ:'ㄉ', ㄍ:'ㄎ', ㄎ:'ㄍ', ㄐ:'ㄑ', ㄑ:'ㄐ',
-                  ㄓ:'ㄔ', ㄔ:'ㄓ', ㄗ:'ㄘ', ㄘ:'ㄗ', ㄇ:'ㄋ', ㄋ:'ㄇ', ㄈ:'ㄏ', ㄏ:'ㄈ',
-                  ㄌ:'ㄖ', ㄖ:'ㄌ', ㄒ:'ㄕ', ㄕ:'ㄒ', ㄙ:'ㄗ' };
-  const SIM_F = { ㄢ:'ㄤ', ㄤ:'ㄢ', ㄣ:'ㄥ', ㄥ:'ㄣ', ㄞ:'ㄟ', ㄟ:'ㄞ', ㄠ:'ㄡ', ㄡ:'ㄠ',
-                  ㄚ:'ㄜ', ㄜ:'ㄚ', ㄧ:'ㄩ', ㄩ:'ㄧ', ㄨ:'ㄡ', ㄛ:'ㄡ', ㄝ:'ㄞ', ㄦ:'ㄜ' };
-
-  // 國語真的拼得出來的韻母（含空韻 ''），用來擋掉「ㄕㄧㄥ」「ㄌㄩㄛ」這種不存在的拼法
-  const RIMES = new Set(['', 'ㄚ','ㄛ','ㄜ','ㄝ','ㄞ','ㄟ','ㄠ','ㄡ','ㄢ','ㄣ','ㄤ','ㄥ','ㄦ',
-    'ㄧ','ㄧㄚ','ㄧㄝ','ㄧㄠ','ㄧㄡ','ㄧㄢ','ㄧㄣ','ㄧㄤ','ㄧㄥ',
-    'ㄨ','ㄨㄚ','ㄨㄛ','ㄨㄞ','ㄨㄟ','ㄨㄢ','ㄨㄣ','ㄨㄤ','ㄨㄥ',
-    'ㄩ','ㄩㄝ','ㄩㄢ','ㄩㄣ','ㄩㄥ']);
-
-  // 聲母和介音的搭配限制
-  function legalZy(zy) {
-    const { head, rest } = splitZy(zy);
-    if (!RIMES.has(rest)) return false;
-    const med = MEDIALS.includes(rest[0]) ? rest[0] : '';
-    if (rest === '') return 'ㄓㄔㄕㄖㄗㄘㄙ'.includes(head);   // 空韻只跟在ㄓㄔㄕㄖㄗㄘㄙ後面
-    if (!head) return true;
-    if ('ㄐㄑㄒ'.includes(head)) return med === 'ㄧ' || med === 'ㄩ';
-    if ('ㄓㄔㄕㄖㄗㄘㄙㄍㄎㄏ'.includes(head)) return med === '' || med === 'ㄨ';
-    if ('ㄅㄆㄇ'.includes(head)) return med === '' || med === 'ㄧ' || rest === 'ㄨ';
-    if (head === 'ㄈ') return med === '' || rest === 'ㄨ' || rest === 'ㄨㄥ';
-    if ('ㄉㄊ'.includes(head)) return med !== 'ㄩ';
-    return true;   // ㄋㄌ 四個介音都能接
-  }
+  const COUNTS = [10, 20, 0];   // 0 = 全部
 
   // ─────────────────────────────────────────────
   // 儲存
   // ─────────────────────────────────────────────
-  const K_STATS = 'zhuyin-stats-v1';   // { 符號: {r: 對, w: 錯} }
-  const K_BEST  = 'zhuyin-best-v1';    // { "mode|scope|count": {score,total,sec} }
-  const K_PREF  = 'zhuyin-pref-v1';    // { mode, scope, count }
+  const K_STATS = 'zhuyin-stats-v2';   // { 符號: {r:對, w:錯} }
+  const K_BEST  = 'zhuyin-best-v2';    // { "scope|count": {score,total,sec} }
+  const K_PREF  = 'zhuyin-pref-v2';    // { scope, count }
+  const K_RUNS  = 'zhuyin-runs-v2';    // 練習回合數
+  const K_HIST  = 'zhuyin-history-v2'; // 歷次成績 [{t,scope,score,total,sec}]，最多留 30 筆
+  const K_SET   = 'zhuyin-settings-v2';// 家長設定：語音、語速、開關
+  const HIST_MAX = 30;
 
-  const load = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) || fb; } catch (e) { return fb; } };
+  const load = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v === null ? fb : v; }
+                            catch (e) { return fb; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
   let stats = load(K_STATS, {});
   let best  = load(K_BEST, {});
-  let pref  = load(K_PREF, { mode: 'sym2word', scope: 'all', count: 10 });
+  let pref  = load(K_PREF, { scope: 'all', count: 10 });
+  let runs  = load(K_RUNS, 0);
+  let hist  = load(K_HIST, []);
+  let S = Object.assign(
+    { voiceURI: null, rate: .7, mute: false, auto: true, sayWord: true, vibrate: true },
+    load(K_SET, {}));
+  const saveSet = () => save(K_SET, S);
 
-  // 錯過而且錯得比對得多（或還沒答對過）的符號
-  function wrongSet() {
+  const stOf = s => stats[s] || { r: 0, w: 0 };
+  const tries = s => { const x = stOf(s); return x.r + x.w; };
+  const rate = s => { const x = stOf(s); return x.r + x.w ? x.r / (x.r + x.w) : null; };
+  // 還沒練熟的：錯過，而且錯的次數 >= 對的次數
+  function weakSet() {
     const set = new Set();
     Object.keys(stats).forEach(s => { const x = stats[s]; if (x && x.w > 0 && x.w >= x.r) set.add(s); });
     return set;
@@ -481,135 +691,96 @@
   const $ = id => document.getElementById(id);
   const shuffle = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
-  const sample = (arr, n) => shuffle(arr).slice(0, n);
+  const sample = (a, n) => shuffle(a).slice(0, n);
   const fmtTime = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-  const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+  const pct = n => Math.round(n * 100) + '%';
+  const buzz = p => { if (!S.vibrate) return;
+                      try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+  const bySym = {};
+  DATA.forEach(d => { bySym[d.s] = d; });
 
   // ── 語音 ──
-  let voice = null, voiceReady = false;
+  let voice = null, zhVoices = [], voiceChecked = false;
+  const hasTTS = 'speechSynthesis' in window;
   function pickVoice() {
-    if (!('speechSynthesis' in window)) return;
+    if (!hasTTS) return;
     const vs = speechSynthesis.getVoices() || [];
-    voice = vs.find(v => /zh[-_]TW|cmn-Hant/i.test(v.lang)) ||
-            vs.find(v => /zh[-_]HK/i.test(v.lang)) ||
-            vs.find(v => /^zh/i.test(v.lang)) || null;
-    const was = voiceReady;
-    voiceReady = !!voice;
-    if (voiceReady !== was) renderModes();
+    if (!vs.length) return;                       // 還沒載完，等 voiceschanged
+    zhVoices = vs.filter(v => /^(zh|cmn|yue)/i.test(v.lang));
+    voice = (S.voiceURI && zhVoices.find(v => v.voiceURI === S.voiceURI)) ||
+            zhVoices.find(v => /zh[-_]TW|cmn-Hant/i.test(v.lang)) ||
+            zhVoices.find(v => /zh[-_]HK|yue/i.test(v.lang)) ||
+            zhVoices[0] || null;
+    voiceChecked = true;
+    renderVoiceWarn();
+    if (document.body.classList.contains('s-settings')) renderSettings();
   }
-  if ('speechSynthesis' in window) {
+  if (hasTTS) {
     pickVoice();
     speechSynthesis.addEventListener('voiceschanged', pickVoice);
   }
   function speak(text, onEnd) {
-    if (!('speechSynthesis' in window)) { onEnd && onEnd(); return; }
+    if (!hasTTS || S.mute) { onEnd && onEnd(); return; }
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'zh-TW'; u.rate = .8; u.pitch = 1.05;
+      u.lang = 'zh-TW'; u.rate = S.rate; u.pitch = 1.05;
       if (voice) u.voice = voice;
       if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
       speechSynthesis.speak(u);
     } catch (e) { onEnd && onEnd(); }
   }
+  // 念出某個符號的音（餵語音引擎的是本音字，注音符號本身念不出來）
+  function saySymbol(sym, onEnd) { speak(bySym[sym].r, onEnd); }
+
+  function renderVoiceWarn() {
+    const box = $('voiceWarn');
+    if (!hasTTS) {
+      box.innerHTML = '<div class="warn bad"><b>這個瀏覽器不會發音</b>' +
+        '這台裝置的瀏覽器沒有語音功能，沒辦法念注音給小朋友聽。' +
+        '換用 Safari 或 Chrome 開這一頁試試看。</div>';
+      $('startBtn').disabled = true;
+      $('startBtn').textContent = '沒有語音，沒辦法練習';
+      return;
+    }
+    box.innerHTML = (voiceChecked && !voice)
+      ? '<div class="warn"><b>好像沒有中文語音</b>' +
+        '還是可以按開始試試看；如果按了喇叭沒聲音，到手機的「設定 → 輔助使用 → 朗讀內容」把中文語音裝起來就會有聲音了。</div>'
+      : '';
+    $('startBtn').disabled = false;
+    $('startBtn').textContent = '開始練習 →';
+  }
 
   // ─────────────────────────────────────────────
   // 出題
   // ─────────────────────────────────────────────
-  function distractorWords(item, n) {
-    // 語詞注音裡「不含」目標符號的才可以當錯的選項
-    const pool = DATA.filter(d => d.s !== item.s && !d.z.includes(item.s) && d.w !== item.w);
-    return sample(pool, n);
-  }
-  function distractorSyms(item, n) {
-    // 這個語詞裡沒出現過的符號才可以當錯的選項；同類優先（比較有鑑別度）
-    const okay = d => d.s !== item.s && !item.z.includes(d.s);
-    const same = DATA.filter(d => okay(d) && d.g === item.g);
-    const rest = DATA.filter(d => okay(d) && d.g !== item.g);
-    return shuffle(same).concat(shuffle(rest)).slice(0, n);
-  }
-  function splitZy(zy) {
-    const last = zy[zy.length - 1];
-    const tone = TONES.indexOf(last) > 0 ? last : '';
-    const base = tone ? zy.slice(0, -1) : zy;
-    const head = INITIALS.includes(base[0]) ? base[0] : '';
-    return { head, rest: base.slice(head.length), tone };
-  }
-  function distractorSpell(item, n) {
-    const { head, rest, tone } = splitZy(item.cz);
-    const out = [];
-    // 換聲調
-    TONES.filter(t => t !== tone).forEach(t => out.push(head + rest + t));
-    // 換相似聲母
-    if (head && SIM_I[head]) out.push(SIM_I[head] + rest + tone);
-    // 換相似韻尾
-    const tail = rest[rest.length - 1];
-    if (tail && SIM_F[tail]) out.push(head + rest.slice(0, -1) + SIM_F[tail] + tone);
-    // 介音：換一個、或整個漏掉（小朋友最常犯的錯）
-    if (MEDIALS.includes(rest[0])) {
-      [...MEDIALS].forEach(m => { if (m !== rest[0]) out.push(head + m + rest.slice(1) + tone); });
-      if (rest.length > 1) out.push(head + rest.slice(1) + tone);
-    } else if (head) {
-      // 反過來，多插一個介音進去
-      out.push(head + 'ㄧ' + rest + tone);
-      out.push(head + 'ㄨ' + rest + tone);
-    }
-    const uniq = [...new Set(out)].filter(x => x !== item.cz && legalZy(x));
-    let picked = sample(uniq, n);
-    // 還不夠就拿別的字來湊
-    if (picked.length < n) {
-      const extra = sample(DATA.filter(d => d.cz !== item.cz && !picked.includes(d.cz)), n - picked.length);
-      picked = picked.concat(extra.map(d => d.cz));
-    }
-    return picked;
-  }
-
-  function buildQuestion(item, mode) {
-    if (mode === 'sym2word') {
-      const wrong = distractorWords(item, 3);
-      return {
-        item, mode,
-        ask: '哪一個語詞裡有這個音？',
-        options: shuffle([{ key: item.w, e: item.e, t: item.w, right: true }]
-          .concat(wrong.map(d => ({ key: d.w, e: d.e, t: d.w })))),
-      };
-    }
-    if (mode === 'word2sym' || mode === 'listen') {
-      const wrong = distractorSyms(item, 3);
-      return {
-        item, mode,
-        ask: mode === 'listen' ? '聽聽看，裡面有哪個注音符號？' : '這個語詞裡有哪個注音符號？',
-        options: shuffle([{ key: item.s, t: item.s, sym: true, right: true }]
-          .concat(wrong.map(d => ({ key: d.s, t: d.s, sym: true })))),
-      };
-    }
-    // spell
-    const wrong = distractorSpell(item, 3);
+  function buildQuestion(item) {
+    const picked = [];
+    const push = s => { if (s && s !== item.s && picked.length < 3 && !picked.includes(s)) picked.push(s); };
+    shuffle([...(ROW_OF[item.s] || '')]).forEach(push);          // 先同一行：ㄅ → ㄆㄇㄈ
+    shuffle([...(CONFUSE[item.s] || '')]).forEach(push);          // 行內不夠就補容易混的
+    shuffle(DATA.filter(d => d.g === item.g)).forEach(d => push(d.s));
+    shuffle(DATA).forEach(d => push(d.s));
     return {
-      item, mode,
-      ask: '這個字要怎麼拼？',
-      options: shuffle([{ key: item.cz, t: item.cz, spell: true, right: true }]
-        .concat(wrong.map(z => ({ key: z, t: z, spell: true })))),
+      item,
+      options: shuffle([{ key: item.s, right: true }].concat(picked.map(s => ({ key: s })))),
     };
   }
 
-  function buildRound(mode, scopeId, count) {
+  function buildRound(scopeId, count) {
     let pool = (SCOPES.find(s => s.id === scopeId) || SCOPES[0]).pick();
     if (!pool.length) pool = DATA;
     const n = count > 0 ? count : pool.length;
     let picks = [];
     while (picks.length < n) picks = picks.concat(shuffle(pool));
-    return picks.slice(0, n).map(it => buildQuestion(it, mode));
+    return picks.slice(0, n).map(buildQuestion);
   }
 
   // ─────────────────────────────────────────────
-  // 狀態
+  // 畫面切換
   // ─────────────────────────────────────────────
-  let run = null;   // { qs, i, score, wrong[], t0, timer, streak, bestStreak, locked }
-
-  const SCREENS = ['setup', 'quiz', 'result', 'chart'];
+  const SCREENS = ['setup', 'quiz', 'result', 'stats', 'settings'];
   function setScreen(name) {
-    // 只動自己的 class，不要整個蓋掉 body.className（外層可能有別人的 class）
     SCREENS.forEach(s => document.body.classList.remove('s-' + s));
     document.body.classList.remove('locked');
     document.body.classList.add('s-' + name);
@@ -619,35 +790,14 @@
   // ─────────────────────────────────────────────
   // 設定畫面
   // ─────────────────────────────────────────────
-  function renderModes() {
-    const box = $('modes');
-    box.innerHTML = '';
-    MODES.forEach(m => {
-      const off = m.needVoice && !voiceReady;
-      const b = document.createElement('button');
-      b.className = 'mode' + (pref.mode === m.id && !off ? ' sel' : '');
-      if (off) b.disabled = true;
-      b.innerHTML = '<span class="mj">' + m.j + '</span>' +
-                    '<span class="mt">' + m.t + '</span>' +
-                    '<span class="md">' + (off ? '這台裝置沒有中文語音，換別的玩法吧' : m.d) + '</span>';
-      b.addEventListener('click', () => { pref.mode = m.id; save(K_PREF, pref); renderSetup(); });
-      box.appendChild(b);
-    });
-    if (MODES.some(m => m.id === pref.mode && m.needVoice) && !voiceReady) {
-      pref.mode = 'sym2word';
-      box.querySelectorAll('.mode').forEach((el, i) => el.classList.toggle('sel', MODES[i].id === pref.mode));
-    }
-  }
-
   function renderSetup() {
-    renderModes();
-
     const sbox = $('scopes');
     sbox.innerHTML = '';
     SCOPES.forEach(sc => {
       const n = sc.pick().length;
       const b = document.createElement('button');
       b.className = 'chip' + (pref.scope === sc.id ? ' on' : '');
+      b.type = 'button';
       if (!n) b.disabled = true;
       b.innerHTML = sc.label + '<span class="n">' + (n ? n + ' 個' : '暫時沒有') + '</span>';
       b.addEventListener('click', () => { if (n) { pref.scope = sc.id; save(K_PREF, pref); renderSetup(); } });
@@ -655,113 +805,76 @@
     });
     const cur = SCOPES.find(s => s.id === pref.scope);
     if (cur && !cur.pick().length) { pref.scope = 'all'; save(K_PREF, pref); return renderSetup(); }
-    $('scopeHint').textContent = pref.scope === 'weak'
-      ? '從答錯紀錄挑出來的，練到會了就會自動消失。'
-      : (GROUPS[pref.scope] ? GROUPS[pref.scope].desc : '聲母、介音、韻母全部混在一起出題。');
+    $('scopeHint').textContent = (cur || SCOPES[0]).hint;
 
+    const poolN = (cur || SCOPES[0]).pick().length;
     const cbox = $('counts');
     cbox.innerHTML = '';
-    const poolN = (SCOPES.find(s => s.id === pref.scope) || SCOPES[0]).pick().length;
     COUNTS.forEach(c => {
       const b = document.createElement('button');
       b.className = 'chip' + (pref.count === c ? ' on' : '');
+      b.type = 'button';
       b.textContent = c === 0 ? '全部 ' + poolN + ' 題' : c + ' 題';
       b.addEventListener('click', () => { pref.count = c; save(K_PREF, pref); renderSetup(); });
       cbox.appendChild(b);
     });
 
-    // 弱點
-    const weak = Object.keys(stats)
-      .filter(s => stats[s].w > 0)
-      .sort((a, b) => stats[b].w - stats[a].w)
-      .slice(0, 8);
+    const weak = Object.keys(stats).filter(s => stats[s].w > 0)
+      .sort((a, b) => stats[b].w - stats[a].w || rate(a) - rate(b)).slice(0, 8);
     $('weakCard').style.display = weak.length ? '' : 'none';
     $('weakList').innerHTML = weak.map(s =>
       '<span class="w zy">' + s + '<small>錯 ' + stats[s].w + '</small></span>').join('');
 
-    const m = MODES.find(x => x.id === pref.mode);
-    $('sub').textContent = m ? m.j + ' ' + m.t : '選模式，開始闖關';
+    renderVoiceWarn();
   }
 
   // ─────────────────────────────────────────────
-  // 答題畫面
+  // 答題
   // ─────────────────────────────────────────────
+  let run = null;
+
   function startRound(qs) {
-    run = { qs, i: 0, score: 0, wrong: [], t0: Date.now(), timer: null, streak: 0, bestStreak: 0 };
+    run = { qs, i: 0, score: 0, wrong: [], t0: Date.now(), timer: null, streak: 0, bestStreak: 0, next: 0 };
     run.timer = setInterval(() => {
       $('clock').textContent = fmtTime(Math.floor((Date.now() - run.t0) / 1000));
     }, 500);
     $('clock').textContent = '0:00';
     setScreen('quiz');
-    showQuestion();
+    showQuestion(true);
   }
 
-  function showQuestion() {
+  function playCurrent() {
+    if (!run) return;
+    const btn = $('sayBtn');
+    btn.classList.add('playing');
+    saySymbol(run.qs[run.i].item.s, () => btn.classList.remove('playing'));
+  }
+
+  // fromGesture：第一題直接在使用者點「開始」的當下發聲，iOS 才不會擋
+  function showQuestion(fromGesture) {
     document.body.classList.remove('locked');
     const q = run.qs[run.i];
     $('qcount').innerHTML = '第 <b>' + (run.i + 1) + '</b>／' + run.qs.length;
     $('fill').style.width = (run.i / run.qs.length * 100) + '%';
+    $('bigSym').textContent = q.item.s;      // 題目的符號，看得見
+    $('reveal').textContent = '';
+    $('verdict').innerHTML = '';
 
-    // 題目區
-    const st = $('stage');
-    st.innerHTML = '';
-    const ask = document.createElement('div');
-    ask.className = 'ask'; ask.textContent = q.ask;
-    st.appendChild(ask);
-
-    if (q.mode === 'sym2word') {
-      const big = document.createElement('div');
-      big.className = 'big zy'; big.textContent = q.item.s;
-      st.appendChild(big);
-    } else if (q.mode === 'word2sym') {
-      const em = document.createElement('div');
-      em.className = 'bigemoji'; em.textContent = q.item.e;
-      const wd = document.createElement('div');
-      wd.className = 'bigword'; wd.textContent = q.item.w;
-      st.appendChild(em); st.appendChild(wd);
-      const rv = document.createElement('div');
-      rv.className = 'reveal'; rv.id = 'reveal'; rv.textContent = '';
-      st.appendChild(rv);
-    } else if (q.mode === 'listen') {
-      const btn = document.createElement('button');
-      btn.className = 'say'; btn.type = 'button'; btn.textContent = '🔊';
-      btn.setAttribute('aria-label', '再念一次');
-      const play = () => {
-        btn.classList.add('playing');
-        speak(q.item.w, () => btn.classList.remove('playing'));
-      };
-      btn.addEventListener('click', play);
-      st.appendChild(btn);
-      const hint = document.createElement('div');
-      hint.className = 'reveal'; hint.id = 'reveal'; hint.textContent = '點喇叭再聽一次';
-      st.appendChild(hint);
-      setTimeout(play, 260);
-    } else {
-      const em = document.createElement('div');
-      em.className = 'bigemoji'; em.textContent = q.item.e;
-      const ch = document.createElement('div');
-      ch.className = 'big small'; ch.textContent = q.item.c;
-      st.appendChild(em); st.appendChild(ch);
-      const rv = document.createElement('div');
-      rv.className = 'reveal'; rv.id = 'reveal'; rv.textContent = q.item.w;
-      st.appendChild(rv);
-    }
-
-    // 選項
     const box = $('opts');
     box.innerHTML = '';
     q.options.forEach(o => {
       const b = document.createElement('button');
       b.className = 'opt';
       b.type = 'button';
-      const t = '<span class="ot' + (o.sym ? ' sym zy' : o.spell ? ' spell zy' : '') + '">' + o.t + '</span>';
-      b.innerHTML = (o.e ? '<span class="oe">' + o.e + '</span>' : '') + t +
+      b.innerHTML = '<span class="ot zy">' + o.key + '</span>' +
                     '<span class="ok-mark">✓</span><span class="no-mark">✕</span>';
       b.addEventListener('click', () => answer(o, b));
       box.appendChild(b);
     });
 
-    $('verdict').innerHTML = '';
+    if (!S.auto && !fromGesture) return;          // 關掉自動發音就等家長／孩子自己點
+    if (fromGesture) playCurrent();
+    else setTimeout(playCurrent, 220);
   }
 
   function answer(opt, el) {
@@ -772,9 +885,7 @@
     const s = q.item.s;
     stats[s] = stats[s] || { r: 0, w: 0 };
 
-    // 標記選項
-    const btns = [...$('opts').children];
-    btns.forEach((b, i) => {
+    [...$('opts').children].forEach((b, i) => {
       const o = q.options[i];
       if (o.right) b.classList.add('right');
       else if (o === opt) b.classList.add('wrong');
@@ -792,24 +903,17 @@
     }
     save(K_STATS, stats);
 
-    // 揭曉
-    const rv = $('reveal');
-    if (rv) { rv.textContent = q.item.z; rv.classList.add('show'); }
+    // 答完補上例詞，加深「這個音長什麼樣子」的印象
+    $('reveal').textContent = q.item.e + ' ' + q.item.w;
+    if (S.sayWord) setTimeout(() => speak(q.item.w), right ? 260 : 420);
 
-    const praise = ['太棒了！', '答對了！', '好厲害！', '就是這個！', '完全正確！'];
-    const v = $('verdict');
-    const streakHtml = run.streak >= 3
-      ? '<span class="streak">' + '⭐'.repeat(Math.min(run.streak, 5)) + '</span>' : '';
-    v.innerHTML = right
-      ? '<div class="vtxt good">' + praise[Math.floor(Math.random() * praise.length)] + streakHtml + '</div>' +
-        '<div class="vsub"><b class="zy">' + q.item.w + '</b>　<span class="zy">' + q.item.z + '</span></div>'
+    const praise = ['太棒了！', '答對了！', '好厲害！', '就是這個！', '眼睛好利！'];
+    $('verdict').innerHTML = right
+      ? '<div class="vtxt good">' + praise[Math.floor(Math.random() * praise.length)] +
+        (run.streak >= 3 ? '<span class="streak">' + '⭐'.repeat(Math.min(run.streak, 5)) + '</span>' : '') + '</div>'
       : '<div class="vtxt bad">再看一次喔</div>' +
-        '<div class="vsub">' + q.item.e + ' <b class="zy">' + q.item.w + '</b>　<span class="zy">' + q.item.z +
-        '</span>　答案是 <b class="zy">' + q.options.filter(o => o.right)[0].t + '</b></div>';
+        '<div class="vsub">上面那個是 <b class="zy">' + s + '</b>，像 <b>' + q.item.w + '</b> 的 <b class="zy">' + s + '</b></div>';
 
-    if (q.mode !== 'listen') speak(q.item.w);
-
-    // 等一下自動下一題；等不及的話點畫面就跳過
     const at = run.i;
     const go = () => {
       document.removeEventListener('pointerdown', skip);
@@ -818,40 +922,42 @@
       next();
     };
     const skip = e => { if (e.target.closest('button:not(.opt)')) return; go(); };
-    run.next = setTimeout(go, right ? 950 : 2100);
-    setTimeout(() => {
-      if (run && run.i === at) document.addEventListener('pointerdown', skip);
-    }, 420);
+    run.next = setTimeout(go, right ? 1000 : 2200);
+    setTimeout(() => { if (run && run.i === at) document.addEventListener('pointerdown', skip); }, 450);
   }
 
   function next() {
     run.i++;
     if (run.i >= run.qs.length) finish();
-    else showQuestion();
+    else showQuestion(false);
   }
 
   function finish() {
     clearInterval(run.timer);
-    try { speechSynthesis.cancel(); } catch (e) {}
+    try { if (hasTTS) speechSynthesis.cancel(); } catch (e) {}
     const sec = Math.max(1, Math.round((Date.now() - run.t0) / 1000));
-    const total = run.qs.length, score = run.score;
-    const pct = score / total;
+    const total = run.qs.length, score = run.score, p = score / total;
+    runs++; save(K_RUNS, runs);
 
-    const nStars = pct >= .9 ? 3 : pct >= .7 ? 2 : pct >= .5 ? 1 : 0;
+    const nStars = p >= .9 ? 3 : p >= .7 ? 2 : p >= .5 ? 1 : 0;
     $('stars').innerHTML = [0, 1, 2].map(i =>
       '<span class="' + (i < nStars ? '' : 'off') + '">' + (i < nStars ? '⭐' : '☆') + '</span>').join('');
     $('bigScore').innerHTML = score + '<span> ／ ' + total + '</span>';
-    $('praise').textContent = pct === 1 ? '全對！你是注音小達人 🏆'
-      : pct >= .8 ? '很厲害，再一點點就滿分！'
-      : pct >= .5 ? '不錯喔，把錯的再練一次吧'
-      : '沒關係，多練幾次就會了 💪';
+    $('praise').textContent = p === 1 ? '全對！耳朵超厲害 🏆'
+      : p >= .8 ? '很棒，再一點點就滿分！'
+      : p >= .5 ? '不錯喔，把錯的再聽幾次'
+      : '沒關係，多聽幾次就會了 💪';
     $('facts').innerHTML =
       '<div class="fact"><b>' + fmtTime(sec) + '</b>用時</div>' +
       '<div class="fact"><b>' + (sec / total).toFixed(1) + ' 秒</b>每題平均</div>' +
       '<div class="fact"><b>' + run.bestStreak + ' 題</b>最長連對</div>';
 
-    // 最佳紀錄
-    const key = pref.mode + '|' + pref.scope + '|' + pref.count;
+    const scopeLabel = (SCOPES.find(s => s.id === pref.scope) || SCOPES[0]).label;
+    hist.unshift({ t: Date.now(), scope: scopeLabel, score, total, sec });
+    hist = hist.slice(0, HIST_MAX);
+    save(K_HIST, hist);
+
+    const key = pref.scope + '|' + pref.count;
     const prev = best[key];
     const better = !prev || score > prev.score || (score === prev.score && sec < prev.sec);
     if (better) { best[key] = { score, total, sec }; save(K_BEST, best); }
@@ -859,91 +965,203 @@
       ? '<span class="newbest">🎉 新紀錄！</span>'
       : '<span class="newbest">最佳紀錄 ' + prev.score + '／' + prev.total + '・' + fmtTime(prev.sec) + '</span>';
 
-    // 錯題
-    const uniqWrong = [];
-    run.wrong.forEach(it => { if (!uniqWrong.some(x => x.s === it.s)) uniqWrong.push(it); });
-    $('wrongs').innerHTML = uniqWrong.length
-      ? '<h2>📝 這幾個再看一下（' + uniqWrong.length + '）</h2>' + uniqWrong.map(it =>
-          '<div class="wrow"><div class="ws zy">' + it.s + '</div>' +
-          '<div class="wb"><div class="ww">' + it.e + ' ' + it.w + '</div>' +
-          '<div class="wz zy">' + it.z + '</div></div>' +
-          '<button class="wsay" type="button" data-say="' + it.w + '" aria-label="念一次">🔊</button></div>').join('')
+    const uniq = [];
+    run.wrong.forEach(it => { if (!uniq.some(x => x.s === it.s)) uniq.push(it); });
+    run.lastWrong = uniq;
+    $('wrongs').innerHTML = uniq.length
+      ? '<h2>📝 這幾個再聽一下（' + uniq.length + '）</h2>' +
+        '<div class="listgrid">' + uniq.map(it => symRow(it, true)).join('') + '</div>'
       : '<h2>✨ 這回合全對，沒有要複習的！</h2>';
-    $('wrongs').querySelectorAll('[data-say]').forEach(b =>
-      b.addEventListener('click', () => speak(b.dataset.say)));
+    bindRows($('wrongs'));
 
-    $('retryWrongBtn').disabled = !uniqWrong.length;
-    $('retryWrongBtn').textContent = uniqWrong.length ? '只練錯的（' + uniqWrong.length + '）' : '沒有錯題';
-    run.lastWrong = uniqWrong;
+    $('retryWrongBtn').disabled = !uniq.length;
+    $('retryWrongBtn').textContent = uniq.length ? '只練錯的（' + uniq.length + '）' : '沒有錯題';
 
     setScreen('result');
   }
 
+  // 一列符號（可點來聽）
+  function symRow(item, miss) {
+    const x = stOf(item.s), t = x.r + x.w, ra = rate(item.s);
+    const cls = ra === null ? '' : ra < .5 ? ' low' : ra < .8 ? ' mid' : '';
+    const meta = t
+      ? '答對 <span class="good">' + x.r + '</span>・答錯 <span class="bad">' + x.w + '</span>・正確率 ' + pct(ra)
+      : '還沒練過';
+    return '<button class="srow' + (miss ? ' miss' : '') + '" type="button" data-say="' + item.s + '">' +
+      '<span class="ss zy">' + item.s + '</span>' +
+      '<span class="sb"><span class="sw">' + item.e + ' ' + item.w + '</span>' +
+      '<span class="sm">' + meta + '</span>' +
+      (t ? '<span class="ratebar"><i class="' + cls + '" style="width:' + (ra * 100) + '%"></i></span>' : '') +
+      '</span><span class="spk">🔊</span></button>';
+  }
+  function bindRows(root) {
+    root.querySelectorAll('[data-say]').forEach(b =>
+      b.addEventListener('click', () => saySymbol(b.dataset.say)));
+  }
+
   // ─────────────────────────────────────────────
-  // 符號表
+  // 語音設定（家長用）
   // ─────────────────────────────────────────────
-  function renderChart() {
-    const hot = wrongSet();
-    const body = $('chartBody');
-    body.innerHTML = '';
-    Object.keys(GROUPS).forEach(g => {
-      const items = DATA.filter(d => d.g === g);
-      const sec = document.createElement('div');
-      sec.className = 'gsec';
-      sec.innerHTML = '<h2>' + GROUPS[g].icon + ' ' + GROUPS[g].name +
-                      ' <small>' + GROUPS[g].desc + '</small></h2>';
-      const grid = document.createElement('div');
-      grid.className = 'grid';
-      items.forEach(d => {
-        const c = document.createElement('button');
-        c.className = 'cell' + (hot.has(d.s) ? ' hot' : '');
-        c.type = 'button';
-        c.innerHTML = '<span class="cs zy">' + d.s + '</span><span class="ce">' + d.e + '</span>' +
-                      '<span class="cw">' + d.w + '</span><span class="cz zy">' + d.z + '</span>';
-        c.addEventListener('click', () => speak(d.w));
-        grid.appendChild(c);
+  function renderMute() {
+    const b = $('muteBtn');
+    b.textContent = S.mute ? '🔇' : '🔊';
+    b.classList.toggle('off', S.mute);
+    b.setAttribute('aria-pressed', S.mute ? 'true' : 'false');
+    b.title = S.mute ? '發音已關閉，點一下打開' : '發音開著，點一下關掉';
+  }
+
+  function renderSettings() {
+    const box = $('voiceList');
+    box.innerHTML = '';
+    if (!zhVoices.length) {
+      $('voiceHint').textContent = hasTTS
+        ? '這台裝置目前找不到中文語音。到系統設定裡把中文語音裝起來，再回到這一頁就會出現。'
+        : '這個瀏覽器沒有語音功能。';
+    } else {
+      zhVoices.forEach(v => {
+        const b = document.createElement('button');
+        b.className = 'chip' + (voice && v.voiceURI === voice.voiceURI ? ' on' : '');
+        b.type = 'button';
+        b.textContent = v.name.replace(/^Microsoft |^Google /, '');
+        b.addEventListener('click', () => {
+          S.voiceURI = v.voiceURI; saveSet(); pickVoice(); renderSettings(); speak(bySym['ㄅ'].r);
+        });
+        box.appendChild(b);
       });
-      sec.appendChild(grid);
-      body.appendChild(sec);
-    });
+      $('voiceHint').textContent = '選好之後可以按下面的試聽聽聽看。';
+    }
+
+    $('rate').value = S.rate;
+    $('rateVal').textContent = '目前速度 ' + Number(S.rate).toFixed(1) + ' 倍' +
+      (S.rate <= .6 ? '（很慢，適合剛開始學）' : S.rate >= 1 ? '（正常語速）' : '（放慢一點）');
+    $('autoPlay').checked = S.auto;
+    $('sayWord').checked = S.sayWord;
+    $('vibr').checked = S.vibrate;
+    renderMute();
+  }
+
+  // ─────────────────────────────────────────────
+  // 統計
+  // ─────────────────────────────────────────────
+  function renderStats() {
+    let tr = 0, tw = 0;
+    Object.keys(stats).forEach(s => { tr += stats[s].r; tw += stats[s].w; });
+    const tot = tr + tw;
+    $('totals').innerHTML =
+      '<div class="tot"><b>' + tot + '</b><span>總共答過</span></div>' +
+      '<div class="tot"><b>' + (tot ? pct(tr / tot) : '—') + '</b><span>總正確率</span></div>' +
+      '<div class="tot"><b>' + runs + '</b><span>練習回合</span></div>';
+
+    // 各類熟練度（等於九九乘法的「各段熟練度」）
+    $('groupSec').innerHTML = '<h2>📈 各類熟練度 <small>練過幾個、答對幾成</small></h2>' +
+      Object.keys(GROUPS).map(g => {
+        const items = DATA.filter(d => d.g === g);
+        let r = 0, w = 0, seen = 0;
+        items.forEach(d => { const x = stOf(d.s); r += x.r; w += x.w; if (x.r + x.w) seen++; });
+        const n = r + w, ra = n ? r / n : null;
+        const cls = ra === null ? '' : ra < .5 ? ' low' : ra < .8 ? ' mid' : '';
+        return '<div class="grow"><span class="gi">' + GROUPS[g].icon + '</span>' +
+          '<span class="gb"><span class="gn">' + GROUPS[g].name + '　<small>' + GROUPS[g].desc + '</small></span>' +
+          '<span class="gm">' + (n ? '練過 ' + seen + '／' + items.length + ' 個・答對 ' + r + '／' + n + ' 題'
+                                   : '還沒練過') + '</span>' +
+          '<span class="ratebar"><i class="' + cls + '" style="width:' + (ra === null ? 0 : ra * 100) + '%"></i></span>' +
+          '</span><span class="gp">' + (ra === null ? '—' : pct(ra)) + '</span></div>';
+      }).join('');
+
+    // 歷次練習紀錄
+    const fmtDate = t => { const d = new Date(t);
+      return (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+             String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+    $('histSec').innerHTML = '<h2>🗓 歷次練習 <small>' +
+      (hist.length ? '最近 ' + Math.min(hist.length, 10) + ' 回合' : '') + '</small></h2>' +
+      (hist.length ? hist.slice(0, 10).map(h => {
+        const p = h.score / h.total;
+        const cls = p >= .8 ? 'good' : p >= .5 ? 'mid' : 'low';
+        return '<div class="hrow"><span class="hd">' + fmtDate(h.t) + '</span>' +
+          '<span class="hs">' + h.scope + '</span>' +
+          '<span class="hv ' + cls + '">' + h.score + '／' + h.total + '</span>' +
+          '<span class="ht">' + fmtTime(h.sec) + '</span></div>';
+      }).join('') : '<div class="empty">還沒有練習紀錄，玩一回合就會出現 📝</div>');
+
+    // 最常錯的：先看錯幾次，再看正確率
+    const ranked = Object.keys(stats).filter(s => stats[s].w > 0 && bySym[s])
+      .sort((a, b) => stats[b].w - stats[a].w || rate(a) - rate(b));
+    const top = ranked.slice(0, 10);
+    $('rankSec').innerHTML = '<h2>🩹 最常錯的 <small>' +
+      (ranked.length > 10 ? '錯最多的前 10 個（共 ' + ranked.length + ' 個錯過）'
+                          : ranked.length ? '錯最多次的排在前面' : '') + '</small></h2>' +
+      (top.length ? '<div class="listgrid">' + top.map(s => symRow(bySym[s], true)).join('') + '</div>'
+                  : '<div class="empty">還沒有答錯的紀錄，先玩幾回合吧 🎉</div>');
+
+    // 全部 37 個，依順序
+    $('allSec').innerHTML = '<h2>📖 全部符號 <small>共 37 個，點一下聽發音</small></h2>' +
+      '<div class="listgrid">' + DATA.map(d => symRow(d, false)).join('') + '</div>';
+
+    bindRows($('rankSec'));
+    bindRows($('allSec'));
   }
 
   // ─────────────────────────────────────────────
   // 綁定
   // ─────────────────────────────────────────────
-  $('startBtn').addEventListener('click', () => {
-    startRound(buildRound(pref.mode, pref.scope, pref.count));
-  });
-  $('againBtn').addEventListener('click', () => {
-    startRound(buildRound(pref.mode, pref.scope, pref.count));
-  });
+  $('startBtn').addEventListener('click', () => startRound(buildRound(pref.scope, pref.count)));
+  $('againBtn').addEventListener('click', () => startRound(buildRound(pref.scope, pref.count)));
+  $('sayBtn').addEventListener('click', playCurrent);
   $('retryWrongBtn').addEventListener('click', () => {
     const list = (run && run.lastWrong) || [];
     if (!list.length) return;
     let qs = [];
-    while (qs.length < Math.max(list.length, 6)) qs = qs.concat(shuffle(list));
-    startRound(qs.slice(0, Math.max(list.length * 2, 6)).map(it => buildQuestion(it, pref.mode)));
+    while (qs.length < Math.max(list.length * 2, 6)) qs = qs.concat(shuffle(list));
+    startRound(qs.slice(0, Math.max(list.length * 2, 6)).map(buildQuestion));
   });
   $('backSetupBtn').addEventListener('click', () => { renderSetup(); setScreen('setup'); });
+
+  // ── 頂端三顆控制鈕 ──
+  $('voiceBtn').addEventListener('click', () => { renderSettings(); setScreen('settings'); });
+  $('statsTopBtn').addEventListener('click', () => { renderStats(); setScreen('stats'); });
+  $('muteBtn').addEventListener('click', () => {
+    S.mute = !S.mute; saveSet(); renderMute();
+    if (S.mute) { try { if (hasTTS) speechSynthesis.cancel(); } catch (e) {} }
+    else if (document.body.classList.contains('s-quiz')) playCurrent();
+  });
+
+  // ── 語音設定 ──
+  $('rate').addEventListener('input', e => {
+    S.rate = parseFloat(e.target.value); saveSet();
+    $('rateVal').textContent = '目前速度 ' + S.rate.toFixed(1) + ' 倍' +
+      (S.rate <= .6 ? '（很慢，適合剛開始學）' : S.rate >= 1 ? '（正常語速）' : '（放慢一點）');
+  });
+  $('rate').addEventListener('change', () => speak(bySym['ㄅ'].r));
+  $('testBtn').addEventListener('click', () => speak(bySym['ㄅ'].r));
+  $('autoPlay').addEventListener('change', e => { S.auto = e.target.checked; saveSet(); });
+  $('sayWord').addEventListener('change', e => { S.sayWord = e.target.checked; saveSet(); });
+  $('vibr').addEventListener('change', e => { S.vibrate = e.target.checked; saveSet(); });
+  $('setBackBtn').addEventListener('click', () => { renderSetup(); setScreen('setup'); });
+  $('resultStatsBtn').addEventListener('click', () => { renderStats(); setScreen('stats'); });
+  $('statsBtn').addEventListener('click', () => { renderStats(); setScreen('stats'); });
+  $('statsBackBtn').addEventListener('click', () => { renderSetup(); setScreen('setup'); });
+  $('clearBtn').addEventListener('click', () => {
+    if (!confirm('要清除所有答題紀錄嗎？（包含最常錯的統計、歷次練習和最佳紀錄）')) return;
+    stats = {}; best = {}; runs = 0; hist = [];
+    save(K_STATS, stats); save(K_BEST, best); save(K_RUNS, runs); save(K_HIST, hist);
+    renderStats(); renderSetup();
+  });
   $('quitBtn').addEventListener('click', () => {
-    if (!confirm('要結束這回合嗎？答過的還是會算進紀錄。')) return;
+    if (!confirm('要結束這回合嗎？答過的還是會算進統計。')) return;
     clearTimeout(run.next);
+    try { if (hasTTS) speechSynthesis.cancel(); } catch (e) {}
     if (run.i > 0) { run.qs = run.qs.slice(0, run.i); finish(); }
     else { clearInterval(run.timer); renderSetup(); setScreen('setup'); }
   });
-  $('chartBtn').addEventListener('click', () => { renderChart(); setScreen('chart'); });
-  $('chartBackBtn').addEventListener('click', () => { renderSetup(); setScreen('setup'); });
 
-  // 鍵盤：1～4 選答案
+  // 鍵盤 1～4 選答案
   document.addEventListener('keydown', e => {
     if (!document.body.classList.contains('s-quiz')) return;
     const n = parseInt(e.key, 10);
-    if (n >= 1 && n <= 4) {
-      const b = $('opts').children[n - 1];
-      if (b) b.click();
-    }
+    if (n >= 1 && n <= 4) { const b = $('opts').children[n - 1]; if (b) b.click(); }
   });
 
+  renderMute();
   renderSetup();
   setScreen('setup');
 </script>
