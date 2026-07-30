@@ -1123,6 +1123,7 @@
     var el = $('voiceDiag');
     if (!el) return;
     if (!canSpeak) { el.textContent = '狀態：這個瀏覽器沒有語音合成功能。'; return; }
+    if (!db.speak) { el.textContent = '狀態：朗讀被關掉了，點右上角的 🤐 打開。'; return; }
     var who = voice ? (accentOf(voice.lang) + ' ' + voice.name) : '系統預設';
     var state = speechBroken ? '✗ 按了沒有發出聲音'
               : speechHeard ? '✓ 有發出聲音'
@@ -1155,7 +1156,13 @@
 
   var speechTries = 0, speechHeard = false, speechBroken = false;
 
-  // 念出去之後檢查瀏覽器是不是真的在念；完全沒動靜就當作這台裝置不會發音
+  // 語音真的開始念了 —— 這是最可靠的證據，短字母可能在檢查前就念完
+  function markHeard() {
+    speechHeard = true; speechBroken = false;
+    renderVoiceDiag();
+  }
+
+  // 保險：onstart 沒來、也查不到正在念，就當作這台裝置不會發音
   function watchSpeech() {
     var n = ++speechTries;
     setTimeout(function () {
@@ -1167,27 +1174,34 @@
     }, 700);
   }
 
-  // parts 為 [文字, 語速倍率] 的陣列，依序念完；onDone 在最後一段唸完才呼叫
+  // parts 為 [文字, 語速倍率] 的陣列，依序念完；onDone 在最後一段唸完才呼叫。
+  // 沒有指定 delay 就「同步」執行 —— iOS Safari 只有在使用者手勢的那個當下
+  // 同步呼叫 speak() 才會出聲，包進 setTimeout 會被靜靜丟掉。
   function speak(parts, delay, onDone) {
     var fired = false;
     function done() { if (!fired) { fired = true; if (onDone) onDone(); } }
     if (!speakable()) { if (onDone) setTimeout(done, 0); return; }
-    setTimeout(function () {
+    function run() {
       if (!speakable()) { done(); return; }
       try {
-        window.speechSynthesis.cancel();
+        var ss = window.speechSynthesis;
+        // 只在真的還在念的時候才 cancel：cancel 緊接著 speak 會讓 iOS 卡住不出聲
+        if (ss.speaking || ss.pending) ss.cancel();
         parts.forEach(function (p, i) {
           var u = new SpeechSynthesisUtterance(p[0]);
           if (voice) u.voice = voice;
           u.lang = (voice && voice.lang) || 'en-US';
           u.rate = Math.max(MIN_RATE, db.rate * (p[1] || 1));
           u.pitch = db.pitch;
+          if (i === 0) u.onstart = markHeard;
           if (i === parts.length - 1) { u.onend = done; u.onerror = done; }
-          window.speechSynthesis.speak(u);
+          ss.speak(u);
         });
+        try { ss.resume(); } catch (e2) {}   // 被系統暫停時要叫醒它
         watchSpeech();
       } catch (e) { done(); }
-    }, delay || 0);
+    }
+    if (delay) setTimeout(run, delay); else run();
   }
   var lower = function (c) { return c.toLowerCase(); };
   function sayLetter(c, delay, onDone) { speak([[lower(c), 1]], delay, onDone); }
@@ -1558,8 +1572,13 @@
     $('qkind').textContent = KIND_LABEL[q.kind];
     var body = $('qbody');
     if (q.kind === 'listen') {
-      body.innerHTML = '<button class="speaker" id="playBtn" aria-label="再聽一次">🔊</button>';
+      body.innerHTML = '<button class="speaker" id="playBtn" aria-label="再聽一次">🔊</button>' +
+        '<button class="btn ghost" id="noHearBtn" style="margin-top:10px">聽不到？換個問法</button>';
       $('playBtn').addEventListener('click', function () { sayLetter(q.c); });
+      $('noHearBtn').addEventListener('click', function () {
+        q.kind = 'case';                 // 換成看得見的題型，不換答案
+        renderQuestion(q); paintOptions();
+      });
       sayLetter(q.c, 150);
     } else if (q.kind === 'picture') {
       body.innerHTML = '<div class="qemoji">' + L.emoji + '</div>' +
@@ -1763,9 +1782,16 @@
     checkBreak();
   }
 
-  $('quitBtn').addEventListener('click', function () {
-    if (confirm('要結束這一輪嗎？做到目前為止的成績會留下來。')) endGame(false);
-  });
+  // sandbox 的 iframe 會直接忽略 confirm()，所以用「再按一次」代替跳出確認框
+  function armConfirm(btn, ask, ok) {
+    var armed = false, t = null, label = btn.textContent;
+    btn.addEventListener('click', function () {
+      if (armed) { clearTimeout(t); armed = false; btn.textContent = label; ok(); return; }
+      armed = true; btn.textContent = ask;
+      t = setTimeout(function () { armed = false; btn.textContent = label; }, 4000);
+    });
+  }
+  armConfirm($('quitBtn'), '確定結束？再按一次', function () { endGame(false); });
 
   /* ────────── 結果畫面 ────────── */
   function renderResult(isRecord, completed) {
@@ -1952,8 +1978,7 @@
     renderHistory(); renderUseHint(); show('history');
   });
   $('hBackBtn').addEventListener('click', function () { refreshSetup(); show('setup'); });
-  $('clearBtn').addEventListener('click', function () {
-    if (!confirm('要清除所有練習紀錄嗎？學會的字母 ⭐ 和設定會保留。')) return;
+  armConfirm($('clearBtn'), '確定清除全部紀錄？再按一次', function () {
     db.perQ = {}; db.recent = {}; db.runs = []; db.best = {}; db.lastWrong = [];
     db.useMs = 0; db.useAt = 0; db.breakUntil = 0;
     save(); renderHistory(); renderUseHint(); refreshSetup();
@@ -1971,6 +1996,7 @@
     $('speakBtn').classList.toggle('off', !on);
     $('speakBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
     $('speakBtn').disabled = !canSpeak;
+    renderVoiceDiag();
   }
   $('soundBtn').addEventListener('click', function () {
     db.sound = !db.sound; save(); syncSound();
