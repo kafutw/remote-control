@@ -593,7 +593,6 @@
         <button class="btn ghost grow" id="selNone">全部清除</button>
         <button class="btn ghost grow" id="selWeak">我的弱點</button>
       </div>
-      <div class="row mt wrapme" id="quickRanges"></div>
       <div class="legend">
         <div><b>🥇</b><span>金牌<i>最近 10 題對 9 題</i></span></div>
         <div><b>🥈</b><span>銀牌<i>對 8 題</i></span></div>
@@ -649,9 +648,16 @@
         <button class="mode sel" data-pitch="1.1"><b>中</b><i>一般</i></button>
         <button class="mode" data-pitch="1.4"><b>高</b><i>活潑</i></button>
       </div>
+      <div class="sub-h">答對之後</div>
+      <div class="modes three" id="rights">
+        <button class="mode" data-right="none"><b>不念</b><i>答對就換下一題</i></button>
+        <button class="mode sel" data-right="letter"><b>只念字母</b><i>再聽一次字母</i></button>
+        <button class="mode" data-right="full"><b>字母＋單字</b><i>連單字一起念</i></button>
+      </div>
       <div class="row mt">
         <button class="btn grow" id="tryVoiceBtn">🔊 試聽「b ・ bear」</button>
       </div>
+      <p class="hint" id="voiceDiag"></p>
     </div>
 
     <div class="foot">
@@ -872,17 +878,10 @@
   LETTERS.forEach(function (L, i) { IDX[L.c] = i; });
   var ALL = LETTERS.map(function (L) { return L.c; });
 
-  var RANGES = [
-    { label: 'A–F', from: 0,  to: 5  },
-    { label: 'G–L', from: 6,  to: 11 },
-    { label: 'M–R', from: 12, to: 17 },
-    { label: 'S–Z', from: 18, to: 25 }
-  ];
-
   /* ────────── 資料儲存 ────────── */
   var KEY = 'abc_v1';
   var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', count: 10,
-              rate: 0.55, pitch: 1.1, voiceURI: '',
+              rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter',
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 熟練度只看每個字母最近這麼多題，以前的錯誤會慢慢淡出
@@ -932,6 +931,7 @@
     if (['all', 'listen', 'picture', 'case'].indexOf(db.kind) < 0) db.kind = DEF.kind;
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
+    if (['none', 'letter', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
     if ([0, 20, 30].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
     if (typeof db.useMs !== 'number' || db.useMs < 0) db.useMs = 0;
     if (typeof db.useAt !== 'number') db.useAt = 0;
@@ -1086,55 +1086,111 @@
   function buildVoiceSelect() {
     var sel = $('voiceSel');
     sel.innerHTML = '';
-    if (!canSpeak || !enVoices.length) {
-      var o = document.createElement('option');
-      o.textContent = '這台裝置沒有英語語音';
-      sel.appendChild(o);
-      sel.disabled = true;
-      $('voiceHint').textContent = canSpeak
-        ? '找不到英語語音，聽聲音的題目會自動不出現。iPad 可到「設定 → 輔助使用 → 朗讀內容 → 語音」下載美式英語。'
-        : '這個瀏覽器不支援朗讀，聽聲音的題目會自動不出現。';
-      return;
-    }
-    sel.disabled = false;
+    sel.disabled = !canSpeak;
+    // 沒抓到英語語音也留一個「系統預設」，照樣用 en-US 去念，不要整個鎖死
+    var auto = document.createElement('option');
+    auto.value = '';
+    auto.textContent = enVoices.length ? '自動（挑美式優先）' : '系統預設語音';
+    sel.appendChild(auto);
     enVoices.forEach(function (v) {
       var o = document.createElement('option');
       o.value = v.voiceURI;
       o.textContent = accentOf(v.lang) + '　' + v.name;
       sel.appendChild(o);
     });
-    if (voice) sel.value = voice.voiceURI;
-    var us = enVoices.filter(function (v) { return /^en-?US/i.test((v.lang || '').replace('_', '-')); });
-    $('voiceHint').textContent = us.length
-      ? '預設挑美式英語（en-US）。這台裝置有 ' + us.length + ' 個美式語音可以選。'
-      : '這台裝置沒有美式英語語音，先用 ' + accentOf(voice.lang) +
-        '。iPad 可到「設定 → 輔助使用 → 朗讀內容 → 語音」下載美式英語。';
+    sel.value = (voice && db.voiceURI) ? db.voiceURI : '';
+    if (!canSpeak) {
+      $('voiceHint').textContent = '這個瀏覽器不支援朗讀，聽聲音的題目會自動不出現。';
+    } else if (!enVoices.length) {
+      $('voiceHint').textContent = '這台裝置沒有回報英語語音，會用系統預設的聲音念（口音不保證）。' +
+        'iPad 可到「設定 → 輔助使用 → 朗讀內容 → 語音 → 英文」下載美式英語。';
+    } else {
+      var us = enVoices.filter(function (v) { return /^en-?US/i.test((v.lang || '').replace('_', '-')); });
+      $('voiceHint').textContent = us.length
+        ? '預設挑美式英語（en-US）。這台裝置有 ' + us.length + ' 個美式語音可以選。'
+        : '這台裝置沒有美式英語語音，先用 ' + accentOf(voice.lang) +
+          '。iPad 可到「設定 → 輔助使用 → 朗讀內容 → 語音 → 英文」下載美式英語。';
+    }
+    renderVoiceDiag();
   }
 
-  function speakable() { return canSpeak && db.speak && !!voice; }
+  // 把「到底有沒有發出聲音」寫在畫面上，不要讓人對著沒反應的按鈕猜
+  function renderVoiceDiag() {
+    var el = $('voiceDiag');
+    if (!el) return;
+    if (!canSpeak) { el.textContent = '狀態：這個瀏覽器沒有語音合成功能。'; return; }
+    var who = voice ? (accentOf(voice.lang) + ' ' + voice.name) : '系統預設';
+    var state = speechBroken ? '✗ 按了沒有發出聲音'
+              : speechHeard ? '✓ 有發出聲音'
+              : speechTries ? '正在念…'
+              : '還沒試過，按上面的試聽鍵';
+    el.textContent = '狀態：' + state + '　・　語音：' + who +
+      '　・　找到 ' + enVoices.length + ' 個英語語音' +
+      (IOS ? '　・　iOS 語速下限 0.5' : '');
+  }
 
-  // parts 為 [文字, 語速倍率] 的陣列，依序念完
-  function speak(parts, delay) {
-    if (!speakable()) return;
+  // 真的念不出來：把「聽聲音」題型收起來，目前這題也換一種問法
+  function onSpeechBroken() {
+    if (S && S.q && S.q.kind === 'listen' && !lock) {
+      S.q.kind = 'case';
+      renderQuestion(S.q);
+      paintOptions();
+    }
+  }
+
+  // 找不到 en 語音也照念（交給瀏覽器挑預設），只是口音不保證
+  function speakable() { return canSpeak && db.speak; }
+  // 題型是否還能靠聲音出題：這台裝置真的念不出來時就不出「聽聲音」
+  function speechUsable() { return speakable() && !speechBroken; }
+
+  // iOS 在 rate 太低時會整句變無聲，這裡設一個地板
+  var IOS = /iP(hone|ad|od)/.test(navigator.platform || '') ||
+            (/Mac/.test(navigator.platform || '') && navigator.maxTouchPoints > 1) ||
+            /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+  var MIN_RATE = IOS ? 0.5 : 0.1;
+
+  var speechTries = 0, speechHeard = false, speechBroken = false;
+
+  // 念出去之後檢查瀏覽器是不是真的在念；完全沒動靜就當作這台裝置不會發音
+  function watchSpeech() {
+    var n = ++speechTries;
     setTimeout(function () {
-      if (!speakable()) return;
+      var live = false;
+      try { live = !!(window.speechSynthesis.speaking || window.speechSynthesis.pending); } catch (e) {}
+      if (live) { speechHeard = true; speechBroken = false; }
+      else if (!speechHeard && n === speechTries) { speechBroken = true; onSpeechBroken(); }
+      renderVoiceDiag();
+    }, 700);
+  }
+
+  // parts 為 [文字, 語速倍率] 的陣列，依序念完；onDone 在最後一段唸完才呼叫
+  function speak(parts, delay, onDone) {
+    var fired = false;
+    function done() { if (!fired) { fired = true; if (onDone) onDone(); } }
+    if (!speakable()) { if (onDone) setTimeout(done, 0); return; }
+    setTimeout(function () {
+      if (!speakable()) { done(); return; }
       try {
         window.speechSynthesis.cancel();
-        parts.forEach(function (p) {
+        parts.forEach(function (p, i) {
           var u = new SpeechSynthesisUtterance(p[0]);
-          u.voice = voice;
-          u.lang = voice.lang || 'en-US';
-          u.rate = Math.max(0.1, db.rate * (p[1] || 1));
+          if (voice) u.voice = voice;
+          u.lang = (voice && voice.lang) || 'en-US';
+          u.rate = Math.max(MIN_RATE, db.rate * (p[1] || 1));
           u.pitch = db.pitch;
+          if (i === parts.length - 1) { u.onend = done; u.onerror = done; }
           window.speechSynthesis.speak(u);
         });
-      } catch (e) {}
+        watchSpeech();
+      } catch (e) { done(); }
     }, delay || 0);
   }
   var lower = function (c) { return c.toLowerCase(); };
-  function sayLetter(c, delay) { speak([[lower(c), 1]], delay); }
-  function sayWord(c, delay) { speak([[letterOf(c).word, 1.25]], delay); }
-  function sayFull(c, delay) { speak([[lower(c), 1], [letterOf(c).word, 1.25]], delay); }
+  function sayLetter(c, delay, onDone) { speak([[lower(c), 1]], delay, onDone); }
+  function sayWord(c, delay, onDone) { speak([[letterOf(c).word, 1.25]], delay, onDone); }
+  function sayFull(c, delay, onDone) {
+    speak([[lower(c), 1], [letterOf(c).word, 1.25]], delay, onDone);
+  }
   function hushSpeech() {
     if (!canSpeak) return;
     try { window.speechSynthesis.cancel(); } catch (e) {}
@@ -1216,21 +1272,6 @@
     });
   }
 
-  function buildQuickRanges() {
-    var box = $('quickRanges');
-    box.innerHTML = '';
-    RANGES.forEach(function (r) {
-      var b = document.createElement('button');
-      b.className = 'btn ghost grow';
-      b.textContent = r.label;
-      b.addEventListener('click', function () {
-        picked = ALL.slice(r.from, r.to + 1);
-        buildTiles(); syncStart();
-      });
-      box.appendChild(b);
-    });
-  }
-
   function syncStart() {
     $('startBtn').disabled = picked.length === 0;
     $('startBtn').textContent = '開始測驗（' + db.count + ' 題）🚀';
@@ -1269,17 +1310,23 @@
   segment('kinds', function (m) { db.kind = m.dataset.kind; });
   segment('rates', function (m) { db.rate = Number(m.dataset.rate); tryVoice(); });
   segment('pitches', function (m) { db.pitch = Number(m.dataset.pitch); tryVoice(); });
+  segment('rights', function (m) { db.sayOnRight = m.dataset.right; });
   segment('limits', function (m) { db.limitMin = Number(m.dataset.limit); renderUseHint(); });
 
   $('voiceSel').addEventListener('change', function () {
     db.voiceURI = $('voiceSel').value;
-    voice = enVoices.filter(function (v) { return v.voiceURI === db.voiceURI; })[0] || voice;
+    voice = db.voiceURI
+      ? (enVoices.filter(function (v) { return v.voiceURI === db.voiceURI; })[0] || null)
+      : (enVoices[0] || null);
     save(); buildVoiceSelect(); tryVoice();
   });
   function tryVoice() {
     unlockSpeech();
-    if (!speakable()) return;
+    speechBroken = false; speechHeard = false;
+    renderVoiceDiag();
+    if (!speakable()) { renderVoiceDiag(); return; }
     sayFull('B');
+    $('voiceDiag').textContent = '狀態：正在念「b ・ bear」…';
   }
   $('tryVoiceBtn').addEventListener('click', tryVoice);
 
@@ -1372,8 +1419,8 @@
 
   function kindsAvailable() {
     var ks = db.kind === 'all' ? ['listen', 'picture', 'case'] : [db.kind];
-    // 沒有英語語音就別出「聽聲音」，不然小朋友會卡住
-    if (!speakable()) {
+    // 這台裝置念不出聲音就別出「聽聲音」，不然小朋友會卡住
+    if (!speechUsable()) {
       ks = ks.filter(function (k) { return k !== 'listen'; });
       if (!ks.length) ks = ['picture', 'case'];
     }
@@ -1523,6 +1570,16 @@
 
   function optionFace(c, kind) { return kind === 'case' ? lower(c) : c; }
 
+  function paintOptions() {
+    document.querySelectorAll('.opt').forEach(function (btn, i) {
+      var c = S.opts[i];
+      btn.className = 'opt';
+      btn.textContent = optionFace(c, S.q.kind);
+      btn.dataset.val = c;
+      btn.disabled = false;
+    });
+  }
+
   function nextQuestion() {
     clearReveal();
     if (!S.running) return;
@@ -1539,13 +1596,8 @@
     $('qnum').textContent = S.idx + ' / ' + S.total;
     updateDots();
     renderQuestion(q);
-    var opts = makeOptions(q.c);
-    document.querySelectorAll('.opt').forEach(function (btn, i) {
-      btn.className = 'opt';
-      btn.textContent = optionFace(opts[i], q.kind);
-      btn.dataset.val = opts[i];
-      btn.disabled = false;
-    });
+    S.opts = makeOptions(q.c);
+    paintOptions();
     tickClock();
   }
 
@@ -1628,9 +1680,22 @@
       var note = S.streak >= 3 ? '連續答對 ' + S.streak + ' 題！🔥' : '答對了！';
       $('streakTxt').textContent = note;
       updateDots();
-      sayFull(q.c, 260);
       save();
-      setTimeout(nextQuestion, 1100);
+
+      // 換下一題會 cancel 掉語音，所以要等念完再換，最少停 700ms、最多等 3 秒
+      var t0 = Date.now(), moved = false;
+      function go() {
+        if (moved) return;
+        moved = true;
+        setTimeout(nextQuestion, Math.max(0, 700 - (Date.now() - t0)));
+      }
+      if (db.sayOnRight === 'none' || !speakable()) {
+        setTimeout(go, 700);
+      } else {
+        if (db.sayOnRight === 'full') sayFull(q.c, 240, go);
+        else sayLetter(q.c, 240, go);
+        setTimeout(go, 3000);
+      }
     } else {
       rec.w++;
       btn.classList.add('bad');
@@ -1897,7 +1962,7 @@
     $('soundBtn').setAttribute('aria-pressed', db.sound ? 'true' : 'false');
   }
   function syncSpeak() {
-    var on = db.speak && canSpeak && !!voice;
+    var on = db.speak && canSpeak;
     $('speakBtn').textContent = on ? '🗣️' : '🤐';
     $('speakBtn').classList.toggle('off', !on);
     $('speakBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -2040,9 +2105,8 @@
   }
 
   load();
-  picked = [];   // 每次打開都從空白開始，讓他自己決定今天要練哪幾個字母
+  picked = ALL.slice();   // 預設全選 A–Z，不想練哪個再自己點掉
   $('subtitle').textContent = '每題 ' + PER_Q + ' 秒 ・ ' + db.count + ' 題';
-  buildQuickRanges();
   document.querySelectorAll('#counts .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.count) === db.count);
   });
@@ -2057,6 +2121,9 @@
   });
   document.querySelectorAll('#pitches .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.pitch) === db.pitch);
+  });
+  document.querySelectorAll('#rights .mode').forEach(function (m) {
+    m.classList.toggle('sel', m.dataset.right === db.sayOnRight);
   });
   document.querySelectorAll('#limits .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.limit) === db.limitMin);
