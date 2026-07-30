@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08151d">
+<title>市場瞭望台 · 每日晨間簡報</title>
+<style>
+:root{
+  --bg:#08151d; --bg2:#0e2029; --card:#122a35; --card2:#16333f;
+  --line:#1e4150; --line2:#2a5568;
+  --txt:#e8f2f6; --dim:#8fb0bd; --dim2:#5f8393;
+  --up:#ff4d4f; --down:#00c853; --flat:#c9d8de;
+  --gold:#ffc94d; --blue:#4fc3f7;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,:root{background:#08151d;color-scheme:dark}
+html,body{margin:0;padding:0}
+body{
+  background:linear-gradient(180deg,#08151d 0%,#0a1a23 40%,#08151d 100%);
+  color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  font-size:15px;line-height:1.6;padding:0 0 60px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px}
+h1,h2{margin:0;font-weight:700;letter-spacing:.02em}
+
+header{
+  padding:20px 0 15px;background:linear-gradient(160deg,#0d2b38,#0a1c25);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;backdrop-filter:blur(8px);
+}
+.hdr{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+h1{font-size:20px}
+h1 .sub{display:block;font-size:10.5px;color:var(--dim2);font-weight:500;letter-spacing:.1em;margin-top:3px}
+.clock{font-variant-numeric:tabular-nums;font-size:22px;font-weight:700;color:var(--gold);line-height:1;text-align:right}
+.clock small{display:block;font-size:10px;color:var(--dim2);font-weight:500;letter-spacing:.05em;margin-top:2px}
+.stamp{
+  margin-top:11px;font-size:11px;color:var(--dim2);background:rgba(0,0,0,.25);
+  border:1px solid var(--line);border-radius:8px;padding:7px 10px;line-height:1.5
+}
+.stamp b{color:var(--gold)}
+.stale{border-color:#7a5b2b;background:#211d13;color:#ffc94d}
+
+section{margin-top:24px}
+.sec-h{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.sec-h h2{font-size:15px}
+.sec-h .ic{
+  width:24px;height:24px;border-radius:8px;background:var(--card2);border:1px solid var(--line2);
+  display:grid;place-items:center;font-size:12px;flex:0 0 auto
+}
+.sec-h .hint{margin-left:auto;font-size:11px;color:var(--dim2)}
+
+/* 今日基調 */
+.tone{border-radius:14px;padding:18px;border:1px solid var(--line2);background:var(--bg2)}
+.tone .lamp{font-size:32px;line-height:1}
+.tone .lv{font-size:21px;font-weight:800;margin-top:7px;letter-spacing:.03em}
+.tone .txt{font-size:13.5px;margin-top:9px;line-height:1.75;color:var(--txt)}
+.t-up{background:linear-gradient(160deg,#3a1417,#12262f);border-color:#7a2b2f}
+.t-flat{background:linear-gradient(160deg,#2c2716,#12262f);border-color:#6b5c2a}
+.t-down{background:linear-gradient(160deg,#0d3322,#12262f);border-color:#2f7d51}
+
+/* 行情列 */
+.row{
+  display:flex;align-items:center;gap:10px;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-top:8px
+}
+.row .nm{flex:1 1 auto;min-width:0}
+.row .nm .n{font-size:15px;font-weight:700}
+.row .nm .c{font-size:10.5px;color:var(--dim2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .px{flex:0 0 84px;width:84px;text-align:right;font-variant-numeric:tabular-nums}
+.row .px .lab{font-size:10px;color:var(--dim2)}
+.row .px .p{font-size:19px;font-weight:800;line-height:1.15}
+.pctbox{
+  flex:0 0 108px;width:108px;text-align:center;border-radius:10px;padding:6px 8px;
+  font-variant-numeric:tabular-nums;border:1px solid var(--line2);
+  background:rgba(201,216,222,.06);color:var(--flat)
+}
+.pctbox .pv{font-size:18px;font-weight:800;line-height:1.15;white-space:nowrap}
+.pctbox .dv{font-size:11px;line-height:1.35;opacity:.9;white-space:nowrap}
+.pctbox.up{background:rgba(255,77,79,.15);border-color:rgba(255,77,79,.5);color:var(--up)}
+.pctbox.down{background:rgba(0,200,83,.13);border-color:rgba(0,200,83,.45);color:var(--down)}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--flat)}
+
+/* ADR 專區 */
+.adr{background:linear-gradient(150deg,#14313d,#102530);border:1px solid var(--line2);border-radius:14px;padding:15px}
+.adr .big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}
+.adr .sub{font-size:12px;color:var(--dim);margin-top:2px}
+.kv{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 0;border-top:1px solid rgba(42,85,104,.6);font-size:12.5px;color:var(--dim)}
+.kv b{font-size:16px;font-weight:800;color:var(--txt);font-variant-numeric:tabular-nums;white-space:nowrap}
+.kv b.up{color:var(--up)}.kv b.down{color:var(--down)}
+
+/* 重點 / 新聞 */
+.pt{display:flex;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--gold);border-radius:11px;padding:11px 12px;margin-top:8px;font-size:13px;line-height:1.7}
+.pt .no{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;padding-top:2px}
+.pt b{color:#fff}
+.pt.warn{border-left-color:var(--up)}
+.pt.good{border-left-color:var(--down)}
+
+.news{display:block;background:var(--card);border:1px solid var(--line);border-radius:11px;
+  padding:11px 12px;margin-top:8px;text-decoration:none;color:var(--txt)}
+.news .t{font-size:13.5px;font-weight:700;line-height:1.5}
+.news .d{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.6}
+.news .s{font-size:10.5px;color:var(--blue);margin-top:5px}
+
+.cal{display:flex;gap:11px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid rgba(30,65,80,.6);font-size:13px}
+.cal:last-child{border-bottom:none}
+.cal .d{flex:0 0 62px;font-size:11.5px;color:var(--gold);font-family:ui-monospace,Menlo,monospace;padding-top:2px}
+.cal .x small{display:block;color:var(--dim2);font-size:11px;margin-top:1px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+
+.links{display:grid;grid-template-columns:1fr;gap:8px}
+.links a{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);text-decoration:none;font-size:13px}
+.links a span{color:var(--dim2);font-size:10.5px}
+.note{font-size:11.5px;color:var(--dim2);line-height:1.75;margin-top:11px}
+.disc{margin-top:26px;padding:13px;border:1px dashed var(--line2);border-radius:11px;
+  font-size:11px;color:var(--dim2);line-height:1.75}
+.foot{text-align:center;color:#3b5b69;font-size:10.5px;margin-top:16px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="hdr">
+      <h1>市場瞭望台<span class="sub">MARKET WATCHTOWER · 晨間簡報</span></h1>
+      <div class="clock"><span id="clk">--:--:--</span><small id="clkd">台北時間</small></div>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section><div class="tone" id="tone"></div></section>
+
+  <section>
+    <div class="sec-h"><div class="ic">🇺🇸</div><h2>昨夜美股</h2><div class="hint" id="usWhen"></div></div>
+    <div id="us"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><div class="ic">🔗</div><h2>台積電 ADR ↔ 台股</h2><div class="hint">開盤前最重要的一格</div></div>
+    <div class="adr" id="adr"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><div class="ic">🇹🇼</div><h2>台股昨日</h2><div class="hint" id="twWhen"></div></div>
+    <div id="tw"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><div class="ic">🎯</div><h2>今日觀察重點</h2></div>
+    <div id="points"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><div class="ic">📰</div><h2>昨夜關鍵新聞</h2></div>
+    <div id="news"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><div class="ic">📅</div><h2>近期行事曆</h2></div>
+    <div class="card" id="cal"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><div class="ic">🔎</div><h2>自己查證</h2><div class="hint">這頁是快照，不是即時</div></div>
+    <div class="card">
+      <div class="links">
+        <a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener"><b>台指期夜盤</b><span>期交所即時</span></a>
+        <a href="https://tw.stock.yahoo.com/quote/TSM" target="_blank" rel="noopener"><b>台積電 ADR</b><span>TSM 即時報價</span></a>
+        <a href="https://tw.stock.yahoo.com/quote/%5ESOX" target="_blank" rel="noopener"><b>費城半導體</b><span>^SOX</span></a>
+        <a href="https://tw.stock.yahoo.com/quote/2330.TW/technical-analysis" target="_blank" rel="noopener"><b>台積電技術分析</b><span>看 MA60 季線在哪</span></a>
+        <a href="https://mis.twse.com.tw/stock/index.jsp" target="_blank" rel="noopener"><b>台股試撮</b><span>08:30–09:00</span></a>
+        <a href="https://tw.stock.yahoo.com/quote/%5ETWII" target="_blank" rel="noopener"><b>加權指數</b><span>^TWII</span></a>
+      </div>
+      <div class="note">
+        頁面上的每個數字都來自公開新聞與行情頁，<b>產生後就不會再變</b>。真的要下單前，用上面的連結確認一次即時價。
+      </div>
+    </div>
+  </section>
+
+  <div class="disc">
+    <b>免責聲明</b>：本頁是個人閱讀用的資訊整理，內容來自公開報導，可能有誤植、延遲或轉述失真，<b>不是投資建議</b>，也不保證正確性。所有數字請以證交所、期交所與券商即時報價為準。投資決策與盈虧自負。
+  </div>
+  <div class="foot">市場瞭望台 · 每個交易日早上 07:00 重新產生</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ══════════════════════════════════════════════════════════
+   每日簡報資料 —— 每天早上重新產生時只換這一整塊
+   ══════════════════════════════════════════════════════════ */
+var BRIEF = {
+  generatedAt: "2026-07-31T07:20:00+08:00",
+  forSession:  "2026/07/31（五）台股",
+
+  tone: {
+    k: "up",
+    lamp: "🔴",
+    lv: "強勢反彈，但別追第一根",
+    txt: "昨夜費半 <b>+9.01%</b>、台積電 ADR <b>+7.64%</b>，是這波修正以來最大單日反彈，催化劑是<b>微軟財報 Azure 大增</b>、盤後暴漲 15%。ADR 換算後對台股溢價擴大到約 <b>18.5%</b>，台積電今天補漲壓力明顯。但要記得兩件事：這根反彈的引信是雲端財報、<b>不是半導體自己的基本面轉好</b>；而且台股昨天盤中震盪超過 1,700 點、一度大漲 1,116 點仍收黑，<b>開高守不守得住是兩回事</b>。"
+  },
+
+  usWhen: "2026/07/30 美國時段（台北 7/31 04:00 收）",
+  us: [
+    {n:"費城半導體", c:"^SOX · 晶片股火車頭", pct:9.01,  note:"前兩日 −2.23%／−5%"},
+    {n:"納斯達克",   c:"^IXIC",              pct:2.63,  note:""},
+    {n:"標普 500",   c:"^GSPC",              pct:1.30,  note:""},
+    {n:"道瓊工業",   c:"^DJI",               pct:0.67,  note:""},
+    {n:"輝達",       c:"NVDA",               pct:3.76,  note:""},
+    {n:"微軟",       c:"MSFT · 這波反彈的引信", pct:15.0, note:"Azure 大增，盤後暴漲"}
+  ],
+
+  adr: {
+    price: 403.31, chg: 28.64, pct: 7.64,
+    fx: 32.39,                 // 美元／台幣，由 ADR 折台股報價反推
+    tsmcClose: 2205,           // 台積電 7/30 台股收盤
+    tsmcMA60: 2346,            // 季線概估，請自行以券商 MA60 校正
+    twiiClose: 39933.30,
+    weight: 40                 // 台積電佔加權指數權重（估）
+  },
+
+  twWhen: "2026/07/30（四）收盤",
+  tw: [
+    {n:"加權指數", c:"盤中 39,404 ～ 41,155，震盪逾 1,700 點", p:39933.30, pct:-0.26, dp:0},
+    {n:"台積電",   c:"2330 · 逆勢收紅",                        p:2205,     pct:0.23,  dp:0}
+  ],
+  twNote: "其餘持股（台達電、鴻海、華通、中華電、星宇航空與各檔 ETF）的昨收與價位警示在盤前控制台，這裡只放帶動大盤的兩個。",
+
+  points: [
+    {k:"good", t:"<b>台積電 ADR 溢價擴大到約 18.5%</b>（前一日約 15.5%）。ADR 一夜漲 7.64%，台股昨天只漲 0.23%，這個落差通常會在開盤補回來。"},
+    {k:"warn", t:"<b>反彈的引信是微軟財報，不是半導體基本面。</b>費半 +9% 之前是連兩天的 −2.23% 和 −5%，這比較像超跌反彈而非趨勢反轉。"},
+    {k:"warn", t:"<b>昨天盤中大漲 1,116 點仍收黑，失守 4 萬點。</b>追價買盤接不住，代表上檔賣壓還很重，今天開高之後的走勢比開盤價重要。"},
+    {k:"",     t:"<b>台積電昨收 2,205 距季線（約 2,346）−6%，落在控制台階梯的第 2 批</b>（−5%～−10%）。但若今天完全反映 ADR 的 +7.64%，開盤就會回到 2,374、<b>直接站回季線之上</b> — 這代表你可能連第 2 批都來不及買。<b>不要為了追上車而在開盤衝進去</b>，站回季線要連續站穩才算數。季線確切數字請用券商 MA60 校正。"},
+    {k:"",     t:"<b>今天是週五。</b>週末有兩天無法反應的空窗，遇到大波動的行情，留倉部位要比平常保守。"}
+  ],
+
+  news: [
+    {t:"晶片股回神！費半強彈逾 8%、台積電 ADR 飆漲 7.6%",
+     d:"低接買盤湧現，半導體全面反攻，台積電 ADR 收 403.31 美元，單日漲 28.64 美元。",
+     s:"自由財經", u:"https://ec.ltn.com.tw/article/breakingnews/5523702"},
+    {t:"美股週四反彈 那斯達克大漲 2%、微軟噴高 15%",
+     d:"微軟財報 Azure 雲端業務大幅成長，帶動整體科技股情緒回穩。",
+     s:"世界新聞網", u:"https://www.worldjournal.com/wj/story/121477/9661658"},
+    {t:"台股 4 萬點得而復失、收跌 105 點　台積電逆勢收 2,205 元",
+     d:"盤中一度大漲 1,116 點衝上 41,155，尾盤追價買盤未能延續再度翻黑。",
+     s:"聯合新聞網", u:"https://udn.com/news/story/7251/9660516"},
+    {t:"台股盤後：漲 794 點創歷年最大漲點，連 2 日強彈 1,464 點",
+     d:"前一交易日的強彈紀錄，可對照昨日尾盤翻黑，看出這波反彈的不穩定。",
+     s:"Yahoo 股市", u:"https://tw.stock.yahoo.com/news/%E5%8F%B0%E8%82%A1%E7%9B%A4%E5%BE%8C-%E6%BC%B2794%E9%BB%9E%E5%89%B5%E6%AD%B7%E5%B9%B4%E6%9C%80%E5%A4%A7%E6%BC%B2%E9%BB%9E-%E9%80%A32%E6%97%A5%E5%BC%B7%E5%BD%881464%E9%BB%9E-060405959.html"}
+  ],
+
+  cal: [
+    {d:"08/12", x:"美國 7 月 CPI", s:"台灣時間 20:30 公布"},
+    {d:"09/15–16", x:"FOMC 利率決策會議", s:"下一次會議"},
+    {d:"09/16", x:"台積電除息", s:"季配息調升至 7 元，10/08 入帳"}
+  ]
+};
+/* ════════════════════ 資料區結束 ════════════════════ */
+
+function $(id){ return document.getElementById(id); }
+function fmt(n,d){ return (n===null||n===undefined||!isFinite(n)) ? "—"
+  : n.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function cls(n){ return (n===null||n===undefined||!isFinite(n)) ? "flat" : (n>0?"up":(n<0?"down":"flat")); }
+function arrow(n){ return (n===null||!isFinite(n)||n===0) ? "－" : (n>0?"▲":"▼"); }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+function taipei(){
+  var p = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",
+    day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})
+    .formatToParts(new Date()).reduce(function(a,x){a[x.type]=x.value;return a;},{});
+  return {h:parseInt(p.hour,10)%24, mi:+p.minute, s:+p.second, date:p.year+"-"+p.month+"-"+p.day};
+}
+
+/* 產生時間戳＋過期提醒 */
+function renderStamp(){
+  var gen = new Date(BRIEF.generatedAt);
+  var ageH = (Date.now() - gen.getTime())/3600000;
+  var s = $("stamp");
+  var when = new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",month:"2-digit",day:"2-digit",
+    hour:"2-digit",minute:"2-digit",hour12:false}).format(gen);
+  s.className = "stamp" + (ageH > 20 ? " stale" : "");
+  s.innerHTML = (ageH > 20 ? "⚠️ 這份簡報已經是 <b>" + Math.floor(ageH/24) + " 天前</b>產生的，數字可能過時 — "
+                           : "這份簡報產生於 <b>" + when + "</b>　·　")
+    + "對應 " + esc(BRIEF.forSession);
+}
+
+function renderTone(){
+  var t = BRIEF.tone;
+  $("tone").className = "tone t-" + t.k;
+  $("tone").innerHTML = '<div class="lamp">'+t.lamp+'</div><div class="lv">'+esc(t.lv)+'</div>'
+    + '<div class="txt">'+t.txt+'</div>';
+}
+
+function quoteRow(o){
+  var hasPrice = o.p !== null && o.p !== undefined;
+  return '<div class="row">'
+    + '<div class="nm"><div class="n">'+esc(o.n)+'</div><div class="c">'+esc(o.c||"")+'</div></div>'
+    + (hasPrice ? '<div class="px"><div class="lab">收盤</div><div class="p">'+fmt(o.p,o.dp||0)+'</div></div>' : '')
+    + '<div class="pctbox '+cls(o.pct)+'">'
+    +   '<div class="pv">'+arrow(o.pct)+' '+(o.pct===null||o.pct===undefined?"—":Math.abs(o.pct).toFixed(2)+"%")+'</div>'
+    +   (o.note ? '<div class="dv">'+esc(o.note)+'</div>' : '')
+    + '</div></div>';
+}
+
+function renderUS(){
+  $("usWhen").textContent = BRIEF.usWhen;
+  $("us").innerHTML = BRIEF.us.map(quoteRow).join("");
+}
+function renderTW(){
+  $("twWhen").textContent = BRIEF.twWhen;
+  $("tw").innerHTML = BRIEF.tw.map(quoteRow).join("")
+    + (BRIEF.twNote ? '<div class="note">'+esc(BRIEF.twNote)+'</div>' : "");
+}
+
+function renderADR(){
+  var a = BRIEF.adr;
+  var impliedOpen = a.tsmcClose * (1 + a.pct/100);     // 台積電完全比照 ADR 漲跌的話
+  var pts  = (a.pct/100) * (a.weight/100) * a.twiiClose;
+  var ptsPct = pts / a.twiiClose * 100;
+  var conv = a.price * a.fx / 5;                       // 1 ADR = 5 股普通股
+  var prem = (conv / a.tsmcClose - 1) * 100;
+  var bias = (a.tsmcClose / a.tsmcMA60 - 1) * 100;
+  var biasOpen = (impliedOpen / a.tsmcMA60 - 1) * 100;
+
+  $("adr").innerHTML =
+      '<div class="big '+cls(a.pct)+'">'+fmt(a.price,2)+' <span style="font-size:15px">美元</span></div>'
+    + '<div class="sub"><span class="'+cls(a.pct)+'">'+arrow(a.pct)+' '+Math.abs(a.pct).toFixed(2)+'%'
+    +   '（'+(a.chg>0?"+":"−")+fmt(Math.abs(a.chg),2)+' 美元）</span>　昨夜收盤</div>'
+
+    + '<div class="kv"><span>台積電台股昨收</span><b>'+fmt(a.tsmcClose,0)+' 元</b></div>'
+    + '<div class="kv"><span>若完全反映 ADR 漲跌<small style="display:block;color:var(--dim2);font-size:10.5px">'
+    +   '昨收 × (1 '+(a.pct>0?"+":"−")+' '+Math.abs(a.pct).toFixed(2)+'%)</small></span>'
+    +   '<b class="'+cls(a.pct)+'">'+fmt(impliedOpen,0)+' 元</b></div>'
+    + '<div class="kv"><span>對大盤的貢獻<small style="display:block;color:var(--dim2);font-size:10.5px">'
+    +   '以台積電權重 '+a.weight+'% 估</small></span><b class="'+cls(pts)+'">'
+    +   (pts>0?"+":"−")+fmt(Math.abs(pts),0)+' 點（'+(ptsPct>0?"+":"")+ptsPct.toFixed(1)+'%）</b></div>'
+    + '<div class="kv"><span>季線 '+fmt(a.tsmcMA60,0)+'<small style="display:block;color:var(--dim2);font-size:10.5px">'
+    +   '昨收距季線</small></span><b class="'+cls(bias)+'">'+(bias>0?"+":"")+bias.toFixed(1)+'%</b></div>'
+    + '<div class="kv"><span>隱含開盤距季線</span><b class="'+cls(biasOpen)+'">'
+    +   (biasOpen>0?"+":"")+biasOpen.toFixed(1)+'%'+(biasOpen>=0?"　站回":"　仍在下方")+'</b></div>'
+    + '<div class="kv"><span>ADR 換算價 '+fmt(conv,0)+' 元<small style="display:block;color:var(--dim2);font-size:10.5px">'
+    +   'ADR × '+a.fx+' ÷ 5，溢價率</small></span><b class="'+cls(prem)+'">'
+    +   (prem>0?"+":"")+prem.toFixed(1)+'%</b></div>'
+
+    + '<div class="note" style="margin-top:12px">'
+    +   '⚠️ 兩件事別搞混：<b>「若完全反映」只是上限參考</b>，台股很少剛好補到滿，而且有 10% 漲跌幅限制。'
+    +   '另外台積電 ADR 長期<b>結構性溢價</b>就有一到二成，所以<b>絕對溢價率不是訊號，溢價率的「變化」才是</b> — '
+    +   '溢價擴大代表 ADR 跑在台股前面、台股有補漲空間，收斂代表已經反映完了。'
+    + '</div>';
+}
+
+function renderPoints(){
+  $("points").innerHTML = BRIEF.points.map(function(p,i){
+    return '<div class="pt '+(p.k||"")+'"><div class="no">'+(i+1)+'</div><div>'+p.t+'</div></div>';
+  }).join("");
+}
+function renderNews(){
+  $("news").innerHTML = BRIEF.news.map(function(n){
+    return '<a class="news" href="'+n.u+'" target="_blank" rel="noopener">'
+      + '<div class="t">'+esc(n.t)+'</div><div class="d">'+esc(n.d)+'</div>'
+      + '<div class="s">'+esc(n.s)+' ↗</div></a>';
+  }).join("");
+}
+function renderCal(){
+  $("cal").innerHTML = BRIEF.cal.map(function(c){
+    return '<div class="cal"><div class="d">'+esc(c.d)+'</div>'
+      + '<div class="x">'+esc(c.x)+'<small>'+esc(c.s)+'</small></div></div>';
+  }).join("");
+}
+
+function tick(){
+  var t = taipei();
+  $("clk").textContent = String(t.h).padStart(2,"0")+":"+String(t.mi).padStart(2,"0")+":"+String(t.s).padStart(2,"0");
+  $("clkd").textContent = t.date.slice(5).replace("-","/")+" 台北";
+}
+
+renderStamp(); renderTone(); renderUS(); renderADR();
+renderTW(); renderPoints(); renderNews(); renderCal();
+tick(); setInterval(tick,1000);
+
+})();
+</script>
+</body>
+</html>
