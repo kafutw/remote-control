@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-31T02:52:44.515Z",
-  "generatedAtTaipei": "2026-07-31 10:52:44",
+  "generatedAt": "2026-07-31T08:20:18.497Z",
+  "generatedAtTaipei": "2026-07-31 16:20:18",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -58,8 +58,8 @@
       "group": "adr",
       "dp": 2,
       "via": "cnbc:TSM",
-      "price": 374.67,
-      "prevClose": 374.67,
+      "price": 403.31,
+      "prevClose": 403.31,
       "change": 0,
       "pct": 0,
       "marketState": "PRE_MKT"
@@ -70,9 +70,9 @@
       "dp": 2,
       "via": "cnbc:.SOX",
       "price": 11302.988,
-      "prevClose": 10447.489,
-      "change": 855.499,
-      "pct": 8.1886,
+      "prevClose": 11302.988,
+      "change": 0,
+      "pct": 0,
       "marketState": "REG_MKT"
     },
     "ixic": {
@@ -81,9 +81,9 @@
       "dp": 2,
       "via": "cnbc:.IXIC",
       "price": 25122.177,
-      "prevClose": 24442.942,
-      "change": 679.235,
-      "pct": 2.7789,
+      "prevClose": 25122.177,
+      "change": 0,
+      "pct": 0,
       "marketState": "REG_MKT"
     },
     "gspc": {
@@ -92,9 +92,9 @@
       "dp": 2,
       "via": "cnbc:.SPX",
       "price": 7437.63,
-      "prevClose": 7316.15,
-      "change": 121.48,
-      "pct": 1.6604,
+      "prevClose": 7437.63,
+      "change": 0,
+      "pct": 0,
       "marketState": "REG_MKT"
     },
     "dji": {
@@ -103,9 +103,9 @@
       "dp": 2,
       "via": "cnbc:.DJI",
       "price": 52208.06,
-      "prevClose": 51594.14,
-      "change": 613.92,
-      "pct": 1.1899,
+      "prevClose": 52208.06,
+      "change": 0,
+      "pct": 0,
       "marketState": "REG_MKT"
     },
     "n225": {
@@ -113,10 +113,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 64572.25,
+      "price": 64362.02,
       "prevClose": 61867.43,
-      "change": 2704.82,
-      "pct": 4.372,
+      "change": 2494.59,
+      "pct": 4.0322,
       "marketState": "REG_MKT"
     },
     "kospi": {
@@ -124,10 +124,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6376.71,
+      "price": 6595.45,
       "prevClose": 5593.56,
-      "change": 783.15,
-      "pct": 14.0009,
+      "change": 1001.89,
+      "pct": 17.9115,
       "marketState": "REG_MKT"
     },
     "usdtwd": {
@@ -143,8 +143,8 @@
     }
   },
   "adrPremium": {
-    "converted": 2426.23,
-    "premiumPct": 10.03,
+    "converted": 2611.69,
+    "premiumPct": 18.44,
     "impliedOpen": 2205,
     "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
