@@ -114,6 +114,76 @@ for (const s of SYMBOLS) {
   await sleep(400);   // 對 Yahoo 客氣一點，免得被限流
 }
 
+/* ────────────────────────────────────────────────────────────
+   第二來源：證交所 OpenAPI。官方、免金鑰，但只有收盤價。
+   用途不是取代 Yahoo，是**校正** —— 兩邊對得起來才敢說數字是對的。
+   ──────────────────────────────────────────────────────────── */
+const TWSE_MAP = { twii: null, tsmc: "2330", e0050: "0050", e0056: "0056" };
+
+/** 從物件裡挑出第一個 key 含指定字樣的數值，避免欄位改名就整支壞掉 */
+function pickNum(obj, ...needles) {
+  for (const n of needles) {
+    for (const [k, v] of Object.entries(obj || {})) {
+      if (k.toLowerCase().includes(n.toLowerCase())) {
+        const num = Number(String(v).replace(/,/g, ""));
+        if (isFinite(num) && num > 0) return num;
+      }
+    }
+  }
+  return null;
+}
+
+async function twseJson(url) {
+  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+const verify = {};
+try {
+  console.error("\n證交所 OpenAPI 校正中…");
+
+  // 個股收盤（全上市一次拿回來）
+  const all = await twseJson("https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL");
+  const byCode = new Map((Array.isArray(all) ? all : []).map(r => [String(r.Code ?? r.code).trim(), r]));
+  for (const [key, code] of Object.entries(TWSE_MAP)) {
+    if (!code) continue;
+    const row = byCode.get(code);
+    verify[key] = row ? { close: pickNum(row, "ClosingPrice", "Closing", "Close") } : { error: "查無此代號" };
+  }
+
+  // 加權指數（發行量加權股價指數的日 K）
+  try {
+    const idx = await twseJson("https://openapi.twse.com.tw/v1/indicesReport/MI_5MINS_HIST");
+    const last = Array.isArray(idx) && idx.length ? idx[idx.length - 1] : null;
+    verify.twii = last ? { close: pickNum(last, "ClosingIndex", "Closing", "Close"), date: last.Date ?? null }
+                       : { error: "指數回應是空的" };
+  } catch (e) { verify.twii = { error: String(e.message || e) }; }
+
+  console.error("證交所校正完成");
+} catch (e) {
+  console.error("證交所校正失敗：", e.message);
+  verify.__error = String(e.message || e);
+}
+
+/* 對帳：兩個來源差超過 0.5% 就標記出來，不要默默採信其中一個 */
+const crossCheck = {};
+for (const [key, v] of Object.entries(verify)) {
+  if (key.startsWith("__") || !v || v.error || !v.close) continue;
+  const y = data[key];
+  if (!y || y.error || !y.price) continue;
+  const diffPct = (y.price / v.close - 1) * 100;
+  const agree = Math.abs(diffPct) <= 0.5;
+  crossCheck[key] = {
+    yahoo: y.price, twse: v.close, diffPct: +diffPct.toFixed(3), agree,
+    note: agree ? "兩個來源一致"
+                : "⚠️ 兩個來源不一致 —— 可能是其中一邊延遲、或含盤中價，請以證交所為準"
+  };
+  if (!agree) console.error(`⚠️ ${y.name}　Yahoo ${y.price} vs 證交所 ${v.close}　差 ${diffPct.toFixed(2)}%`);
+  // 台股收盤數字以官方為準；Yahoo 的值保留下來供對照
+  if (!agree) { y.priceYahoo = y.price; y.price = v.close; y.correctedBy = "TWSE"; }
+}
+
 /* ADR 溢價：ADR × 匯率 ÷ 5 ÷ 台積電台股價 − 1。這是台股開盤前最有用的一格 */
 const adr = data.adr, tsmc = data.tsmc, fx = data.usdtwd;
 if (adr?.price && tsmc?.price && fx?.price) {
@@ -131,8 +201,12 @@ const payload = {
   generatedAtTaipei: new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Asia/Taipei", dateStyle: "short", timeStyle: "medium"
   }).format(new Date()),
-  source: "Yahoo Finance chart API",
+  sources: {
+    primary: "Yahoo Finance chart API（免金鑰，涵蓋台股／美股／日韓／匯率）",
+    verify:  "證交所 OpenAPI（官方，免金鑰，僅台股收盤，用來校正）"
+  },
   ok, failed: bad,
+  crossCheck,          // 兩來源對帳結果；agree=false 代表該檔數字有疑慮
   data
 };
 

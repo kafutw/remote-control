@@ -59,7 +59,19 @@ jobs:
                 else if (v.price !== undefined)
                   console.log("  ✓", (v.name||k).padEnd(14), String(v.price).padStart(10),
                               v.pct === null ? "" : (v.pct > 0 ? "+" : "") + v.pct + "%",
-                              v.ma60 ? "　季線 " + v.ma60 + "　乖離 " + v.bias60 + "%" : "");
+                              v.ma60 ? "　季線 " + v.ma60 + "　乖離 " + v.bias60 + "%" : "",
+                              v.correctedBy ? "　（已依 " + v.correctedBy + " 校正，Yahoo 原值 " + v.priceYahoo + "）" : "");
+              }
+              const cc = d.crossCheck || {};
+              if (Object.keys(cc).length) {
+                console.log("\n── 雙來源對帳 Yahoo vs 證交所 ──");
+                for (const [k, v] of Object.entries(cc))
+                  console.log(" ", (v.agree ? "✅" : "⚠️ "), k.padEnd(7),
+                              "Yahoo", String(v.yahoo).padStart(10),
+                              "證交所", String(v.twse).padStart(10),
+                              "差", v.diffPct + "%");
+              } else {
+                console.log("\n⚠️ 沒有對帳結果 —— 證交所那邊可能整個沒抓到，今天的台股數字只有單一來源");
               }
             '
           fi

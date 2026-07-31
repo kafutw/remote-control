@@ -105,5 +105,15 @@ GitHub Actions（網路無限制）→ 打 Yahoo Finance API → 算好均線
 - [`.github/workflows/market-data.yml`](./.github/workflows/market-data.yml)：台北 06:50 / 08:10 / 13:45 各跑一次，也可手動觸發
 - [`tools/fetch-live.mjs`](./tools/fetch-live.mjs)：抓 12 個標的，順便算 20/60/240 日均線、乖離率與台積電 ADR 溢價，寫成 `data/live.json`
 
+**兩個來源交叉驗證**，因為「正確」不能靠單一 API：
+
+| 角色 | 來源 | 金鑰 | 涵蓋 |
+|---|---|---|---|
+| 主來源 | Yahoo Finance chart API | 不用 | 台股、美股、日韓、匯率 |
+| 校正 | 證交所 OpenAPI | 不用 | 台股收盤（官方權威） |
+
+兩邊差距超過 **0.5%** 就標記 `agree:false`，並且**台股數字改採證交所的官方值**，Yahoo 的原值留在 `priceYahoo` 供對照。
+對帳結果放在 `live.json` 的 `crossCheck`，Actions 的執行摘要也會印出來。
+
 **排程觸發只在預設分支生效**，所以 workflow 要進到預設分支才會照表跑，其他分支只能手動。
 單一標的抓失敗不會影響其他，該欄位會留下 `error` 讓讀取端知道那格是壞的。
