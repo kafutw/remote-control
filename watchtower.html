@@ -299,8 +299,11 @@ section{margin-top:30px}
   </section>
 
   <section>
-    <div class="sec-h"><div class="ic">📊</div><h2>今日指標</h2><div class="hint">一眼掃完</div></div>
+    <div class="sec-h"><div class="ic">📊</div><h2>今日指標</h2><div class="hint" id="liveStamp">一眼掃完</div></div>
     <div class="keyi" id="keyi"></div>
+    <div class="note">美股（費半／S&amp;P／道瓊／那指）與台積電 ADR 在<b>台北 04:00 就收盤</b>、台指期夜盤 05:00 收 ——
+      你早上看到的是<b>最終收盤價，當天不會再變</b>，所以它們不需要即時。<b>只有日經與 KOSPI 會動</b>（08:00 開盤，比台股早 1 小時），
+      這一區在 GitHub Pages 版本上每 60 秒自動更新。</div>
   </section>
 
   <section>
@@ -648,14 +651,111 @@ function applyLive(j){
   if(used){
     BRIEF.holdingsLive = j.generatedAtTaipei || "已更新";
     renderHoldings();
+    // 同一份 live.json 也帶著日韓／美股，順手更新最上面的指標面板
+    var asia = BRIEF.asia, touched = false;
+    [["n225","日經 225","^N225"],["kospi","韓國 KOSPI","^KS11"]].forEach(function(m){
+      var v = d[m[0]];
+      if(!v || v.error || !v.price) return;
+      asia.today = (asia.today||[]).filter(function(x){ return x.n.indexOf(m[1])<0; });
+      asia.today.push({n:m[1], c:m[2]+" · 比台股早 1 小時", p:v.price,
+                       pct:(v.pct===null||v.pct===undefined)?null:v.pct, dp:0});
+      touched = true;
+    });
+    if(touched) renderKey();
+    setStamp(j.generatedAtTaipei);
   }
 }
+function setStamp(when){
+  var el = $("liveStamp");
+  if(el && when) el.textContent = "最後更新 " + String(when).slice(11, 16);
+}
+/* ══════════════════════════════════════════════════════════
+   即時更新設定
+
+   關鍵事實：美股 04:00（台北）收盤、台指期夜盤 05:00 收盤。你 07:00 在看的時候，
+   費半／S&P／道瓊／那指／台積電 ADR 全部已經定案，當天不會再動 —— 這些不需要
+   「即時」，只需要正確的收盤價，一天抓一次就夠。
+
+   真正需要分鐘級更新的只有【日經與 KOSPI】，而且只在 08:00–09:00 這一小時
+   （它們開盤到台股開盤之間）。範圍縮到這麼小，就做得到了。
+
+   兩種來源，能用哪個就用哪個：
+   A. data/live.json —— GitHub Actions 產生。免金鑰，但受 GitHub 排程延遲影響，
+      實際更新頻率約 10–15 分鐘。頁面每 60 秒輪詢一次，抓到新的就換。
+   B. Twelve Data —— 免費註冊拿 apikey（800 次/日、8 次/分），支援瀏覽器直接呼叫。
+      把金鑰填進下面就會在盤中每 60 秒直接打 API，真正做到分鐘級。
+      ⚠️ 金鑰會出現在公開網頁原始碼裡；額度可能被別人用掉，但不會有金錢損失。
+      ⚠️ 這段程式我無法在此環境測試（連不到 api.twelvedata.com），第一次用請看
+         主控台是否有錯誤訊息。
+   ══════════════════════════════════════════════════════════ */
+var LIVE = {
+  json: "data/live.json",
+  twelveDataKey: "",        // ← 填了才會啟用 B
+  twelveDataMap: { n225:"N225", kospi:"KS11" },   // 只補這兩個，其他收盤就定案了
+  pollMs: 60000
+};
+
+/* 現在是否處於「日韓開盤到台股開盤」的窗口（台北 08:00–13:30 之間都值得更新） */
+function inLiveWindow(){
+  var t = taipei();
+  var mins = t.h*60 + t.mi;
+  return mins >= 470 && mins <= 830;      // 07:50 ～ 13:50
+}
+
+var lastStamp = null;
 function tryLive(){
   if(typeof fetch !== "function") return;
-  fetch("data/live.json", {cache:"no-store"})
+  fetch(LIVE.json + "?t=" + Date.now(), {cache:"no-store"})
     .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
-    .then(applyLive)
+    .then(function(j){
+      if(j && j.generatedAtTaipei === lastStamp) return;   // 沒變就不重繪
+      lastStamp = j && j.generatedAtTaipei;
+      applyLive(j);
+    })
     .catch(function(){ /* 靜態／受限環境抓不到，維持已標日期的快照 */ });
+}
+
+/* Twelve Data：盤中直接在瀏覽器打，補上日經與 KOSPI 的分鐘級數字 */
+function tryTwelveData(){
+  if(!LIVE.twelveDataKey || typeof fetch !== "function") return;
+  var keys = Object.keys(LIVE.twelveDataMap);
+  var syms = keys.map(function(k){ return LIVE.twelveDataMap[k]; }).join(",");
+  fetch("https://api.twelvedata.com/quote?symbol=" + encodeURIComponent(syms)
+        + "&apikey=" + encodeURIComponent(LIVE.twelveDataKey), {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
+    .then(function(j){
+      var today = [];
+      keys.forEach(function(k){
+        var sym = LIVE.twelveDataMap[k];
+        var q = (j && j[sym]) || (j && j.symbol === sym ? j : null);
+        if(!q || q.status === "error") return;
+        var price = Number(q.close), pct = Number(q.percent_change);
+        if(!isFinite(price)) return;
+        var name = k === "n225" ? "日經 225" : "韓國 KOSPI";
+        today.push({n:name, c:(k==="n225"?"^N225":"^KS11")+" · 盤中即時 · Twelve Data",
+                    p:price, pct:isFinite(pct)?+pct.toFixed(2):null, dp:0});
+      });
+      if(today.length){
+        BRIEF.asia.today = today;
+        BRIEF.asia.todayWhen = taipeiClock() + " 台北 · 每分鐘更新";
+        renderKey();
+        markLiveStamp();
+      }
+    })
+    .catch(function(){ /* CORS 被擋或額度用盡；保留既有數字，不假裝有更新 */ });
+}
+function taipeiClock(){
+  var t = taipei();
+  return String(t.h).padStart(2,"0")+":"+String(t.mi).padStart(2,"0");
+}
+function markLiveStamp(){ setStamp("0000-00-00 " + taipeiClock()); }
+
+function startPolling(){
+  tryLive(); tryTwelveData();
+  setInterval(function(){
+    if(!inLiveWindow()) return;    // 收盤後不再打，省額度也避免製造「還在更新」的錯覺
+    tryLive(); tryTwelveData();
+  }, LIVE.pollMs);
 }
 
 function renderTone(){
@@ -811,7 +911,7 @@ function tick(){
 renderStamp(); renderTone(); renderKey(); renderHoldings(); renderAsia(); renderUS(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
 tick(); setInterval(tick,1000);
-tryLive();
+startPolling();
 
 })();
 </script>
