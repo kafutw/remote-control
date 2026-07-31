@@ -3,121 +3,251 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#08151d">
+<meta name="theme-color" content="#F4F6F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12161B" media="(prefers-color-scheme: dark)">
 <title>市場瞭望台 · 每日晨間簡報</title>
 <style>
+/* ─────────────────────────────────────────────────────────────
+   設計語彙：法人晨報。淺色紙面為底、髮絲線分隔、數字一律等寬對齊。
+   亮暗兩色都設計過，跟隨系統，也吃 claude.ai 的主題切換。
+   ───────────────────────────────────────────────────────────── */
 :root{
-  --bg:#08151d; --bg2:#0e2029; --card:#122a35; --card2:#16333f;
-  --line:#1e4150; --line2:#2a5568;
-  --txt:#e8f2f6; --dim:#8fb0bd; --dim2:#5f8393;
-  --up:#ff4d4f; --down:#00c853; --flat:#c9d8de;
-  --gold:#ffc94d; --blue:#4fc3f7;
+  --paper:#F4F6F8;      /* 頁面底 */
+  --sheet:#FFFFFF;      /* 內容面 */
+  --ink:#0F1B2A;        /* 主文字 */
+  --ink2:#43566B;       /* 次文字 */
+  --ink3:#7C8FA3;       /* 輔助文字 */
+  --rule:#DEE4EA;       /* 髮絲線 */
+  --rule2:#C3CDD8;      /* 較重的線 */
+  --navy:#1B3A6B;       /* 結構強調色 */
+  --up:#C8102E;         /* 台股慣例：紅漲 */
+  --down:#00785A;       /* 綠跌 */
+  --upBg:rgba(200,16,46,.07);
+  --downBg:rgba(0,120,90,.07);
+  --flat:#5B6B7C;
+  --warnBg:#FFF8E6; --warnLine:#E3B341; --warnInk:#7A5B12;
 }
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#12161B; --sheet:#1A2027; --ink:#E9EEF3; --ink2:#AFBECD; --ink3:#7B8B9C;
+    --rule:#2A333D; --rule2:#3A4652; --navy:#8FB4E8;
+    --up:#FF6B7A; --down:#3ECF9A;
+    --upBg:rgba(255,107,122,.12); --downBg:rgba(62,207,154,.12); --flat:#9BAABA;
+    --warnBg:#241E10; --warnLine:#8A6D1F; --warnInk:#E3B341;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12161B; --sheet:#1A2027; --ink:#E9EEF3; --ink2:#AFBECD; --ink3:#7B8B9C;
+  --rule:#2A333D; --rule2:#3A4652; --navy:#8FB4E8;
+  --up:#FF6B7A; --down:#3ECF9A;
+  --upBg:rgba(255,107,122,.12); --downBg:rgba(62,207,154,.12); --flat:#9BAABA;
+  --warnBg:#241E10; --warnLine:#8A6D1F; --warnInk:#E3B341;
+}
+:root[data-theme="light"]{
+  --paper:#F4F6F8; --sheet:#FFFFFF; --ink:#0F1B2A; --ink2:#43566B; --ink3:#7C8FA3;
+  --rule:#DEE4EA; --rule2:#C3CDD8; --navy:#1B3A6B;
+  --up:#C8102E; --down:#00785A;
+  --upBg:rgba(200,16,46,.07); --downBg:rgba(0,120,90,.07); --flat:#5B6B7C;
+  --warnBg:#FFF8E6; --warnLine:#E3B341; --warnInk:#7A5B12;
+}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,:root{background:#08151d;color-scheme:dark}
 html,body{margin:0;padding:0}
+html,:root{background:var(--paper)}
 body{
-  background:linear-gradient(180deg,#08151d 0%,#0a1a23 40%,#08151d 100%);
-  color:var(--txt);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
-  font-size:15px;line-height:1.6;padding:0 0 60px;-webkit-font-smoothing:antialiased;
+  background:var(--paper); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  font-size:15px; line-height:1.65; padding:0 0 56px; -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:760px;margin:0 auto;padding:0 14px}
-h1,h2{margin:0;font-weight:700;letter-spacing:.02em}
+/* 所有數字都走等寬，欄位才對得齊 —— 這是「專業感」的主要來源 */
+.num,.clock,.row .px .p,.pctbox,.kv b,.fct b,.hist .hr b,.stk-h .rt .p,.stk-h .rt .b,.adr .big{
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1;
+}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+h1,h2{margin:0;font-weight:700;letter-spacing:-.01em}
 
-header{
-  padding:20px 0 15px;background:linear-gradient(160deg,#0d2b38,#0a1c25);
-  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;backdrop-filter:blur(8px);
+/* ── 報頭 ── */
+header{background:var(--sheet);border-bottom:2px solid var(--ink);padding:20px 0 0}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+h1{font-size:21px;letter-spacing:.06em}
+h1 .sub{
+  display:block;font-size:9.5px;color:var(--ink3);font-weight:600;
+  letter-spacing:.22em;margin-top:5px;text-transform:uppercase
 }
-.hdr{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-h1{font-size:20px}
-h1 .sub{display:block;font-size:10.5px;color:var(--dim2);font-weight:500;letter-spacing:.1em;margin-top:3px}
-.clock{font-variant-numeric:tabular-nums;font-size:22px;font-weight:700;color:var(--gold);line-height:1;text-align:right}
-.clock small{display:block;font-size:10px;color:var(--dim2);font-weight:500;letter-spacing:.05em;margin-top:2px}
+.clock{font-size:19px;font-weight:600;color:var(--ink);line-height:1;text-align:right;letter-spacing:.02em}
+.clock small{
+  display:block;font-size:9.5px;color:var(--ink3);font-weight:600;
+  letter-spacing:.12em;margin-top:5px;font-family:inherit
+}
 .stamp{
-  margin-top:11px;font-size:11px;color:var(--dim2);background:rgba(0,0,0,.25);
-  border:1px solid var(--line);border-radius:8px;padding:7px 10px;line-height:1.5
+  margin:16px -18px 0;padding:9px 18px;font-size:11.5px;color:var(--ink2);
+  border-top:1px solid var(--rule);background:var(--paper);line-height:1.5
 }
-.stamp b{color:var(--gold)}
-.stale{border-color:#7a5b2b;background:#211d13;color:#ffc94d}
+.stamp b{color:var(--ink);font-weight:700}
+.stamp.stale{background:var(--warnBg);color:var(--warnInk);border-top-color:var(--warnLine)}
+.stamp.stale b{color:var(--warnInk)}
 
-section{margin-top:24px}
-.sec-h{display:flex;align-items:center;gap:8px;margin-bottom:11px}
-.sec-h h2{font-size:15px}
-.sec-h .ic{
-  width:24px;height:24px;border-radius:8px;background:var(--card2);border:1px solid var(--line2);
-  display:grid;place-items:center;font-size:12px;flex:0 0 auto
-}
-.sec-h .hint{margin-left:auto;font-size:11px;color:var(--dim2)}
+/* ── 區塊標題：小型全大寫眉標 + 細線 ── */
+section{margin-top:30px}
+.sec-h{display:flex;align-items:center;gap:8px;padding-bottom:7px;border-bottom:1.5px solid var(--ink);margin-bottom:2px}
+.sec-h .ic{font-size:13px;flex:0 0 auto;line-height:1;filter:saturate(.85)}
+.sec-h h2{font-size:13.5px;letter-spacing:.06em;font-weight:800}
+.sec-h .hint{margin-left:auto;font-size:10px;color:var(--ink3);letter-spacing:.06em;text-align:right}
 
-/* 今日基調 */
-.tone{border-radius:14px;padding:18px;border:1px solid var(--line2);background:var(--bg2)}
-.tone .lamp{font-size:32px;line-height:1}
-.tone .lv{font-size:21px;font-weight:800;margin-top:7px;letter-spacing:.03em}
-.tone .txt{font-size:13.5px;margin-top:9px;line-height:1.75;color:var(--txt)}
-.t-up{background:linear-gradient(160deg,#3a1417,#12262f);border-color:#7a2b2f}
-.t-flat{background:linear-gradient(160deg,#2c2716,#12262f);border-color:#6b5c2a}
-.t-down{background:linear-gradient(160deg,#0d3322,#12262f);border-color:#2f7d51}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:15px;margin-top:10px}
 
-/* 行情列 */
+/* ── 今日基調 ── */
+.tone{background:var(--sheet);border:1px solid var(--rule);border-top:3px solid var(--flat);border-radius:0 0 5px 5px;padding:16px;margin-top:10px}
+.tone .eyebrow{font-size:9.5px;letter-spacing:.2em;color:var(--ink3);font-weight:700;text-transform:uppercase}
+.tone .lv{font-size:20px;font-weight:800;margin-top:6px;letter-spacing:-.01em;line-height:1.35}
+.tone .txt{font-size:13.5px;margin-top:10px;line-height:1.85;color:var(--ink2)}
+.tone .txt b{color:var(--ink);font-weight:700}
+.t-up{border-top-color:var(--up)} .t-up .lv{color:var(--up)}
+.t-down{border-top-color:var(--down)} .t-down .lv{color:var(--down)}
+.t-flat{border-top-color:var(--warnLine)}
+
+/* ── 行情列：表格式，髮絲線分隔 ── */
 .row{
-  display:flex;align-items:center;gap:10px;background:var(--card);
-  border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-top:8px
+  display:flex;align-items:center;gap:12px;background:var(--sheet);
+  border:1px solid var(--rule);border-top:none;padding:11px 14px
 }
+.row:first-of-type{border-top:1px solid var(--rule);border-radius:5px 5px 0 0}
+.row:last-of-type{border-radius:0 0 5px 5px}
 .row .nm{flex:1 1 auto;min-width:0}
-.row .nm .n{font-size:15px;font-weight:700}
-.row .nm .c{font-size:10.5px;color:var(--dim2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row .px{flex:0 0 84px;width:84px;text-align:right;font-variant-numeric:tabular-nums}
-.row .px .lab{font-size:10px;color:var(--dim2)}
-.row .px .p{font-size:19px;font-weight:800;line-height:1.15}
-.pctbox{
-  flex:0 0 108px;width:108px;text-align:center;border-radius:10px;padding:6px 8px;
-  font-variant-numeric:tabular-nums;border:1px solid var(--line2);
-  background:rgba(201,216,222,.06);color:var(--flat)
+.row .nm .n{font-size:14.5px;font-weight:700;letter-spacing:-.005em}
+.row .nm .c{font-size:10.5px;color:var(--ink3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .px{flex:0 0 80px;width:80px;text-align:right}
+.row .px .lab{font-size:9px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase}
+.row .px .p{font-size:17px;font-weight:600;line-height:1.2}
+.pctbox{flex:0 0 100px;width:100px;text-align:right;padding:2px 0 2px 10px;border-left:1px solid var(--rule)}
+.pctbox .pv{font-size:16px;font-weight:700;line-height:1.25;white-space:nowrap}
+.pctbox .dv{font-size:10.5px;line-height:1.4;color:var(--ink3);white-space:nowrap;margin-top:1px}
+.pctbox.up .pv{color:var(--up)} .pctbox.down .pv{color:var(--down)} .pctbox.flat .pv{color:var(--flat)}
+.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--flat)}
+.subh{
+  font-size:9.5px;color:var(--ink3);letter-spacing:.18em;text-transform:uppercase;
+  font-weight:700;margin:20px 0 8px;display:flex;align-items:center;gap:10px
 }
-.pctbox .pv{font-size:18px;font-weight:800;line-height:1.15;white-space:nowrap}
-.pctbox .dv{font-size:11px;line-height:1.35;opacity:.9;white-space:nowrap}
-.pctbox.up{background:rgba(255,77,79,.15);border-color:rgba(255,77,79,.5);color:var(--up)}
-.pctbox.down{background:rgba(0,200,83,.13);border-color:rgba(0,200,83,.45);color:var(--down)}
-.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--flat)}
+.subh::after{content:"";flex:1;height:1px;background:var(--rule)}
 
-/* ADR 專區 */
-.adr{background:linear-gradient(150deg,#14313d,#102530);border:1px solid var(--line2);border-radius:14px;padding:15px}
-.adr .big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}
-.adr .sub{font-size:12px;color:var(--dim);margin-top:2px}
-.kv{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:9px 0;border-top:1px solid rgba(42,85,104,.6);font-size:12.5px;color:var(--dim)}
-.kv b{font-size:16px;font-weight:800;color:var(--txt);font-variant-numeric:tabular-nums;white-space:nowrap}
-.kv b.up{color:var(--up)}.kv b.down{color:var(--down)}
+/* ── 時間軸 ── */
+.tl{position:relative;padding-left:20px}
+.tl::before{content:"";position:absolute;left:4px;top:9px;bottom:9px;width:1px;background:var(--rule2)}
+.tli{position:relative;padding:6px 0;font-size:12.5px;color:var(--ink2)}
+.tli::before{
+  content:"";position:absolute;left:-19px;top:13px;width:7px;height:7px;border-radius:50%;
+  background:var(--sheet);border:1.5px solid var(--rule2)
+}
+.tli.key::before{background:var(--navy);border-color:var(--navy)}
+.tli.key{color:var(--ink);font-weight:700}
+.tli .t{
+  font-family:ui-monospace,Menlo,monospace;color:var(--navy);font-size:11px;
+  margin-right:9px;font-weight:600;letter-spacing:.02em
+}
+.tli small{color:var(--ink3);font-size:11px}
+.pend{
+  background:var(--warnBg);border:1px solid var(--warnLine);border-left-width:3px;border-radius:4px;
+  padding:12px 14px;font-size:12.5px;color:var(--warnInk);line-height:1.7;margin-top:10px
+}
+.pend b{font-weight:800}
 
-/* 重點 / 新聞 */
-.pt{display:flex;gap:10px;background:var(--card);border:1px solid var(--line);
-  border-left:3px solid var(--gold);border-radius:11px;padding:11px 12px;margin-top:8px;font-size:13px;line-height:1.7}
-.pt .no{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;padding-top:2px}
-.pt b{color:#fff}
-.pt.warn{border-left-color:var(--up)}
-.pt.good{border-left-color:var(--down)}
+/* ── ADR ── */
+.adr{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:16px;margin-top:10px}
+.adr .big{font-size:30px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
+.adr .sub{font-size:12px;color:var(--ink3);margin-top:5px;margin-bottom:4px}
+.kv{
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  padding:10px 0;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink2)
+}
+.kv small{display:block;color:var(--ink3);font-size:10.5px;margin-top:1px}
+.kv b{font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;text-align:right}
+.kv b.up{color:var(--up)} .kv b.down{color:var(--down)}
 
-.news{display:block;background:var(--card);border:1px solid var(--line);border-radius:11px;
-  padding:11px 12px;margin-top:8px;text-decoration:none;color:var(--txt)}
-.news .t{font-size:13.5px;font-weight:700;line-height:1.5}
-.news .d{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.6}
-.news .s{font-size:10.5px;color:var(--blue);margin-top:5px}
+/* ── 個股深度 ── */
+.stk{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:0;margin-top:10px;overflow:hidden}
+.stk-h{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;background:var(--paper);border-bottom:1px solid var(--rule)}
+.stk-h .nm{flex:1;min-width:0}
+.stk-h .nm .n{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.stk-h .nm .c{font-size:10.5px;color:var(--ink3);font-family:ui-monospace,Menlo,monospace;margin-top:2px;letter-spacing:.06em}
+.stk-h .rt{text-align:right;flex:0 0 auto}
+.stk-h .rt .p{font-size:20px;font-weight:700;line-height:1.2}
+.stk-h .rt .b{font-size:11.5px;font-weight:700;margin-top:3px}
+.fct{
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  padding:9px 15px;border-bottom:1px solid var(--rule);font-size:12.5px;color:var(--ink2)
+}
+.fct b{font-size:14px;font-weight:700;color:var(--ink);text-align:right;white-space:nowrap}
+.fct small{display:block;color:var(--ink3);font-size:10.5px;font-weight:400;margin-top:1px}
+.hist{background:var(--paper);padding:13px 15px;border-top:1px solid var(--rule2)}
+.hist .ht{
+  font-size:9.5px;color:var(--ink3);font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;margin-bottom:9px
+}
+.hist .hr{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--ink2);padding:4px 0}
+.hist .hr b{color:var(--ink);font-weight:700;white-space:nowrap;text-align:right}
+.hist .hr b.up{color:var(--up)} .hist .hr b.down{color:var(--down)}
 
-.cal{display:flex;gap:11px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid rgba(30,65,80,.6);font-size:13px}
+/* ── 觀察重點 ── */
+.pt{
+  display:flex;gap:13px;background:var(--sheet);border:1px solid var(--rule);border-top:none;
+  padding:13px 15px;font-size:13px;line-height:1.8;color:var(--ink2)
+}
+.pt:first-of-type{border-top:1px solid var(--rule);border-radius:5px 5px 0 0}
+.pt:last-of-type{border-radius:0 0 5px 5px}
+.pt .no{
+  flex:0 0 auto;font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;
+  color:var(--ink3);padding-top:3px;min-width:14px
+}
+.pt b{color:var(--ink);font-weight:700}
+.pt.warn{box-shadow:inset 3px 0 0 var(--up)} .pt.warn .no{color:var(--up)}
+.pt.good{box-shadow:inset 3px 0 0 var(--down)} .pt.good .no{color:var(--down)}
+
+/* ── 新聞 ── */
+.news{
+  display:block;background:var(--sheet);border:1px solid var(--rule);border-top:none;
+  padding:13px 15px;text-decoration:none;color:var(--ink);transition:background .12s
+}
+.news:first-of-type{border-top:1px solid var(--rule);border-radius:5px 5px 0 0}
+.news:last-of-type{border-radius:0 0 5px 5px}
+.news:hover{background:var(--paper)}
+.news .t{font-size:13.5px;font-weight:700;line-height:1.55}
+.news .d{font-size:12px;color:var(--ink2);margin-top:5px;line-height:1.7}
+.news .s{font-size:10px;color:var(--navy);margin-top:6px;letter-spacing:.06em;font-weight:600}
+
+/* ── 行事曆 ── */
+.cal{display:flex;gap:14px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--rule);font-size:13px}
 .cal:last-child{border-bottom:none}
-.cal .d{flex:0 0 62px;font-size:11.5px;color:var(--gold);font-family:ui-monospace,Menlo,monospace;padding-top:2px}
-.cal .x small{display:block;color:var(--dim2);font-size:11px;margin-top:1px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.cal .d{
+  flex:0 0 66px;font-size:11px;color:var(--navy);font-family:ui-monospace,Menlo,monospace;
+  padding-top:3px;font-weight:600;letter-spacing:.02em
+}
+.cal .x{color:var(--ink)}
+.cal .x small{display:block;color:var(--ink3);font-size:11px;margin-top:1px}
 
-.links{display:grid;grid-template-columns:1fr;gap:8px}
-.links a{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg2);
-  border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);text-decoration:none;font-size:13px}
-.links a span{color:var(--dim2);font-size:10.5px}
-.note{font-size:11.5px;color:var(--dim2);line-height:1.75;margin-top:11px}
-.disc{margin-top:26px;padding:13px;border:1px dashed var(--line2);border-radius:11px;
-  font-size:11px;color:var(--dim2);line-height:1.75}
-.foot{text-align:center;color:#3b5b69;font-size:10.5px;margin-top:16px}
+/* ── 連結 ── */
+.links{display:grid;grid-template-columns:1fr;gap:0}
+.links a{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 2px;color:var(--ink);text-decoration:none;font-size:13px;
+  border-bottom:1px solid var(--rule)
+}
+.links a:last-child{border-bottom:none}
+.links a b{font-weight:700}
+.links a span{color:var(--ink3);font-size:10.5px;text-align:right}
+.links a::after{content:"↗";color:var(--navy);font-size:11px;flex:0 0 auto;margin-left:2px}
+
+.note{font-size:11.5px;color:var(--ink3);line-height:1.8;margin-top:12px}
+.note b{color:var(--ink2);font-weight:700}
+.disc{
+  margin-top:30px;padding:14px;border:1px solid var(--rule);border-left:3px solid var(--rule2);
+  border-radius:4px;background:var(--sheet);font-size:11px;color:var(--ink3);line-height:1.8
+}
+.disc b{color:var(--ink2)}
+.foot{
+  text-align:center;color:var(--ink3);font-size:9.5px;margin-top:18px;
+  letter-spacing:.14em;text-transform:uppercase
+}
 </style>
 </head>
 <body>
@@ -136,6 +266,13 @@ section{margin-top:24px}
   <section><div class="tone" id="tone"></div></section>
 
   <section>
+    <div class="sec-h"><div class="ic">🌏</div><h2>亞股先行指標</h2><div class="hint">比台股早 1 小時</div></div>
+    <div class="card" id="asiaTl"></div>
+    <div id="asiaToday"></div>
+    <div id="asiaPrev"></div>
+  </section>
+
+  <section>
     <div class="sec-h"><div class="ic">🇺🇸</div><h2>昨夜美股</h2><div class="hint" id="usWhen"></div></div>
     <div id="us"></div>
   </section>
@@ -148,6 +285,11 @@ section{margin-top:24px}
   <section>
     <div class="sec-h"><div class="ic">🇹🇼</div><h2>台股昨日</h2><div class="hint" id="twWhen"></div></div>
     <div id="tw"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><div class="ic">📌</div><h2>個股深度</h2><div class="hint">基本面＋均線位階＋歷史統計</div></div>
+    <div id="stocks"></div>
   </section>
 
   <section>
@@ -172,6 +314,8 @@ section{margin-top:24px}
         <a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener"><b>台指期夜盤</b><span>期交所即時</span></a>
         <a href="https://tw.stock.yahoo.com/quote/TSM" target="_blank" rel="noopener"><b>台積電 ADR</b><span>TSM 即時報價</span></a>
         <a href="https://tw.stock.yahoo.com/quote/%5ESOX" target="_blank" rel="noopener"><b>費城半導體</b><span>^SOX</span></a>
+        <a href="https://tw.stock.yahoo.com/quote/%5EN225" target="_blank" rel="noopener"><b>日經 225</b><span>^N225 · 08:00 開，比台股早 1 小時</span></a>
+        <a href="https://tw.stock.yahoo.com/quote/%5EKS11" target="_blank" rel="noopener"><b>韓國 KOSPI</b><span>^KS11 · 08:00 開，比台股早 1 小時</span></a>
         <a href="https://tw.stock.yahoo.com/quote/2330.TW/technical-analysis" target="_blank" rel="noopener"><b>台積電技術分析</b><span>看 MA60 季線在哪</span></a>
         <a href="https://mis.twse.com.tw/stock/index.jsp" target="_blank" rel="noopener"><b>台股試撮</b><span>08:30–09:00</span></a>
         <a href="https://tw.stock.yahoo.com/quote/%5ETWII" target="_blank" rel="noopener"><b>加權指數</b><span>^TWII</span></a>
@@ -206,6 +350,20 @@ var BRIEF = {
     txt: "昨夜費半 <b>+9.01%</b>、台積電 ADR <b>+7.64%</b>，是這波修正以來最大單日反彈，催化劑是<b>微軟財報 Azure 大增</b>、盤後暴漲 15%。ADR 換算後對台股溢價擴大到約 <b>18.5%</b>，台積電今天補漲壓力明顯。但要記得兩件事：這根反彈的引信是雲端財報、<b>不是半導體自己的基本面轉好</b>；而且台股昨天盤中震盪超過 1,700 點、一度大漲 1,116 點仍收黑，<b>開高守不守得住是兩回事</b>。"
   },
 
+  /* ── 亞股：日韓比台股早 1 小時開盤，是當天最直接的領先指標 ── */
+  asia: {
+    todayWhen: null,          // 08:00 之後那一版才填；null 代表尚未開盤
+    today: [],                // 開盤後的即時表現，格式同 prev
+    prevWhen: "2026/07/30（四）收盤",
+    prev: [
+      {n:"日經 225",   c:"^N225 · 東京",                      p:61867.43, pct:0.71,  dp:0},
+      {n:"韓國 KOSPI", c:"^KS11 · 首爾",                      p:5593.56,  pct:-1.23, dp:0},
+      {n:"三星電子",   c:"005930 · Q2 營益年增 1813.8%，優於預期", p:207000, pct:-0.72, dp:0},
+      {n:"SK 海力士",  c:"000660 · 記憶體",                    p:1322000,  pct:-5.64, dp:0}
+    ],
+    why: "日本東證與韓國 KRX 都是當地 09:00 開盤（UTC+9），換算<b>台北時間 08:00</b>，比台股早整整 1 小時；韓股 07:30 還有盤前集合競價。這兩個市場的半導體權重高（三星、SK 海力士、東京威力科創、鎧俠），<b>台股電子股開盤怎麼走，通常前一小時就先在首爾和東京演過一次</b>。"
+  },
+
   usWhen: "2026/07/30 美國時段（台北 7/31 04:00 收）",
   us: [
     {n:"費城半導體", c:"^SOX · 晶片股火車頭", pct:9.01,  note:"前兩日 −2.23%／−5%"},
@@ -232,11 +390,60 @@ var BRIEF = {
   ],
   twNote: "其餘持股（台達電、鴻海、華通、中華電、星宇航空與各檔 ETF）的昨收與價位警示在盤前控制台，這裡只放帶動大盤的兩個。",
 
+  /* ── 個股深度：基本面 + 均線位階 + 用真實日線跑出來的歷史統計 ── */
+  histWindow: "2024/02 ～ 2026/04",
+  histNote: "歷史統計用的是公開資料集的日線（2024/02–2026/04，約 516 個交易日）跑出來的真實數字，"
+          + "不是估計值。但要注意兩件事：<b>樣本只有 2 年、事件數個位數</b>；而且<b>這 2 年台積電從 700 漲到 1,850，是大多頭</b>，"
+          + "所以「跌破後 60 日中位數 +13%」高度反映當時的環境，不能直接套用到現在。這份資料也<b>不含 2026/04 之後</b>，"
+          + "也就是說今年 7 月這波完全不在裡面。",
+  stocks: [
+    {
+      code:"2330", n:"台積電", price:2205, ma60:2346,
+      facts:[
+        {k:"6 月營收",   v:"4,426.8 億", s:"年增 +67.87%，連 2 月創新高"},
+        {k:"上半年累計", v:"2.40 兆",    s:"年增 +35.6%"},
+        {k:"本益比",     v:"29.58 倍",   s:"2026/07/30"},
+        {k:"外資持股",   v:"69.67%",     s:"2026/07/03"},
+        {k:"Q2 EPS",     v:"27.25 元",   s:"歷史新高，毛利率 67.7% 超財測上緣"},
+        {k:"2026 資本支出", v:"600–640 億美元", s:"由 520–560 億上調，市場擔心現金流與毛利稀釋"}
+      ],
+      hist:{breaks:8, eff:4, fake:4, perYear:3.8,
+            deepMed:-6.90, deepQ:"−11.71% ～ −0.88%", backMed:15, backMax:52,
+            r60Med:13.38, win:75}
+    },
+    {
+      code:"0050", n:"元大台灣 50", price:null, ma60:null,
+      facts:[
+        {k:"7 月配息",   v:"0.60 元",  s:"7/21 除息，8/10 發放"},
+        {k:"上半年漲幅", v:"+64.33%",  s:""},
+        {k:"受益人數",   v:"323.87 萬", s:"去年底 153.09 萬，半年倍增"},
+        {k:"最大成分股", v:"台積電",   s:"權重極高，走勢幾乎跟著台積電走"}
+      ],
+      hist:{breaks:12, eff:5, fake:7, perYear:5.7,
+            deepMed:-11.10, deepQ:"−22.64% ～ −6.60%", backMed:21, backMax:58,
+            r60Med:5.06, win:60}
+    },
+    {
+      code:"0056", n:"元大高股息", price:null, ma60:null,
+      facts:[
+        {k:"7 月配息",   v:"1.35 元",  s:"7/21 除息，8/10 發放"},
+        {k:"近 5 年均殖利率", v:"7.91%", s:""},
+        {k:"連續配息",   v:"第 16 年", s:"首檔達成存股 0 成本的高股息 ETF"},
+        {k:"可分配收益", v:"4.54 元",  s:"另有資本平準金 23.24 元（6/30）"}
+      ],
+      hist:{breaks:16, eff:12, fake:4, perYear:7.6,
+            deepMed:-1.61, deepQ:"−4.48% ～ −1.22%", backMed:9, backMax:56,
+            r60Med:-4.06, win:45}
+    }
+  ],
+
   points: [
     {k:"good", t:"<b>台積電 ADR 溢價擴大到約 18.5%</b>（前一日約 15.5%）。ADR 一夜漲 7.64%，台股昨天只漲 0.23%，這個落差通常會在開盤補回來。"},
     {k:"warn", t:"<b>反彈的引信是微軟財報，不是半導體基本面。</b>費半 +9% 之前是連兩天的 −2.23% 和 −5%，這比較像超跌反彈而非趨勢反轉。"},
     {k:"warn", t:"<b>昨天盤中大漲 1,116 點仍收黑，失守 4 萬點。</b>追價買盤接不住，代表上檔賣壓還很重，今天開高之後的走勢比開盤價重要。"},
     {k:"",     t:"<b>台積電昨收 2,205 距季線（約 2,346）−6%，落在控制台階梯的第 2 批</b>（−5%～−10%）。但若今天完全反映 ADR 的 +7.64%，開盤就會回到 2,374、<b>直接站回季線之上</b> — 這代表你可能連第 2 批都來不及買。<b>不要為了追上車而在開盤衝進去</b>，站回季線要連續站穩才算數。季線確切數字請用券商 MA60 校正。"},
+    {k:"warn", t:"<b>08:00 先看日韓，再決定 09:00 怎麼做。</b>昨天日韓已經分歧了 — 日經 +0.71%、KOSPI −1.23%，SK 海力士更是重挫 5.64%。記憶體弱、非記憶體強的格局如果今天延續，台股電子股內部也會分化，不會齊漲。"},
+    {k:"",     t:"<b>0056 跟 0050／台積電的均線行為完全不同。</b>用真實日線跑出來：0056 跌破季線後 60 日的報酬中位數是 <b>−4.06%</b>、只有 45% 為正；0050 是 +5.06%／60%，台積電是 +13.38%／75%。<b>高股息 ETF 跌破季線不是撿便宜的訊號</b>，它本來就會除息、走勢也偏防禦，別把同一套規則套上去。"},
     {k:"",     t:"<b>今天是週五。</b>週末有兩天無法反應的空窗，遇到大波動的行情，留倉部位要比平常保守。"}
   ],
 
@@ -294,8 +501,8 @@ function renderStamp(){
 function renderTone(){
   var t = BRIEF.tone;
   $("tone").className = "tone t-" + t.k;
-  $("tone").innerHTML = '<div class="lamp">'+t.lamp+'</div><div class="lv">'+esc(t.lv)+'</div>'
-    + '<div class="txt">'+t.txt+'</div>';
+  $("tone").innerHTML = '<div class="eyebrow">'+t.lamp+'　今日基調</div>'
+    + '<div class="lv">'+esc(t.lv)+'</div><div class="txt">'+t.txt+'</div>';
 }
 
 function quoteRow(o){
@@ -307,6 +514,66 @@ function quoteRow(o){
     +   '<div class="pv">'+arrow(o.pct)+' '+(o.pct===null||o.pct===undefined?"—":Math.abs(o.pct).toFixed(2)+"%")+'</div>'
     +   (o.note ? '<div class="dv">'+esc(o.note)+'</div>' : '')
     + '</div></div>';
+}
+
+var ASIA_TL = [
+  {t:"07:30", x:"韓股盤前集合競價",  s:"首爾 08:30，最早的風向", key:false},
+  {t:"08:00", x:"日經 225、KOSPI 開盤", s:"東京／首爾 09:00 · 比台股早 1 小時", key:true},
+  {t:"08:30", x:"台股試撮",          s:"最後 5 分鐘不可取消，別被騙", key:false},
+  {t:"08:45", x:"台指期日盤開盤",    s:"比現貨再早 15 分鐘", key:false},
+  {t:"09:00", x:"台股開盤",          s:"", key:true},
+  {t:"14:30", x:"日韓收盤",          s:"台股 13:30 就收了，可回頭看尾盤有沒有背離", key:false}
+];
+
+function renderAsia(){
+  $("asiaTl").innerHTML = '<div class="tl">' + ASIA_TL.map(function(i){
+    return '<div class="tli'+(i.key?" key":"")+'"><span class="t">'+i.t+'</span>'+esc(i.x)
+      + (i.s?'<small style="display:block">'+esc(i.s)+'</small>':'') + '</div>';
+  }).join("") + '</div><div class="note">'+BRIEF.asia.why+'</div>';
+
+  var a = BRIEF.asia;
+  if(a.todayWhen && a.today && a.today.length){
+    $("asiaToday").innerHTML = '<div class="subh">今日開盤　'+esc(a.todayWhen)+'</div>'
+      + a.today.map(quoteRow).join("");
+  }else{
+    $("asiaToday").innerHTML = '<div class="pend">⏳ <b>日韓還沒開盤</b>（08:00 台北時間）。'
+      + '這份簡報產生時亞股尚未交易 — 08:00 之後這一區會補上實際開盤走勢，'
+      + '或是直接點下面「自己查證」裡的 ^N225 與 ^KS11 連結自己看。</div>';
+  }
+  $("asiaPrev").innerHTML = '<div class="subh">前一日收盤　'+esc(a.prevWhen)+'</div>'
+    + a.prev.map(quoteRow).join("");
+}
+
+function renderStocks(){
+  $("stocks").innerHTML = BRIEF.stocks.map(function(s){
+    var bias = (s.price!==null && s.ma60) ? (s.price/s.ma60-1)*100 : null;
+    var h = s.hist;
+    return '<div class="stk">'
+      + '<div class="stk-h"><div class="nm"><div class="n">'+esc(s.n)+'</div>'
+      +   '<div class="c">'+esc(s.code)+'</div></div>'
+      +   (s.price!==null
+            ? '<div class="rt"><div class="p">'+fmt(s.price,0)+'</div>'
+              + (bias!==null ? '<div class="b '+cls(bias)+'">季線 '+(bias>0?"+":"")+bias.toFixed(1)+'%</div>' : '')
+              + '</div>'
+            : '')
+      + '</div>'
+      + s.facts.map(function(f){
+          return '<div class="fct"><span>'+esc(f.k)+(f.s?'<small>'+esc(f.s)+'</small>':'')+'</span>'
+            + '<b>'+esc(f.v)+'</b></div>';
+        }).join("")
+      + '<div class="hist"><div class="ht">📊 跌破季線的歷史統計　'+esc(BRIEF.histWindow)+'</div>'
+      +   '<div class="hr"><span>跌破次數</span><b>'+h.breaks+' 次　'
+      +     '<span style="font-weight:400;color:var(--dim2);font-size:11px">有效 '+h.eff+' ／ 假跌破 '+h.fake+'</span></b></div>'
+      +   '<div class="hr"><span>平均一年</span><b>'+h.perYear.toFixed(1)+' 次</b></div>'
+      +   '<div class="hr"><span>有效跌破・最深負乖離</span><b class="down">'+h.deepMed.toFixed(2)+'%</b></div>'
+      +   '<div class="hr"><span>　四分位區間</span><b style="font-weight:600;font-size:12px">'+esc(h.deepQ)+'</b></div>'
+      +   '<div class="hr"><span>站回季線天數</span><b>'+h.backMed+' 天　'
+      +     '<span style="font-weight:400;color:var(--dim2);font-size:11px">最久 '+h.backMax+'</span></b></div>'
+      +   '<div class="hr"><span>跌破後 60 日報酬</span><b class="'+cls(h.r60Med)+'">'
+      +     (h.r60Med>0?"+":"")+h.r60Med.toFixed(2)+'%　'
+      +     '<span style="font-weight:400;color:var(--dim2);font-size:11px">正報酬 '+h.win+'%</span></b></div>'
+      + '</div></div>';
+  }).join("") + '<div class="note">'+BRIEF.histNote+'</div>';
 }
 
 function renderUS(){
@@ -381,8 +648,8 @@ function tick(){
   $("clkd").textContent = t.date.slice(5).replace("-","/")+" 台北";
 }
 
-renderStamp(); renderTone(); renderUS(); renderADR();
-renderTW(); renderPoints(); renderNews(); renderCal();
+renderStamp(); renderTone(); renderAsia(); renderUS(); renderADR();
+renderTW(); renderStocks(); renderPoints(); renderNews(); renderCal();
 tick(); setInterval(tick,1000);
 
 })();
