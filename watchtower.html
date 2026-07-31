@@ -629,10 +629,10 @@ function renderHoldings(){
   $("hdSrc").innerHTML = live
     ? '<div class="note">✅ 這三檔已由 <b>data/live.json</b> 更新（GitHub Actions 打 Yahoo Finance ＋ 證交所雙來源對帳）。</div>'
     : '<div class="pend">⚠️ <b>這不是即時報價，是有標日期的收盤快照。</b>'
-      + '這個頁面在 claude.ai 上受安全政策限制，無法自行連外抓行情 —— '
-      + '要看當下的價格，<b>直接點上面任一列</b>會開啟 Yahoo 的即時報價。<br>'
-      + '接上 <b>data/live.json</b>（GitHub Actions 每天 06:50／08:10／13:45 跑）之後，'
-      + '這一區在 GitHub Pages 版本上會自動換成當日數字。</div>';
+      + '你現在看的是 claude.ai 版本，安全政策擋掉頁面所有對外請求，所以它抓不到行情 —— '
+      + '<b>直接點上面任一列</b>就會開啟 Yahoo 的即時報價。<br>'
+      + '<b>GitHub Pages 版本會自己更新</b>：盤中每 60 秒重讀一次 data/live.json，'
+      + '而那份檔案由 GitHub Actions 在 08:02～08:52 每 10 分鐘、以及 06:50／09:02／13:45 各跑一次產生。</div>';
 }
 
 /* 有 live.json 就用它覆蓋（GitHub Pages 同源才抓得到；Artifact 會靜靜失敗並保留快照） */
