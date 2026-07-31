@@ -91,3 +91,19 @@ node tools/ma-analysis.mjs 2330.csv --ma 240     # 年線
 ```
 
 `ma-analysis.mjs` 也吃你自己準備的 CSV，只要有「日期」和「收盤價」兩欄就行（證交所、Google 試算表、券商匯出的格式都可以，民國年也認得）。它會把**假跌破**（幾天內站回）和**有效跌破**（連續 3 天以上收在均線下）分開統計。
+
+### 📡 行情資料管線
+
+執行 Claude 的環境擋掉了幾乎所有行情來源（Yahoo Finance、證交所、FinMind、Alpha Vantage…），
+但連得到 `raw.githubusercontent.com`。所以改由 **GitHub Actions** 負責打 API：
+
+```
+GitHub Actions（網路無限制）→ 打 Yahoo Finance API → 算好均線
+   → commit data/live.json → raw.githubusercontent.com → 晨報排程讀得到
+```
+
+- [`.github/workflows/market-data.yml`](./.github/workflows/market-data.yml)：台北 06:50 / 08:10 / 13:45 各跑一次，也可手動觸發
+- [`tools/fetch-live.mjs`](./tools/fetch-live.mjs)：抓 12 個標的，順便算 20/60/240 日均線、乖離率與台積電 ADR 溢價，寫成 `data/live.json`
+
+**排程觸發只在預設分支生效**，所以 workflow 要進到預設分支才會照表跑，其他分支只能手動。
+單一標的抓失敗不會影響其他，該欄位會留下 `error` 讓讀取端知道那格是壞的。
