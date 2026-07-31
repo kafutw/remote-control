@@ -105,6 +105,28 @@ section{margin-top:30px}
 .kx.live{background:linear-gradient(90deg,rgba(91,156,246,.07),transparent 60%)}
 .kx.live .n small{color:var(--navy)}
 
+/* ── 我的持股 ── */
+.hdrow{
+  display:flex;align-items:center;gap:12px;background:var(--sheet);text-decoration:none;color:var(--ink);
+  border:1px solid var(--rule);border-top:none;padding:12px 14px;transition:background .12s
+}
+.hdrow:first-of-type{border-top:1px solid var(--rule);border-radius:5px 5px 0 0}
+.hdrow:last-of-type{border-radius:0 0 5px 5px}
+.hdrow:hover{background:var(--paper)}
+.hdrow .nm{flex:1 1 auto;min-width:0}
+.hdrow .nm .n{font-size:15px;font-weight:700}
+.hdrow .nm .c{font-size:10.5px;color:var(--ink3);margin-top:3px;font-family:ui-monospace,Menlo,monospace}
+.hdrow .nm .tg{
+  font-family:-apple-system,sans-serif;background:var(--paper);border:1px solid var(--rule2);
+  border-radius:3px;padding:1px 5px;font-size:9.5px;letter-spacing:.04em
+}
+.hdrow.stale .nm .tg{background:var(--warnBg);border-color:var(--warnLine);color:var(--warnInk)}
+.hdrow .px{flex:0 0 86px;width:86px;text-align:right;font-variant-numeric:tabular-nums;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.hdrow .px .p{font-size:19px;font-weight:700;line-height:1.2}
+.hdrow .px .bi{font-size:10.5px;margin-top:2px}
+.hdrow::after{content:"↗";color:var(--navy);font-size:11px;flex:0 0 auto}
+
 /* ── 今日基調 ── */
 .tone{background:var(--sheet);border:1px solid var(--rule);border-top:3px solid var(--flat);border-radius:0 0 5px 5px;padding:16px;margin-top:10px}
 .tone .eyebrow{font-size:9.5px;letter-spacing:.2em;color:var(--ink3);font-weight:700;text-transform:uppercase}
@@ -282,6 +304,12 @@ section{margin-top:30px}
   </section>
 
   <section>
+    <div class="sec-h"><div class="ic">💼</div><h2>我的持股</h2><div class="hint" id="hdWhen"></div></div>
+    <div id="holdings"></div>
+    <div id="hdSrc"></div>
+  </section>
+
+  <section>
     <div class="sec-h"><div class="ic">🇺🇸</div><h2>昨夜美股</h2><div class="hint" id="usWhen"></div></div>
     <div id="us"></div>
   </section>
@@ -366,6 +394,16 @@ var BRIEF = {
   },
 
   /* ── 亞股：日韓比台股早 1 小時開盤，是當天最直接的領先指標 ── */
+  /* ── 我的持股。有 data/live.json 時會被即時值覆蓋（見 applyLive） ── */
+  holdings: [
+    {code:"2330",   n:"台積電",       p:2205,  pct:0.23,  dp:0, ma60:2346,
+     asOf:"2026-07-30", tag:"07/30 收盤", url:"https://tw.stock.yahoo.com/quote/2330.TW"},
+    {code:"0050",   n:"元大台灣 50",  p:97.15, pct:-4.24, dp:2, ma60:null,
+     asOf:"2026-07-28", tag:"07/28 收盤", url:"https://tw.stock.yahoo.com/quote/0050.TW"},
+    {code:"0056",   n:"元大高股息",   p:48.19, pct:-3.62, dp:2, ma60:null,
+     asOf:"2026-07-28", tag:"07/28 收盤", url:"https://tw.stock.yahoo.com/quote/0056.TW"}
+  ],
+
   /* ── 跨市場：匯率、其他亞洲與歐洲指數。台幣走勢直接牽動外資進出 ── */
   crossWhen: "2026/07/31 08:00 台北（取自 TradingView 市場摘要）",
   cross: [
@@ -558,6 +596,68 @@ function renderKey(){
   }).join("");
 }
 
+/* ── 我的持股 ──
+   靜態頁面沒辦法自己抓行情（Artifact 的 CSP 擋掉所有外部請求），
+   所以預設顯示的是**有標日期的快照**。同時會試著抓同目錄的 data/live.json：
+   在 GitHub Pages 上是同源、抓得到，就自動換成當日數字；抓不到就維持快照。
+   兩種狀態都會在下方明講是哪一種，不讓舊價看起來像即時價。 */
+function daysOld(iso){
+  if(!iso) return null;
+  var d = Math.floor((Date.now() - Date.parse(iso+"T13:30:00+08:00")) / 86400000);
+  return d > 0 ? d : 0;
+}
+function renderHoldings(){
+  var live = BRIEF.holdingsLive;
+  $("hdWhen").textContent = live ? "即時 · "+live : "快照 · 非即時";
+  $("holdings").innerHTML = BRIEF.holdings.map(function(s){
+    var old = live ? 0 : daysOld(s.asOf);
+    var stale = old !== null && old >= 1;
+    var bias = (s.p!==null && s.ma60) ? (s.p/s.ma60-1)*100 : null;
+    return '<a class="hdrow'+(stale?" stale":"")+'" href="'+s.url+'" target="_blank" rel="noopener">'
+      + '<div class="nm"><div class="n">'+esc(s.n)+'</div>'
+      +   '<div class="c">'+esc(s.code)+'　<span class="tg">'+esc(s.tag)+(stale?'　· 已過 '+old+' 天':'')+'</span></div></div>'
+      + '<div class="px"><div class="p">'+fmt(s.p,s.dp)+'</div>'
+      +   (bias!==null?'<div class="bi '+cls(bias)+'">季線 '+(bias>0?"+":"")+bias.toFixed(1)+'%</div>':'')+'</div>'
+      + '<div class="pctbox '+cls(s.pct)+'"><div class="pv">'+arrow(s.pct)+' '
+      +   (s.pct===null?"—":Math.abs(s.pct).toFixed(2)+"%")+'</div></div>'
+      + '</a>';
+  }).join("");
+
+  $("hdSrc").innerHTML = live
+    ? '<div class="note">✅ 這三檔已由 <b>data/live.json</b> 更新（GitHub Actions 打 Yahoo Finance ＋ 證交所雙來源對帳）。</div>'
+    : '<div class="pend">⚠️ <b>這不是即時報價，是有標日期的收盤快照。</b>'
+      + '這個頁面在 claude.ai 上受安全政策限制，無法自行連外抓行情 —— '
+      + '要看當下的價格，<b>直接點上面任一列</b>會開啟 Yahoo 的即時報價。<br>'
+      + '接上 <b>data/live.json</b>（GitHub Actions 每天 06:50／08:10／13:45 跑）之後，'
+      + '這一區在 GitHub Pages 版本上會自動換成當日數字。</div>';
+}
+
+/* 有 live.json 就用它覆蓋（GitHub Pages 同源才抓得到；Artifact 會靜靜失敗並保留快照） */
+function applyLive(j){
+  var d = j && j.data; if(!d) return;
+  var map = {"2330":"tsmc", "0050":"e0050", "0056":"e0056"};
+  var used = false;
+  BRIEF.holdings.forEach(function(s){
+    var v = d[map[s.code]];
+    if(!v || v.error || !v.price) return;
+    s.p = v.price; s.pct = (v.pct===null||v.pct===undefined)?null:v.pct;
+    if(v.ma60) s.ma60 = v.ma60;
+    s.tag = (v.marketState==="REGULAR" ? "盤中" : "收盤");
+    used = true;
+  });
+  if(used){
+    BRIEF.holdingsLive = j.generatedAtTaipei || "已更新";
+    renderHoldings();
+  }
+}
+function tryLive(){
+  if(typeof fetch !== "function") return;
+  fetch("data/live.json", {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
+    .then(applyLive)
+    .catch(function(){ /* 靜態／受限環境抓不到，維持已標日期的快照 */ });
+}
+
 function renderTone(){
   var t = BRIEF.tone;
   $("tone").className = "tone t-" + t.k;
@@ -708,9 +808,10 @@ function tick(){
   $("clkd").textContent = t.date.slice(5).replace("-","/")+" 台北";
 }
 
-renderStamp(); renderTone(); renderKey(); renderAsia(); renderUS(); renderADR();
+renderStamp(); renderTone(); renderKey(); renderHoldings(); renderAsia(); renderUS(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
 tick(); setInterval(tick,1000);
+tryLive();
 
 })();
 </script>
