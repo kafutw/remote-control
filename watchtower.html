@@ -85,6 +85,26 @@ section{margin-top:30px}
 
 .card{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:15px;margin-top:10px}
 
+/* ── 今日指標：最上面的一眼總覽 ── */
+.keyi{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;margin-top:10px;overflow:hidden}
+.kx{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule)}
+.kx:last-child{border-bottom:none}
+.kx .n{flex:1 1 auto;min-width:0;font-size:13.5px;font-weight:700}
+.kx .n small{
+  display:block;color:var(--ink3);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700;margin-top:2px
+}
+.kx .v{
+  flex:0 0 auto;font-size:14px;font-weight:600;text-align:right;color:var(--ink2);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums
+}
+.kx .c{
+  flex:0 0 74px;text-align:right;font-size:14.5px;font-weight:700;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums
+}
+.kx.live{background:linear-gradient(90deg,rgba(91,156,246,.07),transparent 60%)}
+.kx.live .n small{color:var(--navy)}
+
 /* ── 今日基調 ── */
 .tone{background:var(--sheet);border:1px solid var(--rule);border-top:3px solid var(--flat);border-radius:0 0 5px 5px;padding:16px;margin-top:10px}
 .tone .eyebrow{font-size:9.5px;letter-spacing:.2em;color:var(--ink3);font-weight:700;text-transform:uppercase}
@@ -251,7 +271,15 @@ section{margin-top:30px}
 </header>
 
 <div class="wrap">
-  <section><div class="tone" id="tone"></div></section>
+  <section>
+    <div class="sec-h"><div class="ic">📊</div><h2>今日指標</h2><div class="hint">一眼掃完</div></div>
+    <div class="keyi" id="keyi"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><div class="ic">🧭</div><h2>今日基調</h2></div>
+    <div class="tone" id="tone"></div>
+  </section>
 
   <section>
     <div class="sec-h"><div class="ic">🌏</div><h2>亞股先行指標</h2><div class="hint">比台股早 1 小時</div></div>
@@ -505,10 +533,39 @@ function renderStamp(){
     + "對應 " + esc(BRIEF.forSession);
 }
 
+/* 今日指標：全部從下面各區塊的資料組出來，不另外維護一份，才不會兜不攏 */
+function renderKey(){
+  function find(arr, name){
+    return (arr||[]).filter(function(x){ return x.n.indexOf(name)>=0; })[0] || null;
+  }
+  var a = BRIEF.asia, rows = [];
+  function push(label, tag, o, live, dp){
+    if(!o) return;
+    rows.push({label:label, tag:tag, p:o.p, pct:o.pct, live:!!live, dp:dp===undefined?(o.dp||0):dp});
+  }
+  // 日韓：有今日盤中就用今日，否則退回前一日收盤
+  ["日經","KOSPI"].forEach(function(k){
+    var live = find(a.today, k), prev = find(a.prev, k);
+    push(live?live.n:(prev?prev.n:k), live?"盤中":"前收", live||prev, !!live);
+  });
+  push("費城半導體", "昨夜收盤", find(BRIEF.us, "費城"), false, 2);
+  if(BRIEF.adr) rows.push({label:"台積電 ADR", tag:"昨夜收盤", p:BRIEF.adr.price, pct:BRIEF.adr.pct, live:false, dp:2});
+  push("加權指數", "前一交易日", find(BRIEF.tw, "加權"), false);
+  push("USD／TWD", "匯率", find(BRIEF.cross, "TWD"), false, 3);
+
+  $("keyi").innerHTML = rows.map(function(r){
+    return '<div class="kx'+(r.live?" live":"")+'">'
+      + '<div class="n">'+esc(r.label)+'<small>'+esc(r.tag)+'</small></div>'
+      + (r.p===null||r.p===undefined ? '' : '<div class="v">'+fmt(r.p, r.dp)+'</div>')
+      + '<div class="c '+cls(r.pct)+'">'+(r.pct>0?"+":"")+ (r.pct===null||r.pct===undefined?"—":r.pct.toFixed(2)+"%") +'</div>'
+      + '</div>';
+  }).join("");
+}
+
 function renderTone(){
   var t = BRIEF.tone;
   $("tone").className = "tone t-" + t.k;
-  $("tone").innerHTML = '<div class="eyebrow">'+t.lamp+'　今日基調</div>'
+  $("tone").innerHTML = '<div class="eyebrow">'+t.lamp+'　開盤研判</div>'
     + '<div class="lv">'+esc(t.lv)+'</div><div class="txt">'+t.txt+'</div>';
 }
 
@@ -664,7 +721,7 @@ function tick(){
   $("clkd").textContent = t.date.slice(5).replace("-","/")+" 台北";
 }
 
-renderStamp(); renderTone(); renderAsia(); renderUS(); renderADR();
+renderStamp(); renderKey(); renderTone(); renderAsia(); renderUS(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
 tick(); setInterval(tick,1000);
 
