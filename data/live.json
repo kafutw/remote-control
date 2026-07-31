@@ -1,0 +1,97 @@
+{
+  "generatedAt": "2026-07-31T02:44:10.548Z",
+  "generatedAtTaipei": "2026-07-31 10:44:10",
+  "sources": {
+    "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
+    "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
+  },
+  "ok": 4,
+  "failed": 8,
+  "crossCheck": {},
+  "data": {
+    "twii": {
+      "name": "加權指數",
+      "group": "twii",
+      "dp": 2,
+      "via": "twseIndex:-",
+      "price": 39933.3,
+      "prevClose": null,
+      "change": null,
+      "pct": null,
+      "marketState": "CLOSED"
+    },
+    "tsmc": {
+      "name": "台積電",
+      "group": "tsmc",
+      "dp": 2,
+      "via": "twseStock:2330",
+      "price": 2205,
+      "prevClose": 2200,
+      "change": 5,
+      "pct": 0.2273,
+      "marketState": "CLOSED"
+    },
+    "e0050": {
+      "name": "元大台灣50",
+      "group": "e0050",
+      "dp": 2,
+      "via": "twseStock:0050",
+      "price": 93.5,
+      "prevClose": null,
+      "change": null,
+      "pct": null,
+      "marketState": "CLOSED"
+    },
+    "e0056": {
+      "name": "元大高股息",
+      "group": "e0056",
+      "dp": 2,
+      "via": "twseStock:0056",
+      "price": 46.29,
+      "prevClose": null,
+      "change": null,
+      "pct": null,
+      "marketState": "CLOSED"
+    },
+    "adr": {
+      "name": "台積電 ADR",
+      "group": "adr",
+      "error": "全部來源都失敗｜stooq:tsm.us → HTTP 404 ｜ yahoo:TSM → HTTP 429"
+    },
+    "sox": {
+      "name": "費城半導體",
+      "group": "sox",
+      "error": "全部來源都失敗｜stooq:^sox → HTTP 404 ｜ yahoo:^SOX → HTTP 429"
+    },
+    "ixic": {
+      "name": "納斯達克",
+      "group": "ixic",
+      "error": "全部來源都失敗｜stooq:^ndq → HTTP 404 ｜ yahoo:^IXIC → HTTP 429"
+    },
+    "gspc": {
+      "name": "標普 500",
+      "group": "gspc",
+      "error": "全部來源都失敗｜stooq:^spx → HTTP 404 ｜ yahoo:^GSPC → HTTP 429"
+    },
+    "dji": {
+      "name": "道瓊工業",
+      "group": "dji",
+      "error": "全部來源都失敗｜stooq:^dji → HTTP 404 ｜ yahoo:^DJI → HTTP 429"
+    },
+    "n225": {
+      "name": "日經 225",
+      "group": "n225",
+      "error": "全部來源都失敗｜stooq:^nkx → HTTP 404 ｜ yahoo:^N225 → HTTP 429"
+    },
+    "kospi": {
+      "name": "韓國 KOSPI",
+      "group": "kospi",
+      "error": "全部來源都失敗｜stooq:^kospi → HTTP 404 ｜ stooq:^ksp → HTTP 404 ｜ yahoo:^KS11 → HTTP 429"
+    },
+    "usdtwd": {
+      "name": "USD／TWD",
+      "group": "usdtwd",
+      "error": "全部來源都失敗｜stooq:usdtwd → HTTP 404 ｜ yahoo:TWD=X → HTTP 429"
+    }
+  }
+}
