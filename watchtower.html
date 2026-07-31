@@ -272,20 +272,13 @@ section{margin-top:30px}
 
 <div class="wrap">
   <section>
-    <div class="sec-h"><div class="ic">📊</div><h2>今日指標</h2><div class="hint">一眼掃完</div></div>
-    <div class="keyi" id="keyi"></div>
-  </section>
-
-  <section>
     <div class="sec-h"><div class="ic">🧭</div><h2>今日基調</h2></div>
     <div class="tone" id="tone"></div>
   </section>
 
   <section>
-    <div class="sec-h"><div class="ic">🌏</div><h2>亞股先行指標</h2><div class="hint">比台股早 1 小時</div></div>
-    <div class="card" id="asiaTl"></div>
-    <div id="asiaToday"></div>
-    <div id="asiaPrev"></div>
+    <div class="sec-h"><div class="ic">📊</div><h2>今日指標</h2><div class="hint">一眼掃完</div></div>
+    <div class="keyi" id="keyi"></div>
   </section>
 
   <section>
@@ -331,7 +324,8 @@ section{margin-top:30px}
   <section>
     <div class="sec-h"><div class="ic">🔎</div><h2>自己查證</h2><div class="hint">這頁是快照，不是即時</div></div>
     <div class="card">
-      <div class="links">
+      <div class="tl" id="asiaTl"></div>
+      <div class="links" style="margin-top:14px">
         <a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener"><b>台指期夜盤</b><span>期交所即時</span></a>
         <a href="https://tw.stock.yahoo.com/quote/TSM" target="_blank" rel="noopener"><b>台積電 ADR</b><span>TSM 即時報價</span></a>
         <a href="https://tw.stock.yahoo.com/quote/%5ESOX" target="_blank" rel="noopener"><b>費城半導體</b><span>^SOX</span></a>
@@ -378,7 +372,9 @@ var BRIEF = {
     {n:"USD／TWD", c:"台幣貶值 · 外資匯出的壓力指標",   p:32.394,  pct:1.74,  dp:3},
     {n:"上證綜合", c:"000001 · 中國",                   p:3804.69, pct:-0.62, dp:0},
     {n:"FTSE 100", c:"UKX · 英國",                      p:10897.27,pct:-0.10, dp:0},
-    {n:"台灣 50 指數", c:"TW50 · 0050 追蹤的母指數",     p:37278.59,pct:0.27,  dp:0}
+    {n:"台灣 50 指數", c:"TW50 · 0050 追蹤的母指數",     p:37278.59,pct:0.27,  dp:0},
+    {n:"三星電子",   c:"005930 · Q2 營益年增 1813.8%，優於預期", p:207000,  pct:-0.72, dp:0},
+    {n:"SK 海力士",  c:"000660 · 記憶體，台股電子的對照組",      p:1322000, pct:-5.64, dp:0}
   ],
 
   asia: {
@@ -590,22 +586,12 @@ var ASIA_TL = [
 ];
 
 function renderAsia(){
-  $("asiaTl").innerHTML = '<div class="tl">' + ASIA_TL.map(function(i){
+  /* 日經與 KOSPI 的數字已經在最上面的「今日指標」裡，這裡只留時間軸 ——
+     它回答的是「幾點該看什麼」，跟報價不重複。 */
+  $("asiaTl").innerHTML = '<div class="subh">今天的時間軸　台北時間</div>' + ASIA_TL.map(function(i){
     return '<div class="tli'+(i.key?" key":"")+'"><span class="t">'+i.t+'</span>'+esc(i.x)
       + (i.s?'<small style="display:block">'+esc(i.s)+'</small>':'') + '</div>';
-  }).join("") + '</div><div class="note">'+BRIEF.asia.why+'</div>';
-
-  var a = BRIEF.asia;
-  if(a.todayWhen && a.today && a.today.length){
-    $("asiaToday").innerHTML = '<div class="subh">今日開盤　'+esc(a.todayWhen)+'</div>'
-      + a.today.map(quoteRow).join("");
-  }else{
-    $("asiaToday").innerHTML = '<div class="pend">⏳ <b>日韓還沒開盤</b>（08:00 台北時間）。'
-      + '這份簡報產生時亞股尚未交易 — 08:00 之後這一區會補上實際開盤走勢，'
-      + '或是直接點下面「自己查證」裡的 ^N225 與 ^KS11 連結自己看。</div>';
-  }
-  $("asiaPrev").innerHTML = '<div class="subh">前一日收盤　'+esc(a.prevWhen)+'</div>'
-    + a.prev.map(quoteRow).join("");
+  }).join("");
 }
 
 function renderCross(){
@@ -614,7 +600,8 @@ function renderCross(){
   $("cross").innerHTML = BRIEF.cross.map(quoteRow).join("")
     + '<div class="note">台幣是外資進出的溫度計 —— <b>台幣大幅走貶時，外資賣股匯出的壓力通常同步升高</b>，'
     + '但對台積電這類以美元計價收款的出口商，貶值反而墊高換回台幣的營收。看到台幣單日變動超過 1%，'
-    + '就值得回頭確認三大法人買賣超。</div>';
+    + '就值得回頭確認三大法人買賣超。<b>三星與 SK 海力士則是記憶體族群的對照組</b>，'
+    + '它們弱而非記憶體強的時候，台股電子內部通常也會分化、不會齊漲。</div>';
 }
 
 function renderStocks(){
@@ -721,7 +708,7 @@ function tick(){
   $("clkd").textContent = t.date.slice(5).replace("-","/")+" 台北";
 }
 
-renderStamp(); renderKey(); renderTone(); renderAsia(); renderUS(); renderADR();
+renderStamp(); renderTone(); renderKey(); renderAsia(); renderUS(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
 tick(); setInterval(tick,1000);
 
