@@ -56,7 +56,7 @@ const SYMBOLS = [
   { key:"kospi", name:"韓國 KOSPI", dp:2, ma:false,
     srcs:[["stooq","^kospi"],["stooq","^ksp"],["yahoo","^KS11"]] },
   { key:"usdtwd",name:"USD／TWD",   dp:3, ma:false,
-    srcs:[["stooq","usdtwd"],["yahoo","TWD=X"]] }
+    srcs:[["erapi","TWD"],["stooq","usdtwd"],["yahoo","TWD=X"]] }
 ];
 
 /* ── 證交所 OpenAPI：官方、免金鑰、只有收盤 ── */
@@ -89,12 +89,25 @@ function pick(row, ...needles){
 }
 
 /* ── Stooq：免金鑰 CSV。l=最新報價，d/l=日線歷史（拿來算均線） ── */
+const STOOQ_HOSTS = ["https://stooq.com", "https://stooq.pl"];
+/** 失敗時把實際回應的前幾十個字帶進錯誤訊息 —— 光看狀態碼查不出網址哪裡錯 */
+async function getText(url){
+  const r = await fetch(url, {headers:{"User-Agent":UA, Accept:"text/csv,text/plain,*/*"}});
+  const body = await r.text().catch(()=> "");
+  if(!r.ok) throw new Error(`HTTP ${r.status}｜回應開頭「${body.slice(0,80).replace(/\s+/g," ")}」`);
+  return body;
+}
 async function stooqQuote(sym){
-  const r = await fetch(`https://stooq.com/q/l/?s=${encodeURIComponent(sym)}&f=sd2t2ohlcv&h&e=csv`,
-                        {headers:{"User-Agent":UA}});
-  if(!r.ok) throw new Error("HTTP " + r.status);
-  const lines = (await r.text()).trim().split(/\r?\n/);
-  if(lines.length < 2) throw new Error("回應沒有資料列");
+  let last;
+  for(const host of STOOQ_HOSTS){
+    try{ return parseStooqQuote(await getText(`${host}/q/l/?s=${encodeURIComponent(sym)}&f=sd2t2ohlcv&h&e=csv`)); }
+    catch(e){ last = e; }
+  }
+  throw last;
+}
+function parseStooqQuote(text){
+  const lines = text.trim().split(/\r?\n/);
+  if(lines.length < 2) throw new Error("回應沒有資料列｜" + text.slice(0,80));
   const head = lines[0].split(",").map(s=>s.trim().toLowerCase());
   const row  = lines[1].split(",").map(s=>s.trim());
   const get  = n => { const i = head.indexOf(n); return i<0 ? null : row[i]; };
@@ -103,9 +116,13 @@ async function stooqQuote(sym){
   return { price: close, prevClose: null, open };
 }
 async function stooqDaily(sym){
-  const r = await fetch(`https://stooq.com/q/d/l/?s=${encodeURIComponent(sym)}&i=d`, {headers:{"User-Agent":UA}});
-  if(!r.ok) throw new Error("HTTP " + r.status);
-  const lines = (await r.text()).trim().split(/\r?\n/);
+  let text, last;
+  for(const host of STOOQ_HOSTS){
+    try{ text = await getText(`${host}/q/d/l/?s=${encodeURIComponent(sym)}&i=d`); break; }
+    catch(e){ last = e; }
+  }
+  if(text === undefined) throw last;
+  const lines = text.trim().split(/\r?\n/);
   if(lines.length < 3) throw new Error("歷史資料太短");
   const head = lines[0].split(",").map(s=>s.trim().toLowerCase());
   const ci = head.indexOf("close");
@@ -160,6 +177,12 @@ async function resolve(s){
             if(closes.length > 1) out.prevClose = closes[closes.length-2];
           }catch(e){ /* 歷史拿不到就只用報價，均線會是 null */ }
         }
+      } else if(src === "erapi"){
+        // open.er-api.com：免金鑰的匯率來源，每日更新
+        const j = JSON.parse(await getText("https://open.er-api.com/v6/latest/USD"));
+        const rate = j && j.rates && j.rates[sym];
+        if(!rate) throw new Error("回應裡沒有 " + sym);
+        out = { price: rate, prevClose: null, marketState: null };
       } else {
         out = await yahooChart(sym, s.ma);
       }
