@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-07-31T02:46:32.292Z",
-  "generatedAtTaipei": "2026-07-31 10:46:32",
+  "generatedAt": "2026-07-31T02:52:44.515Z",
+  "generatedAtTaipei": "2026-07-31 10:52:44",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
   },
-  "ok": 5,
-  "failed": 7,
+  "ok": 12,
+  "failed": 0,
   "crossCheck": {},
   "data": {
     "twii": {
@@ -56,37 +56,79 @@
     "adr": {
       "name": "台積電 ADR",
       "group": "adr",
-      "error": "全部來源都失敗｜stooq:tsm.us → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:TSM → HTTP 429"
+      "dp": 2,
+      "via": "cnbc:TSM",
+      "price": 374.67,
+      "prevClose": 374.67,
+      "change": 0,
+      "pct": 0,
+      "marketState": "PRE_MKT"
     },
     "sox": {
       "name": "費城半導體",
       "group": "sox",
-      "error": "全部來源都失敗｜stooq:^sox → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:^SOX → HTTP 429"
+      "dp": 2,
+      "via": "cnbc:.SOX",
+      "price": 11302.988,
+      "prevClose": 10447.489,
+      "change": 855.499,
+      "pct": 8.1886,
+      "marketState": "REG_MKT"
     },
     "ixic": {
       "name": "納斯達克",
       "group": "ixic",
-      "error": "全部來源都失敗｜stooq:^ndq → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:^IXIC → HTTP 429"
+      "dp": 2,
+      "via": "cnbc:.IXIC",
+      "price": 25122.177,
+      "prevClose": 24442.942,
+      "change": 679.235,
+      "pct": 2.7789,
+      "marketState": "REG_MKT"
     },
     "gspc": {
       "name": "標普 500",
       "group": "gspc",
-      "error": "全部來源都失敗｜stooq:^spx → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:^GSPC → HTTP 429"
+      "dp": 2,
+      "via": "cnbc:.SPX",
+      "price": 7437.63,
+      "prevClose": 7316.15,
+      "change": 121.48,
+      "pct": 1.6604,
+      "marketState": "REG_MKT"
     },
     "dji": {
       "name": "道瓊工業",
       "group": "dji",
-      "error": "全部來源都失敗｜stooq:^dji → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:^DJI → HTTP 429"
+      "dp": 2,
+      "via": "cnbc:.DJI",
+      "price": 52208.06,
+      "prevClose": 51594.14,
+      "change": 613.92,
+      "pct": 1.1899,
+      "marketState": "REG_MKT"
     },
     "n225": {
       "name": "日經 225",
       "group": "n225",
-      "error": "全部來源都失敗｜stooq:^nkx → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:^N225 → HTTP 429"
+      "dp": 2,
+      "via": "cnbc:.N225",
+      "price": 64572.25,
+      "prevClose": 61867.43,
+      "change": 2704.82,
+      "pct": 4.372,
+      "marketState": "REG_MKT"
     },
     "kospi": {
       "name": "韓國 KOSPI",
       "group": "kospi",
-      "error": "全部來源都失敗｜stooq:^kospi → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ stooq:^ksp → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:^KS11 → HTTP 429"
+      "dp": 2,
+      "via": "cnbc:.KS11",
+      "price": 6376.71,
+      "prevClose": 5593.56,
+      "change": 783.15,
+      "pct": 14.0009,
+      "marketState": "REG_MKT"
     },
     "usdtwd": {
       "name": "USD／TWD",
@@ -99,5 +141,11 @@
       "pct": null,
       "marketState": null
     }
+  },
+  "adrPremium": {
+    "converted": 2426.23,
+    "premiumPct": 10.03,
+    "impliedOpen": 2205,
+    "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
 }
