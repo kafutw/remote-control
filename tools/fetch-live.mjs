@@ -42,19 +42,19 @@ const SYMBOLS = [
   { key:"e0056", name:"元大高股息", dp:2, ma:true,
     srcs:[["twseStock","0056"],["stooq","0056.tw"],["yahoo","0056.TW"]] },
   { key:"adr",   name:"台積電 ADR", dp:2, ma:false,
-    srcs:[["stooq","tsm.us"],["yahoo","TSM"]] },
+    srcs:[["cnbc","TSM"],["twelve","TSM"],["stooq","tsm.us"],["yahoo","TSM"]] },
   { key:"sox",   name:"費城半導體", dp:2, ma:false,
-    srcs:[["stooq","^sox"],["yahoo","^SOX"]] },
+    srcs:[["cnbc",".SOX"],["twelve","SOX"],["stooq","^sox"],["yahoo","^SOX"]] },
   { key:"ixic",  name:"納斯達克",   dp:2, ma:false,
-    srcs:[["stooq","^ndq"],["yahoo","^IXIC"]] },
+    srcs:[["cnbc",".IXIC"],["twelve","IXIC"],["stooq","^ndq"],["yahoo","^IXIC"]] },
   { key:"gspc",  name:"標普 500",   dp:2, ma:false,
-    srcs:[["stooq","^spx"],["yahoo","^GSPC"]] },
+    srcs:[["cnbc",".SPX"],["twelve","SPX"],["stooq","^spx"],["yahoo","^GSPC"]] },
   { key:"dji",   name:"道瓊工業",   dp:2, ma:false,
-    srcs:[["stooq","^dji"],["yahoo","^DJI"]] },
+    srcs:[["cnbc",".DJI"],["twelve","DJI"],["stooq","^dji"],["yahoo","^DJI"]] },
   { key:"n225",  name:"日經 225",   dp:2, ma:false,
-    srcs:[["stooq","^nkx"],["yahoo","^N225"]] },
+    srcs:[["cnbc",".N225"],["twelve","N225"],["stooq","^nkx"],["yahoo","^N225"]] },
   { key:"kospi", name:"韓國 KOSPI", dp:2, ma:false,
-    srcs:[["stooq","^kospi"],["stooq","^ksp"],["yahoo","^KS11"]] },
+    srcs:[["cnbc",".KS11"],["twelve","KS11"],["stooq","^kospi"],["yahoo","^KS11"]] },
   { key:"usdtwd",name:"USD／TWD",   dp:3, ma:false,
     srcs:[["erapi","TWD"],["stooq","usdtwd"],["yahoo","TWD=X"]] }
 ];
@@ -130,6 +130,32 @@ async function stooqDaily(sym){
   return lines.slice(1).map(l=>num(l.split(",")[ci])).filter(v=>v!==null && v>0);
 }
 
+/* ── CNBC 公開報價端點：免金鑰。指數用 .SPX 這種點號寫法 ── */
+async function cnbcQuote(sym){
+  const url = "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol"
+            + `?symbols=${encodeURIComponent(sym)}&requestMethod=itv&noform=1&partnerId=2`
+            + "&fund=1&exthrs=0&output=json&events=0";
+  const j = JSON.parse(await getText(url));
+  let q = j?.FormattedQuoteResult?.FormattedQuote;
+  if(Array.isArray(q)) q = q[0];
+  if(!q) throw new Error("回應沒有 FormattedQuote");
+  const price = num(q.last), prev = num(q.previous_day_closing);
+  if(price === null) throw new Error("沒有 last 欄位");
+  return { price, prevClose: prev, marketState: q.curmktstatus || null };
+}
+
+/* ── Twelve Data：需免費金鑰，放在 repo secret TWELVEDATA_KEY。專為 API 用途設計，不擋機房 IP ── */
+const TD_KEY = process.env.TWELVEDATA_KEY || "";
+async function twelveQuote(sym){
+  if(!TD_KEY) throw new Error("沒有設定 TWELVEDATA_KEY（跳過）");
+  const j = JSON.parse(await getText(
+    `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(sym)}&apikey=${encodeURIComponent(TD_KEY)}`));
+  if(!j || j.status === "error") throw new Error(j?.message || "Twelve Data 回錯誤");
+  const price = num(j.close), prev = num(j.previous_close);
+  if(price === null) throw new Error("沒有 close 欄位");
+  return { price, prevClose: prev, marketState: j.is_market_open ? "REGULAR" : "CLOSED" };
+}
+
 /* ── Yahoo：留著當最後手段。從機房 IP 常被 429 擋。 ── */
 async function yahooChart(sym, withMa){
   const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}`
@@ -177,6 +203,10 @@ async function resolve(s){
             if(closes.length > 1) out.prevClose = closes[closes.length-2];
           }catch(e){ /* 歷史拿不到就只用報價，均線會是 null */ }
         }
+      } else if(src === "cnbc"){
+        out = await cnbcQuote(sym);
+      } else if(src === "twelve"){
+        out = await twelveQuote(sym);
       } else if(src === "erapi"){
         // open.er-api.com：免金鑰的匯率來源，每日更新
         const j = JSON.parse(await getText("https://open.er-api.com/v6/latest/USD"));

@@ -36,6 +36,10 @@ jobs:
           node-version: '22'
 
       - name: 抓行情並計算均線
+        env:
+          # 選用：到 twelvedata.com 免費註冊拿金鑰，存成 repo secret 就會啟用。
+          # 沒設也能跑，只是少一個備援來源。
+          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
         run: node tools/fetch-live.mjs -o data/live.json
 
       - name: 有變動才 commit
