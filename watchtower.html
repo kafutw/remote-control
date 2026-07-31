@@ -3,52 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F4F6F8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#12161B" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#131722">
 <title>市場瞭望台 · 每日晨間簡報</title>
 <style>
 /* ─────────────────────────────────────────────────────────────
    設計語彙：法人晨報。淺色紙面為底、髮絲線分隔、數字一律等寬對齊。
    亮暗兩色都設計過，跟隨系統，也吃 claude.ai 的主題切換。
    ───────────────────────────────────────────────────────────── */
+/* 深色為預設 —— 用中性藍炭色，不是原本那種悶住的墨綠。
+   淺色只在檢視者主動切成 light 時才出現。 */
 :root{
-  --paper:#F4F6F8;      /* 頁面底 */
-  --sheet:#FFFFFF;      /* 內容面 */
-  --ink:#0F1B2A;        /* 主文字 */
-  --ink2:#43566B;       /* 次文字 */
-  --ink3:#7C8FA3;       /* 輔助文字 */
-  --rule:#DEE4EA;       /* 髮絲線 */
-  --rule2:#C3CDD8;      /* 較重的線 */
-  --navy:#1B3A6B;       /* 結構強調色 */
-  --up:#C8102E;         /* 台股慣例：紅漲 */
-  --down:#00785A;       /* 綠跌 */
-  --upBg:rgba(200,16,46,.07);
-  --downBg:rgba(0,120,90,.07);
-  --flat:#5B6B7C;
-  --warnBg:#FFF8E6; --warnLine:#E3B341; --warnInk:#7A5B12;
-}
-@media (prefers-color-scheme:dark){
-  :root{
-    --paper:#12161B; --sheet:#1A2027; --ink:#E9EEF3; --ink2:#AFBECD; --ink3:#7B8B9C;
-    --rule:#2A333D; --rule2:#3A4652; --navy:#8FB4E8;
-    --up:#FF6B7A; --down:#3ECF9A;
-    --upBg:rgba(255,107,122,.12); --downBg:rgba(62,207,154,.12); --flat:#9BAABA;
-    --warnBg:#241E10; --warnLine:#8A6D1F; --warnInk:#E3B341;
-  }
-}
-:root[data-theme="dark"]{
-  --paper:#12161B; --sheet:#1A2027; --ink:#E9EEF3; --ink2:#AFBECD; --ink3:#7B8B9C;
-  --rule:#2A333D; --rule2:#3A4652; --navy:#8FB4E8;
-  --up:#FF6B7A; --down:#3ECF9A;
-  --upBg:rgba(255,107,122,.12); --downBg:rgba(62,207,154,.12); --flat:#9BAABA;
-  --warnBg:#241E10; --warnLine:#8A6D1F; --warnInk:#E3B341;
+  --paper:#131722;      /* 頁面底 */
+  --sheet:#181C27;      /* 內容面 */
+  --ink:#DCE1EA;        /* 主文字 */
+  --ink2:#9BA5B5;       /* 次文字 */
+  --ink3:#6B7586;       /* 輔助文字 */
+  --rule:#262B38;       /* 髮絲線 */
+  --rule2:#363D4C;      /* 較重的線 */
+  --navy:#5B9CF6;       /* 結構強調色 */
+  --up:#F6465D;         /* 台股慣例：紅漲 */
+  --down:#2EBD85;       /* 綠跌 */
+  --flat:#8B95A5;
+  --warnBg:#241E10; --warnLine:#8A6D1F; --warnInk:#E8B93F;
 }
 :root[data-theme="light"]{
   --paper:#F4F6F8; --sheet:#FFFFFF; --ink:#0F1B2A; --ink2:#43566B; --ink3:#7C8FA3;
   --rule:#DEE4EA; --rule2:#C3CDD8; --navy:#1B3A6B;
-  --up:#C8102E; --down:#00785A;
-  --upBg:rgba(200,16,46,.07); --downBg:rgba(0,120,90,.07); --flat:#5B6B7C;
+  --up:#C8102E; --down:#00785A; --flat:#5B6B7C;
   --warnBg:#FFF8E6; --warnLine:#E3B341; --warnInk:#7A5B12;
+}
+:root[data-theme="dark"]{
+  --paper:#131722; --sheet:#181C27; --ink:#DCE1EA; --ink2:#9BA5B5; --ink3:#6B7586;
+  --rule:#262B38; --rule2:#363D4C; --navy:#5B9CF6;
+  --up:#F6465D; --down:#2EBD85; --flat:#8B95A5;
+  --warnBg:#241E10; --warnLine:#8A6D1F; --warnInk:#E8B93F;
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -68,7 +56,7 @@ body{
 h1,h2{margin:0;font-weight:700;letter-spacing:-.01em}
 
 /* ── 報頭 ── */
-header{background:var(--sheet);border-bottom:2px solid var(--ink);padding:20px 0 0}
+header{background:var(--sheet);border-bottom:1px solid var(--rule2);padding:20px 0 0}
 .hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 h1{font-size:21px;letter-spacing:.06em}
 h1 .sub{
@@ -90,7 +78,7 @@ h1 .sub{
 
 /* ── 區塊標題：小型全大寫眉標 + 細線 ── */
 section{margin-top:30px}
-.sec-h{display:flex;align-items:center;gap:8px;padding-bottom:7px;border-bottom:1.5px solid var(--ink);margin-bottom:2px}
+.sec-h{display:flex;align-items:center;gap:8px;padding-bottom:7px;border-bottom:1px solid var(--rule2);margin-bottom:2px}
 .sec-h .ic{font-size:13px;flex:0 0 auto;line-height:1;filter:saturate(.85)}
 .sec-h h2{font-size:13.5px;letter-spacing:.06em;font-weight:800}
 .sec-h .hint{margin-left:auto;font-size:10px;color:var(--ink3);letter-spacing:.06em;text-align:right}
@@ -288,6 +276,11 @@ section{margin-top:30px}
   </section>
 
   <section>
+    <div class="sec-h"><div class="ic">💱</div><h2>跨市場</h2><div class="hint" id="crossWhen"></div></div>
+    <div id="cross"></div>
+  </section>
+
+  <section>
     <div class="sec-h"><div class="ic">📌</div><h2>個股深度</h2><div class="hint">基本面＋均線位階＋歷史統計</div></div>
     <div id="stocks"></div>
   </section>
@@ -351,9 +344,21 @@ var BRIEF = {
   },
 
   /* ── 亞股：日韓比台股早 1 小時開盤，是當天最直接的領先指標 ── */
+  /* ── 跨市場：匯率、其他亞洲與歐洲指數。台幣走勢直接牽動外資進出 ── */
+  crossWhen: "2026/07/31 08:00 台北（取自 TradingView 市場摘要）",
+  cross: [
+    {n:"USD／TWD", c:"台幣貶值 · 外資匯出的壓力指標",   p:32.394,  pct:1.74,  dp:3},
+    {n:"上證綜合", c:"000001 · 中國",                   p:3804.69, pct:-0.62, dp:0},
+    {n:"FTSE 100", c:"UKX · 英國",                      p:10897.27,pct:-0.10, dp:0},
+    {n:"台灣 50 指數", c:"TW50 · 0050 追蹤的母指數",     p:37278.59,pct:0.27,  dp:0}
+  ],
+
   asia: {
-    todayWhen: null,          // 08:00 之後那一版才填；null 代表尚未開盤
-    today: [],                // 開盤後的即時表現，格式同 prev
+    todayWhen: "2026/07/31 08:00 盤中（取自 TradingView）",
+    today: [
+      {n:"日經 225", c:"^N225 · 今日開盤後，比台股早 1 小時", p:62275.81, pct:0.66, dp:0,
+       note:"高開走穩"}
+    ],
     prevWhen: "2026/07/30（四）收盤",
     prev: [
       {n:"日經 225",   c:"^N225 · 東京",                      p:61867.43, pct:0.71,  dp:0},
@@ -438,6 +443,8 @@ var BRIEF = {
   ],
 
   points: [
+    {k:"warn", t:"<b>台幣單日貶值 1.74% 到 32.394。</b>這是今天最容易被忽略的變數 —— 台幣急貶通常伴隨外資賣股匯出，對指數是壓力；但台積電收美元、貶值反而墊高換算後的營收。<b>兩股力量方向相反，看盤時要盯三大法人買賣超才知道哪一邊贏。</b>"},
+    {k:"good", t:"<b>日經今天開高走穩 +0.66%（62,275）。</b>日韓 08:00 就開了，比台股早 1 小時，這個方向跟昨夜美股反彈一致，是台股開盤偏多的佐證。"},
     {k:"good", t:"<b>台積電 ADR 溢價擴大到約 18.5%</b>（前一日約 15.5%）。ADR 一夜漲 7.64%，台股昨天只漲 0.23%，這個落差通常會在開盤補回來。"},
     {k:"warn", t:"<b>反彈的引信是微軟財報，不是半導體基本面。</b>費半 +9% 之前是連兩天的 −2.23% 和 −5%，這比較像超跌反彈而非趨勢反轉。"},
     {k:"warn", t:"<b>昨天盤中大漲 1,116 點仍收黑，失守 4 萬點。</b>追價買盤接不住，代表上檔賣壓還很重，今天開高之後的走勢比開盤價重要。"},
@@ -542,6 +549,15 @@ function renderAsia(){
   }
   $("asiaPrev").innerHTML = '<div class="subh">前一日收盤　'+esc(a.prevWhen)+'</div>'
     + a.prev.map(quoteRow).join("");
+}
+
+function renderCross(){
+  if(!BRIEF.cross || !BRIEF.cross.length){ $("cross").innerHTML=""; return; }
+  $("crossWhen").textContent = BRIEF.crossWhen || "";
+  $("cross").innerHTML = BRIEF.cross.map(quoteRow).join("")
+    + '<div class="note">台幣是外資進出的溫度計 —— <b>台幣大幅走貶時，外資賣股匯出的壓力通常同步升高</b>，'
+    + '但對台積電這類以美元計價收款的出口商，貶值反而墊高換回台幣的營收。看到台幣單日變動超過 1%，'
+    + '就值得回頭確認三大法人買賣超。</div>';
 }
 
 function renderStocks(){
@@ -649,7 +665,7 @@ function tick(){
 }
 
 renderStamp(); renderTone(); renderAsia(); renderUS(); renderADR();
-renderTW(); renderStocks(); renderPoints(); renderNews(); renderCal();
+renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
 tick(); setInterval(tick,1000);
 
 })();
