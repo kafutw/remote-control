@@ -4,13 +4,21 @@
  *
  *   node tools/fetch-live.mjs [-o data/live.json]
  *
- * 這支腳本設計成在 **GitHub Actions 的 runner** 上跑（見 .github/workflows/market-data.yml）。
- * Actions 的機器對外網路沒有限制，打得到 Yahoo Finance 與證交所；
- * 而產出的 JSON 推回 repo 之後，raw.githubusercontent.com 是受限環境唯一連得到的來源，
- * 於是晨報排程就能讀到真正的即時數字，而不是搜尋引擎的轉述。
+ * 在 GitHub Actions 的 runner 上跑（見 .github/workflows/market-data.yml）。
+ * 受限的執行環境連不到任何行情站，但連得到 raw.githubusercontent.com，
+ * 所以由 Actions 抓、推回 repo，晨報排程再讀回去。
  *
- * 每個標的獨立 try/catch —— 一個掛掉不影響其他，結果裡會留下 error 欄位，
- * 讓讀取端知道哪一格是壞的，而不是拿到一個看起來正常的錯數字。
+ * ── 為什麼是多來源 ──
+ * 第一版只用 Yahoo，實際跑起來 12 檔全部 HTTP 429 —— Yahoo 會擋資料中心 IP，
+ * 而 Actions 的 runner 正是資料中心 IP。所以改成每個標的準備多組來源，
+ * 依序嘗試直到成功，並把「這個數字是誰給的」記在 via 欄位裡。
+ *
+ * 來源優先序：
+ *   台股   證交所 OpenAPI（官方）→ Stooq → Yahoo
+ *   其他   Stooq → Yahoo
+ * Stooq 提供免金鑰的 CSV，對機房 IP 相對寬容；證交所是台股的權威但只有收盤。
+ *
+ * 每個標的獨立處理，一個掛掉不影響其他，失敗的會留下 error 欄位讓讀取端知道。
  */
 
 import fs from "node:fs";
@@ -18,201 +26,238 @@ import path from "node:path";
 
 const outIdx = process.argv.indexOf("-o");
 const OUT = outIdx >= 0 ? process.argv[outIdx + 1] : "data/live.json";
+const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/125 Safari/537.36";
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const sma = (a, n) => a.length < n ? null : a.slice(-n).reduce((x, y) => x + y, 0) / n;
+const num = v => { const n = Number(String(v).replace(/,/g, "").trim()); return isFinite(n) ? n : null; };
 
-/* 要抓什麼。key 是給讀取端用的穩定名稱，不會因為代號寫法改變而壞掉 */
+/* 每個標的的候選來源，依序嘗試。symbol 寫法各站不同，所以連代號一起帶。 */
 const SYMBOLS = [
-  { key: "twii",   sym: "^TWII",  name: "加權指數",       group: "tw",    dp: 2, ma: true  },
-  { key: "tsmc",   sym: "2330.TW",name: "台積電",         group: "tw",    dp: 2, ma: true  },
-  { key: "e0050",  sym: "0050.TW",name: "元大台灣50",     group: "tw",    dp: 2, ma: true  },
-  { key: "e0056",  sym: "0056.TW",name: "元大高股息",     group: "tw",    dp: 2, ma: true  },
-  { key: "adr",    sym: "TSM",    name: "台積電 ADR",     group: "us",    dp: 2, ma: false },
-  { key: "sox",    sym: "^SOX",   name: "費城半導體",     group: "us",    dp: 2, ma: false },
-  { key: "ixic",   sym: "^IXIC",  name: "納斯達克",       group: "us",    dp: 2, ma: false },
-  { key: "gspc",   sym: "^GSPC",  name: "標普 500",       group: "us",    dp: 2, ma: false },
-  { key: "dji",    sym: "^DJI",   name: "道瓊工業",       group: "us",    dp: 2, ma: false },
-  { key: "n225",   sym: "^N225",  name: "日經 225",       group: "asia",  dp: 2, ma: false },
-  { key: "kospi",  sym: "^KS11",  name: "韓國 KOSPI",     group: "asia",  dp: 2, ma: false },
-  { key: "usdtwd", sym: "TWD=X",  name: "USD／TWD",       group: "fx",    dp: 3, ma: false }
+  { key:"twii",  name:"加權指數",   dp:2, ma:true,
+    srcs:[["twseIndex",""],["stooq","^twse"],["stooq","^tai"],["yahoo","^TWII"]] },
+  { key:"tsmc",  name:"台積電",     dp:2, ma:true,
+    srcs:[["twseStock","2330"],["stooq","2330.tw"],["yahoo","2330.TW"]] },
+  { key:"e0050", name:"元大台灣50", dp:2, ma:true,
+    srcs:[["twseStock","0050"],["stooq","0050.tw"],["yahoo","0050.TW"]] },
+  { key:"e0056", name:"元大高股息", dp:2, ma:true,
+    srcs:[["twseStock","0056"],["stooq","0056.tw"],["yahoo","0056.TW"]] },
+  { key:"adr",   name:"台積電 ADR", dp:2, ma:false,
+    srcs:[["stooq","tsm.us"],["yahoo","TSM"]] },
+  { key:"sox",   name:"費城半導體", dp:2, ma:false,
+    srcs:[["stooq","^sox"],["yahoo","^SOX"]] },
+  { key:"ixic",  name:"納斯達克",   dp:2, ma:false,
+    srcs:[["stooq","^ndq"],["yahoo","^IXIC"]] },
+  { key:"gspc",  name:"標普 500",   dp:2, ma:false,
+    srcs:[["stooq","^spx"],["yahoo","^GSPC"]] },
+  { key:"dji",   name:"道瓊工業",   dp:2, ma:false,
+    srcs:[["stooq","^dji"],["yahoo","^DJI"]] },
+  { key:"n225",  name:"日經 225",   dp:2, ma:false,
+    srcs:[["stooq","^nkx"],["yahoo","^N225"]] },
+  { key:"kospi", name:"韓國 KOSPI", dp:2, ma:false,
+    srcs:[["stooq","^kospi"],["stooq","^ksp"],["yahoo","^KS11"]] },
+  { key:"usdtwd",name:"USD／TWD",   dp:3, ma:false,
+    srcs:[["stooq","usdtwd"],["yahoo","TWD=X"]] }
 ];
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const sma = (arr, n) =>
-  arr.length < n ? null : arr.slice(-n).reduce((a, b) => a + b, 0) / n;
-
-async function fetchOne(s) {
-  const range = s.ma ? "1y" : "5d";
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s.sym)}`
-            + `?range=${range}&interval=1d`;
-
-  const res = await fetch(url, {
-    headers: {
-      // Yahoo 對沒有 UA 的請求會擋
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/125 Safari/537.36",
-      "Accept": "application/json"
-    }
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-  const j = await res.json();
-  const r = j?.chart?.result?.[0];
-  if (!r) throw new Error(j?.chart?.error?.description || "回應沒有 result");
-
-  const meta = r.meta || {};
-  const closes = (r.indicators?.quote?.[0]?.close || []).filter(v => typeof v === "number" && isFinite(v));
-
-  const price = meta.regularMarketPrice ?? closes[closes.length - 1] ?? null;
-  const prev  = meta.chartPreviousClose ?? meta.previousClose
-             ?? (closes.length > 1 ? closes[closes.length - 2] : null);
-  if (price === null) throw new Error("沒有取到價格");
-
-  const out = {
-    name: s.name, symbol: s.sym, group: s.group, dp: s.dp,
-    price,
-    prevClose: prev,
-    change: prev !== null ? +(price - prev).toFixed(6) : null,
-    pct:    prev ? +(((price / prev) - 1) * 100).toFixed(4) : null,
-    currency: meta.currency || null,
-    // regular / pre / post / closed —— 讀取端可據此判斷這是即時價還是收盤價
-    marketState: meta.marketState || null,
-    asOf: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : null
-  };
-
-  if (s.ma) {
-    // 均線用日線收盤算。60 日 = 季線，是這整套判斷的核心
-    const ma20 = sma(closes, 20), ma60 = sma(closes, 60), ma240 = sma(closes, 240);
-    out.ma20  = ma20  !== null ? +ma20.toFixed(2)  : null;
-    out.ma60  = ma60  !== null ? +ma60.toFixed(2)  : null;
-    out.ma240 = ma240 !== null ? +ma240.toFixed(2) : null;
-    out.bias20  = ma20  ? +(((price / ma20)  - 1) * 100).toFixed(2) : null;
-    out.bias60  = ma60  ? +(((price / ma60)  - 1) * 100).toFixed(2) : null;
-    out.bias240 = ma240 ? +(((price / ma240) - 1) * 100).toFixed(2) : null;
-    out.bars = closes.length;
-  }
-  return out;
+/* ── 證交所 OpenAPI：官方、免金鑰、只有收盤 ── */
+let twseStocks = null, twseIndexRow = null;
+async function loadTwse(){
+  if(twseStocks !== null) return;
+  twseStocks = new Map();
+  try{
+    const r = await fetch("https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
+                          {headers:{"User-Agent":UA, Accept:"application/json"}});
+    if(r.ok){
+      const j = await r.json();
+      for(const row of (Array.isArray(j)?j:[])) twseStocks.set(String(row.Code ?? row.code).trim(), row);
+      console.error(`證交所個股：${twseStocks.size} 檔`);
+    } else console.error("證交所個股 HTTP " + r.status);
+  }catch(e){ console.error("證交所個股失敗：" + e.message); }
+  try{
+    const r = await fetch("https://openapi.twse.com.tw/v1/indicesReport/MI_5MINS_HIST",
+                          {headers:{"User-Agent":UA, Accept:"application/json"}});
+    if(r.ok){ const j = await r.json(); twseIndexRow = Array.isArray(j)&&j.length ? j[j.length-1] : null; }
+    else console.error("證交所指數 HTTP " + r.status);
+  }catch(e){ console.error("證交所指數失敗：" + e.message); }
 }
-
-const data = {};
-let ok = 0, bad = 0;
-
-for (const s of SYMBOLS) {
-  let done = false;
-  for (let attempt = 1; attempt <= 3 && !done; attempt++) {
-    try {
-      data[s.key] = await fetchOne(s);
-      ok++; done = true;
-      console.error(`✓ ${s.name.padEnd(12)} ${data[s.key].price}`);
-    } catch (e) {
-      if (attempt === 3) {
-        bad++;
-        data[s.key] = { name: s.name, symbol: s.sym, group: s.group, error: String(e.message || e) };
-        console.error(`✗ ${s.name.padEnd(12)} ${e.message}`);
-      } else {
-        await sleep(attempt * 2000);
-      }
-    }
-  }
-  await sleep(400);   // 對 Yahoo 客氣一點，免得被限流
-}
-
-/* ────────────────────────────────────────────────────────────
-   第二來源：證交所 OpenAPI。官方、免金鑰，但只有收盤價。
-   用途不是取代 Yahoo，是**校正** —— 兩邊對得起來才敢說數字是對的。
-   ──────────────────────────────────────────────────────────── */
-const TWSE_MAP = { twii: null, tsmc: "2330", e0050: "0050", e0056: "0056" };
-
-/** 從物件裡挑出第一個 key 含指定字樣的數值，避免欄位改名就整支壞掉 */
-function pickNum(obj, ...needles) {
-  for (const n of needles) {
-    for (const [k, v] of Object.entries(obj || {})) {
-      if (k.toLowerCase().includes(n.toLowerCase())) {
-        const num = Number(String(v).replace(/,/g, ""));
-        if (isFinite(num) && num > 0) return num;
-      }
-    }
-  }
+/** 從一列裡挑出第一個 key 含指定字樣的數字，欄位改名也不會整支壞掉 */
+function pick(row, ...needles){
+  for(const n of needles)
+    for(const [k,v] of Object.entries(row||{}))
+      if(k.toLowerCase().includes(n.toLowerCase())){ const x = num(v); if(x !== null && x > 0) return x; }
   return null;
 }
 
-async function twseJson(url) {
-  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" } });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+/* ── Stooq：免金鑰 CSV。l=最新報價，d/l=日線歷史（拿來算均線） ── */
+async function stooqQuote(sym){
+  const r = await fetch(`https://stooq.com/q/l/?s=${encodeURIComponent(sym)}&f=sd2t2ohlcv&h&e=csv`,
+                        {headers:{"User-Agent":UA}});
+  if(!r.ok) throw new Error("HTTP " + r.status);
+  const lines = (await r.text()).trim().split(/\r?\n/);
+  if(lines.length < 2) throw new Error("回應沒有資料列");
+  const head = lines[0].split(",").map(s=>s.trim().toLowerCase());
+  const row  = lines[1].split(",").map(s=>s.trim());
+  const get  = n => { const i = head.indexOf(n); return i<0 ? null : row[i]; };
+  const close = num(get("close")), open = num(get("open"));
+  if(close === null || String(get("close")).toUpperCase() === "N/D") throw new Error("Stooq 回 N/D（可能無此代號）");
+  return { price: close, prevClose: null, open };
+}
+async function stooqDaily(sym){
+  const r = await fetch(`https://stooq.com/q/d/l/?s=${encodeURIComponent(sym)}&i=d`, {headers:{"User-Agent":UA}});
+  if(!r.ok) throw new Error("HTTP " + r.status);
+  const lines = (await r.text()).trim().split(/\r?\n/);
+  if(lines.length < 3) throw new Error("歷史資料太短");
+  const head = lines[0].split(",").map(s=>s.trim().toLowerCase());
+  const ci = head.indexOf("close");
+  if(ci < 0) throw new Error("找不到 Close 欄");
+  return lines.slice(1).map(l=>num(l.split(",")[ci])).filter(v=>v!==null && v>0);
 }
 
-const verify = {};
-try {
-  console.error("\n證交所 OpenAPI 校正中…");
+/* ── Yahoo：留著當最後手段。從機房 IP 常被 429 擋。 ── */
+async function yahooChart(sym, withMa){
+  const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}`
+                        + `?range=${withMa?"1y":"5d"}&interval=1d`,
+                        {headers:{"User-Agent":UA, Accept:"application/json"}});
+  if(!r.ok) throw new Error("HTTP " + r.status);
+  const j = await r.json();
+  const res = j?.chart?.result?.[0];
+  if(!res) throw new Error(j?.chart?.error?.description || "回應沒有 result");
+  const m = res.meta || {};
+  const closes = (res.indicators?.quote?.[0]?.close || []).filter(v=>typeof v==="number"&&isFinite(v));
+  const price = m.regularMarketPrice ?? closes[closes.length-1];
+  if(price == null) throw new Error("沒有取到價格");
+  return { price, prevClose: m.chartPreviousClose ?? m.previousClose ?? closes[closes.length-2] ?? null,
+           closes, marketState: m.marketState || null };
+}
 
-  // 個股收盤（全上市一次拿回來）
-  const all = await twseJson("https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL");
-  const byCode = new Map((Array.isArray(all) ? all : []).map(r => [String(r.Code ?? r.code).trim(), r]));
-  for (const [key, code] of Object.entries(TWSE_MAP)) {
-    if (!code) continue;
-    const row = byCode.get(code);
-    verify[key] = row ? { close: pickNum(row, "ClosingPrice", "Closing", "Close") } : { error: "查無此代號" };
+/* ── 逐一嘗試各來源 ── */
+async function resolve(s){
+  const tried = [];
+  for(const [src, sym] of s.srcs){
+    try{
+      let out = null;
+      if(src === "twseStock"){
+        await loadTwse();
+        const row = twseStocks.get(sym);
+        if(!row) throw new Error("證交所查無此代號");
+        const close = pick(row,"ClosingPrice","Closing","Close");
+        const chg   = pick(row,"Change");
+        if(close === null) throw new Error("沒有收盤價欄位");
+        out = { price: close, prevClose: chg !== null ? close - chg : null, marketState:"CLOSED" };
+      } else if(src === "twseIndex"){
+        await loadTwse();
+        if(!twseIndexRow) throw new Error("證交所指數沒有資料");
+        const close = pick(twseIndexRow,"ClosingIndex","Closing","Close");
+        if(close === null) throw new Error("沒有收盤指數欄位");
+        out = { price: close, prevClose: null, marketState:"CLOSED" };
+      } else if(src === "stooq"){
+        const q = await stooqQuote(sym);
+        out = { price: q.price, prevClose: null, marketState:null };
+        if(s.ma || out.prevClose === null){
+          try{
+            const closes = await stooqDaily(sym);
+            out.closes = closes;
+            if(closes.length > 1) out.prevClose = closes[closes.length-2];
+          }catch(e){ /* 歷史拿不到就只用報價，均線會是 null */ }
+        }
+      } else {
+        out = await yahooChart(sym, s.ma);
+      }
+      out.via = `${src}:${sym || "-"}`;
+      out.tried = tried;
+      return out;
+    }catch(e){
+      tried.push(`${src}:${sym||"-"} → ${e.message}`);
+      await sleep(600);
+    }
   }
-
-  // 加權指數（發行量加權股價指數的日 K）
-  try {
-    const idx = await twseJson("https://openapi.twse.com.tw/v1/indicesReport/MI_5MINS_HIST");
-    const last = Array.isArray(idx) && idx.length ? idx[idx.length - 1] : null;
-    verify.twii = last ? { close: pickNum(last, "ClosingIndex", "Closing", "Close"), date: last.Date ?? null }
-                       : { error: "指數回應是空的" };
-  } catch (e) { verify.twii = { error: String(e.message || e) }; }
-
-  console.error("證交所校正完成");
-} catch (e) {
-  console.error("證交所校正失敗：", e.message);
-  verify.__error = String(e.message || e);
+  throw new Error("全部來源都失敗｜" + tried.join(" ｜ "));
 }
 
-/* 對帳：兩個來源差超過 0.5% 就標記出來，不要默默採信其中一個 */
+/* ── 主流程 ── */
+const data = {};
+let ok = 0, bad = 0;
+for(const s of SYMBOLS){
+  try{
+    const r = await resolve(s);
+    // 證交所只給收盤、沒有歷史，所以均線另外去 Stooq 拿日線來算：
+    // 價格用官方的，均線用歷史的 —— 兩者職責分開。
+    if(s.ma && (!r.closes || !r.closes.length)){
+      const alt = s.srcs.find(x => x[0] === "stooq");
+      if(alt){
+        try{ r.closes = await stooqDaily(alt[1]); r.maVia = `stooq:${alt[1]}`; }
+        catch(e){ console.error(`  （${s.name} 均線歷史拿不到：${e.message}）`); }
+      }
+    }
+    const price = r.price, prev = r.prevClose;
+    const o = {
+      name:s.name, group:s.key, dp:s.dp, via:r.via, price,
+      prevClose: prev,
+      change: prev !== null ? +(price - prev).toFixed(6) : null,
+      pct: prev ? +(((price/prev)-1)*100).toFixed(4) : null,
+      marketState: r.marketState || null,
+      triedBefore: (r.tried && r.tried.length) ? r.tried : undefined
+    };
+    if(s.ma && r.closes && r.closes.length){
+      const c = r.closes;
+      const m20=sma(c,20), m60=sma(c,60), m240=sma(c,240);
+      o.ma20  = m20  !== null ? +m20.toFixed(2)  : null;
+      o.ma60  = m60  !== null ? +m60.toFixed(2)  : null;
+      o.ma240 = m240 !== null ? +m240.toFixed(2) : null;
+      o.bias20  = m20  ? +(((price/m20) -1)*100).toFixed(2) : null;
+      o.bias60  = m60  ? +(((price/m60) -1)*100).toFixed(2) : null;
+      o.bias240 = m240 ? +(((price/m240)-1)*100).toFixed(2) : null;
+      o.bars = c.length;
+      if(r.maVia) o.maVia = r.maVia;
+    }
+    data[s.key] = o; ok++;
+    console.error(`✓ ${s.name.padEnd(12)} ${String(price).padStart(11)}  via ${o.via}`
+                  + (o.ma60 ? `  季線 ${o.ma60}` : ""));
+  }catch(e){
+    bad++;
+    data[s.key] = { name:s.name, group:s.key, error:String(e.message||e) };
+    console.error(`✗ ${s.name.padEnd(12)} ${e.message}`);
+  }
+  await sleep(500);
+}
+
+/* 台股：若同時有非證交所的值，跟證交所對帳；差 >0.5% 以官方為準 */
 const crossCheck = {};
-for (const [key, v] of Object.entries(verify)) {
-  if (key.startsWith("__") || !v || v.error || !v.close) continue;
+await loadTwse();
+for(const [key, code] of Object.entries({tsmc:"2330", e0050:"0050", e0056:"0056"})){
   const y = data[key];
-  if (!y || y.error || !y.price) continue;
-  const diffPct = (y.price / v.close - 1) * 100;
+  if(!y || y.error || !y.price || String(y.via).startsWith("twse")) continue;
+  const row = twseStocks.get(code); if(!row) continue;
+  const official = pick(row,"ClosingPrice","Closing","Close"); if(official === null) continue;
+  const diffPct = (y.price/official - 1)*100;
   const agree = Math.abs(diffPct) <= 0.5;
-  crossCheck[key] = {
-    yahoo: y.price, twse: v.close, diffPct: +diffPct.toFixed(3), agree,
-    note: agree ? "兩個來源一致"
-                : "⚠️ 兩個來源不一致 —— 可能是其中一邊延遲、或含盤中價，請以證交所為準"
-  };
-  if (!agree) console.error(`⚠️ ${y.name}　Yahoo ${y.price} vs 證交所 ${v.close}　差 ${diffPct.toFixed(2)}%`);
-  // 台股收盤數字以官方為準；Yahoo 的值保留下來供對照
-  if (!agree) { y.priceYahoo = y.price; y.price = v.close; y.correctedBy = "TWSE"; }
-}
-
-/* ADR 溢價：ADR × 匯率 ÷ 5 ÷ 台積電台股價 − 1。這是台股開盤前最有用的一格 */
-const adr = data.adr, tsmc = data.tsmc, fx = data.usdtwd;
-if (adr?.price && tsmc?.price && fx?.price) {
-  const converted = adr.price * fx.price / 5;
-  data.adrPremium = {
-    converted: +converted.toFixed(2),
-    premiumPct: +(((converted / tsmc.price) - 1) * 100).toFixed(2),
-    impliedOpen: adr.pct !== null ? +(tsmc.price * (1 + adr.pct / 100)).toFixed(0) : null,
-    note: "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
-  };
+  crossCheck[key] = { primary:y.price, via:y.via, twse:official, diffPct:+diffPct.toFixed(3), agree,
+                      note: agree ? "兩個來源一致" : "⚠️ 不一致，已改採證交所官方收盤" };
+  if(!agree){ y.priceYahoo = y.price; y.price = official; y.correctedBy = "TWSE"; }
 }
 
 const payload = {
   generatedAt: new Date().toISOString(),
-  generatedAtTaipei: new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Taipei", dateStyle: "short", timeStyle: "medium"
-  }).format(new Date()),
-  sources: {
-    primary: "Yahoo Finance chart API（免金鑰，涵蓋台股／美股／日韓／匯率）",
-    verify:  "證交所 OpenAPI（官方，免金鑰，僅台股收盤，用來校正）"
-  },
-  ok, failed: bad,
-  crossCheck,          // 兩來源對帳結果；agree=false 代表該檔數字有疑慮
-  data
+  generatedAtTaipei: new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Taipei",dateStyle:"short",timeStyle:"medium"})
+                       .format(new Date()),
+  sources: { note:"每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
+             order:"台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo" },
+  ok, failed: bad, crossCheck, data
 };
 
-fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify(payload, null, 2) + "\n");
-console.error(`\n寫入 ${OUT}　成功 ${ok} / 失敗 ${bad}`);
+/* ADR 溢價：ADR × 匯率 ÷ 5 ÷ 台積電台股價 − 1 */
+const adr = data.adr, tsmc = data.tsmc, fx = data.usdtwd;
+if(adr?.price && tsmc?.price && fx?.price){
+  const conv = adr.price * fx.price / 5;
+  payload.adrPremium = {
+    converted:+conv.toFixed(2),
+    premiumPct:+(((conv/tsmc.price)-1)*100).toFixed(2),
+    impliedOpen: adr.pct !== null && adr.pct !== undefined ? +(tsmc.price*(1+adr.pct/100)).toFixed(0) : null,
+    note:"台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
+  };
+}
 
-// 全部失敗才算這次執行失敗；部分失敗仍然把拿到的寫出去
-if (ok === 0) process.exit(1);
+fs.mkdirSync(path.dirname(OUT), {recursive:true});
+fs.writeFileSync(OUT, JSON.stringify(payload,null,2) + "\n");
+console.error(`\n寫入 ${OUT}　成功 ${ok} / 失敗 ${bad}`);
+if(ok === 0) process.exit(1);
