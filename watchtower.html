@@ -419,6 +419,12 @@ section{margin-top:30px}
 
 .note{font-size:11.5px;color:var(--ink3);line-height:1.8;margin-top:12px}
 .note b{color:var(--ink2);font-weight:700}
+/* 資料過期的警示：舊數字配上今天的即時報價是這份報告最危險的誤讀，要看得見 */
+.warnbox{
+  font-size:12px;line-height:1.75;color:var(--warnInk);background:var(--warnBg);
+  border:1px solid var(--warnLine);border-radius:5px;padding:9px 12px
+}
+.warnbox b{font-weight:800}
 .disc{
   margin-top:30px;padding:14px;border:1px solid var(--rule);border-left:3px solid var(--rule2);
   border-radius:4px;background:var(--sheet);font-size:11px;color:var(--ink3);line-height:1.8
@@ -600,9 +606,11 @@ var BRIEF = {
   twNote: "電子類指數 +9.19%；聯發科、日月光、信驊、川湖同步漲停；南亞科、華邦電、旺宏、群聯等記憶體股全面亮燈。",
 
   histWindow: "2024/02 ～ 2026/04",
-  histNote: "歷史統計用公開資料集的日線（約 516 個交易日）跑出來，是真實數字不是估計值。但<b>樣本只有 2 年、事件數個位數</b>，"
-          + "且<b>期間台積電從 700 漲到 1,850，是大多頭</b>，「跌破後 60 日中位數 +13%」高度反映當時環境。"
-          + "資料也<b>不含 2026/04 之後</b>，今年 7 月這波完全不在裡面。",
+  // 涵蓋到哪一天不寫在這裡 —— 那個日期由 renderStocks 從實際資料算出來標在上面，
+  // 寫死的話 CSV 補了新資料就會變成假話。這裡只放不隨資料變動的警語。
+  histNote: "歷史統計是從日線收盤價實際跑出來的，不是估計值。但<b>樣本只有 2 年、事件數個位數</b>，"
+          + "且<b>期間台積電從 700 漲到 1,850，是大多頭</b>，「跌破後 60 日中位數 +13%」高度反映當時環境。",
+  histCoverage: {to:"2026-04-01", stale:null},
   stocks: [
     { code:"2330", n:"台積電", price:2425, ma60:2346,
       facts:[
@@ -613,7 +621,7 @@ var BRIEF = {
         {k:"Q2 EPS",     v:"27.25 元",   s:"歷史新高，毛利率 67.7% 超財測上緣"},
         {k:"2026 資本支出", v:"600–640 億美元", s:"由 520–560 億上調，市場曾據此殺盤"}
       ],
-      hist:{breaks:8, eff:4, fake:4, perYear:3.8, deepMed:-6.90,
+      hist:{breaks:8, eff:4, fake:4, perYear:3.83, deepMed:-6.90,
             deepQ:"−11.71% ～ −0.88%", backMed:15, backMax:52, r60Med:13.38, win:75,
             events:[13.38, 5.93, -8.84, 30.18]} },
     { code:"0050", n:"元大台灣 50", price:null, ma60:null,
@@ -623,7 +631,7 @@ var BRIEF = {
         {k:"受益人數",   v:"323.87 萬", s:"去年底 153.09 萬，半年倍增"},
         {k:"最大成分股", v:"台積電",   s:"權重極高，走勢幾乎跟著台積電走"}
       ],
-      hist:{breaks:11, eff:4, fake:7, perYear:5.3, deepMed:-6.60,
+      hist:{breaks:11, eff:4, fake:7, perYear:5.33, deepMed:-6.60,
             deepQ:"−11.10% ～ −0.61%", backMed:21, backMax:51, r60Med:5.06, win:50,
             events:[8.80, 5.06, -0.24, -6.69]} },
     { code:"0056", n:"元大高股息", price:null, ma60:null,
@@ -633,7 +641,7 @@ var BRIEF = {
         {k:"連續配息",   v:"第 16 年", s:"首檔達成存股 0 成本的高股息 ETF"},
         {k:"可分配收益", v:"4.54 元",  s:"另有資本平準金 23.24 元（6/30）"}
       ],
-      hist:{breaks:16, eff:12, fake:4, perYear:7.6, deepMed:-1.61,
+      hist:{breaks:16, eff:12, fake:4, perYear:7.67, deepMed:-1.61,
             deepQ:"−4.48% ～ −1.22%", backMed:9, backMax:56, r60Med:-4.06, win:45,
             events:[-4.32, -4.06, -5.44, -11.93, -6.80, -5.41, 2.40, 1.42, 4.15, 6.23, 7.03]} }
   ],
@@ -960,6 +968,42 @@ function tryLive(){
     .catch(function(){ /* 靜態／受限環境抓不到，維持已標日期的快照 */ });
 }
 
+/* ── 歷史統計：以 data/history-stats.json 為準 ──
+   下面 BRIEF.stocks[].hist 裡寫死的那份是備援（離線、Artifact 版本用的），
+   由 tools/update-stats.mjs 直接從 CSV 算出來、並在 CI 上跟這個 JSON 對帳，
+   所以兩者理應一樣。真正重要的是：CSV 補了新資料之後，
+   統計會自己跟著變，不需要有人記得回來改數字 —— 手改就會有改錯與忘了改的問題。 */
+function tryHistoryStats(){
+  if(typeof fetch !== "function") return;
+  fetch("data/history-stats.json?t=" + Date.now(), {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
+    .then(function(j){
+      if(!j || !j.stocks) return;
+      var touched = false;
+      BRIEF.stocks.forEach(function(s){
+        var v = j.stocks[s.code];
+        if(!v) return;
+        s.hist = {
+          breaks:v.breaks, eff:v.eff, fake:v.fake, perYear:v.perYear,
+          deepMed:v.deepMed,
+          deepQ: fmtPct(v.deepQ25) + " ～ " + fmtPct(v.deepQ75),
+          backMed:v.backMed, backMax:v.backMax,
+          r60Med:v.r60Med, win:v.win, events:v.events, pending:v.pending
+        };
+        touched = true;
+      });
+      if(j.window) BRIEF.histWindow = j.window;
+      BRIEF.histCoverage = {to:j.coverageTo, stale:j.staleDays};
+      if(touched) renderStocks();
+    })
+    .catch(function(){ /* 抓不到就用寫死的備援，下面會標明它涵蓋到哪一天 */ });
+}
+/* 負數用 U+2212 減號，跟頁面其他地方一致（ASCII 的 - 在數字旁邊太細） */
+function fmtPct(v){
+  return (v===null||v===undefined||!isFinite(v)) ? "—"
+       : (v<0 ? "−" : (v>0 ? "+" : "")) + Math.abs(v).toFixed(2) + "%";
+}
+
 /* Twelve Data：盤中直接在瀏覽器打，補上日經與 KOSPI 的分鐘級數字 */
 function tryTwelveData(){
   if(!LIVE.twelveDataKey || typeof fetch !== "function") return;
@@ -1089,7 +1133,27 @@ function renderStocks(){
               + h.events.length + ' 次，三檔同尺度）</div>' + dotPlot(h.events, h.r60Med, dom, 300) + '</div>'
             : '')
       + '</div></div>';
-  }).join("") + '<div class="note">'+BRIEF.histNote+'</div>';
+  }).join("")
+    + histCoverageNote()
+    + '<div class="note">'+BRIEF.histNote+'</div>';
+}
+
+/* 歷史資料涵蓋到哪一天，由資料本身講，不是寫死的一句話。
+   落後超過兩週就用警示樣式講清楚 —— 幾個月前的統計配上今天的價格，
+   看起來會像是「現在的判斷依據」，那是這份報告最該避免的錯覺。 */
+function histCoverageNote(){
+  var c = BRIEF.histCoverage || {};
+  if(!c.to) return "";
+  var stale = (c.stale===null || c.stale===undefined)
+    ? Math.floor((Date.now() - Date.parse(c.to+"T00:00:00Z")) / 86400000)
+    : c.stale;
+  var fresh = stale <= 14;
+  return '<div class="'+(fresh?"note":"warnbox")+'" style="margin-top:10px">'
+    + (fresh ? "上面三張統計的日線資料涵蓋到 <b>"+esc(c.to)+"</b>（"+stale+" 天前），已是最新。"
+             : "⚠️ 上面三張統計的日線資料<b>只到 "+esc(c.to)+"</b>，已經 <b>"+stale+" 天</b>沒更新 —— "
+               + "今年 7 月這波（含 7/31 的歷史性反彈）<b>完全不在統計裡</b>。"
+               + "卡片上方的即時報價是今天的，但下面這些歷史數字不是，兩者不要混著看。")
+    + '</div>';
 }
 
 function renderUS(){
@@ -1167,6 +1231,7 @@ function tick(){
 renderStamp(); renderTone(); renderKey(); renderHoldings(); renderAsia(); renderUS(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
 tick(); setInterval(tick,1000);
+tryHistoryStats();      // 歷史統計改由 CSV 算出來的 JSON 覆蓋，寫死的那份只是備援
 startPolling();
 
 })();

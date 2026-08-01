@@ -42,17 +42,52 @@ jobs:
           TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
         run: node tools/fetch-live.mjs -o data/live.json
 
+      # 歷史日線是「跌破季線的歷史統計」的唯一根據，放著不管就會愈來愈舊，
+      # 舊到讓圖表看起來像現在、其實是幾個月前。每天收盤後補一次缺口。
+      # 這一步失敗不擋整個 workflow：即時報價比歷史補檔急，而且那支腳本
+      # 對不上帳時本來就不會寫檔，失敗的結果是「維持原狀」不是「寫進錯的」。
+      - name: 補歷史日線
+        id: hist
+        continue-on-error: true
+        run: node tools/update-history.mjs
+
+      # 統計從 CSV 重算，寫成 data/history-stats.json，頁面優先讀它。
+      # 這一步同時會對帳 watchtower.html 裡寫死的備援值有沒有跟 CSV 脫節；
+      # 脫節不算失敗（線上讀 JSON 看到的是對的），但一定要在 log 上喊出來。
+      - name: 重算歷史統計
+        id: stats
+        continue-on-error: true
+        run: node tools/update-stats.mjs
+
       - name: 有變動才 commit
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/live.json
+          git add data/live.json data/daily-*.csv data/history-stats.json
           if git diff --staged --quiet; then
             echo "行情沒有變動，不 commit"
           else
             git commit -m "行情更新 $(TZ=Asia/Taipei date '+%Y-%m-%d %H:%M') 台北"
             git push
           fi
+
+      # 歷史檔涵蓋到哪一天要看得見。落後太多就在 log 上喊，
+      # 免得統計圖悄悄地一直用幾個月前的資料。
+      - name: 歷史涵蓋到哪一天
+        if: always()
+        run: |
+          if [ "${{ steps.hist.outcome }}" != "success" ]; then
+            echo "⚠️ 補歷史那步沒有成功 —— 下面的日期是補之前的舊狀態"
+          fi
+          for f in data/daily-*.csv; do
+            last=$(tail -1 "$f" | cut -d, -f1)
+            age=$(( ( $(date -u +%s) - $(date -u -d "$last" +%s) ) / 86400 ))
+            if [ "$age" -gt 7 ]; then
+              echo "⚠️ $f 最後一天 $last，已經 $age 天沒更新"
+            else
+              echo "✓ $f 最後一天 $last（$age 天前）"
+            fi
+          done
 
       - name: 摘要
         if: always()
