@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-01T02:46:32.352Z",
-  "generatedAtTaipei": "2026-08-01 10:46:32",
+  "generatedAt": "2026-08-01T02:52:33.598Z",
+  "generatedAtTaipei": "2026-08-01 10:52:33",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -19,7 +19,7 @@
       "change": null,
       "pct": null,
       "marketState": "CLOSED",
-      "asOf": null
+      "asOf": "2026-07-31"
     },
     "tsmc": {
       "name": "台積電",
@@ -31,7 +31,7 @@
       "change": 220,
       "pct": 9.9773,
       "marketState": "CLOSED",
-      "asOf": null
+      "asOf": "2026-07-31"
     },
     "e0050": {
       "name": "元大台灣50",
@@ -43,7 +43,7 @@
       "change": 9.35,
       "pct": 10,
       "marketState": "CLOSED",
-      "asOf": null
+      "asOf": "2026-07-31"
     },
     "e0056": {
       "name": "元大高股息",
@@ -55,7 +55,7 @@
       "change": 3.19,
       "pct": 6.8913,
       "marketState": "CLOSED",
-      "asOf": null
+      "asOf": "2026-07-31"
     },
     "adr": {
       "name": "台積電 ADR",
