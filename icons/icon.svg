@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 頁面的底色 -->
+  <rect width="512" height="512" rx="114" fill="#131722"/>
+  <!-- 基準線，對應報表裡的髮絲線 -->
+  <line x1="86" y1="400" x2="426" y2="400" stroke="#2A3140" stroke-width="12" stroke-linecap="round"/>
+  <!-- 先跌後彈：綠跌紅漲，台股慣例，也剛好是這波行情的形狀 -->
+  <polyline points="86,176 164,246 238,326" fill="none" stroke="#2EBD85" stroke-width="30"
+            stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+  <polyline points="238,326 320,240 424,124" fill="none" stroke="#F6465D" stroke-width="34"
+            stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="424" cy="124" r="33" fill="#F6465D"/>
+</svg>

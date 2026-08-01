@@ -60,7 +60,7 @@ const SYMBOLS = [
 ];
 
 /* ── 證交所 OpenAPI：官方、免金鑰、只有收盤 ── */
-let twseStocks = null, twseIndexRow = null;
+let twseStocks = null, twseIndexRow = null, twseDate = null;
 async function loadTwse(){
   if(twseStocks !== null) return;
   twseStocks = new Map();
@@ -76,8 +76,19 @@ async function loadTwse(){
   try{
     const r = await fetch("https://openapi.twse.com.tw/v1/indicesReport/MI_5MINS_HIST",
                           {headers:{"User-Agent":UA, Accept:"application/json"}});
-    if(r.ok){ const j = await r.json(); twseIndexRow = Array.isArray(j)&&j.length ? j[j.length-1] : null; }
-    else console.error("證交所指數 HTTP " + r.status);
+    if(r.ok){
+      const j = await r.json();
+      twseIndexRow = Array.isArray(j) && j.length ? j[j.length-1] : null;
+    } else {
+      console.error("證交所指數 HTTP " + r.status);
+    }
+    // 證交所是盤後結算才更新，抓取時間 ≠ 資料日期。把資料日期記下來，
+    // 讀取端才知道這是哪一天的收盤，不會拿它蓋掉更新的數字。
+    if(twseIndexRow){
+      const raw = String(twseIndexRow.Date ?? twseIndexRow.date ?? "").replace(/\D/g,"");
+      if(raw.length === 8) twseDate = `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
+      console.error("證交所資料日期：" + (twseDate || "（無法判讀）"));
+    }
   }catch(e){ console.error("證交所指數失敗：" + e.message); }
 }
 /** 從一列裡挑出第一個 key 含指定字樣的數字，欄位改名也不會整支壞掉 */
@@ -186,13 +197,13 @@ async function resolve(s){
         const close = pick(row,"ClosingPrice","Closing","Close");
         const chg   = pick(row,"Change");
         if(close === null) throw new Error("沒有收盤價欄位");
-        out = { price: close, prevClose: chg !== null ? close - chg : null, marketState:"CLOSED" };
+        out = { price: close, prevClose: chg !== null ? close - chg : null, marketState:"CLOSED", asOf: twseDate };
       } else if(src === "twseIndex"){
         await loadTwse();
         if(!twseIndexRow) throw new Error("證交所指數沒有資料");
         const close = pick(twseIndexRow,"ClosingIndex","Closing","Close");
         if(close === null) throw new Error("沒有收盤指數欄位");
-        out = { price: close, prevClose: null, marketState:"CLOSED" };
+        out = { price: close, prevClose: null, marketState:"CLOSED", asOf: twseDate };
       } else if(src === "stooq"){
         const q = await stooqQuote(sym);
         out = { price: q.price, prevClose: null, marketState:null };
@@ -249,6 +260,7 @@ for(const s of SYMBOLS){
       change: prev !== null ? +(price - prev).toFixed(6) : null,
       pct: prev ? +(((price/prev)-1)*100).toFixed(4) : null,
       marketState: r.marketState || null,
+      asOf: r.asOf || null,
       triedBefore: (r.tried && r.tried.length) ? r.tried : undefined
     };
     if(s.ma && r.closes && r.closes.length){

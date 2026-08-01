@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#131722">
 <title>市場瞭望台 · 每日晨間簡報</title>
+
+<!-- 加到主畫面之後就像 App 一樣：獨立視窗、深色狀態列、自己的圖示 -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="瞭望台">
+<meta name="application-name" content="市場瞭望台">
 <style>
 /* ─────────────────────────────────────────────────────────────
    設計語彙：法人晨報。淺色紙面為底、髮絲線分隔、數字一律等寬對齊。
@@ -266,6 +277,48 @@ section{margin-top:30px}
 .links a b{font-weight:700}
 .links a span{color:var(--ink3);font-size:10.5px;text-align:right}
 .links a::after{content:"↗";color:var(--navy);font-size:11px;flex:0 0 auto;margin-left:2px}
+
+/* ─────────────────────────────────────────────────────────────
+   桌面版：手機是一欄堆疊，寬螢幕改成兩欄並排。
+   堆疊清單（共用邊框、只有頭尾有圓角）在 grid 裡會散掉，
+   所以寬螢幕下每個項目改成獨立卡片，各自有完整邊框與圓角。
+   ───────────────────────────────────────────────────────────── */
+@media (min-width:1040px){
+  .wrap{max-width:1160px}
+  section{margin-top:36px}
+  h1{font-size:24px}
+  .clock{font-size:22px}
+
+  /* 今日指標：兩欄 */
+  .keyi{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;background:none;overflow:visible}
+  .kx{background:var(--sheet);border:1px solid var(--rule);border-radius:5px}
+  .kx:last-child{border-bottom:1px solid var(--rule)}
+
+  /* 行情列、持股、觀察重點、新聞：兩欄 */
+  #us,#tw,#cross,#holdings,#points,#news{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start
+  }
+  #us>.row,#tw>.row,#cross>.row,
+  #holdings>.hdrow,#points>.pt,#news>.news{
+    border:1px solid var(--rule);border-radius:5px
+  }
+  /* 說明文字橫跨整列，不要被擠成半欄 */
+  #tw>.note,#cross>.note,#stocks>.note{grid-column:1/-1;margin-top:2px}
+
+  /* 個股深度：兩欄，很寬的時候三欄 */
+  #stocks{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start}
+  #stocks>.stk{margin-top:0}
+
+  /* 基調與 ADR 這兩塊本來就是整段文字／整組數字，維持整寬但限制行長 */
+  .tone .txt{max-width:74ch}
+
+  /* 快速連結兩欄 */
+  .links{grid-template-columns:1fr 1fr;column-gap:26px}
+}
+@media (min-width:1440px){
+  .wrap{max-width:1340px}
+  #stocks{grid-template-columns:repeat(3,1fr)}
+}
 
 .note{font-size:11.5px;color:var(--ink3);line-height:1.8;margin-top:12px}
 .note b{color:var(--ink2);font-weight:700}
@@ -617,6 +670,9 @@ function applyLive(j){
   BRIEF.holdings.forEach(function(s){
     var v = d[map[s.code]];
     if(!v || v.error || !v.price) return;
+    // 證交所盤後才結算，抓到的常是前一交易日。若它比頁面上已有的日期舊，就不要覆蓋 ——
+    // 舊資料蓋掉新資料，比沒有資料更危險。
+    if(v.asOf && s.asOf && v.asOf < s.asOf) return;
     s.p = v.price; s.pct = (v.pct===null||v.pct===undefined)?null:v.pct;
     if(v.ma60) s.ma60 = v.ma60;
     s.tag = (v.marketState==="REGULAR" ? "盤中" : "收盤");
