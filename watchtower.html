@@ -285,9 +285,87 @@ section{margin-top:30px}
    ───────────────────────────────────────────────────────────── */
 @media (min-width:1040px){
   .wrap{max-width:1160px}
-  section{margin-top:36px}
-  h1{font-size:24px}
-  .clock{font-size:22px}
+  section{margin-top:40px}
+
+  /* 螢幕變寬，字也要跟著變大 —— 手機的 15px 放到桌面上會太小 */
+  body{font-size:17px}
+  h1{font-size:27px}
+  h1 .sub{font-size:11px}
+  .clock{font-size:25px}
+  .clock small{font-size:11px}
+  .stamp{font-size:13.5px;padding:11px 18px}
+  .sec-h h2{font-size:16px}
+  .sec-h .ic{font-size:16px}
+  .sec-h .hint{font-size:12px}
+
+  .tone{padding:22px}
+  .tone .eyebrow{font-size:11px}
+  .tone .lv{font-size:26px}
+  .tone .txt{font-size:16px;line-height:1.9}
+
+  .kx{padding:13px 17px}
+  .kx .n{font-size:16px}
+  .kx .n small{font-size:10.5px}
+  .kx .v{font-size:17px}
+  .kx .c{font-size:18px;flex-basis:92px}
+
+  .hdrow{padding:15px 17px}
+  .hdrow .nm .n{font-size:18px}
+  .hdrow .nm .c{font-size:12px}
+  .hdrow .nm .tg{font-size:11px}
+  .hdrow .px{flex:0 0 104px;width:104px}
+  .hdrow .px .p{font-size:23px}
+  .hdrow .px .bi{font-size:12px}
+
+  .row{padding:14px 17px}
+  .row .nm .n{font-size:17px}
+  .row .nm .c{font-size:12px}
+  .row .px{flex:0 0 96px;width:96px}
+  .row .px .lab{font-size:10px}
+  .row .px .p{font-size:20px}
+  .pctbox{flex:0 0 116px;width:116px}
+  .pctbox .pv{font-size:19px}
+  .pctbox .dv{font-size:12px}
+
+  .adr{padding:22px}
+  .adr .big{font-size:38px}
+  .adr .sub{font-size:14px}
+  .kv{font-size:14.5px;padding:13px 0}
+  .kv b{font-size:18px}
+  .kv small{font-size:12px}
+
+  .stk-h{padding:17px 18px}
+  .stk-h .nm .n{font-size:20px}
+  .stk-h .nm .c{font-size:12px}
+  .stk-h .rt .p{font-size:24px}
+  .stk-h .rt .b{font-size:13px}
+  .fct{font-size:14.5px;padding:12px 18px}
+  .fct b{font-size:16px}
+  .fct small{font-size:12px}
+  .hist{padding:16px 18px}
+  .hist .ht{font-size:11px}
+  .hist .hr{font-size:14px;padding:6px 0}
+
+  .pt{font-size:15.5px;padding:16px 18px;line-height:1.85}
+  .pt .no{font-size:13px}
+  .news{padding:16px 18px}
+  .news .t{font-size:16px}
+  .news .d{font-size:14px}
+  .news .s{font-size:11.5px}
+  .cal{font-size:15.5px;padding:13px 0}
+  .cal .d{flex-basis:80px;font-size:12.5px}
+  .cal .x small{font-size:12.5px}
+
+  .tli{font-size:14.5px}
+  .tli .t{font-size:12.5px}
+  .tli small{font-size:12.5px}
+  .links a{font-size:15px;padding:14px 2px}
+  .links a span{font-size:12px}
+  .pend{font-size:14.5px;padding:16px 18px}
+  .note{font-size:13.5px}
+  .disc{font-size:12.5px;padding:18px}
+  .foot{font-size:11px}
+  .subh{font-size:11px}
 
   /* 今日指標：兩欄 */
   .keyi{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;background:none;overflow:visible}
@@ -316,8 +394,20 @@ section{margin-top:30px}
   .links{grid-template-columns:1fr 1fr;column-gap:26px}
 }
 @media (min-width:1440px){
-  .wrap{max-width:1340px}
+  .wrap{max-width:1360px}
   #stocks{grid-template-columns:repeat(3,1fr)}
+  body{font-size:18px}
+  h1{font-size:30px}
+  .clock{font-size:28px}
+  .tone .lv{font-size:29px}
+  .tone .txt{font-size:17px}
+  .kx .n{font-size:17px} .kx .c{font-size:19px} .kx .v{font-size:18px}
+  .hdrow .nm .n{font-size:19px} .hdrow .px .p{font-size:25px}
+  .row .nm .n{font-size:18px} .row .px .p{font-size:21px} .pctbox .pv{font-size:20px}
+  .pt{font-size:16.5px} .news .t{font-size:17px} .news .d{font-size:14.5px}
+  .adr .big{font-size:42px} .kv{font-size:15.5px} .kv b{font-size:19px}
+  .fct{font-size:15.5px} .fct b{font-size:17px} .hist .hr{font-size:14.5px}
+  .note{font-size:14px}
 }
 
 .note{font-size:11.5px;color:var(--ink3);line-height:1.8;margin-top:12px}
@@ -670,9 +760,13 @@ function applyLive(j){
   BRIEF.holdings.forEach(function(s){
     var v = d[map[s.code]];
     if(!v || v.error || !v.price) return;
-    // 證交所盤後才結算，抓到的常是前一交易日。若它比頁面上已有的日期舊，就不要覆蓋 ——
-    // 舊資料蓋掉新資料，比沒有資料更危險。
-    if(v.asOf && s.asOf && v.asOf < s.asOf) return;
+    // 證交所盤後才結算，抓到的常是前一交易日。
+    // 規則：**只有能證明不比現有資料舊，才允許覆蓋**。
+    //  - 有日期且比較舊 → 拒絕
+    //  - 沒有日期（舊版 live.json）且不是盤中價 → 也拒絕，因為無從判斷新舊
+    // 舊資料悄悄蓋掉新資料，比完全沒有更新更危險。
+    if(v.asOf && s.asOf){ if(v.asOf < s.asOf) return; }
+    else if(v.marketState !== "REGULAR" && s.asOf) return;
     s.p = v.price; s.pct = (v.pct===null||v.pct===undefined)?null:v.pct;
     if(v.ma60) s.ma60 = v.ma60;
     s.tag = (v.marketState==="REGULAR" ? "盤中" : "收盤");
