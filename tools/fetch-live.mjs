@@ -51,6 +51,11 @@ const SYMBOLS = [
     srcs:[["cnbc",".SPX"],["twelve","SPX"],["stooq","^spx"],["yahoo","^GSPC"]] },
   { key:"dji",   name:"道瓊工業",   dp:2, ma:false,
     srcs:[["cnbc",".DJI"],["twelve","DJI"],["stooq","^dji"],["yahoo","^DJI"]] },
+  // VIX 是唯一「漲＝壞」的標的：它衡量的是 S&P 500 未來 30 天的隱含波動度，
+  // 也就是市場願意為避險付多少錢。所以它跟頁面其他數字的紅綠意義是反過來的，
+  // 顯示端要特別處理，不能直接套紅漲綠跌。
+  { key:"vix",   name:"VIX 恐慌指數", dp:2, ma:false,
+    srcs:[["cnbc",".VIX"],["twelve","VIX"],["stooq","^vix"],["yahoo","^VIX"]] },
   { key:"n225",  name:"日經 225",   dp:2, ma:false,
     srcs:[["cnbc",".N225"],["twelve","N225"],["stooq","^nkx"],["yahoo","^N225"]] },
   { key:"kospi", name:"韓國 KOSPI", dp:2, ma:false,

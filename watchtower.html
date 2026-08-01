@@ -116,6 +116,11 @@ section{margin-top:30px}
 .kx.live{background:linear-gradient(90deg,rgba(91,156,246,.07),transparent 60%)}
 .kx.live .n small{color:var(--navy)}
 .kx .bar{flex:0 0 70px;display:block}
+.kx .n small.inv{color:var(--warnInk);letter-spacing:0;text-transform:none;font-size:9.5px}
+.kx .nobar{
+  font-size:9px;color:var(--ink3);text-align:center;line-height:20px;
+  letter-spacing:.04em
+}
 .scale{
   color:var(--ink3);font-size:10.5px;margin-top:5px;text-align:right;letter-spacing:.02em
 }
@@ -595,6 +600,13 @@ var BRIEF = {
     {n:"道瓊工業",   c:"^DJI · via CNBC",  p:52208.06, pct:null, dp:0}
   ],
 
+  // VIX 的備援值來自 Google Finance（INDEXCBOE: VIX）7/31 下午 3:15 CDT 的畫面：
+  // 收盤 15.99、上次收盤 17.09，換算當日 −1.10（−6.44%）。
+  // 有 data/live.json 時會被即時值覆蓋。
+  // 52 週區間也一併記著 —— 只看「15.99」不知道這在一年裡算高還算低。
+  vix: {p:15.99, pct:-6.44, prev:17.09, lo52:13.38, hi52:35.30,
+        src:"Google Finance · 2026/07/31 收盤"},
+
   adr: { price:403.31, chg:28.64, pct:7.64, fx:32.38,
          tsmcClose:2425, tsmcMA60:2346, twiiClose:43119.75, weight:40 },
 
@@ -828,26 +840,42 @@ function renderKey(){
   });
   push("費城半導體", "昨夜收盤", find(BRIEF.us, "費城"), false, 2);
   if(BRIEF.adr) rows.push({label:"台積電 ADR", tag:"昨夜收盤", p:BRIEF.adr.price, pct:BRIEF.adr.pct, live:false, dp:2});
+  // VIX 的 tag 直接寫水位分級，不寫「昨夜收盤」——
+  // 這一列的重點是絕對水位（現在算不算恐慌），不是它昨天收在幾點
+  if(BRIEF.vix){
+    var lv = vixLevel(BRIEF.vix.p);
+    rows.push({label:"VIX 恐慌指數", tag:lv ? "昨夜 · "+lv.t : "昨夜收盤",
+               p:BRIEF.vix.p, pct:BRIEF.vix.pct, live:false, dp:2, invert:true});
+  }
   push("加權指數", "前一交易日", find(BRIEF.tw, "加權"), false);
   push("USD／TWD", "匯率", find(BRIEF.cross, "TWD"), false, 3);
 
-  // 橫條共用一個對稱尺度，domain 取當日最大絕對漲跌幅
+  // 橫條共用一個對稱尺度，domain 取當日最大絕對漲跌幅。
+  // VIX 不畫橫條也不算進 domain：這組橫條的意義是「零線右邊＝漲＝好」，
+  // 而 VIX 往右代表恐慌升高，方向意義正好相反。把它畫進同一組尺度，
+  // 等於在同一張圖裡混了兩種相反的解讀，比不畫更糟。
   var domain = 0;
   rows.forEach(function(r){
+    if(r.invert) return;
     if(r.pct!==null && r.pct!==undefined && isFinite(r.pct)) domain = Math.max(domain, Math.abs(r.pct));
   });
   domain = Math.max(domain, 1);   // 全部貼近 0 的日子不要把雜訊放大成長條
 
   $("keyi").innerHTML = rows.map(function(r){
     return '<div class="kx'+(r.live?" live":"")+'">'
-      + '<div class="n">'+esc(r.label)+'<small>'+esc(r.tag)+'</small></div>'
+      + '<div class="n">'+esc(r.label)
+      // 這一列漲跌的好壞意義是反的，就寫在標籤上，不要讓讀者自己記
+      +   (r.invert ? '<small class="inv">漲＝避險升溫，對股市偏空</small>'
+                    : '<small>'+esc(r.tag)+'</small>')
+      + '</div>'
       + (r.p===null||r.p===undefined ? '' : '<div class="v">'+fmt(r.p, r.dp)+'</div>')
       + '<div class="c '+cls(r.pct)+'">'+(r.pct>0?"+":"")+ (r.pct===null||r.pct===undefined?"—":r.pct.toFixed(2)+"%") +'</div>'
-      + pctBar(r.pct, domain, 70, 20)
+      + (r.invert ? '<span class="bar nobar">不同尺度</span>' : pctBar(r.pct, domain, 70, 20))
       + '</div>';
   }).join("");
   var sc = $("keyiScale");
-  if(sc) sc.textContent = "橫條共用同一尺度，滿格＝±" + domain.toFixed(2) + "%";
+  if(sc) sc.textContent = "橫條共用同一尺度，滿格＝±" + domain.toFixed(2) + "%"
+        + (rows.some(function(r){ return r.invert; }) ? "　·　VIX 方向意義相反，不畫在同一尺度上" : "");
 }
 
 /* ── 我的持股 ──
@@ -927,6 +955,16 @@ function applyLive(j){
                      live: v.marketState==="REG_MKT" && asiaSessionNow()});
     touched = true;
   });
+  // VIX 頁面上沒有寫死的備援值，完全靠這裡供應；抓不到就整列不出現
+  if(d.vix && !d.vix.error && d.vix.price){
+    // 52 週高低點 live.json 沒有，沿用備援裡那組（來源已標在說明裡）
+    var old = BRIEF.vix || {};
+    BRIEF.vix = {p:d.vix.price, pct:(d.vix.pct===null||d.vix.pct===undefined)?null:d.vix.pct,
+                 lo52:old.lo52, hi52:old.hi52, src:"data/live.json · "+(j.generatedAtTaipei||"")};
+    renderUS();
+    touched = true;
+  }
+
   if(touched) renderKey();
   if(used || touched) setStamp(j.generatedAtTaipei);
 }
@@ -1009,7 +1047,10 @@ function tryHistoryStats(){
           deepMed:v.deepMed,
           deepQ: fmtPct(v.deepQ25) + " ～ " + fmtPct(v.deepQ75),
           backMed:v.backMed, backMax:v.backMax,
-          r60Med:v.r60Med, win:v.win, events:v.events, pending:v.pending
+          r60Med:v.r60Med, win:v.win, events:v.events, pending:v.pending,
+          // 每一檔記自己的涵蓋區間。補歷史時有可能只有部分標的成功，
+          // 三張卡片就會落在不同的期間 —— 那時候拿它們互相比較是不成立的。
+          from:v.from, to:v.to
         };
         touched = true;
       });
@@ -1114,6 +1155,8 @@ function renderCross(){
     + '它們弱而非記憶體強的時候，台股電子內部通常也會分化、不會齊漲。</div>';
 }
 
+function ym(d){ return String(d||"").slice(0,7).replace("-","/"); }
+
 function renderStocks(){
   // 三檔的點圖共用同一個 x 尺度，否則「0056 偏左、2330 偏右」這件事會被各自縮放抹掉
   var dom = 5;
@@ -1121,6 +1164,11 @@ function renderStocks(){
     (s.hist.events||[]).forEach(function(v){ dom = Math.max(dom, Math.abs(v)); });
   });
   dom = Math.ceil(dom/5)*5;
+
+  // 三檔涵蓋的期間一不一樣？不一樣的話它們之間的比較就不成立，要講出來。
+  var tos = BRIEF.stocks.map(function(s){ return s.hist.to; }).filter(Boolean);
+  var mixed = tos.length === BRIEF.stocks.length
+           && tos.some(function(t){ return t !== tos[0]; });
 
   $("stocks").innerHTML = BRIEF.stocks.map(function(s){
     var bias = (s.price!==null && s.ma60) ? (s.price/s.ma60-1)*100 : null;
@@ -1138,7 +1186,10 @@ function renderStocks(){
           return '<div class="fct"><span>'+esc(f.k)+(f.s?'<small>'+esc(f.s)+'</small>':'')+'</span>'
             + '<b>'+esc(f.v)+'</b></div>';
         }).join("")
-      + '<div class="hist"><div class="ht">📊 跌破季線的歷史統計　'+esc(BRIEF.histWindow)+'</div>'
+      // 每張卡片標自己的區間。補歷史有可能只有部分標的成功，
+      // 那時三張卡片涵蓋的期間不同，用同一個標題會讓人以為它們可以互相比較。
+      + '<div class="hist"><div class="ht">📊 跌破季線的歷史統計　'
+      +   esc(h.from && h.to ? ym(h.from)+" ～ "+ym(h.to) : BRIEF.histWindow)+'</div>'
       +   '<div class="hr"><span>跌破次數</span><b>'+h.breaks+' 次　'
       +     '<span style="font-weight:400;color:var(--ink3);font-size:11px">有效 '+h.eff+' ／ 假跌破 '+h.fake+'</span></b></div>'
       +   '<div class="hr"><span>平均一年</span><b>'+h.perYear.toFixed(1)+' 次</b></div>'
@@ -1151,10 +1202,18 @@ function renderStocks(){
       +     '<span style="font-weight:400;color:var(--ink3);font-size:11px">正報酬 '+h.win+'%</span></b></div>'
       +   (h.events && h.events.length
             ? '<div class="dotwrap"><div class="dl">每一點＝一次有效跌破後的 60 日報酬（'
-              + h.events.length + ' 次，三檔同尺度）</div>' + dotPlot(h.events, h.r60Med, dom, 300) + '</div>'
+              + h.events.length + ' 次，三檔同尺度'
+              + (h.pending ? '；另有 ' + h.pending + ' 次尚未滿 60 天，不入圖' : '')
+              + '）</div>' + dotPlot(h.events, h.r60Med, dom, 300) + '</div>'
             : '')
       + '</div></div>';
   }).join("")
+    + (mixed
+        ? '<div class="warnbox" style="margin-top:10px">⚠️ <b>三檔的資料期間不一樣</b>（'
+          + BRIEF.stocks.map(function(s){ return esc(s.code)+" 到 "+esc(s.hist.to); }).join("、")
+          + '），代表補歷史時有標的沒抓成功。<b>期間不同的統計不能互相比較</b> —— '
+          + '上面那句「三檔同尺度」講的是圖的 x 軸刻度相同，不是說它們涵蓋同一段行情。</div>'
+        : '')
     + histCoverageNote()
     + '<div class="note">'+BRIEF.histNote+'</div>';
 }
@@ -1177,9 +1236,38 @@ function histCoverageNote(){
     + '</div>';
 }
 
+/* VIX：S&P 500 未來 30 天的隱含波動度，也就是市場願意為避險付多少錢。
+   它是這頁唯一「漲＝壞」的數字，所以除了漲跌幅之外一定要給絕對水位的分級 ——
+   單看「VIX +8%」不知道是從平靜漲到還是平靜，還是從警戒漲進恐慌。 */
+function vixLevel(v){
+  if(v===null || v===undefined || !isFinite(v)) return null;
+  if(v < 15) return {t:"平靜", d:"避險成本低，市場沒有在擔心"};
+  if(v < 20) return {t:"偏低", d:"正常區間，多頭環境常見的水位"};
+  if(v < 30) return {t:"警戒", d:"避險需求明顯升溫，波動放大"};
+  return {t:"恐慌", d:"恐慌區，通常伴隨急跌；歷史上也常是階段性底部附近"};
+}
+
 function renderUS(){
   $("usWhen").textContent = BRIEF.usWhen;
-  $("us").innerHTML = BRIEF.us.map(quoteRow).join("");
+  var rows = BRIEF.us.map(quoteRow).join("");
+  var v = BRIEF.vix, lv = v && vixLevel(v.p);
+  if(v && lv){
+    // 警語放最前面：這一行在窄螢幕會被截掉尾巴，最不能被截掉的就是「漲＝壞」
+    rows += quoteRow({n:"VIX 恐慌指數", c:"⚠️ 漲＝壞 · "+lv.t, p:v.p, pct:v.pct, dp:2});
+  }
+  $("us").innerHTML = rows
+    + (v && lv ? '<div class="note"><b>VIX '+fmt(v.p,2)+'　'+esc(lv.t)+'</b> —— '+esc(lv.d)+'。'
+        + (v.lo52 && v.hi52
+            ? '過去 52 週的區間是 <b>'+fmt(v.lo52,2)+' ～ '+fmt(v.hi52,2)+'</b>，'
+              + '目前落在 <b>'+Math.round((v.p-v.lo52)/(v.hi52-v.lo52)*100)+'%</b> 分位（0% 是一年最平靜、100% 是一年最恐慌）。'
+            : '')
+        + '<br>VIX 衡量的是 S&P 500 未來 30 天的隱含波動度，<b>它上漲代表避險情緒升高，'
+        + '對股市是壞消息</b> —— 跟這頁其他數字的紅綠意義相反。'
+        + '顏色仍照台股慣例（紅漲綠跌），<b>看到 VIX 是紅的要反過來理解</b>。'
+        + '分級：15 以下平靜／15–20 偏低／20–30 警戒／30 以上恐慌。'
+        + (v.src ? '<br>資料來源：'+esc(v.src)+'（有即時檔時會被覆蓋）' : '')
+        + '</div>'
+      : '');
 }
 function renderTW(){
   $("twWhen").textContent = BRIEF.twWhen;
