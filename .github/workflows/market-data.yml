@@ -40,6 +40,12 @@ jobs:
         with:
           node-version: '22'
 
+      # 匯率的前一日錨點是純邏輯，離線就能驗。它守著一條沒有症狀的錯誤：
+      # 換日規則寫錯的話「日變動」會永遠是 0，頁面看起來完全正常。
+      # 所以這一步不加 continue-on-error —— 它只花幾十毫秒，但錯了就是靜靜地錯。
+      - name: 驗匯率換日邏輯
+        run: node tools/fx-daily.mjs --self-test
+
       - name: 抓行情並計算均線
         env:
           # 選用：到 twelvedata.com 免費註冊拿金鑰，存成 repo secret 就會啟用。
@@ -74,11 +80,14 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/live.json data/daily-*.csv data/history-stats.json
+          git add data/live.json data/daily-*.csv data/history-stats.json data/fx-usdtwd.csv
           if git diff --staged --quiet; then
             echo "行情沒有變動，不 commit"
           else
             git commit -m "行情更新 $(TZ=Asia/Taipei date '+%Y-%m-%d %H:%M') 台北"
+            # fx-usdtwd.csv 帶著狀態（前一日錨點），不像其他檔案是每次重寫的快照。
+            # 裸的 push 遇到別人先推就整批失敗，那一天的錨點就掉了 —— 先 rebase。
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
             git push
           fi
 

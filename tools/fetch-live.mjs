@@ -23,9 +23,11 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { readHistory, deriveFx, writeHistory } from "./fx-daily.mjs";
 
 const outIdx = process.argv.indexOf("-o");
 const OUT = outIdx >= 0 ? process.argv[outIdx + 1] : "data/live.json";
+const FX_HIST = "data/fx-usdtwd.csv";
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/125 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const sma = (a, n) => a.length < n ? null : a.slice(-n).reduce((x, y) => x + y, 0) / n;
@@ -243,11 +245,14 @@ async function resolve(s){
       } else if(src === "twelve"){
         out = await twelveQuote(sym);
       } else if(src === "erapi"){
-        // open.er-api.com：免金鑰的匯率來源，每日更新
+        // open.er-api.com：免金鑰的匯率來源，每日更新（UTC 00:00＝台北 08:00）
         const j = JSON.parse(await getText("https://open.er-api.com/v6/latest/USD"));
         const rate = j && j.rates && j.rates[sym];
         if(!rate) throw new Error("回應裡沒有 " + sym);
-        out = { price: rate, prevClose: null, marketState: null };
+        // 同一份回應裡就有更新時戳，本來被丟掉了。留著它，匯率才知道自己屬於哪一天，
+        // 前一日錨點（tools/fx-daily.mjs）也才有可靠的換日依據。
+        out = { price: rate, prevClose: null, marketState: null,
+                rateUnix: Number(j && j.time_last_update_unix) || null };
       } else {
         out = await yahooChart(sym, s.ma);
       }
@@ -285,6 +290,7 @@ for(const s of SYMBOLS){
       pct: prev ? +(((price/prev)-1)*100).toFixed(4) : null,
       marketState: r.marketState || null,
       asOf: r.asOf || null,
+      rateUnix: r.rateUnix || undefined,      // 匯率專用：供應商自己的更新時戳
       triedBefore: (r.tried && r.tried.length) ? r.tried : undefined
     };
     if(s.ma && r.closes && r.closes.length){
@@ -325,6 +331,36 @@ for(const [key, code] of Object.entries({tsmc:"2330", e0050:"0050", e0056:"0056"
   if(!agree){ y.priceYahoo = y.price; y.price = official; y.correctedBy = "TWSE"; }
 }
 
+/* 匯率的前一日錨點。
+   er-api 只回當下匯率、沒有前收，所以「日變動」得靠自己記昨天是多少。
+   錨點放獨立的 data/fx-usdtwd.csv —— 理由寫在 tools/fx-daily.mjs 的檔頭：
+   匯率單獨失敗時 live.json 照樣會 commit，錨點寄生在裡面就會跟著消失。
+   拿不到錨點時什麼都不編，寧可讓那一列顯示「—」。 */
+const fxEntry = data.usdtwd;
+if(fxEntry && !fxEntry.error && fxEntry.price){
+  try{
+    const hist = readHistory(FX_HIST);
+    const fx = deriveFx(hist, fxEntry.price, fxEntry.rateUnix, Date.now());
+    fxEntry.asOf        = fx.asOf;
+    fxEntry.asOfVia     = fx.asOfVia;      // provider ／ runClock，兩者意思不同
+    fxEntry.prevClose   = fx.prevClose;
+    fxEntry.prevDay     = fx.prevDay;
+    fxEntry.prevGapDays = fx.prevGapDays;
+    if(fx.prevClose){
+      fxEntry.change = +(fxEntry.price - fx.prevClose).toFixed(6);
+      fxEntry.pct    = +(((fxEntry.price/fx.prevClose)-1)*100).toFixed(4);
+    }
+    // 週末只推算不寫入：手動在週日跑會插進「週日＝週五的凍結匯率」，
+    // 害週一算成 ≈0%，把週末的跳空藏起來。
+    if(fx.shouldWrite) writeHistory(FX_HIST, fx.nextHistory);
+    console.error(`  匯率 ${fxEntry.price}　${fx.asOf}（${fx.asOfVia}）`
+      + (fx.prevDay ? `　較 ${fx.prevDay}（${fx.prevGapDays} 天前）${fxEntry.pct>0?"+":""}${fxEntry.pct}%`
+                    : "　尚無前一日錨點，日變動留空"));
+  }catch(e){
+    console.error("  匯率錨點失敗（不影響其他標的）：" + e.message);
+  }
+}
+
 const payload = {
   generatedAt: new Date().toISOString(),
   generatedAtTaipei: new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Taipei",dateStyle:"short",timeStyle:"medium"})
@@ -340,6 +376,7 @@ if(adr?.price && tsmc?.price && fx?.price){
   const conv = adr.price * fx.price / 5;
   payload.adrPremium = {
     converted:+conv.toFixed(2),
+    fxAsOf: fx.asOf || null,        // 這個溢價率是用哪一天的匯率算的
     premiumPct:+(((conv/tsmc.price)-1)*100).toFixed(2),
     impliedOpen: adr.pct !== null && adr.pct !== undefined ? +(tsmc.price*(1+adr.pct/100)).toFixed(0) : null,
     note:"台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"

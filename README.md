@@ -98,21 +98,28 @@ node tools/ma-analysis.mjs 2330.csv --ma 240     # 年線
 但連得到 `raw.githubusercontent.com`。所以改由 **GitHub Actions** 負責打 API：
 
 ```
-GitHub Actions（網路無限制）→ 打 Yahoo Finance API → 算好均線
+GitHub Actions（網路無限制）→ 依序試多個來源 → 算好均線
    → commit data/live.json → raw.githubusercontent.com → 晨報排程讀得到
 ```
 
-- [`.github/workflows/market-data.yml`](./.github/workflows/market-data.yml)：台北 06:50 / 08:10 / 13:45 各跑一次，也可手動觸發
-- [`tools/fetch-live.mjs`](./tools/fetch-live.mjs)：抓 12 個標的，順便算 20/60/240 日均線、乖離率與台積電 ADR 溢價，寫成 `data/live.json`
+- [`.github/workflows/market-data.yml`](./.github/workflows/market-data.yml)：台北 06:50、08:02～08:52 每 10 分鐘、09:02、13:45，也可手動觸發
+- [`tools/fetch-live.mjs`](./tools/fetch-live.mjs)：抓 13 個標的，順便算 20/60/240 日均線、乖離率與台積電 ADR 溢價，寫成 `data/live.json`
+- [`tools/fx-daily.mjs`](./tools/fx-daily.mjs)：USD/TWD 的前一日錨點（`data/fx-usdtwd.csv`）。匯率來源只回當下值、沒有前收，所以日變動要自己記；純邏輯、可離線 `--self-test`
 
-**兩個來源交叉驗證**，因為「正確」不能靠單一 API：
+**每個標的依序嘗試多個來源**，因為「正確」不能靠單一 API ——
+而且 runner 是資料中心 IP，第一版只用 Yahoo 時 12 檔全部被擋回 429：
 
-| 角色 | 來源 | 金鑰 | 涵蓋 |
+| 順位 | 來源 | 金鑰 | 涵蓋 |
 |---|---|---|---|
-| 主來源 | Yahoo Finance chart API | 不用 | 台股、美股、日韓、匯率 |
-| 校正 | 證交所 OpenAPI | 不用 | 台股收盤（官方權威） |
+| 台股優先 | 證交所 OpenAPI | 不用 | 台股收盤（官方權威） |
+| 其他優先 | CNBC | 不用 | 美股、日韓、VIX、ADR |
+| 備援 | Twelve Data | 選用 | 同上 |
+| 備援 | Stooq → Yahoo | 不用 | 兩者都會擋機房 IP，實務上很少輪到 |
+| 匯率 | open.er-api.com | 不用 | USD/TWD（每日更新一次） |
 
-兩邊差距超過 **0.5%** 就標記 `agree:false`，並且**台股數字改採證交所的官方值**，Yahoo 的原值留在 `priceYahoo` 供對照。
+實際採用的來源記在每個標的的 `via` 欄位，失敗過的來源留在 `triedBefore`。
+
+台股若採用了非證交所的來源，會再跟證交所對帳：差距超過 **0.5%** 就標記 `agree:false`，並且**改採證交所的官方值**，原值留在 `priceYahoo` 供對照。
 對帳結果放在 `live.json` 的 `crossCheck`，Actions 的執行摘要也會印出來。
 
 **排程觸發只在預設分支生效**，所以 workflow 要進到預設分支才會照表跑，其他分支只能手動。

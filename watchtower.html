@@ -216,6 +216,9 @@ section{margin-top:30px}
 .stk-h .nm{flex:1;min-width:0}
 .stk-h .nm .n{font-size:17px;font-weight:800;letter-spacing:-.01em}
 .stk-h .nm .c{font-size:10.5px;color:var(--ink3);font-family:ui-monospace,Menlo,monospace;margin-top:3px;letter-spacing:.06em}
+/* 頁面沒有全域的 a 重設，不寫這條就會吃到瀏覽器預設的底線與藍紫色 */
+.kv a{color:var(--navy);text-decoration:none}
+.kv a:hover{text-decoration:underline}
 .stk-h .nm .c a{color:var(--navy);text-decoration:none}
 .stk-h .nm .c a:hover{text-decoration:underline}
 /* 價格旁邊的日期標記。過期的換成警示色 —— 沒有日期的價格看起來都像今天的 */
@@ -473,8 +476,21 @@ section{margin-top:30px}
   </section>
 
 
+  <!-- 上面那區是「市場今天怎麼了」，這一區是「那些數字對台積電意味著什麼」。
+       刻意不重複報價：一個數字只有一個家，別區用小字引用並連過去。 -->
   <section>
-    <div class="sec-h"><div class="ic">🔗</div><h2>台積電 ADR ↔ 台股</h2><div class="hint">開盤前最重要的一格</div></div>
+    <div class="sec-h"><div class="ic">⚙️</div><h2>影響台積電的變數</h2>
+      <div class="hint" id="preoWhen"></div></div>
+    <div class="subh">盤前變數</div>
+    <div class="card" id="preo"></div>
+    <div id="preoNote"></div>
+    <div class="subh" style="margin-top:14px">台積電自己的行事曆</div>
+    <div class="card" id="tsmcCal"></div>
+    <div id="tsmcCalNote"></div>
+  </section>
+
+  <section id="adrSec">
+    <div class="sec-h"><div class="ic">🔗</div><h2>台積電 ADR ↔ 台股</h2><div class="hint">完整換算</div></div>
     <div class="adr" id="adr"></div>
   </section>
 
@@ -559,7 +575,10 @@ var BRIEF = {
 
   crossWhen: "2026/07/31",
   cross: [
-    {n:"USD／TWD", c:"open.er-api.com",              p:32.38,   pct:null,  dp:3},
+    // 這個 32.38 只是離線備援（Artifact 版本抓不到 live.json 時用），
+    // 帶上日期才有辦法跟即時值比新舊。**永遠不拿它去算日變動** ——
+    // 不知道它真正的時點，硬算就會生出一個假的漲跌。
+    {n:"USD／TWD", c:"open.er-api.com", p:32.38, pct:null, dp:3, asOf:"2026-07-31"},
     {n:"三星電子",  c:"005930 · 財報強勁，KOSPI 的引信", p:null,   pct:null,  dp:0},
     {n:"SK 海力士", c:"000660 · 帶動記憶體全面漲停",    p:null,   pct:null,  dp:0}
   ],
@@ -681,8 +700,20 @@ var BRIEF = {
   cal: [
     {d:"08/03", x:"台股下一個交易日", s:"觀察 43,000 守不守得住、漲停打開後的換手"},
     {d:"08/12", x:"美國 7 月 CPI", s:"台灣時間 20:30 公布"},
-    {d:"09/15–16", x:"FOMC 利率決策會議", s:"下一次會議"},
-    {d:"09/16", x:"台積電除息", s:"季配息調升至 7 元，10/08 入帳"}
+    {d:"09/15–16", x:"FOMC 利率決策會議", s:"下一次會議"}
+  ],
+
+  /* 台積電自己的行事曆。用 ISO 日期（可排序、可比較）——
+     上面那份 cal 的 d 是自由格式字串（"09/15–16"），沒有年份也沒辦法比大小。
+     sure:false ＝ 日期還沒正式公告，顯示時一定要標出來。 */
+  tsmcCal: [
+    {date:"2026-07-16", x:"Q2 2026 法說會", sure:true, done:"已舉行",
+     s:"EPS 27.25 元、毛利率 67.7% 超財測上緣、2026 資本支出上調至 600–640 億美元"},
+    {date:"2026-09-16", x:"除息交易日", sure:true, done:"已除息",
+     s:"季配 7 元／股，史上最高。當天參考價直接扣掉 7 元，不是下跌"},
+    {date:"2026-10-08", x:"股息入帳", sure:true, done:"已入帳", s:"09/16 除息的 7 元／股"},
+    {date:"2026-10-15", x:"Q3 2026 法說會", sure:false, done:"已舉行",
+     s:"台積電尚未正式公告，這是依歷年慣例（10 月中旬的週四）推的 —— 不要照這個排行程"}
   ]
 };
 /* ════════════════════ 資料區結束 ════════════════════ */
@@ -941,6 +972,12 @@ function applyLive(j){
     if(v.asOf) s.asOf = v.asOf;
     s.tag = (v.marketState==="REG_MKT") ? "盤中"
           : (v.asOf ? v.asOf.slice(5).replace("-","/") + " 收盤" : "收盤");
+    // ADR 卡片的「台股昨收」跟這裡是同一個數字，就在這個迴圈裡一起更新，
+    // 沿用上面那套日期防呆，不要再長出第二套。
+    if(s.code === "2330"){
+      BRIEF.adr.tsmcClose = s.price;
+      if(s.ma60) BRIEF.adr.tsmcMA60 = s.ma60;
+    }
     used = true;
   });
   if(used){
@@ -950,7 +987,7 @@ function applyLive(j){
 
   // 日韓指標跟台股持股是各自獨立的資料，不要綁在一起：
   // 證交所盤後結算落後而讓持股那三檔被擋下來時，日韓照樣該更新。
-  var asia = BRIEF.asia, touched = false;
+  var asia = BRIEF.asia, touched = false, crossTouched = false, adrTouched = false;
   [["n225","日經 225","^N225"],["kospi","韓國 KOSPI","^KS11"]].forEach(function(m){
     var v = d[m[0]];
     if(!v || v.error || !v.price) return;
@@ -983,6 +1020,51 @@ function applyLive(j){
   // 來源（CNBC）不附交易日，我們只知道它是「最近一個收盤」，就照實這樣寫，
   // 不要沿用一個現在已經對不上的日期。
   if(usLive) BRIEF.usWhen = "最近一個美股交易日收盤 · 取自 data/live.json";
+
+  // 匯率。防呆規則跟股票報價**不一樣**，要說清楚為什麼：
+  // 上面那條「沒有日期又不是盤中就拒絕」是為了擋證交所盤後才結算的舊收盤 ——
+  // 股票報價的抓取時間說明不了它屬於哪一盤。匯率不是這回事，
+  // 它一天只發布一次、根本沒有盤中概念（marketState 是 null），
+  // 照搬那條會把匯率永遠擋掉：看起來有防護，實際上永遠凍結。
+  // 這裡的規則是：優先用供應商自己的日期，拿不到退回抓取日期，
+  // 只有在**嚴格比頁面上更舊**時才拒絕。
+  var fx = d.usdtwd, fxRow = (BRIEF.cross||[]).filter(function(x){ return x.n.indexOf("TWD")>=0; })[0];
+  if(fx && !fx.error && fx.price && fxRow){
+    var fxAsOf = fx.asOf || (j.generatedAtTaipei||"").slice(0,10) || null;
+    if(!(fxRow.asOf && fxAsOf && fxAsOf < fxRow.asOf)){
+      fxRow.p = fx.price;
+      fxRow.pct = (fx.pct===null||fx.pct===undefined) ? null : fx.pct;
+      fxRow.asOf = fxAsOf;
+      // asOfVia 分開記：provider＝供應商公告的日期，runClock＝我們抓取的日期。
+      // 絕不把抓取時間標成公告日期。
+      fxRow.asOfVia = fx.asOfVia || (fx.asOf ? "provider" : "runClock");
+      fxRow.prevDay = fx.prevDay || null;
+      fxRow.prevGapDays = (fx.prevGapDays===null||fx.prevGapDays===undefined) ? null : fx.prevGapDays;
+      // 這個欄位只有 120px 寬，寫全網域會撐出橫向捲軸。
+      // 日期同樣縮成 MM/DD，但「公告／抓取」的區別一定要留著。
+      fxRow.c = "er-api · " + fxAsOf.slice(5).replace("-","/")
+              + (fxRow.asOfVia==="provider" ? " 公告" : " 抓取");
+      BRIEF.adr.fx = fx.price;          // ADR 溢價率本來一直用過期匯率在算
+      BRIEF.adr.fxAsOf = fxAsOf;
+      BRIEF.adr.fxAsOfVia = fxRow.asOfVia;
+      touched = true; crossTouched = true;
+    }
+  }
+
+  // ADR 本身也從來沒被接過 —— 整張卡片（價格、漲跌、隱含開盤）都是靜態快照。
+  // 新區塊要用即時資料推算，這裡不接就會跟下面那張卡片公然打架。
+  var av = d.adr;
+  if(av && !av.error && av.price){
+    BRIEF.adr.price = av.price;
+    if(av.pct!==null && av.pct!==undefined) BRIEF.adr.pct = av.pct;
+    if(av.change!==null && av.change!==undefined) BRIEF.adr.chg = av.change;
+    BRIEF.adr.state = av.marketState || null;
+    touched = true; adrTouched = true;
+  }
+
+  if(crossTouched) renderCross();
+  if(adrTouched || crossTouched) renderADR();
+  renderPre();
 
   if(touched) renderKey();
   if(used || touched) setStamp(j.generatedAtTaipei);
@@ -1174,6 +1256,94 @@ function renderCross(){
     + '它們弱而非記憶體強的時候，台股電子內部通常也會分化、不會齊漲。</div>';
 }
 
+/* ── 影響台積電的變數 ──
+   這一區不重印任何已經在別區當頭條的數字，只放「傳導後的結果」。 */
+
+/* 匯率單日變動的量級分級。
+   一般日子 USD/TWD 只動 0.1～0.3%，換算成毛利率是 0.04～0.12pp。
+   每天盡責地報一個 0.03pp，會把讀者訓練成把雜訊當訊號 ——
+   所以先講這個幅度算不算數，再講它是多少。
+   1% 這個門檻是頁面自己在用的（跨市場那段：單日超過 1% 就該回頭看三大法人）。 */
+function fxLevel(pct){
+  if(pct===null || pct===undefined || !isFinite(pct)) return null;
+  var a = Math.abs(pct);
+  if(a < 0.25) return {t:"雜訊等級", warn:false, weak:true};
+  if(a < 1.00) return {t:"有感",     warn:false, weak:false};
+  return {t:"顯著", warn:true, weak:false};
+}
+
+/* USD/TWD 是「1 美元換多少台幣」，所以 pct < 0 ＝ 台幣升值。
+   台積電法說會公布的敏感度：台幣每升值 1%，毛利率約降 0.4 個百分點
+   （營收幾乎全以美元計價，約 75% 成本以台幣計價）。
+     台幣升值幅度 = −pct
+     毛利率影響   = −0.4 × 升值幅度 = +0.4 × pct
+   所以 USD/TWD −1% → 毛利率 −0.4pp。方向很容易寫反，這裡寫死推導過程。 */
+function marginPP(pct){
+  return (pct===null || pct===undefined || !isFinite(pct)) ? null : 0.4 * pct;
+}
+
+function renderPre(){
+  var a = BRIEF.adr, rows = [];
+  var fxRow = (BRIEF.cross||[]).filter(function(x){ return x.n.indexOf("TWD")>=0; })[0] || {};
+
+  function kv(label, sub, val, klass){
+    return '<div class="kv"><span>'+label
+      + (sub ? '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'+sub+'</small>' : '')
+      + '</span><b'+(klass?' class="'+klass+'"':'')+'>'+val+'</b></div>';
+  }
+
+  // ① ADR：只顯示 ADR 卡片沒有當頭條的那一個數字，其餘連過去
+  var io = impliedOpenOf(a);
+  rows.push(kv(
+    '台積電 ADR　<span class="'+cls(a.pct)+'">'+arrow(a.pct)+' '+Math.abs(a.pct).toFixed(2)+'%</span>',
+    '台股昨收 '+fmt(a.tsmcClose,0)+' · <a href="#adrSec">完整換算與溢價率 ↓</a> · 只是上限參考，台股很少補滿',
+    io!==null ? '隱含開盤 '+fmt(io,0)+' 元' : '—', cls(a.pct)));
+
+  // ② 匯率 → 毛利率。這一區唯一能量化成台積電損益的變數
+  var lv = fxLevel(fxRow.pct), mp = marginPP(fxRow.pct);
+  var fxSub;
+  if(lv){
+    var apprec = -fxRow.pct;
+    fxSub = '台幣' + (apprec>0?'升值':'貶值') + ' ' + Math.abs(apprec).toFixed(2) + '%'
+          + (fxRow.prevDay ? '（較 '+fxRow.prevDay.slice(5).replace("-","/")
+              + (fxRow.prevGapDays>1 ? '，'+fxRow.prevGapDays+' 天前' : '')+'）' : '')
+          + ' × 每升值 1% ≈ −0.4pp　<b>'+lv.t+'</b>';
+  }else{
+    // 沒有錨點就明說，不要編一個數字出來
+    fxSub = '尚無前一日錨點，明天早上才會有日變動'
+          + (fxRow.asOfVia==="runClock" ? '（此匯率只知抓取日，供應商未附日期）' : '');
+  }
+  rows.push(kv('USD／TWD　<span style="color:var(--ink2)">'+fmt(fxRow.p,3)+'</span>', fxSub,
+    mp===null ? '—' : '毛利率 '+(mp>0?"+":"−")+Math.abs(mp).toFixed(2)+'pp',
+    mp===null ? "" : (lv && lv.weak ? "" : cls(mp))));
+
+  // ③ 費半：不放頭條數字，只在小字引用、右邊給推導出來的方向
+  var sox = (BRIEF.us||[]).filter(function(x){ return x.n.indexOf("費城")>=0; })[0];
+  var sp = sox && sox.pct, dir;
+  if(sp===null || sp===undefined || !isFinite(sp)) dir = "—";
+  else if(Math.abs(sp) < 0.5) dir = "方向不明";
+  else dir = sp > 0 ? "族群偏多" : "族群偏空";
+  rows.push(kv('費城半導體',
+    '^SOX ' + (sp===null||sp===undefined ? '—' : (sp>0?"+":"")+sp.toFixed(2)+'%')
+      + '，數字在上方今日指標 · ±0.5% 以內視為方向不明',
+    dir, (sp!==null && sp!==undefined && Math.abs(sp)>=0.5) ? cls(sp) : ""));
+
+  // ④ 台指期夜盤：沒有任何來源，誠實說沒有，不要用 ADR 反推一個假的
+  rows.push(kv('台指期夜盤',
+    '15:00～次日 05:00，開盤方向最直接的領先指標。期交所擋機房 IP、沒有免費 API，這一格永遠要自己看',
+    '<a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener">期交所即時 ↗</a>'));
+
+  $("preo").innerHTML = rows.join("");
+
+  $("preoNote").innerHTML = '<div class="note">'
+    + '<b>那個 0.4pp 是季度尺度的敏感度，不是當天的損益。</b>'
+    + '台積電給的口徑是<b>整季平均匯率</b>對<b>整季毛利率</b>，而且每季還會自己設一個假設匯率 —— '
+    + '單日換算只是讓你知道方向與量級，不是預測。'
+    + '一般日子台幣只動 0.1～0.3%，對應 0.04～0.12pp，<b>那個級距基本上是雜訊</b>；'
+    + '真正值得回頭看三大法人的是單日 1% 以上。'
+    + '</div>';
+}
+
 function ym(d){ return String(d||"").slice(0,7).replace("-","/"); }
 
 function renderStocks(){
@@ -1344,9 +1514,17 @@ function renderTW(){
     + (BRIEF.twNote ? '<div class="note">'+esc(BRIEF.twNote)+'</div>' : "");
 }
 
+/* 台積電完全比照 ADR 漲跌的話會開在哪。
+   抽成函式是因為「盤前變數」那一區也要用同一個數字 ——
+   同一條式子放兩份，第一次有人改就會分岔。 */
+function impliedOpenOf(a){
+  return (a && a.tsmcClose && a.pct!==null && a.pct!==undefined)
+       ? a.tsmcClose * (1 + a.pct/100) : null;
+}
+
 function renderADR(){
   var a = BRIEF.adr;
-  var impliedOpen = a.tsmcClose * (1 + a.pct/100);     // 台積電完全比照 ADR 漲跌的話
+  var impliedOpen = impliedOpenOf(a);
   var pts  = (a.pct/100) * (a.weight/100) * a.twiiClose;
   var ptsPct = pts / a.twiiClose * 100;
   var conv = a.price * a.fx / 5;                       // 1 ADR = 5 股普通股
@@ -1371,7 +1549,10 @@ function renderADR(){
     + '<div class="kv"><span>隱含開盤距季線</span><b class="'+cls(biasOpen)+'">'
     +   (biasOpen>0?"+":"")+biasOpen.toFixed(1)+'%'+(biasOpen>=0?"　站回":"　仍在下方")+'</b></div>'
     + '<div class="kv"><span>ADR 換算價 '+fmt(conv,0)+' 元<small style="display:block;color:var(--ink3);font-size:10.5px">'
-    +   'ADR × '+a.fx+' ÷ 5，溢價率</small></span><b class="'+cls(prem)+'">'
+    // 匯率日期要講清楚是「供應商公告的」還是「我們抓取的」，兩者意思不同
+    +   'ADR × '+fmt(a.fx,3)+' ÷ 5'
+    +   (a.fxAsOf ? '（'+esc(a.fxAsOf)+(a.fxAsOfVia==="runClock"?' 抓取':' 公告')+'）' : '')
+    +   '，溢價率</small></span><b class="'+cls(prem)+'">'
     +   (prem>0?"+":"")+prem.toFixed(1)+'%</b></div>'
 
     + '<div class="note" style="margin-top:12px">'
@@ -1393,11 +1574,71 @@ function renderNews(){
       + '<div class="s">'+esc(n.s)+' ↗</div></a>';
   }).join("");
 }
-function renderCal(){
-  $("cal").innerHTML = BRIEF.cal.map(function(c){
-    return '<div class="cal"><div class="d">'+esc(c.d)+'</div>'
+/* 一個 renderer 給兩份行事曆用（大盤那份、台積電那份），
+   免得兩邊的樣式和欄位日後各走各的。
+   dim:true ＝ 日期還沒確定，日期格改用灰色並加問號 ——
+   不能只靠顏色區分，所以問號和小字裡的警語都要有。 */
+function calHTML(list){
+  return list.map(function(c){
+    return '<div class="cal">'
+      + '<div class="d"'+(c.dim?' style="color:var(--ink3)"':'')+'>'+esc(c.d)+(c.dim?'?':'')+'</div>'
       + '<div class="x">'+esc(c.x)+'<small>'+esc(c.s)+'</small></div></div>';
   }).join("");
+}
+
+function renderCal(){ $("cal").innerHTML = calHTML(BRIEF.cal); }
+
+/* 月營收不寫死日期，用算的。
+   法規是「每月 10 日前公告上月營運情形」，所以下一次一定是某個月的 10 號，
+   寫死就會過期，算出來就不會。 */
+function nextRevenue(todayISO){
+  var y = +todayISO.slice(0,4), m = +todayISO.slice(5,7), day = +todayISO.slice(8,10);
+  if(day > 10){ m++; if(m > 12){ m = 1; y++; } }      // 用 > 10：10 號當天還算數
+  var rm = m - 1 || 12;                                // 公布的是「上個月」的營收
+  return { date: y + "-" + String(m).padStart(2,"0") + "-10",
+           x: rm + " 月營收", sure:true, deadline:true, done:"已公布",
+           s: "依法最晚於次月 10 日前公布，公司可以提早發，遇假日順延" };
+}
+
+function renderTsmcCal(){
+  var today = taipei().date;
+  var list = BRIEF.tsmcCal.concat([nextRevenue(today)])
+    .sort(function(a,b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; })
+    // 太久以前的丟掉，但最近發生過的留著 —— Q2 法說會就是「個股深度」那些
+    // 指引數字的來源，看得到它才知道那些數字是哪來的
+    .filter(function(c){ return daysBetween(today, c.date) >= -90; });
+
+  var next = list.filter(function(c){ return c.date >= today; })[0];
+  var nw = $("preoWhen");
+  if(nw) nw.textContent = next
+    ? "下一件事：" + (next.sure ? "" : "（未公告）") + next.x
+      + "（" + (next.deadline ? "最晚 " : "") + next.date.slice(5).replace("-","/") + "）"
+      + "　還有 " + daysBetween(today, next.date) + " 天"
+    : "";
+
+  $("tsmcCal").innerHTML = calHTML(list.map(function(c){
+    var gap = daysBetween(today, c.date), past = gap < 0;
+    return {
+      // 「最晚」是日期的修飾語，掛在日期上；掛在事件名上會變成「最晚 7 月營收」
+      d: (c.deadline && !past ? "最晚 " : "") + c.date.slice(5).replace("-","/"),
+      dim: !c.sure,
+      // 已經發生的事各有各的講法：法說會「已舉行」、除息「已除息」，
+      // 一律寫「已結束」套在股息入帳上會很怪
+      x: c.x + (past ? "（"+(c.done||"已結束")+"）" : ""),
+      s: c.s + (past ? "" : "　· 還有 " + gap + " 天")
+    };
+  }));
+
+  $("tsmcCalNote").innerHTML = '<div class="pend">⚠️ <b>這三種日期的確定程度不一樣。</b>'
+    + '<b>除息與入帳</b>是台積電正式公告的日期；'
+    + '<b>月營收</b>是法定期限（次月 10 日前），公司可以提早發、遇假日順延，所以寫「最晚」；'
+    + '<b>法說會</b>只有已經開過的那場是確定的 —— 下一場台積電通常要到前一季法說會後'
+    + '約一個月才公告，標成灰色加問號的那筆是依慣例推的，<b>請以投資人關係網站的公告為準</b>。</div>';
+}
+
+/* 兩個 ISO 日期相差幾天（b 減 a）。行事曆的「還有 N 天」跟保留期限都用它。 */
+function daysBetween(a, b){
+  return Math.round((Date.parse(b+"T00:00:00+08:00") - Date.parse(a+"T00:00:00+08:00")) / 86400000);
 }
 
 function tick(){
@@ -1408,6 +1649,7 @@ function tick(){
 
 renderStamp(); renderTone(); renderKey(); renderAsia(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
+renderPre(); renderTsmcCal();
 tick(); setInterval(tick,1000);
 tryHistoryStats();      // 歷史統計改由 CSV 算出來的 JSON 覆蓋，寫死的那份只是備援
 startPolling();
