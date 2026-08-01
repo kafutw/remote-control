@@ -26,6 +26,9 @@ const flag = (name, dflt) => {
 };
 const MA = flag("ma", 60);
 const CONFIRM = flag("confirm", 3);
+const AS_JSON = argv.includes("--json");
+/** --json 時 stdout 只能有 JSON，診斷一律轉 stderr，否則管線接不起來 */
+const log = (...a) => (AS_JSON ? console.error(...a) : console.log(...a));
 
 if (!file) {
   console.error("用法: node tools/ma-analysis.mjs <csv檔> [--ma 60] [--confirm 3]");
@@ -100,7 +103,7 @@ if (dateCol < 0 || closeCol < 0) {
   console.error("第一行看到的是：", head.join(" | "));
   process.exit(1);
 }
-console.log(
+log(
   startRow === 1
     ? `欄位判斷：日期＝第 ${dateCol + 1} 欄「${head[dateCol]}」，收盤＝第 ${closeCol + 1} 欄「${head[closeCol]}」`
     : `欄位判斷（無表頭）：日期＝第 ${dateCol + 1} 欄，收盤＝第 ${closeCol + 1} 欄`
@@ -121,11 +124,39 @@ for (let i = startRow; i < lines.length; i++) {
 }
 bars.sort((a, b) => (a.date < b.date ? -1 : 1));
 
+/* ---------- 股票分割還原 ----------
+ * 未還原的分割在原始資料裡長得跟崩盤一模一樣：0050 在 2025-06-18 一拆四，
+ * 188.65 變成 47.55，看起來是單日 −74.8%。若不處理，它會被當成一次「有效跌破」，
+ * 還會污染其後 60 天的均線 —— 統計整個歪掉。
+ *
+ * 判定方式：單日變動幅度大到不像真實行情（跌破 1/1.9 或漲過 1.9 倍），
+ * 且比值接近常見的分割比例，就視為分割，把分割日之前的價格全部換算到之後的基準。
+ */
+const SPLIT_RATIOS = [2, 3, 4, 5, 10, 20];
+const splits = [];
+for (let i = 1; i < bars.length; i++) {
+  const ratio = bars[i - 1].close / bars[i].close;       // >1 表示變便宜（分割）
+  const inv = 1 / ratio;                                  // >1 表示變貴（反向分割）
+  for (const r of SPLIT_RATIOS) {
+    // 容許 8% 誤差：分割當天本來就會有正常漲跌
+    if (Math.abs(ratio - r) / r < 0.08) { splits.push({ i, factor: r, kind: "分割" }); break; }
+    if (Math.abs(inv - r) / r < 0.08)   { splits.push({ i, factor: 1 / r, kind: "反向分割" }); break; }
+  }
+}
+if (splits.length) {
+  for (const s of splits) {
+    for (let k = 0; k < s.i; k++) bars[k].close /= s.factor;
+    log(`⚠️ 偵測到${s.kind}：${bars[s.i].date} 比例 1:${s.factor >= 1 ? s.factor : (1 / s.factor)}`
+              + `，已將該日之前的價格還原到相同基準`);
+  }
+  log("");
+}
+
 if (bars.length < MA + 40) {
   console.error(`資料只有 ${bars.length} 筆，算 ${MA} 日均線加上後續追蹤至少需要 ${MA + 40} 筆。`);
   process.exit(1);
 }
-console.log(`讀到 ${bars.length} 個交易日：${bars[0].date} ～ ${bars[bars.length - 1].date}\n`);
+log(`讀到 ${bars.length} 個交易日：${bars[0].date} ～ ${bars[bars.length - 1].date}\n`);
 
 /* ---------- 均線 ---------- */
 let sum = 0;
@@ -181,6 +212,23 @@ for (let i = MA; i < bars.length; i++) {
     r20: fwd(i, 20),
     r60: fwd(i, 60)
   });
+}
+
+/* ---------- --json：把每個事件吐出來，給圖表用 ---------- */
+if (AS_JSON) {
+  const round = (v, d = 2) => (v === null || v === undefined || !isFinite(v) ? null : +v.toFixed(d));
+  process.stdout.write(JSON.stringify({
+    window: { from: bars[0].date, to: bars[bars.length - 1].date, sessions: bars.length },
+    ma: MA, confirm: CONFIRM,
+    splitsApplied: splits.map(s => ({ date: bars[s.i].date, factor: s.factor })),
+    events: events.map(e => ({
+      date: e.date, close: round(e.close), ma: round(e.ma),
+      bias: round(e.bias), deepest: round(e.deepest),
+      below: e.below, backIn: e.backIn, effective: e.effective,
+      r20: round(e.r20), r60: round(e.r60)
+    }))
+  }, null, 2) + "\n");
+  process.exit(0);
 }
 
 /* ---------- 輸出 ---------- */

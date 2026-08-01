@@ -115,6 +115,10 @@ section{margin-top:30px}
 }
 .kx.live{background:linear-gradient(90deg,rgba(91,156,246,.07),transparent 60%)}
 .kx.live .n small{color:var(--navy)}
+.kx .bar{flex:0 0 70px;display:block}
+.scale{
+  color:var(--ink3);font-size:10.5px;margin-top:5px;text-align:right;letter-spacing:.02em
+}
 
 /* ── 我的持股 ── */
 .hdrow{
@@ -228,6 +232,9 @@ section{margin-top:30px}
 .hist .hr{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--ink2);padding:4px 0}
 .hist .hr b{color:var(--ink);font-weight:700;white-space:nowrap;text-align:right}
 .hist .hr b.up{color:var(--up)} .hist .hr b.down{color:var(--down)}
+.dotwrap{margin-top:10px;padding-top:9px;border-top:1px solid var(--rule)}
+.dotwrap .dl{color:var(--ink3);font-size:10.5px;line-height:1.5;margin-bottom:2px}
+.dotwrap .dots{display:block;width:100%;height:auto}
 
 /* ── 觀察重點 ── */
 .pt{
@@ -444,6 +451,7 @@ section{margin-top:30px}
   <section>
     <div class="sec-h"><div class="ic">📊</div><h2>今日指標</h2><div class="hint" id="liveStamp">一眼掃完</div></div>
     <div class="keyi" id="keyi"></div>
+    <div class="scale" id="keyiScale"></div>
     <div class="note">美股（費半／S&amp;P／道瓊／那指）與台積電 ADR 在<b>台北 04:00 就收盤</b>、台指期夜盤 05:00 收 ——
       你早上看到的是<b>最終收盤價，當天不會再變</b>，所以它們不需要即時。<b>只有日經與 KOSPI 會動</b>（08:00 開盤，比台股早 1 小時），
       這一區在 GitHub Pages 版本上每 60 秒自動更新。</div>
@@ -606,7 +614,8 @@ var BRIEF = {
         {k:"2026 資本支出", v:"600–640 億美元", s:"由 520–560 億上調，市場曾據此殺盤"}
       ],
       hist:{breaks:8, eff:4, fake:4, perYear:3.8, deepMed:-6.90,
-            deepQ:"−11.71% ～ −0.88%", backMed:15, backMax:52, r60Med:13.38, win:75} },
+            deepQ:"−11.71% ～ −0.88%", backMed:15, backMax:52, r60Med:13.38, win:75,
+            events:[13.38, 5.93, -8.84, 30.18]} },
     { code:"0050", n:"元大台灣 50", price:null, ma60:null,
       facts:[
         {k:"07/31",     v:"漲停",     s:"跟著台積電亮燈"},
@@ -614,8 +623,9 @@ var BRIEF = {
         {k:"受益人數",   v:"323.87 萬", s:"去年底 153.09 萬，半年倍增"},
         {k:"最大成分股", v:"台積電",   s:"權重極高，走勢幾乎跟著台積電走"}
       ],
-      hist:{breaks:12, eff:5, fake:7, perYear:5.7, deepMed:-11.10,
-            deepQ:"−22.64% ～ −6.60%", backMed:21, backMax:58, r60Med:5.06, win:60} },
+      hist:{breaks:11, eff:4, fake:7, perYear:5.3, deepMed:-6.60,
+            deepQ:"−11.10% ～ −0.61%", backMed:21, backMax:51, r60Med:5.06, win:50,
+            events:[8.80, 5.06, -0.24, -6.69]} },
     { code:"0056", n:"元大高股息", price:null, ma60:null,
       facts:[
         {k:"7 月配息",   v:"1.35 元",  s:"7/21 除息，8/10 發放"},
@@ -624,7 +634,8 @@ var BRIEF = {
         {k:"可分配收益", v:"4.54 元",  s:"另有資本平準金 23.24 元（6/30）"}
       ],
       hist:{breaks:16, eff:12, fake:4, perYear:7.6, deepMed:-1.61,
-            deepQ:"−4.48% ～ −1.22%", backMed:9, backMax:56, r60Med:-4.06, win:45} }
+            deepQ:"−4.48% ～ −1.22%", backMed:9, backMax:56, r60Med:-4.06, win:45,
+            events:[-4.32, -4.06, -5.44, -11.93, -6.80, -5.41, 2.40, 1.42, 4.15, 6.23, 7.03]} }
   ],
 
   points: [
@@ -667,6 +678,106 @@ function arrow(n){ return (n===null||!isFinite(n)||n===0) ? "－" : (n>0?"▲":"
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
+/* ══════════════════════════════════════════════════════════
+   圖表：全部手寫 inline SVG
+   —— Artifact 的 CSP 擋掉所有外部資源，不能引任何函式庫。
+   紅漲綠跌對紅綠色盲是最難分的一組（實測 deutan ΔE 6.2），
+   所以每張圖的正負都另外用「位置」表達（零線的左邊／右邊），
+   顏色只是輔助，拿掉顏色仍讀得出方向。
+   ══════════════════════════════════════════════════════════ */
+
+/* 從基準線長出去的橫條：遠端 4px 圓角，貼著基準線那端是方的 */
+function barPath(x0, x1, cy, h){
+  var half = h/2, r = Math.min(4, Math.abs(x1-x0)), dir = x1 >= x0 ? 1 : -1;
+  var xe = x1 - r*dir;
+  return "M"+x0+","+(cy-half)
+       + "H"+xe + "Q"+x1+","+(cy-half)+" "+x1+","+(cy-half+r)
+       + "V"+(cy+half-r) + "Q"+x1+","+(cy+half)+" "+xe+","+(cy+half)
+       + "H"+x0 + "Z";
+}
+
+/* 圖①　今日指標的漲跌幅橫條：零點置中，全部共用同一個對稱尺度，
+   所以 KOSPI 佔滿、其他相對縮小 —— 那個懸殊本身就是今天的重點 */
+function pctBar(pct, domain, w, h){
+  var cx = w/2, cy = h/2, has = !(pct===null || pct===undefined || !isFinite(pct));
+  var body = "", label = "沒有漲跌幅資料";
+  if(has){
+    var len = domain > 0 ? Math.min(Math.abs(pct)/domain, 1) * (cx - 3) : 0;
+    var col = pct >= 0 ? "var(--up)" : "var(--down)";
+    body = len < 1.2
+      ? '<rect x="'+(cx-1)+'" y="'+(cy-1)+'" width="2" height="2" fill="'+col+'"/>'
+      : '<path d="'+barPath(cx, pct>=0 ? cx+len : cx-len, cy, 9)+'" fill="'+col+'"/>';
+    label = (pct>0?"上漲":(pct<0?"下跌":"持平")) + " " + Math.abs(pct).toFixed(2) + "%";
+  }
+  // 零線一律畫 —— 沒有資料的列若整格留白，整欄的基準線就斷掉，六列不再讀成同一張圖
+  return '<svg class="bar" viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" '
+       + 'role="img" aria-label="'+label+'">'
+       + body
+       + '<line x1="'+cx+'" y1="0" x2="'+cx+'" y2="'+h+'" stroke="var(--rule2)" stroke-width="1"/>'
+       + '</svg>';
+}
+
+/* 圖③　跌破季線後 60 日報酬的分布：n 只有個位數到十幾個，
+   畫成長條或直方圖都是把 4 個點假裝成一條分布，所以用點圖直接把每個事件畫出來。
+   三檔共用同一個 x 尺度，才看得出 0056 的點整片偏左、2330 偏右。 */
+/* mid 由呼叫端傳進來，不在這裡重算 ——
+   ma-analysis 的中位數在偶數項時取上中位（v[floor(n/2)]），
+   自己算一份會跟上方表格的數字打架，同一張卡片出現兩個「中位數」。 */
+function dotPlot(events, mid, domain, w){
+  if(!events || !events.length) return "";
+  var pad = 6, R = 4.6, ROW = 11, LBL = 15;      // LBL：頂端中位數標籤佔的高度
+  var iw = w - pad*2, cx = pad + iw/2, half = iw/2 - 6;
+  var X = function(v){ return cx + Math.max(-1, Math.min(1, v/domain)) * half; };
+  var pos = events.filter(function(v){ return v > 0; }).length;
+
+  // 蜂群式錯位：值相近的事件疊在同一點會糊成一團，數不出幾個。
+  // 依 x 排序後往上下讓開，第一顆一定留在中線上，垂直位置本身不帶意義。
+  var placed = [];
+  events.map(function(v){ return {v:v, x:X(v)}; })
+        .sort(function(a,b){ return a.x - b.x; })
+        .forEach(function(d){
+    for(var k = 0; ; k++){
+      var dy = (k===0) ? 0 : (k%2 ? Math.ceil(k/2) : -k/2) * ROW;
+      var hit = placed.some(function(q){
+        return Math.abs(q.x-d.x) < 2*R+2 && Math.abs(q.dy-dy) < ROW-0.5;
+      });
+      if(!hit || k > 12){ d.dy = dy; placed.push(d); break; }
+    }
+  });
+  // 高度依實際錯位範圍算出來，不寫死 —— 寫死的話點多的那張會被裁掉，
+  // 或者軸標籤掉到容器外，變成卡片裡冒出一條小捲軸
+  var spread = placed.reduce(function(m,d){ return Math.max(m, Math.abs(d.dy)); }, 0);
+  var tp   = LBL,
+      dotY = tp + 4 + R + spread,
+      bt   = dotY + spread + R + 4,
+      axY  = bt + 12,
+      h    = axY + 3;
+
+  // 等比縮放（不設 preserveAspectRatio="none"）—— 拉伸會把圓點壓成橢圓
+  var s = '<svg class="dots" viewBox="0 0 '+w+' '+h+'" '
+        + 'role="img" aria-label="'+events.length+' 次有效跌破後的 60 日報酬，'+pos+' 次為正，中位數 '
+        + (mid>0?"+":"")+mid.toFixed(2)+'%">';
+  // 零線與中位線都是實線髮絲，不用虛線；長度跟著錯位範圍長，不會被點戳出頭
+  s += '<line x1="'+X(0)+'" y1="'+tp+'" x2="'+X(0)+'" y2="'+bt+'" stroke="var(--rule2)" stroke-width="1"/>';
+  s += '<line x1="'+X(mid).toFixed(1)+'" y1="'+tp+'" x2="'+X(mid).toFixed(1)+'" y2="'+bt+'" '
+     + 'stroke="var(--navy)" stroke-width="1.5"/>';
+  placed.forEach(function(d){
+    s += '<circle cx="'+d.x.toFixed(1)+'" cy="'+(dotY+d.dy)+'" r="'+R+'" '
+       + 'fill="'+(d.v>=0?"var(--up)":"var(--down)")+'" '
+       + 'stroke="var(--paper)" stroke-width="2"/>';   // 2px surface ring：點重疊時仍分得開
+  });
+  // 中位數標在點的上方、0% 標在下方 —— 兩者靠得再近也不會疊在一起
+  var anchor = X(mid) > cx ? "end" : "start", mx = X(mid) + (anchor==="end" ? 3 : -3);
+  mx = Math.max(pad, Math.min(w-pad, mx));
+  s += '<text x="'+mx.toFixed(1)+'" y="11" fill="var(--navy)" font-size="9.5" font-weight="700" '
+     + 'text-anchor="'+anchor+'">中位數 '+(mid>0?"+":"")+mid.toFixed(2)+'%</text>';
+  // 軸標籤全部同一條基線：0% 在中間、尺度端點在左右角，彼此不會撞在一起
+  s += '<text x="'+X(0)+'" y="'+axY+'" fill="var(--ink3)" font-size="9" text-anchor="middle">0%</text>';
+  s += '<text x="'+pad+'" y="'+axY+'" fill="var(--ink3)" font-size="9">−'+domain+'%</text>';
+  s += '<text x="'+(w-pad)+'" y="'+axY+'" fill="var(--ink3)" font-size="9" text-anchor="end">+'+domain+'%</text>';
+  return s + '</svg>';
+}
+
 function taipei(){
   var p = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",
     day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})
@@ -707,13 +818,23 @@ function renderKey(){
   push("加權指數", "前一交易日", find(BRIEF.tw, "加權"), false);
   push("USD／TWD", "匯率", find(BRIEF.cross, "TWD"), false, 3);
 
+  // 橫條共用一個對稱尺度，domain 取當日最大絕對漲跌幅
+  var domain = 0;
+  rows.forEach(function(r){
+    if(r.pct!==null && r.pct!==undefined && isFinite(r.pct)) domain = Math.max(domain, Math.abs(r.pct));
+  });
+  domain = Math.max(domain, 1);   // 全部貼近 0 的日子不要把雜訊放大成長條
+
   $("keyi").innerHTML = rows.map(function(r){
     return '<div class="kx'+(r.live?" live":"")+'">'
       + '<div class="n">'+esc(r.label)+'<small>'+esc(r.tag)+'</small></div>'
       + (r.p===null||r.p===undefined ? '' : '<div class="v">'+fmt(r.p, r.dp)+'</div>')
       + '<div class="c '+cls(r.pct)+'">'+(r.pct>0?"+":"")+ (r.pct===null||r.pct===undefined?"—":r.pct.toFixed(2)+"%") +'</div>'
+      + pctBar(r.pct, domain, 70, 20)
       + '</div>';
   }).join("");
+  var sc = $("keyiScale");
+  if(sc) sc.textContent = "橫條共用同一尺度，滿格＝±" + domain.toFixed(2) + "%";
 }
 
 /* ── 我的持股 ──
@@ -766,10 +887,10 @@ function applyLive(j){
     //  - 沒有日期（舊版 live.json）且不是盤中價 → 也拒絕，因為無從判斷新舊
     // 舊資料悄悄蓋掉新資料，比完全沒有更新更危險。
     if(v.asOf && s.asOf){ if(v.asOf < s.asOf) return; }
-    else if(v.marketState !== "REGULAR" && s.asOf) return;
+    else if(v.marketState !== "REG_MKT" && s.asOf) return;
     s.p = v.price; s.pct = (v.pct===null||v.pct===undefined)?null:v.pct;
     if(v.ma60) s.ma60 = v.ma60;
-    s.tag = (v.marketState==="REGULAR" ? "盤中" : "收盤");
+    s.tag = (v.marketState==="REG_MKT" ? "盤中" : "收盤");
     used = true;
   });
   if(used){
@@ -929,6 +1050,13 @@ function renderCross(){
 }
 
 function renderStocks(){
+  // 三檔的點圖共用同一個 x 尺度，否則「0056 偏左、2330 偏右」這件事會被各自縮放抹掉
+  var dom = 5;
+  BRIEF.stocks.forEach(function(s){
+    (s.hist.events||[]).forEach(function(v){ dom = Math.max(dom, Math.abs(v)); });
+  });
+  dom = Math.ceil(dom/5)*5;
+
   $("stocks").innerHTML = BRIEF.stocks.map(function(s){
     var bias = (s.price!==null && s.ma60) ? (s.price/s.ma60-1)*100 : null;
     var h = s.hist;
@@ -947,15 +1075,19 @@ function renderStocks(){
         }).join("")
       + '<div class="hist"><div class="ht">📊 跌破季線的歷史統計　'+esc(BRIEF.histWindow)+'</div>'
       +   '<div class="hr"><span>跌破次數</span><b>'+h.breaks+' 次　'
-      +     '<span style="font-weight:400;color:var(--dim2);font-size:11px">有效 '+h.eff+' ／ 假跌破 '+h.fake+'</span></b></div>'
+      +     '<span style="font-weight:400;color:var(--ink3);font-size:11px">有效 '+h.eff+' ／ 假跌破 '+h.fake+'</span></b></div>'
       +   '<div class="hr"><span>平均一年</span><b>'+h.perYear.toFixed(1)+' 次</b></div>'
       +   '<div class="hr"><span>有效跌破・最深負乖離</span><b class="down">'+h.deepMed.toFixed(2)+'%</b></div>'
       +   '<div class="hr"><span>　四分位區間</span><b style="font-weight:600;font-size:12px">'+esc(h.deepQ)+'</b></div>'
       +   '<div class="hr"><span>站回季線天數</span><b>'+h.backMed+' 天　'
-      +     '<span style="font-weight:400;color:var(--dim2);font-size:11px">最久 '+h.backMax+'</span></b></div>'
+      +     '<span style="font-weight:400;color:var(--ink3);font-size:11px">最久 '+h.backMax+'</span></b></div>'
       +   '<div class="hr"><span>跌破後 60 日報酬</span><b class="'+cls(h.r60Med)+'">'
       +     (h.r60Med>0?"+":"")+h.r60Med.toFixed(2)+'%　'
-      +     '<span style="font-weight:400;color:var(--dim2);font-size:11px">正報酬 '+h.win+'%</span></b></div>'
+      +     '<span style="font-weight:400;color:var(--ink3);font-size:11px">正報酬 '+h.win+'%</span></b></div>'
+      +   (h.events && h.events.length
+            ? '<div class="dotwrap"><div class="dl">每一點＝一次有效跌破後的 60 日報酬（'
+              + h.events.length + ' 次，三檔同尺度）</div>' + dotPlot(h.events, h.r60Med, dom, 300) + '</div>'
+            : '')
       + '</div></div>';
   }).join("") + '<div class="note">'+BRIEF.histNote+'</div>';
 }
@@ -986,17 +1118,17 @@ function renderADR(){
     +   '（'+(a.chg>0?"+":"−")+fmt(Math.abs(a.chg),2)+' 美元）</span>　昨夜收盤</div>'
 
     + '<div class="kv"><span>台積電台股昨收</span><b>'+fmt(a.tsmcClose,0)+' 元</b></div>'
-    + '<div class="kv"><span>若完全反映 ADR 漲跌<small style="display:block;color:var(--dim2);font-size:10.5px">'
+    + '<div class="kv"><span>若完全反映 ADR 漲跌<small style="display:block;color:var(--ink3);font-size:10.5px">'
     +   '昨收 × (1 '+(a.pct>0?"+":"−")+' '+Math.abs(a.pct).toFixed(2)+'%)</small></span>'
     +   '<b class="'+cls(a.pct)+'">'+fmt(impliedOpen,0)+' 元</b></div>'
-    + '<div class="kv"><span>對大盤的貢獻<small style="display:block;color:var(--dim2);font-size:10.5px">'
+    + '<div class="kv"><span>對大盤的貢獻<small style="display:block;color:var(--ink3);font-size:10.5px">'
     +   '以台積電權重 '+a.weight+'% 估</small></span><b class="'+cls(pts)+'">'
     +   (pts>0?"+":"−")+fmt(Math.abs(pts),0)+' 點（'+(ptsPct>0?"+":"")+ptsPct.toFixed(1)+'%）</b></div>'
-    + '<div class="kv"><span>季線 '+fmt(a.tsmcMA60,0)+'<small style="display:block;color:var(--dim2);font-size:10.5px">'
+    + '<div class="kv"><span>季線 '+fmt(a.tsmcMA60,0)+'<small style="display:block;color:var(--ink3);font-size:10.5px">'
     +   '昨收距季線</small></span><b class="'+cls(bias)+'">'+(bias>0?"+":"")+bias.toFixed(1)+'%</b></div>'
     + '<div class="kv"><span>隱含開盤距季線</span><b class="'+cls(biasOpen)+'">'
     +   (biasOpen>0?"+":"")+biasOpen.toFixed(1)+'%'+(biasOpen>=0?"　站回":"　仍在下方")+'</b></div>'
-    + '<div class="kv"><span>ADR 換算價 '+fmt(conv,0)+' 元<small style="display:block;color:var(--dim2);font-size:10.5px">'
+    + '<div class="kv"><span>ADR 換算價 '+fmt(conv,0)+' 元<small style="display:block;color:var(--ink3);font-size:10.5px">'
     +   'ADR × '+a.fx+' ÷ 5，溢價率</small></span><b class="'+cls(prem)+'">'
     +   (prem>0?"+":"")+prem.toFixed(1)+'%</b></div>'
 
