@@ -815,6 +815,61 @@ function fxChart(series, ma5, ma20, w, h){
        + '</svg>';
 }
 
+/* 圖⑤　每日成交值柱狀圖＋5 日均量＋三條門檻線。
+   門檻線是這張圖的重點 —— 沒有那三條線，柱子高低只是相對的，
+   看不出「今天算不算量縮」。所以尺度一律含到過熱線，不隨資料縮放，
+   否則量縮的日子會被拉伸成看起來很高。 */
+function volChart(series, cfg, w, h){
+  if(!series || !series.length) return "";
+  var pad = 4, iw = w - pad*2, ih = h - pad*2;
+  var vals = series.map(function(r){ return r.total; });
+  var top = Math.max(cfg.overheat * 1.05,
+                     Math.max.apply(null, vals.filter(function(v){ return v!==null && isFinite(v); }).concat([0])) * 1.05);
+  var Y = function(v){ return pad + (1 - v/top) * ih; };
+  var bw = iw / series.length;
+
+  var bars = series.map(function(r, i){
+    if(r.total === null || !isFinite(r.total)){
+      // 資料不全的日子畫一個空槽，不要直接跳過 —— 跳過會讓那天看起來不存在
+      return '<rect x="'+(pad+i*bw).toFixed(1)+'" y="'+(pad+ih-2).toFixed(1)+'" width="'
+           + Math.max(bw-0.8,0.6).toFixed(1)+'" height="2" fill="var(--rule2)"/>';
+    }
+    var y = Y(r.total);
+    var col = r.total > cfg.overheat ? "var(--warnInk)"
+            : r.total < cfg.quiet    ? "var(--ink3)" : "var(--navy)";
+    // 柱子壓半透明，門檻線才透得出來 —— 這張圖要回答的是
+    // 「今天有沒有越過 1.1 兆那條線」，實心柱子會把那條線整個蓋掉
+    return '<rect x="'+(pad+i*bw).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'
+         + Math.max(bw-0.8,0.6).toFixed(1)+'" height="'+Math.max(pad+ih-y,0.6).toFixed(1)
+         + '" fill="'+col+'" fill-opacity="0.5"/>';
+  }).join("");
+
+  function line(v, col, dash, wid){
+    return '<line x1="'+pad+'" y1="'+Y(v).toFixed(1)+'" x2="'+(w-pad)+'" y2="'+Y(v).toFixed(1)
+         + '" stroke="'+col+'" stroke-width="'+(wid||1)+'" stroke-dasharray="'+dash+'"/>';
+  }
+  var ma = movAvg(vals, 5), md = "", started = false;
+  for(var i=0;i<ma.length;i++){
+    if(ma[i]===null){ started = false; continue; }
+    md += (started?"L":"M") + (pad+i*bw+bw/2).toFixed(1) + " " + Y(ma[i]).toFixed(1) + " ";
+    started = true;
+  }
+
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" preserveAspectRatio="none" '
+       + 'role="img" aria-label="近 '+series.length+' 日成交值，門檻 '
+       +   (cfg.quiet/10000).toFixed(2)+' 兆／'+(cfg.breakout/10000).toFixed(2)+' 兆／'
+       +   (cfg.overheat/10000).toFixed(2)+' 兆">'
+       + bars
+       // 三條線用虛線疏密＋位置區分，不用顏色 ——
+       // 顏色在這頁已經被「紅漲綠跌」佔走了，門檻線借用會被讀成方向
+       + line(cfg.quiet,    "var(--ink3)",   "2 3")
+       // 突破線是這張圖的主角，畫最粗 —— 其他兩條是配角
+       + line(cfg.breakout, "var(--ink)",    "6 3", 1.6)
+       + line(cfg.overheat, "var(--warnInk)","6 3")
+       + (md ? '<path d="'+md.trim()+'" fill="none" stroke="var(--navy)" stroke-width="1.4"/>' : "")
+       + '</svg>';
+}
+
 /* 圖③　跌破季線後 60 日報酬的分布：n 只有個位數到十幾個，
    畫成長條或直方圖都是把 4 個點假裝成一條分布，所以用點圖直接把每個事件畫出來。
    三檔共用同一個 x 尺度，才看得出 0056 的點整片偏左、2330 偏右。 */
@@ -1129,6 +1184,8 @@ function applyLive(j){
 
   if(crossTouched) renderCross();
   if(adrTouched || crossTouched) renderADR();
+  // 量能是抓取端算好的整包，直接收下 —— 判定不在頁面重做一次
+  if(j.volume){ BRIEF.volume = j.volume; sigTouched = true; }
   if(sigTouched) renderSignals();
   renderPre();
 
@@ -1428,18 +1485,13 @@ function movAvg(values, n){
 /* ── 資金燈號 ──
    判定規則本身在 tools/signals.mjs（有離線自測），這裡只負責顯示。
    頁面不重算一次 —— 兩邊各算一份就會出現「圖說亮、字說暗」。 */
-function renderSignals(){
+function fxCardHTML(){
   var fx = BRIEF.fxSignal;
-  var w = $("sigWhen"); if(w) w.textContent = fx && fx.asOf ? fx.asOf + " 收盤" : "尚未有資料";
-
-  if(!fx || !fx.series || !fx.series.length){
-    $("sigCards").innerHTML = '<div class="pend">⚠️ <b>匯率歷史還沒開始累積。</b>'
+  if(!fx || !fx.series || !fx.series.length)
+    return '<div class="pend">⚠️ <b>匯率歷史還沒開始累積。</b>'
       + '這張卡需要 data/fx-usdtwd.csv 裡的每日匯率，而那份檔案由 GitHub Actions 在平日'
       + '每天寫入一筆。<b>在 Actions 至少跑過一個交易日之前，這裡不會有東西</b> —— '
       + '刻意留白而不是先畫一條假的線。</div>';
-    $("sigNote").innerHTML = "";
-    return;
-  }
 
   var s = fx.series.map(function(r){ return r.rate; });
   var dates = fx.series.map(function(r){ return r.date; });
@@ -1449,11 +1501,12 @@ function renderSignals(){
 
   // 燈：資料不夠時是灰的「累積中」，不是「暗」——
   // 那兩件事完全不同，混在一起會讓人以為系統判斷過了而且沒訊號
-  var lamp = !ready ? {e:"⚪", t:"資料累積中", c:"var(--ink3)"}
-           : lit    ? {e:"🟢", t:"亮燈",       c:"var(--down)"}
-                    : {e:"⚫", t:"無訊號",     c:"var(--ink3)"};
+  // 同上：顏色交給 emoji，文字中性
+  var lamp = !ready ? {e:"⚪", t:"資料累積中"}
+           : lit    ? {e:"🟢", t:"亮燈"}
+                    : {e:"⚫", t:"無訊號"};
 
-  var body = '<div class="kv"><span>'+lamp.e+' <b style="color:'+lamp.c+'">'+lamp.t+'</b>'
+  var body = '<div class="kv"><span>'+lamp.e+' <b>'+lamp.t+'</b>'
     + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'
     + (ready
         ? (lit ? esc(fx.reasons.join("；")) : '兩條規則都沒觸發（連 3 日升值／5 日均下穿 20 日均）')
@@ -1485,10 +1538,28 @@ function renderSignals(){
       + '<b style="color:var(--ink2)">'+(spread<0?'短均在下':'短均在上')+'</b></div>';
   }
 
-  $("sigCards").innerHTML = body;
+  return body;
+}
+
+/* 兩張卡各自獨立算、獨立顯示：其中一邊沒資料不該讓另一邊跟著消失。 */
+function renderSignals(){
+  var fx = BRIEF.fxSignal, v = BRIEF.volume;
+  var w = $("sigWhen");
+  if(w) w.textContent = fx && fx.asOf ? fx.asOf + " 收盤" : "尚未有資料";
+
+  $("sigCards").innerHTML =
+      '<div class="subh">① 匯率　外資有沒有在匯入</div>'
+    + '<div class="card">' + fxCardHTML() + '</div>'
+    + '<div class="subh" style="margin-top:14px">② 量能　有沒有人真的在買</div>'
+    + '<div class="card">' + volumeCardHTML() + '</div>';
 
   $("sigNote").innerHTML = '<div class="note">'
-    + '<b>USD／TWD 是「1 美元換多少台幣」，所以線往下＝台幣升值。</b>'
+    + '<b>這兩張卡回答的是「錢在不在場」，不是「這個價位划不划算」。</b>'
+    + '資金流指標是同步的、不是領先的 —— 台幣升值和放量是在價格上漲的<b>同時</b>發生，'
+    + '等訊號確認時那一段通常已經走掉一部分。它們能確認趨勢還在，不會告訴你進場點。'
+    + '<br><b>而且這兩張卡不獨立。</b>外資匯入會同時推升台幣與成交量，'
+    + '所以兩盞燈一起亮不代表兩個證據，比較像同一件事被量了兩次。'
+    + '<br><b>USD／TWD 是「1 美元換多少台幣」，所以線往下＝台幣升值。</b>'
     + '圖的 Y 軸<b>沒有反轉</b> —— 這頁對 VIX 也是同樣狀況（漲＝壞），'
     + '一律照原樣畫、把反轉講在文字上，翻軸會讓這張圖跟其他圖的讀法不一致。'
     + '<br><b>這張卡除了燈以外沒有紅綠。</b>台幣升值對外資匯入是好事、'
@@ -1500,6 +1571,73 @@ function renderSignals(){
     + '<b>data/signals.csv</b>，<b>過幾個月回頭算命中率再決定要不要相信它</b> —— '
     + '沒有那張表，這張卡只是好看而已。'
     + '</div>';
+}
+
+/* 量能卡。判定在 tools/signals.mjs（有離線自測），這裡只顯示。 */
+function volumeCardHTML(){
+  var v = BRIEF.volume;
+  if(!v) return '<div class="pend">⚠️ <b>成交值還沒開始累積。</b>'
+    + 'data/turnover.csv 由 GitHub Actions 每天抓上市（證交所 FMTQIK）與上櫃（TPEx）寫入。'
+    + '<b>那兩個端點在寫這段程式的環境完全連不出去，沒辦法先驗</b> —— '
+    + '第一次跑之後看 Actions 的 log 才知道通不通。</div>';
+
+  var t = v.thresholds;
+  // 7,000 億寫成「0.70 兆」很難讀，一兆以下就用億
+  var tri = function(x){ return x >= 10000 ? (x/10000).toFixed(2) + " 兆" : fmt(x,0) + " 億"; };
+
+  // 三種狀態要分得很開：待命中其實才是最該注意的，不是亮燈
+  // 燈號的顏色由 emoji 承擔，文字用中性色。
+  // --down 是綠色（這頁的綠＝跌），拿它標「亮燈」會被讀成下跌；
+  // 紅綠在這一頁已經有固定意義，燈號不該再借用一次。
+  var lamp = v.latestPartial ? {e:"⚠️", t:"資料不全，不判定"}
+           : !v.ready        ? {e:"⚪", t:"資料累積中"}
+           : v.state==="fired" ? {e:"🟢", t:"亮燈"}
+           : v.state==="armed" ? {e:"🟡", t:"待命中"}
+                               : {e:"⚫", t:"無訊號"};
+
+  var sub;
+  if(v.latestPartial){
+    // 這是關鍵的誠實點：少了上櫃約低估 15～20%，拿去比門檻會系統性不亮，
+    // 而且看起來就像「今天沒事」
+    sub = '最新一日缺上櫃資料。門檻是上市＋上櫃校準的，只用上市會低估 15～20%，'
+        + '硬比會系統性不亮 —— 所以寧可不判定';
+  }else if(!v.ready){
+    sub = '還沒有完整的日成交值';
+  }else if(v.state==="fired"){
+    sub = esc(v.reasons.join("；"));
+  }else if(v.state==="armed"){
+    sub = '已出現量縮打底（' + esc(v.armedSince) + '，' + v.daysArmed + ' 個交易日前），'
+        + '等突破 ' + tri(t.breakout) + ' 才亮燈；超過 ' + t.armWindow + ' 個交易日沒突破就失效';
+  }else{
+    sub = '還沒出現量縮打底（低於 ' + tri(t.quiet) + '），此時的突破不算數';
+  }
+
+  var body = '<div class="kv"><span>'+lamp.e+' <b>'+lamp.t+'</b>'
+    + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'+sub+'</small></span>'
+    + '<b style="color:var(--ink2)">'+(v.last===null||v.last===undefined?'—':fmt(v.last,0)+' 億')+'</b></div>';
+
+  if(v.series && v.series.length){
+    var d0 = v.series[0].date, d1 = v.series[v.series.length-1].date;
+    body += '<div style="padding:10px 15px 4px">'
+      + volChart(v.series, t, 300, 64)
+      + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-top:4px">'
+      +   '<span>'+esc(d0.slice(5).replace("-","/"))+'</span>'
+      +   '<span>虛線由下而上：'+tri(t.quiet)+' · '+tri(t.breakout)+' · '+tri(t.overheat)+'</span>'
+      +   '<span>'+esc(d1.slice(5).replace("-","/"))+'</span>'
+      + '</div></div>';
+  }
+
+  body += '<div class="kv"><span>兩段式判定'
+    + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'
+    + '先低於 '+tri(t.quiet)+' 打底 → 待命 → 突破 '+tri(t.breakout)+'</small></span>'
+    + '<b style="color:var(--ink2)">'+(v.state==="fired"?"已觸發":(v.state==="armed"?"等突破":"等打底"))+'</b></div>';
+
+  if(v.incomplete) body += '<div class="kv"><span>資料完整度'
+    + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'
+    + '只有上市、缺上櫃的日子不列入判定</small></span>'
+    + '<b style="color:var(--ink2)">'+v.complete+' 完整／'+v.incomplete+' 不全</b></div>';
+
+  return body;
 }
 
 function ym(d){ return String(d||"").slice(0,7).replace("-","/"); }

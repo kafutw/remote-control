@@ -105,7 +105,12 @@ GitHub Actions（網路無限制）→ 依序試多個來源 → 算好均線
 - [`.github/workflows/market-data.yml`](./.github/workflows/market-data.yml)：台北 06:50、08:02～08:52 每 10 分鐘、09:02、13:45，也可手動觸發
 - [`tools/fetch-live.mjs`](./tools/fetch-live.mjs)：抓 13 個標的，順便算 20/60/240 日均線、乖離率與台積電 ADR 溢價，寫成 `data/live.json`
 - [`tools/fx-daily.mjs`](./tools/fx-daily.mjs)：USD/TWD 的前一日錨點（`data/fx-usdtwd.csv`）。匯率來源只回當下值、沒有前收，所以日變動要自己記；純邏輯、可離線 `--self-test`
-- [`tools/signals.mjs`](./tools/signals.mjs)：燈號判定（均線、連續日數、均線穿越）。門檻讀 `data/thresholds.json`，可以直接改數字不用改程式；純邏輯、可離線 `--self-test`
+- [`tools/signals.mjs`](./tools/signals.mjs)：燈號判定（均線、連續日數、均線穿越、量能兩段式狀態機）。門檻讀 `data/thresholds.json`，可以直接改數字不用改程式；純邏輯、可離線 `--self-test`
+- [`tools/fetch-turnover.mjs`](./tools/fetch-turnover.mjs)：每日成交值（證交所 FMTQIK ＋ TPEx），寫進 `data/turnover.csv`
+
+**量能為什麼一定要兩個市場相加**：門檻（7,000 億／1.1 兆／1.3 兆）是拿上市＋上櫃校準的，
+只抓上市大約少 15～20%，拿去比同一組門檻會系統性偏低、燈幾乎不會亮 —— 而且是無聲的。
+所以上櫃抓不到那天的 `total` 會留空，判定端看到空值就拒絕評估，顯示「資料不全」而不是「沒訊號」。
 
 **訊號紀錄表**：每次燈由暗轉亮會寫一列到 `data/signals.csv`（日期、指標、當時大盤點位、觸發的規則），
 一天只記一次。過幾個月回頭算命中率，才知道這些門檻值到底準不準 ——

@@ -74,12 +74,67 @@ export function evalFx(rates, cfg){
   };
 }
 
+/* 量能的兩段式狀態機。
+ *
+ * 為什麼不能只看「突破 1.1 兆就亮」：高檔爆量跟打底後放量，單日數字長得一模一樣，
+ * 但一個是出貨、一個是進場。差別不在那一天，在**它之前發生過什麼**。
+ * 所以要先看到量縮打底（< 7,000 億）進入待命，之後的突破才算數。
+ *
+ * 狀態：
+ *   idle  ── 沒事
+ *   armed ── 出現過量縮，在等突破（這其實是最該注意的狀態，不是亮燈）
+ *   fired ── 待命期間內突破了，亮燈；亮完回到 idle，要重新打底才會再亮
+ *
+ * 待命有沒有期限？原始建議沒說。半年前的量縮配上今天的突破顯然不該算數，
+ * 所以我加了一個 armWindow（預設 30 個交易日）並且放進門檻檔可調 ——
+ * 這是我補的假設，不是講者給的，標在這裡免得日後被當成原始設定。
+ */
+export function evalVolume(series, cfg){
+  var c = (cfg && cfg.volume) || {};
+  var quiet    = c.quietBelow    || 7000;      // 億元
+  var breakout = c.breakoutAbove || 11000;
+  var overheat = c.overheatAbove || 13000;
+  var win      = c.armWindow     || 30;
+
+  var vals = series.map(function(r){ return r.total; });
+  var state = "idle", armedAt = null, firedAt = null, armedDate = null;
+
+  for(var i=0;i<vals.length;i++){
+    var v = vals[i];
+    if(v === null || v === undefined || !isFinite(v)) continue;
+    if(armedAt !== null && (i - armedAt) > win){ armedAt = null; }   // 待命過期
+    if(v < quiet){
+      armedAt = i; armedDate = series[i].date;                      // 量縮，重新計時
+    }else if(armedAt !== null && v > breakout){
+      firedAt = i; armedAt = null;                                  // 觸發後要重新打底
+    }
+  }
+  state = firedAt === vals.length - 1 ? "fired" : (armedAt !== null ? "armed" : "idle");
+
+  var last = vals.length ? vals[vals.length-1] : null;
+  var reasons = [];
+  if(state === "fired"){
+    reasons.push("量縮打底後突破 " + (breakout/10000).toFixed(2) + " 兆");
+    // 突破當天就已經爆到過熱區，值得講一句 —— 那正是「高檔爆量」長的樣子
+    if(last > overheat) reasons.push("但同日已達 " + (overheat/10000).toFixed(2) + " 兆過熱區，留意是換手還是出貨");
+  }
+
+  return {
+    state: state, lit: state === "fired", reasons: reasons,
+    ready: vals.length > 0,
+    last: last, armedSince: armedAt !== null ? armedDate : null,
+    daysArmed: armedAt !== null ? (vals.length - 1 - armedAt) : null,
+    thresholds: {quiet:quiet, breakout:breakout, overheat:overheat, armWindow:win}
+  };
+}
+
 /* 只在「由不亮轉成亮」的那一天記一筆。
    每天亮就每天記的話，一段趨勢會產生幾十列，之後算命中率會被同一個訊號灌爆。 */
 export function shouldLog(wasLit, isLit){ return !wasLit && isLit; }
 
 export const DEFAULTS = {
-  fx: { consecutiveDays:3, fastMA:5, slowMA:20 }
+  fx: { consecutiveDays:3, fastMA:5, slowMA:20 },
+  volume: { quietBelow:7000, breakoutAbove:11000, overheatAbove:13000, armWindow:30 }
 };
 
 /* ── 自測 ── */
@@ -142,6 +197,43 @@ function selfTest(){
   // shouldLog
   ok("由暗轉亮才記錄", shouldLog(false,true) === true && shouldLog(true,true) === false
      && shouldLog(true,false) === false);
+
+  // ── 量能兩段式狀態機 ──
+  var V = function(arr){ return arr.map(function(v,i){
+    return {date:"2026-09-"+String(i+1).padStart(2,"0"), total:v}; }); };
+
+  // 沒打底就直接爆量 → 不該亮。這是整個狀態機存在的理由。
+  ok("沒量縮直接突破 → 不亮（高檔爆量不是買訊）",
+     evalVolume(V([9000,9500,10000,11500]), DEFAULTS).lit === false,
+     evalVolume(V([9000,9500,10000,11500]), DEFAULTS).state);
+
+  // 先打底再突破 → 亮
+  var arm = evalVolume(V([9000,6500,8000,9000,11500]), DEFAULTS);
+  ok("量縮打底後突破 → 亮", arm.lit === true && arm.state === "fired", arm);
+
+  // 打底後還沒突破 → armed，不是 idle 也不是亮
+  var waiting = evalVolume(V([9000,6500,8000,9000]), DEFAULTS);
+  ok("打底後等待中 → armed", waiting.state === "armed" && waiting.lit === false, waiting);
+  ok("armed 會記得從哪天開始", waiting.armedSince === "2026-09-02" && waiting.daysArmed === 2, waiting);
+
+  // 待命過期：量縮之後太久才突破，不算
+  var stale = [6500]; for(var q=0;q<40;q++) stale.push(9000); stale.push(11500);
+  ok("量縮後超過 armWindow 才突破 → 不亮",
+     evalVolume(V(stale), DEFAULTS).lit === false, evalVolume(V(stale), DEFAULTS).state);
+
+  // 亮完要重新打底
+  var again = evalVolume(V([6500,11500,9000,11800]), DEFAULTS);
+  ok("亮過之後沒重新打底就再突破 → 不亮", again.lit === false, again.state);
+
+  // 過熱區會加註但仍算亮
+  var hot = evalVolume(V([6500,13500]), DEFAULTS);
+  ok("突破當日直接爆到過熱區 → 亮但加註",
+     hot.lit === true && hot.reasons.length === 2 && hot.reasons[1].indexOf("過熱") >= 0, hot.reasons);
+
+  // 門檻可調：同一組資料換門檻結果要不同
+  ok("門檻調高後同一組資料不亮",
+     evalVolume(V([6500,11500]), {volume:{quietBelow:7000,breakoutAbove:12000,
+       overheatAbove:13000,armWindow:30}}).lit === false);
 
   console.error(fails.length ? "\n✗ " + fails.length + " 項失敗" : "\n全部通過");
   return fails.length;

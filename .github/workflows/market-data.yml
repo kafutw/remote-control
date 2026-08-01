@@ -51,13 +51,6 @@ jobs:
       - name: 驗燈號判定規則
         run: node tools/signals.mjs --self-test
 
-      - name: 抓行情並計算均線
-        env:
-          # 選用：到 twelvedata.com 免費註冊拿金鑰，存成 repo secret 就會啟用。
-          # 沒設也能跑，只是少一個備援來源。
-          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
-        run: node tools/fetch-live.mjs -o data/live.json
-
       # 歷史日線是「跌破季線的歷史統計」的唯一根據，放著不管就會愈來愈舊，
       # 舊到讓圖表看起來像現在、其實是幾個月前。每天收盤後補一次缺口。
       # 這一步失敗不擋整個 workflow：即時報價比歷史補檔急，而且那支腳本
@@ -73,6 +66,21 @@ jobs:
             node tools/update-history.mjs
           fi
 
+      # 成交值（上市＋上櫃）。跟補歷史同理，這一步失敗不擋整個 workflow ——
+      # 抓不到就維持原檔，量能燈號會顯示「資料不全，不判定」而不是給一個偏低的結論。
+      # 注意順序：這一步要在 fetch-live 之前跑，燈號判定才讀得到當天的成交值。
+      - name: 抓每日成交值
+        id: turnover
+        continue-on-error: true
+        run: node tools/fetch-turnover.mjs --months 2
+
+      - name: 抓行情並計算均線
+        env:
+          # 選用：到 twelvedata.com 免費註冊拿金鑰，存成 repo secret 就會啟用。
+          # 沒設也能跑，只是少一個備援來源。
+          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
+        run: node tools/fetch-live.mjs -o data/live.json
+
       # 統計從 CSV 重算，寫成 data/history-stats.json，頁面優先讀它。
       # 這一步同時會對帳 watchtower.html 裡寫死的備援值有沒有跟 CSV 脫節；
       # 脫節不算失敗（線上讀 JSON 看到的是對的），但一定要在 log 上喊出來。
@@ -85,7 +93,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/live.json data/daily-*.csv data/history-stats.json data/fx-usdtwd.csv data/signals.csv data/thresholds.json
+          git add data/live.json data/daily-*.csv data/history-stats.json data/fx-usdtwd.csv data/signals.csv data/thresholds.json data/turnover.csv
           if git diff --staged --quiet; then
             echo "行情沒有變動，不 commit"
           else

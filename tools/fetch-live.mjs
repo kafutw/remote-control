@@ -24,13 +24,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { readHistory, deriveFx, writeHistory } from "./fx-daily.mjs";
-import { evalFx, shouldLog, DEFAULTS } from "./signals.mjs";
+import { evalFx, evalVolume, shouldLog, DEFAULTS } from "./signals.mjs";
 
 const outIdx = process.argv.indexOf("-o");
 const OUT = outIdx >= 0 ? process.argv[outIdx + 1] : "data/live.json";
 const FX_HIST   = "data/fx-usdtwd.csv";
 const THRESHOLDS = "data/thresholds.json";
 const SIGNAL_LOG = "data/signals.csv";
+const TURNOVER   = "data/turnover.csv";
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/125 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const sma = (a, n) => a.length < n ? null : a.slice(-n).reduce((x, y) => x + y, 0) / n;
@@ -418,13 +419,65 @@ if(fxEntry && !fxEntry.error && fxEntry.price){
   }
 }
 
+/* 量能燈號。成交值由 tools/fetch-turnover.mjs 另外抓進 data/turnover.csv，
+   這裡只負責判定並把結果放進 live.json，頁面就不必再讀一份 CSV。 */
+const volume = (() => {
+  try{
+    const rows = fs.readFileSync(TURNOVER,"utf8").split(/\r?\n/).slice(1).filter(Boolean)
+      .map(l => l.split(","))
+      .filter(c => /^\d{4}-\d{2}-\d{2}$/.test((c[0]||"").trim()))
+      .map(c => ({ date:c[0].trim(),
+                   twse: c[1] ? Number(c[1]) : null,
+                   tpex: c[2] ? Number(c[2]) : null,
+                   total: c[3] ? Number(c[3]) : null }));
+    if(!rows.length) return null;
+
+    // 只有兩個市場都齊的日子才進判定。少了上櫃的日子留在檔案裡供對照，
+    // 但不能拿去比門檻 —— 那組門檻是上市＋上櫃校準的。
+    const full = rows.filter(r => r.total !== null && isFinite(r.total));
+    const incomplete = rows.length - full.length;
+
+    let cfg = DEFAULTS;
+    try{ cfg = JSON.parse(fs.readFileSync(THRESHOLDS,"utf8")); }catch(e){}
+
+    const sig = evalVolume(full, cfg);
+    const out = {
+      ...sig,
+      complete: full.length, incomplete,
+      // 最近一天如果資料不全，就明講「不判定」而不是給一個偏低的結論
+      latestPartial: rows.length > 0 && rows[rows.length-1].total === null,
+      series: rows.slice(-60)
+    };
+    console.error(`  量能 ${sig.last ?? "—"} 億　狀態 ${sig.state}`
+      + (sig.armedSince ? `（自 ${sig.armedSince} 待命 ${sig.daysArmed} 日）` : "")
+      + (out.latestPartial ? "　⚠️ 最新一日缺上櫃，不判定" : ""));
+
+    if(sig.ready && !out.latestPartial && full.length >= 2){
+      const prev = evalVolume(full.slice(0,-1), cfg);
+      const day = full[full.length-1].date;
+      if(shouldLog(prev.lit, sig.lit) && !alreadyLogged(SIGNAL_LOG, day, "volume")){
+        appendSignal(SIGNAL_LOG, {
+          date: day, indicator:"volume", signal:"量縮後放量",
+          twii:(data.twii && data.twii.price) || "", note: sig.reasons.join("；")
+        });
+        console.error(`  ⚡ 量能燈號亮起並記錄：${sig.reasons.join("；")}`);
+      }
+    }
+    return out;
+  }catch(e){
+    console.error("  量能燈號略過：" + e.message);
+    return null;
+  }
+})();
+
 const payload = {
   generatedAt: new Date().toISOString(),
   generatedAtTaipei: new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Taipei",dateStyle:"short",timeStyle:"medium"})
                        .format(new Date()),
   sources: { note:"每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
              order:"台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo" },
-  ok, failed: bad, crossCheck, data
+  ok, failed: bad, crossCheck, data,
+  volume            // 量能燈號：判定在抓取端做完，頁面只負責顯示
 };
 
 /* ADR 溢價：ADR × 匯率 ÷ 5 ÷ 台積電台股價 − 1 */

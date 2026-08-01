@@ -5,5 +5,14 @@
     "consecutiveDays": 3,
     "fastMA": 5,
     "slowMA": 20
+  },
+  "volume": {
+    "_what": "上市＋上櫃每日成交值合計，單位億元。兩段式：先量縮打底進待命，之後突破才亮燈 —— 單看突破會把高檔爆量當成買訊。",
+    "_unit": "億元（7000＝7,000 億，11000＝1.1 兆）",
+    "_armWindow": "待命的有效期限（交易日）。原始建議沒有給，這是補上的假設。",
+    "quietBelow": 7000,
+    "breakoutAbove": 11000,
+    "overheatAbove": 13000,
+    "armWindow": 30
   }
 }
