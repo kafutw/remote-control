@@ -130,7 +130,11 @@ section{margin-top:30px}
 }
 .grp .kx:last-child{border-bottom:none}
 .kx .bar{flex:0 0 70px;display:block}
+/* .inv＝要提醒的情況（VIX 漲，或是低檔還在跌的自滿）用琥珀色；
+   .inv2＝單純的好消息（恐慌消退）用一般輔助色。
+   VIX 下跌卻塗成警示色，等於用顏色說了跟文字相反的話。 */
 .kx .n small.inv{color:var(--warnInk);letter-spacing:0;text-transform:none;font-size:9.5px}
+.kx .n small.inv2{color:var(--ink3);letter-spacing:0;text-transform:none;font-size:9.5px}
 .kx .nobar{
   font-size:9px;color:var(--ink3);text-align:center;line-height:20px;
   letter-spacing:.04em
@@ -138,28 +142,6 @@ section{margin-top:30px}
 .scale{
   color:var(--ink3);font-size:10.5px;margin-top:5px;text-align:right;letter-spacing:.02em
 }
-
-/* ── 我的持股 ── */
-.hdrow{
-  display:flex;align-items:center;gap:12px;background:var(--sheet);text-decoration:none;color:var(--ink);
-  border:1px solid var(--rule);border-top:none;padding:12px 14px;transition:background .12s
-}
-.hdrow:first-of-type{border-top:1px solid var(--rule);border-radius:5px 5px 0 0}
-.hdrow:last-of-type{border-radius:0 0 5px 5px}
-.hdrow:hover{background:var(--paper)}
-.hdrow .nm{flex:1 1 auto;min-width:0}
-.hdrow .nm .n{font-size:15px;font-weight:700}
-.hdrow .nm .c{font-size:10.5px;color:var(--ink3);margin-top:3px;font-family:ui-monospace,Menlo,monospace}
-.hdrow .nm .tg{
-  font-family:-apple-system,sans-serif;background:var(--paper);border:1px solid var(--rule2);
-  border-radius:3px;padding:1px 5px;font-size:9.5px;letter-spacing:.04em
-}
-.hdrow.stale .nm .tg{background:var(--warnBg);border-color:var(--warnLine);color:var(--warnInk)}
-.hdrow .px{flex:0 0 86px;width:86px;text-align:right;font-variant-numeric:tabular-nums;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-.hdrow .px .p{font-size:19px;font-weight:700;line-height:1.2}
-.hdrow .px .bi{font-size:10.5px;margin-top:2px}
-.hdrow::after{content:"↗";color:var(--navy);font-size:11px;flex:0 0 auto}
 
 /* ── 今日基調 ── */
 .tone{background:var(--sheet);border:1px solid var(--rule);border-top:3px solid var(--flat);border-radius:0 0 5px 5px;padding:16px;margin-top:10px}
@@ -233,7 +215,15 @@ section{margin-top:30px}
 .stk-h{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;background:var(--paper);border-bottom:1px solid var(--rule)}
 .stk-h .nm{flex:1;min-width:0}
 .stk-h .nm .n{font-size:17px;font-weight:800;letter-spacing:-.01em}
-.stk-h .nm .c{font-size:10.5px;color:var(--ink3);font-family:ui-monospace,Menlo,monospace;margin-top:2px;letter-spacing:.06em}
+.stk-h .nm .c{font-size:10.5px;color:var(--ink3);font-family:ui-monospace,Menlo,monospace;margin-top:3px;letter-spacing:.06em}
+.stk-h .nm .c a{color:var(--navy);text-decoration:none}
+.stk-h .nm .c a:hover{text-decoration:underline}
+/* 價格旁邊的日期標記。過期的換成警示色 —— 沒有日期的價格看起來都像今天的 */
+.stk-h .nm .tg{
+  font-family:-apple-system,sans-serif;background:var(--sheet);border:1px solid var(--rule2);
+  border-radius:3px;padding:1px 5px;font-size:9.5px;letter-spacing:.04em;white-space:nowrap
+}
+.stk-h .nm .tg.stale{background:var(--warnBg);border-color:var(--warnLine);color:var(--warnInk)}
 .stk-h .rt{text-align:right;flex:0 0 auto}
 .stk-h .rt .p{font-size:20px;font-weight:700;line-height:1.2}
 .stk-h .rt .b{font-size:11.5px;font-weight:700;margin-top:3px}
@@ -335,14 +325,6 @@ section{margin-top:30px}
   .kx .v{font-size:17px}
   .kx .c{font-size:18px;flex-basis:92px}
 
-  .hdrow{padding:15px 17px}
-  .hdrow .nm .n{font-size:18px}
-  .hdrow .nm .c{font-size:12px}
-  .hdrow .nm .tg{font-size:11px}
-  .hdrow .px{flex:0 0 104px;width:104px}
-  .hdrow .px .p{font-size:23px}
-  .hdrow .px .bi{font-size:12px}
-
   .row{padding:14px 17px}
   .row .nm .n{font-size:17px}
   .row .nm .c{font-size:12px}
@@ -404,12 +386,11 @@ section{margin-top:30px}
   .kx:last-child{border-bottom:1px solid var(--rule)}
   .grp .kx:last-child{border-bottom:1px solid var(--rule)}
 
-  /* 行情列、持股、觀察重點、新聞：兩欄 */
-  #us,#tw,#cross,#holdings,#points,#news{
+  /* 行情列、觀察重點、新聞：兩欄 */
+  #tw,#cross,#points,#news{
     display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start
   }
-  #us>.row,#tw>.row,#cross>.row,
-  #holdings>.hdrow,#points>.pt,#news>.news{
+  #tw>.row,#cross>.row,#points>.pt,#news>.news{
     border:1px solid var(--rule);border-radius:5px
   }
   /* 說明文字橫跨整列，不要被擠成半欄 */
@@ -434,7 +415,6 @@ section{margin-top:30px}
   .tone .lv{font-size:29px}
   .tone .txt{font-size:17px}
   .kx .n{font-size:17px} .kx .c{font-size:19px} .kx .v{font-size:18px}
-  .hdrow .nm .n{font-size:19px} .hdrow .px .p{font-size:25px}
   .row .nm .n{font-size:18px} .row .px .p{font-size:21px} .pctbox .pv{font-size:20px}
   .pt{font-size:16.5px} .news .t{font-size:17px} .news .d{font-size:14.5px}
   .adr .big{font-size:42px} .kv{font-size:15.5px} .kv b{font-size:19px}
@@ -492,11 +472,6 @@ section{margin-top:30px}
       這一區在 GitHub Pages 版本上每 60 秒自動更新。</div>
   </section>
 
-  <section>
-    <div class="sec-h"><div class="ic">💼</div><h2>我的持股</h2><div class="hint" id="hdWhen"></div></div>
-    <div id="holdings"></div>
-    <div id="hdSrc"></div>
-  </section>
 
   <section>
     <div class="sec-h"><div class="ic">🔗</div><h2>台積電 ADR ↔ 台股</h2><div class="hint">開盤前最重要的一格</div></div>
@@ -514,8 +489,9 @@ section{margin-top:30px}
   </section>
 
   <section>
-    <div class="sec-h"><div class="ic">📌</div><h2>個股深度</h2><div class="hint">基本面＋均線位階＋歷史統計</div></div>
+    <div class="sec-h"><div class="ic">📌</div><h2>個股深度</h2><div class="hint" id="stkWhen"></div></div>
     <div id="stocks"></div>
+    <div id="stkSrc"></div>
   </section>
 
   <section>
@@ -581,15 +557,6 @@ var BRIEF = {
        + "不是新高行情；漲停打開後的隔日走勢，比今天的漲點更能說明事情。"
   },
 
-  holdings: [
-    {code:"2330", n:"台積電", p:2425, pct:9.98, dp:0, ma60:2346,
-     asOf:"2026-07-31", tag:"07/31 漲停", url:"https://tw.stock.yahoo.com/quote/2330.TW"},
-    {code:"0050", n:"元大台灣 50", p:102.85, pct:10.0, dp:2, ma60:null,
-     asOf:"2026-07-31", tag:"07/31 漲停（由 93.50 推算）", url:"https://tw.stock.yahoo.com/quote/0050.TW"},
-    {code:"0056", n:"元大高股息", p:46.29, pct:null, dp:2, ma60:null,
-     asOf:"2026-07-30", tag:"07/30 收盤", url:"https://tw.stock.yahoo.com/quote/0056.TW"}
-  ],
-
   crossWhen: "2026/07/31",
   cross: [
     {n:"USD／TWD", c:"open.er-api.com",              p:32.38,   pct:null,  dp:3},
@@ -644,7 +611,8 @@ var BRIEF = {
           + "「跌破季線之後 60 日多半是正的」這個結論高度反映當時環境，<b>不能直接套到空頭或盤整市</b>。",
   histCoverage: {to:"2026-07-31", stale:null},
   stocks: [
-    { code:"2330", n:"台積電", price:2425, ma60:2346,
+    { code:"2330", n:"台積電", price:2425, pct:9.98, dp:0, ma60:2346,
+      asOf:"2026-07-31", tag:"07/31 漲停", url:"https://tw.stock.yahoo.com/quote/2330.TW",
       facts:[
         {k:"07/31 收盤", v:"2,425 元", s:"漲停 +220，史上最大單日漲點，市值 62.88 兆"},
         {k:"6 月營收",   v:"4,426.8 億", s:"年增 +67.87%，連 2 月創新高"},
@@ -656,7 +624,8 @@ var BRIEF = {
       hist:{breaks:12, eff:6, fake:6, perYear:4.93, deepMed:-6.22,
             deepQ:"−11.73% ～ −1.18%", backMed:5, backMax:51, r60Med:6.57, win:60,
             events:[13.51, 6.57, 0, -8.47, 29.02], pending:1} },
-    { code:"0050", n:"元大台灣 50", price:null, ma60:null,
+    { code:"0050", n:"元大台灣 50", price:102.85, pct:10.0, dp:2, ma60:null,
+      asOf:"2026-07-31", tag:"07/31 漲停", url:"https://tw.stock.yahoo.com/quote/0050.TW",
       facts:[
         {k:"07/31",     v:"漲停",     s:"跟著台積電亮燈"},
         {k:"7 月配息",   v:"0.60 元",  s:"7/21 除息，8/10 發放"},
@@ -666,7 +635,8 @@ var BRIEF = {
       hist:{breaks:14, eff:6, fake:8, perYear:5.8, deepMed:-6.65,
             deepQ:"−11.56% ～ −1.11%", backMed:8, backMax:51, r60Med:3.49, win:60,
             events:[9.04, 5.31, 3.49, -0.16, -6.71], pending:1} },
-    { code:"0056", n:"元大高股息", price:null, ma60:null,
+    { code:"0056", n:"元大高股息", price:49.48, pct:6.89, dp:2, ma60:null,
+      asOf:"2026-07-31", tag:"07/31 收盤", url:"https://tw.stock.yahoo.com/quote/0056.TW",
       facts:[
         {k:"7 月配息",   v:"1.35 元",  s:"7/21 除息，8/10 發放"},
         {k:"近 5 年均殖利率", v:"7.91%", s:""},
@@ -905,8 +875,13 @@ function renderKey(){
   function rowHTML(r){
     return '<div class="kx'+(r.live?" live":"")+'">'
       + '<div class="n">'+esc(r.label)
-      // 這一列漲跌的好壞意義是反的，就寫在標籤上，不要讓讀者自己記
-      +   (r.invert ? '<small class="inv">漲＝避險升溫，對股市偏空</small>'
+      // 這一列漲跌的好壞意義是反的，就寫在標籤上，不要讓讀者自己記。
+      // 標的是今天實際的方向，不是固定寫「漲＝…」——
+      // VIX 明明在跌卻寫著漲會怎樣，讀者得自己在腦裡轉一次。
+      +   (r.invert ? (function(){
+              var dn = vixDirNote(r.pct, vixLevel(r.p), vixPctile(BRIEF.vix));
+              return '<small class="'+(dn.warn?"inv":"inv2")+'">'+esc(dn.t)+'</small>';
+            })()
                     : '<small>'+esc(r.tag)+'</small>')
       + '</div>'
       + (r.p===null||r.p===undefined ? '' : '<div class="v">'+fmt(r.p, r.dp)+'</div>')
@@ -942,38 +917,15 @@ function daysOld(iso){
   var d = Math.floor((Date.now() - Date.parse(iso+"T13:30:00+08:00")) / 86400000);
   return d > 0 ? d : 0;
 }
-function renderHoldings(){
-  var live = BRIEF.holdingsLive;
-  $("hdWhen").textContent = live ? "即時 · "+live : "快照 · 非即時";
-  $("holdings").innerHTML = BRIEF.holdings.map(function(s){
-    var old = live ? 0 : daysOld(s.asOf);
-    var stale = old !== null && old >= 1;
-    var bias = (s.p!==null && s.ma60) ? (s.p/s.ma60-1)*100 : null;
-    return '<a class="hdrow'+(stale?" stale":"")+'" href="'+s.url+'" target="_blank" rel="noopener">'
-      + '<div class="nm"><div class="n">'+esc(s.n)+'</div>'
-      +   '<div class="c">'+esc(s.code)+'　<span class="tg">'+esc(s.tag)+(stale?'　· 已過 '+old+' 天':'')+'</span></div></div>'
-      + '<div class="px"><div class="p">'+fmt(s.p,s.dp)+'</div>'
-      +   (bias!==null?'<div class="bi '+cls(bias)+'">季線 '+(bias>0?"+":"")+bias.toFixed(1)+'%</div>':'')+'</div>'
-      + '<div class="pctbox '+cls(s.pct)+'"><div class="pv">'+arrow(s.pct)+' '
-      +   (s.pct===null?"—":Math.abs(s.pct).toFixed(2)+"%")+'</div></div>'
-      + '</a>';
-  }).join("");
-
-  $("hdSrc").innerHTML = live
-    ? '<div class="note">✅ 這三檔已由 <b>data/live.json</b> 更新（GitHub Actions 打 Yahoo Finance ＋ 證交所雙來源對帳）。</div>'
-    : '<div class="pend">⚠️ <b>這不是即時報價，是有標日期的收盤快照。</b>'
-      + '你現在看的是 claude.ai 版本，安全政策擋掉頁面所有對外請求，所以它抓不到行情 —— '
-      + '<b>直接點上面任一列</b>就會開啟 Yahoo 的即時報價。<br>'
-      + '<b>GitHub Pages 版本會自己更新</b>：盤中每 60 秒重讀一次 data/live.json，'
-      + '而那份檔案由 GitHub Actions 在 08:02～08:52 每 10 分鐘、以及 06:50／09:02／13:45 各跑一次產生。</div>';
-}
-
 /* 有 live.json 就用它覆蓋（GitHub Pages 同源才抓得到；Artifact 會靜靜失敗並保留快照） */
 function applyLive(j){
   var d = j && j.data; if(!d) return;
   var map = {"2330":"tsmc", "0050":"e0050", "0056":"e0056"};
   var used = false;
-  BRIEF.holdings.forEach(function(s){
+  // 即時報價寫進「個股深度」的卡片。原本有一區「我的持股」在做這件事，
+  // 那一區拿掉之後，價格就直接長在有均線與歷史統計的那三張卡片上 ——
+  // 反正要判斷的是同樣那三檔，價格跟它的季線位階本來就該擺在一起看。
+  BRIEF.stocks.forEach(function(s){
     var v = d[map[s.code]];
     if(!v || v.error || !v.price) return;
     // 證交所盤後才結算，抓到的常是前一交易日。
@@ -983,17 +935,17 @@ function applyLive(j){
     // 舊資料悄悄蓋掉新資料，比完全沒有更新更危險。
     if(v.asOf && s.asOf){ if(v.asOf < s.asOf) return; }
     else if(v.marketState !== "REG_MKT" && s.asOf) return;
-    s.p = v.price; s.pct = (v.pct===null||v.pct===undefined)?null:v.pct;
+    s.price = v.price; s.pct = (v.pct===null||v.pct===undefined)?null:v.pct;
     if(v.ma60) s.ma60 = v.ma60;
-    // 收盤價一定要帶哪一天的收盤。只寫「收盤」，隔天再看就分不出是今天還是上週的。
+    // 價格一定要帶哪一天的收盤。只寫「收盤」，隔天再看就分不出是今天還是上週的。
     if(v.asOf) s.asOf = v.asOf;
     s.tag = (v.marketState==="REG_MKT") ? "盤中"
           : (v.asOf ? v.asOf.slice(5).replace("-","/") + " 收盤" : "收盤");
     used = true;
   });
   if(used){
-    BRIEF.holdingsLive = j.generatedAtTaipei || "已更新";
-    renderHoldings();
+    BRIEF.stocksLive = j.generatedAtTaipei || "已更新";
+    renderStocks();
   }
 
   // 日韓指標跟台股持股是各自獨立的資料，不要綁在一起：
@@ -1225,6 +1177,9 @@ function renderCross(){
 function ym(d){ return String(d||"").slice(0,7).replace("-","/"); }
 
 function renderStocks(){
+  var live = BRIEF.stocksLive;
+  var sw = $("stkWhen"); if(sw) sw.textContent = live ? "即時 · "+live : "快照 · 非即時";
+
   // 三檔的點圖共用同一個 x 尺度，否則「0056 偏左、2330 偏右」這件事會被各自縮放抹掉
   var dom = 5;
   BRIEF.stocks.forEach(function(s){
@@ -1240,11 +1195,23 @@ function renderStocks(){
   $("stocks").innerHTML = BRIEF.stocks.map(function(s){
     var bias = (s.price!==null && s.ma60) ? (s.price/s.ma60-1)*100 : null;
     var h = s.hist;
+    // 價格一定要跟「哪一天的價格」擺在一起。沒有日期的價格，隔天再看
+    // 分不出是今天的還是上週的 —— 這是這頁一路在防的失敗模式。
+    var old = live ? 0 : daysOld(s.asOf);
+    var stale = old !== null && old >= 1;
     return '<div class="stk">'
       + '<div class="stk-h"><div class="nm"><div class="n">'+esc(s.n)+'</div>'
-      +   '<div class="c">'+esc(s.code)+'</div></div>'
-      +   (s.price!==null
-            ? '<div class="rt"><div class="p">'+fmt(s.price,0)+'</div>'
+      +   '<div class="c">'
+      +     (s.url ? '<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.code)+' ↗</a>'
+                   : esc(s.code))
+      +     (s.tag ? '　<span class="tg'+(stale?" stale":"")+'">'+esc(s.tag)
+                     + (stale?'　· 已過 '+old+' 天':'') + '</span>' : '')
+      +   '</div></div>'
+      +   (s.price!==null && s.price!==undefined
+            // dp 逐檔給：0050 是 102.85、0056 是 49.48，用 0 位數會被四捨五入成整數
+            ? '<div class="rt"><div class="p">'+fmt(s.price, s.dp===undefined?0:s.dp)+'</div>'
+              + (s.pct!==null && s.pct!==undefined
+                  ? '<div class="b '+cls(s.pct)+'">'+arrow(s.pct)+' '+Math.abs(s.pct).toFixed(2)+'%</div>' : '')
               + (bias!==null ? '<div class="b '+cls(bias)+'">季線 '+(bias>0?"+":"")+bias.toFixed(1)+'%</div>' : '')
               + '</div>'
             : '')
@@ -1283,6 +1250,17 @@ function renderStocks(){
         : '')
     + histCoverageNote()
     + '<div class="note">'+BRIEF.histNote+'</div>';
+
+  // 卡片上的價格是即時的還是有標日期的快照，要講清楚，不能讓讀者自己猜
+  var ss = $("stkSrc");
+  if(ss) ss.innerHTML = live
+    ? '<div class="note">✅ 上面三張卡片的價格已由 <b>data/live.json</b> 更新（'+esc(live)+'），'
+      + '盤中每 60 秒重讀一次。</div>'
+    : '<div class="pend">⚠️ <b>上面的價格不是即時報價，是有標日期的收盤快照</b>（日期標在代號旁邊）。'
+      + '你現在看的是 claude.ai 版本，安全政策擋掉頁面所有對外請求，所以它抓不到行情 —— '
+      + '<b>點卡片標題旁的代號</b>就會開啟 Yahoo 的即時報價。<br>'
+      + '<b>GitHub Pages 版本會自己更新</b>：盤中每 60 秒重讀一次 data/live.json，'
+      + '而那份檔案由 GitHub Actions 在 08:02～08:52 每 10 分鐘、以及 06:50／09:02／13:45 各跑一次產生。</div>';
 }
 
 /* 歷史資料涵蓋到哪一天，由資料本身講，不是寫死的一句話。
@@ -1308,22 +1286,55 @@ function histCoverageNote(){
    單看「VIX +8%」不知道是從平靜漲到還是平靜，還是從警戒漲進恐慌。 */
 function vixLevel(v){
   if(v===null || v===undefined || !isFinite(v)) return null;
-  if(v < 15) return {t:"平靜", d:"避險成本低，市場沒有在擔心"};
-  if(v < 20) return {t:"偏低", d:"正常區間，多頭環境常見的水位"};
-  if(v < 30) return {t:"警戒", d:"避險需求明顯升溫，波動放大"};
-  return {t:"恐慌", d:"恐慌區，通常伴隨急跌；歷史上也常是階段性底部附近"};
+  // 帶著 v 一起回傳，vixDirNote 判斷「跌」的意義時要用到水位
+  if(v < 15) return {v:v, t:"平靜", d:"避險成本低，市場沒有在擔心"};
+  if(v < 20) return {v:v, t:"偏低", d:"正常區間，多頭環境常見的水位"};
+  if(v < 30) return {v:v, t:"警戒", d:"避險需求明顯升溫，波動放大"};
+  return {v:v, t:"恐慌", d:"恐慌區，通常伴隨急跌；歷史上也常是階段性底部附近"};
+}
+
+/* VIX 那列的小字：跟著今天的方向走。
+   關鍵是「跌」不能一律當成好消息 —— 低檔 VIX 再跌不是更安全，
+   而是避險已經便宜到沒人在防備，市場對突發利空最脆弱的時候。
+   同一個方向在不同位階代表不同的事，跟這頁「假跌破 vs 有效跌破」是同一個思路。 */
+function vixDirNote(pct, lv, pctile){
+  if(pct===null || pct===undefined || !isFinite(pct) || pct===0)
+    return {t:"漲＝避險升溫偏空　跌＝避險降溫偏多", warn:false};
+  if(pct > 0) return {t:"漲＝避險升溫，對股市偏空", warn:true};
+  var v = lv && lv.v;
+  if(v !== undefined && v >= 20) return {t:"跌＝恐慌消退，對股市偏多", warn:false};
+  // 自滿的判斷用兩個條件，任一成立就算：絕對水位低於 15，
+  // 或者在自己過去 52 週的區間裡落在最低的 15%。
+  // 只看絕對值會漏掉「以近一年的標準來說已經很低了，只是還沒破 15」——
+  // 今天 15.99 就是這種：數字看起來普通，但它是一年來第 12 百分位。
+  var low = (v !== undefined && v < 15)
+         || (pctile !== null && pctile !== undefined && pctile <= 15);
+  if(low) return {t:"跌＝偏多，但已接近自滿", warn:true};
+  return {t:"跌＝避險降溫，對股市偏多", warn:false};
+}
+/* VIX 在自己過去 52 週區間裡的百分位（0＝一年最平靜、100＝一年最恐慌） */
+function vixPctile(v){
+  if(!v || !v.lo52 || !v.hi52 || v.hi52 <= v.lo52) return null;
+  return Math.round((v.p - v.lo52) / (v.hi52 - v.lo52) * 100);
 }
 
 function vixNote(v, lv){
   return '<div class="note"><b>VIX '+fmt(v.p,2)+'　'+esc(lv.t)+'</b> —— '+esc(lv.d)+'。'
-    + (v.lo52 && v.hi52
+    + (vixPctile(v)!==null
         ? '過去 52 週的區間是 <b>'+fmt(v.lo52,2)+' ～ '+fmt(v.hi52,2)+'</b>，'
-          + '目前落在 <b>'+Math.round((v.p-v.lo52)/(v.hi52-v.lo52)*100)+'%</b> 分位（0% 是一年最平靜、100% 是一年最恐慌）。'
+          + '目前落在 <b>'+vixPctile(v)+'%</b> 分位（0% 是一年最平靜、100% 是一年最恐慌）。'
         : '')
-    + '<br>VIX 衡量的是 S&P 500 未來 30 天的隱含波動度，<b>它上漲代表避險情緒升高，'
-    + '對股市是壞消息</b> —— 跟這頁其他數字的紅綠意義相反。'
-    + '顏色仍照台股慣例（紅漲綠跌），<b>看到 VIX 是紅的要反過來理解</b>。'
-    + '分級：15 以下平靜／15–20 偏低／20–30 警戒／30 以上恐慌。'
+    + '<br>VIX 衡量的是 S&P 500 未來 30 天的隱含波動度，也就是市場願意花多少錢避險。'
+    + '<b>漲＝避險需求升高＝對股市偏空；跌＝避險需求退燒＝對股市偏多。</b>'
+    + '跟這頁其他數字的紅綠意義相反 —— 顏色仍照台股慣例（紅漲綠跌），'
+    + '<b>看到 VIX 是紅的要反過來理解</b>。'
+    + '<br><b>但「跌」要看是從哪裡跌下來。</b>從 30 以上的恐慌區往下掉，是恐慌真的在消退；'
+    + '<b>本來就很低還在繼續跌，代表避險便宜到沒人在防備</b> —— '
+    + '那不是更安全，而是市場對突發利空最沒有緩衝的時候。'
+    + '上面那行小字在<b>絕對水位低於 15</b>、<b>或是落在自己 52 週區間的最低 15%</b> 時，'
+    + '會改標成「已接近自滿」——「15.99」這種數字看起來普通，但它可能是一年來的低點附近，'
+    + '只看絕對值會漏掉。'
+    + '<br>水位分級：15 以下平靜／15–20 偏低／20–30 警戒／30 以上恐慌。'
     + (v.src ? '<br>資料來源：'+esc(v.src)+'（有即時檔時會被覆蓋）' : '')
     + '</div>';
 }
@@ -1395,7 +1406,7 @@ function tick(){
   $("clkd").textContent = t.date.slice(5).replace("-","/")+" 台北";
 }
 
-renderStamp(); renderTone(); renderKey(); renderHoldings(); renderAsia(); renderADR();
+renderStamp(); renderTone(); renderKey(); renderAsia(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
 tick(); setInterval(tick,1000);
 tryHistoryStats();      // 歷史統計改由 CSV 算出來的 JSON 覆蓋，寫死的那份只是備援
