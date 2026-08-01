@@ -489,6 +489,15 @@ section{margin-top:30px}
     <div id="tsmcCalNote"></div>
   </section>
 
+  <!-- 燈號：把指標壓成「一個數字＋一條門檻線」。
+       之後量能卡、台積電估值卡也放這一區。 -->
+  <section>
+    <div class="sec-h"><div class="ic">🚦</div><h2>資金燈號</h2>
+      <div class="hint" id="sigWhen"></div></div>
+    <div id="sigCards"></div>
+    <div id="sigNote"></div>
+  </section>
+
   <section id="adrSec">
     <div class="sec-h"><div class="ic">🔗</div><h2>台積電 ADR ↔ 台股</h2><div class="hint">完整換算</div></div>
     <div class="adr" id="adr"></div>
@@ -765,6 +774,47 @@ function pctBar(pct, domain, w, h){
        + '</svg>';
 }
 
+/* 圖④　匯率走勢：主線加兩條均線。
+   **Y 軸刻意不反轉。** USD/TWD 下降＝台幣升值，直覺上會想把軸翻過來讓「升值向上」，
+   但這頁對 VIX 也是同樣的狀況（漲＝壞），處理方式是顏色照舊、把反轉寫在文字上。
+   翻軸會讓這張圖跟同一頁其他圖的讀法不一致，而且看錯軸向是很難自己發現的錯 ——
+   所以維持原樣畫，方向在軸標與卡片文字上講清楚。 */
+function fxChart(series, ma5, ma20, w, h){
+  if(!series || series.length < 2) return "";
+  var pad = 4, iw = w - pad*2, ih = h - pad*2;
+  var vals = series.concat(ma5||[], ma20||[]).filter(function(v){ return v!==null && isFinite(v); });
+  var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+  if(!(hi > lo)){ hi = lo + 0.01; lo -= 0.01; }        // 完全平盤時不要除以零
+  var X = function(i){ return pad + (series.length<2 ? 0 : i/(series.length-1)*iw); };
+  var Y = function(v){ return pad + (1 - (v-lo)/(hi-lo)) * ih; };
+
+  function path(arr, col, wid, dash){
+    var d = "", started = false;
+    for(var i=0;i<arr.length;i++){
+      var v = arr[i];
+      if(v===null || v===undefined || !isFinite(v)){ started = false; continue; }
+      d += (started ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1) + " ";
+      started = true;
+    }
+    return d ? '<path d="'+d.trim()+'" fill="none" stroke="'+col+'" stroke-width="'+wid+'"'
+             + (dash?' stroke-dasharray="'+dash+'"':'') + ' stroke-linejoin="round"/>' : "";
+  }
+
+  var first = series[0], last = series[series.length-1];
+  /* 主線刻意**不用紅綠**。台幣升值本身不是好事也不是壞事 ——
+     對外資匯入是好的，對台積電毛利率是壞的（這頁兩邊都講過）。
+     用漲跌色會等於幫一個兩義的東西下判斷，而且會跟旁邊那行字打架：
+     線畫綠的、字寫「升值」配紅色，同一件事兩個顏色。
+     這張卡唯一有顏色的東西是燈本身，因為那才是真的做了判斷。 */
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" preserveAspectRatio="none" '
+       + 'role="img" aria-label="USD/TWD 近 '+series.length+' 日走勢，'
+       +   (last<first?'台幣走強':(last>first?'台幣走弱':'持平'))+'">'
+       + path(ma20||[], "var(--ink3)", 1, "3 2")
+       + path(ma5||[],  "var(--navy)", 1.2)
+       + path(series,   "var(--ink)", 1.8)
+       + '</svg>';
+}
+
 /* 圖③　跌破季線後 60 日報酬的分布：n 只有個位數到十幾個，
    畫成長條或直方圖都是把 4 個點假裝成一條分布，所以用點圖直接把每個事件畫出來。
    三檔共用同一個 x 尺度，才看得出 0056 的點整片偏左、2330 偏右。 */
@@ -987,7 +1037,7 @@ function applyLive(j){
 
   // 日韓指標跟台股持股是各自獨立的資料，不要綁在一起：
   // 證交所盤後結算落後而讓持股那三檔被擋下來時，日韓照樣該更新。
-  var asia = BRIEF.asia, touched = false, crossTouched = false, adrTouched = false;
+  var asia = BRIEF.asia, touched = false, crossTouched = false, adrTouched = false, sigTouched = false;
   [["n225","日經 225","^N225"],["kospi","韓國 KOSPI","^KS11"]].forEach(function(m){
     var v = d[m[0]];
     if(!v || v.error || !v.price) return;
@@ -1047,6 +1097,21 @@ function applyLive(j){
       BRIEF.adr.fx = fx.price;          // ADR 溢價率本來一直用過期匯率在算
       BRIEF.adr.fxAsOf = fxAsOf;
       BRIEF.adr.fxAsOfVia = fxRow.asOfVia;
+
+      // 燈號判定是在抓取端算好的（tools/signals.mjs 有離線自測），
+      // 頁面只負責顯示。兩邊各算一份就會出現「圖說亮、字說暗」。
+      if(fx.signal && fx.series){
+        var ser = fx.series.map(function(r){ return r.rate; });
+        BRIEF.fxSignal = {
+          asOf: fxAsOf, series: fx.series,
+          lit: fx.signal.lit, reasons: fx.signal.reasons || [],
+          ready: fx.signal.ready, have: fx.signal.have, need: fx.signal.need,
+          ma5: fx.signal.ma5, ma20: fx.signal.ma20,
+          // 畫圖用的整條均線在前端算，省得 live.json 為了畫圖多背兩條序列
+          ma5Series: movAvg(ser, 5), ma20Series: movAvg(ser, 20)
+        };
+        sigTouched = true;
+      }
       touched = true; crossTouched = true;
     }
   }
@@ -1064,6 +1129,7 @@ function applyLive(j){
 
   if(crossTouched) renderCross();
   if(adrTouched || crossTouched) renderADR();
+  if(sigTouched) renderSignals();
   renderPre();
 
   if(touched) renderKey();
@@ -1341,6 +1407,98 @@ function renderPre(){
     + '單日換算只是讓你知道方向與量級，不是預測。'
     + '一般日子台幣只動 0.1～0.3%，對應 0.04～0.12pp，<b>那個級距基本上是雜訊</b>；'
     + '真正值得回頭看三大法人的是單日 1% 以上。'
+    + '</div>';
+}
+
+/* 滾動平均。口徑跟 tools/signals.mjs 的 sma 刻意一致（不夠就留 null，
+   不要用比較短的窗口硬算一個看起來像 20 日均的東西）——
+   兩邊算出不同的線，比兩邊都沒有更糟。 */
+function movAvg(values, n){
+  return values.map(function(_, i){
+    if(i + 1 < n) return null;
+    var sum = 0;
+    for(var k = i + 1 - n; k <= i; k++){
+      if(values[k] === null || !isFinite(values[k])) return null;
+      sum += values[k];
+    }
+    return sum / n;
+  });
+}
+
+/* ── 資金燈號 ──
+   判定規則本身在 tools/signals.mjs（有離線自測），這裡只負責顯示。
+   頁面不重算一次 —— 兩邊各算一份就會出現「圖說亮、字說暗」。 */
+function renderSignals(){
+  var fx = BRIEF.fxSignal;
+  var w = $("sigWhen"); if(w) w.textContent = fx && fx.asOf ? fx.asOf + " 收盤" : "尚未有資料";
+
+  if(!fx || !fx.series || !fx.series.length){
+    $("sigCards").innerHTML = '<div class="pend">⚠️ <b>匯率歷史還沒開始累積。</b>'
+      + '這張卡需要 data/fx-usdtwd.csv 裡的每日匯率，而那份檔案由 GitHub Actions 在平日'
+      + '每天寫入一筆。<b>在 Actions 至少跑過一個交易日之前，這裡不會有東西</b> —— '
+      + '刻意留白而不是先畫一條假的線。</div>';
+    $("sigNote").innerHTML = "";
+    return;
+  }
+
+  var s = fx.series.map(function(r){ return r.rate; });
+  var dates = fx.series.map(function(r){ return r.date; });
+  var ready = fx.ready, lit = fx.lit;
+  var first = s[0], last = s[s.length-1];
+  var chg = first ? (last/first - 1) * 100 : null;
+
+  // 燈：資料不夠時是灰的「累積中」，不是「暗」——
+  // 那兩件事完全不同，混在一起會讓人以為系統判斷過了而且沒訊號
+  var lamp = !ready ? {e:"⚪", t:"資料累積中", c:"var(--ink3)"}
+           : lit    ? {e:"🟢", t:"亮燈",       c:"var(--down)"}
+                    : {e:"⚫", t:"無訊號",     c:"var(--ink3)"};
+
+  var body = '<div class="kv"><span>'+lamp.e+' <b style="color:'+lamp.c+'">'+lamp.t+'</b>'
+    + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'
+    + (ready
+        ? (lit ? esc(fx.reasons.join("；")) : '兩條規則都沒觸發（連 3 日升值／5 日均下穿 20 日均）')
+        : '還需要 ' + (fx.need - fx.have) + ' 個交易日才夠判定（已有 ' + fx.have + '／' + fx.need + '）')
+    + '</small></span>'
+    + '<b style="color:var(--ink2)">'+fmt(last,3)+'</b></div>';
+
+  // 圖：主線＋5 日均（藍實線）＋20 日均（灰虛線）
+  body += '<div style="padding:10px 15px 4px">'
+    + fxChart(s, fx.ma5Series, fx.ma20Series, 300, 64)
+    + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-top:4px">'
+    +   '<span>'+esc(dates[0].slice(5).replace("-","/"))+'</span>'
+    +   '<span>↓ 這條線往下＝台幣升值</span>'
+    +   '<span>'+esc(dates[dates.length-1].slice(5).replace("-","/"))+'</span>'
+    + '</div></div>';
+
+  body += '<div class="kv"><span>近 '+s.length+' 日'
+    + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'
+    + esc(dates[0])+' 起</small></span>'
+    // 一樣不上色：這是「台幣往哪走」，不是「好還是壞」
+    + '<b style="color:var(--ink2)">台幣'
+    + (chg===null ? '—' : (chg<0?'升值 ':'貶值 ')+Math.abs(chg).toFixed(2)+'%')+'</b></div>';
+
+  if(fx.ma5 !== null && fx.ma20 !== null){
+    var spread = fx.ma5 - fx.ma20;
+    body += '<div class="kv"><span>5 日均 vs 20 日均'
+      + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'
+      + fmt(fx.ma5,3)+' vs '+fmt(fx.ma20,3)+' · 短均在下方代表近期偏強</small></span>'
+      + '<b style="color:var(--ink2)">'+(spread<0?'短均在下':'短均在上')+'</b></div>';
+  }
+
+  $("sigCards").innerHTML = body;
+
+  $("sigNote").innerHTML = '<div class="note">'
+    + '<b>USD／TWD 是「1 美元換多少台幣」，所以線往下＝台幣升值。</b>'
+    + '圖的 Y 軸<b>沒有反轉</b> —— 這頁對 VIX 也是同樣狀況（漲＝壞），'
+    + '一律照原樣畫、把反轉講在文字上，翻軸會讓這張圖跟其他圖的讀法不一致。'
+    + '<br><b>這張卡除了燈以外沒有紅綠。</b>台幣升值對外資匯入是好事、'
+    + '對台積電毛利率是壞事（上面那一區就在算這個），'
+    + '一個兩義的東西不該被塗上「漲＝好」的顏色 —— 有顏色的只有燈，因為那才是真的下了判斷。'
+    + '<br>台幣走強通常代表外資在匯入，是「錢有沒有真的進來」的溫度計，'
+    + '<b>但它是溫度計不是保證</b>。門檻（連 3 日、5／20 日均）放在 '
+    + '<b>data/thresholds.json</b> 可以自己調；每次由暗轉亮會自動寫一列到 '
+    + '<b>data/signals.csv</b>，<b>過幾個月回頭算命中率再決定要不要相信它</b> —— '
+    + '沒有那張表，這張卡只是好看而已。'
     + '</div>';
 }
 
@@ -1649,7 +1807,7 @@ function tick(){
 
 renderStamp(); renderTone(); renderKey(); renderAsia(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
-renderPre(); renderTsmcCal();
+renderPre(); renderTsmcCal(); renderSignals();
 tick(); setInterval(tick,1000);
 tryHistoryStats();      // 歷史統計改由 CSV 算出來的 JSON 覆蓋，寫死的那份只是備援
 startPolling();

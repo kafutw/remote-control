@@ -46,6 +46,11 @@ jobs:
       - name: 驗匯率換日邏輯
         run: node tools/fx-daily.mjs --self-test
 
+      # 燈號規則同理，而且更需要測：抓資料失敗看得見，規則寫反不會有任何症狀 ——
+      # 燈不亮你只會以為今天沒訊號，不會發現它永遠不可能亮。
+      - name: 驗燈號判定規則
+        run: node tools/signals.mjs --self-test
+
       - name: 抓行情並計算均線
         env:
           # 選用：到 twelvedata.com 免費註冊拿金鑰，存成 repo secret 就會啟用。
@@ -80,7 +85,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/live.json data/daily-*.csv data/history-stats.json data/fx-usdtwd.csv
+          git add data/live.json data/daily-*.csv data/history-stats.json data/fx-usdtwd.csv data/signals.csv data/thresholds.json
           if git diff --staged --quiet; then
             echo "行情沒有變動，不 commit"
           else

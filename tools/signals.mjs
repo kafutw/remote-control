@@ -1,0 +1,150 @@
+#!/usr/bin/env node
+/* 燈號判定。純邏輯、不連網，所以可以離線把每一條規則驗過。
+ *
+ * 為什麼要獨立出來：抓資料會失敗、會被擋、會回怪東西，那些problem看得見。
+ * 判定規則寫錯不會有任何症狀 —— 燈不亮你會以為「今天就是沒訊號」，
+ * 而不是「規則寫反了所以永遠不會亮」。所以規則這一層要能單獨測。
+ *
+ * 門檻值一律從 data/thresholds.json 讀，不寫死在這裡：
+ * 那些數字是依當前市值規模抓的經驗值，市值變了就得跟著調，
+ * 而調參數不應該需要改程式。
+ */
+
+/* 滾動平均。回傳跟輸入等長的陣列，資料不夠的位置是 null ——
+   不夠就誠實留空，不要用比較短的窗口硬算一個看起來像 20 日均的東西。 */
+export function sma(values, n){
+  return values.map(function(_, i){
+    if(i + 1 < n) return null;
+    var s = 0;
+    for(var k = i + 1 - n; k <= i; k++){
+      if(values[k] === null || values[k] === undefined || !isFinite(values[k])) return null;
+      s += values[k];
+    }
+    return s / n;
+  });
+}
+
+/* 最後 n 次「變化」是不是全部往下。
+   USD/TWD 下降＝台幣升值，所以這裡找的是連續 n 日台幣走強。
+   注意要 n 次變化就需要 n+1 個資料點。 */
+export function fallingStreak(values, n){
+  if(!values || values.length < n + 1) return false;
+  for(var i = values.length - n; i < values.length; i++){
+    if(!(values[i] < values[i-1])) return false;      // 持平不算，必須嚴格下降
+  }
+  return true;
+}
+
+/* fast 是不是「在最後一根」由上往下穿過 slow。
+   要的是穿越的那一刻，不是「fast 一直在 slow 下面」——
+   後者會讓燈在整段趨勢裡天天亮，訊號紀錄表就會被灌爆。 */
+export function crossedBelow(fast, slow){
+  var i = fast.length - 1;
+  if(i < 1) return false;
+  var a0 = fast[i-1], b0 = slow[i-1], a1 = fast[i], b1 = slow[i];
+  if([a0,b0,a1,b1].some(function(v){ return v === null || v === undefined || !isFinite(v); })) return false;
+  return a0 >= b0 && a1 < b1;
+}
+
+/* 匯率卡的判定。
+   兩條規則都指向同一件事：台幣走強 → 外資有匯入的跡象 → 對台股偏多。
+   但這只是「錢有沒有進來」的溫度計，不是保證 —— 判定結果要配訊號紀錄表
+   回頭算命中率，不然這張卡只是好看。 */
+export function evalFx(rates, cfg){
+  var c = (cfg && cfg.fx) || {};
+  var nStreak = c.consecutiveDays || 3;
+  var nFast   = c.fastMA || 5;
+  var nSlow   = c.slowMA || 20;
+
+  var have = rates.length, need = nSlow + 1;      // 穿越判定要看前一根，所以 +1
+  var fast = sma(rates, nFast), slow = sma(rates, nSlow);
+
+  var reasons = [];
+  if(fallingStreak(rates, nStreak)) reasons.push("連 " + nStreak + " 日台幣升值");
+  if(crossedBelow(fast, slow))      reasons.push(nFast + " 日均由上向下穿越 " + nSlow + " 日均");
+
+  return {
+    lit: reasons.length > 0,
+    reasons: reasons,
+    ready: have >= need,            // 資料不夠就別假裝有結論
+    have: have, need: need,
+    fast: fast[fast.length-1] ?? null,
+    slow: slow[slow.length-1] ?? null,
+    fastSeries: fast, slowSeries: slow
+  };
+}
+
+/* 只在「由不亮轉成亮」的那一天記一筆。
+   每天亮就每天記的話，一段趨勢會產生幾十列，之後算命中率會被同一個訊號灌爆。 */
+export function shouldLog(wasLit, isLit){ return !wasLit && isLit; }
+
+export const DEFAULTS = {
+  fx: { consecutiveDays:3, fastMA:5, slowMA:20 }
+};
+
+/* ── 自測 ── */
+function selfTest(){
+  var fails = [];
+  function ok(name, cond, got){
+    if(cond) console.error("  ✓ " + name);
+    else { console.error("  ✗ " + name + "　得到：" + JSON.stringify(got)); fails.push(name); }
+  }
+  console.error("signals 自測");
+
+  // sma
+  ok("資料不夠時是 null", JSON.stringify(sma([1,2],3)) === "[null,null]", sma([1,2],3));
+  ok("3 日均算對", sma([1,2,3,4],3)[3] === 3, sma([1,2,3,4],3));
+
+  // fallingStreak
+  ok("連 3 日下降 → true",  fallingStreak([10,9,8,7],3) === true);
+  ok("中間反彈 → false",    fallingStreak([10,9,10,7],3) === false);
+  ok("持平不算下降",        fallingStreak([10,9,9,8],3) === false, [10,9,9,8]);
+  ok("資料只有 3 點不足以判 3 次變化", fallingStreak([10,9,8],3) === false);
+  ok("上升 → false",        fallingStreak([7,8,9,10],3) === false);
+
+  // crossedBelow：只認穿越那一刻
+  ok("剛穿下去 → true",     crossedBelow([2,0.9],[1,1]) === true);
+  ok("本來就在下面 → false", crossedBelow([0.8,0.9],[1,1]) === false, "整段趨勢不該天天亮");
+  ok("由下往上穿 → false",   crossedBelow([0.9,2],[1,1]) === false);
+  ok("有 null → false",     crossedBelow([null,0.9],[1,1]) === false);
+
+  // evalFx：資料不夠時不給結論
+  var few = evalFx([32.3,32.2,32.1], DEFAULTS);
+  ok("資料不夠 → ready 為 false", few.ready === false && few.have === 3 && few.need === 21, few);
+
+  // 連 3 日升值會亮
+  var down = [];
+  for(var i=0;i<21;i++) down.push(32.5);              // 先鋪平
+  down.push(32.4, 32.3, 32.2);                        // 再連 3 日走強
+  var r = evalFx(down, DEFAULTS);
+  ok("連 3 日升值 → 亮燈", r.lit === true && r.reasons.some(function(x){ return x.indexOf("連 3 日")>=0; }), r.reasons);
+  ok("資料夠了 → ready 為 true", r.ready === true, r);
+
+  // 平盤不該亮
+  var flat = []; for(var j=0;j<25;j++) flat.push(32.5);
+  ok("完全平盤 → 不亮", evalFx(flat, DEFAULTS).lit === false, evalFx(flat, DEFAULTS));
+
+  // 台幣走貶不該亮（方向寫反的話這條會掛）
+  var up = []; for(var k=0;k<25;k++) up.push(32.0 + k*0.05);
+  ok("台幣持續走貶 → 不亮（方向寫反這條會掛）", evalFx(up, DEFAULTS).lit === false, evalFx(up, DEFAULTS));
+
+  // 門檻真的有被讀進去：同一組資料，門檻 2 會亮、門檻 3 不會。
+  // 剛好只有 2 連跌（中間先彈一次），所以兩個門檻的結果必須不同。
+  var two = []; for(var m=0;m<21;m++) two.push(32.5);
+  two.push(32.6, 32.55, 32.5);                        // 變化：升、跌、跌
+  ok("門檻 2 日 → 亮",
+     evalFx(two, {fx:{consecutiveDays:2, fastMA:5, slowMA:20}}).lit === true,
+     evalFx(two, {fx:{consecutiveDays:2, fastMA:5, slowMA:20}}).reasons);
+  ok("同一組資料門檻 3 日 → 不亮（證明門檻真的有讀）",
+     evalFx(two, {fx:{consecutiveDays:3, fastMA:5, slowMA:20}}).lit === false,
+     evalFx(two, {fx:{consecutiveDays:3, fastMA:5, slowMA:20}}).reasons);
+
+  // shouldLog
+  ok("由暗轉亮才記錄", shouldLog(false,true) === true && shouldLog(true,true) === false
+     && shouldLog(true,false) === false);
+
+  console.error(fails.length ? "\n✗ " + fails.length + " 項失敗" : "\n全部通過");
+  return fails.length;
+}
+
+if(process.argv.includes("--self-test")) process.exit(selfTest() ? 1 : 0);

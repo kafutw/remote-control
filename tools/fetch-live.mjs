@@ -24,10 +24,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { readHistory, deriveFx, writeHistory } from "./fx-daily.mjs";
+import { evalFx, shouldLog, DEFAULTS } from "./signals.mjs";
 
 const outIdx = process.argv.indexOf("-o");
 const OUT = outIdx >= 0 ? process.argv[outIdx + 1] : "data/live.json";
-const FX_HIST = "data/fx-usdtwd.csv";
+const FX_HIST   = "data/fx-usdtwd.csv";
+const THRESHOLDS = "data/thresholds.json";
+const SIGNAL_LOG = "data/signals.csv";
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/125 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const sma = (a, n) => a.length < n ? null : a.slice(-n).reduce((x, y) => x + y, 0) / n;
@@ -331,6 +334,26 @@ for(const [key, code] of Object.entries({tsmc:"2330", e0050:"0050", e0056:"0056"
   if(!agree){ y.priceYahoo = y.price; y.price = official; y.correctedBy = "TWSE"; }
 }
 
+/* 訊號紀錄表的讀寫。CSV 逐列 append，壞不了整份檔案。
+   欄位裡的逗號會破壞格式，所以一律換成頓號 —— 這張表是給人回頭看的，
+   不值得為了它引進一套 CSV 跳脫規則。 */
+/* 這一天這個指標已經記過了嗎。
+   workflow 一天跑 9 次，沒有這道防線同一個訊號會被記 9 列，
+   之後算命中率就會被同一件事灌爆。 */
+function alreadyLogged(file, date, indicator){
+  try{
+    return fs.readFileSync(file,"utf8").split(/\r?\n/).slice(1).filter(Boolean)
+      .some(r => { const c = r.split(","); return c[0] === date && c[1] === indicator; });
+  }catch(e){ return false; }
+}
+function appendSignal(file, row){
+  const clean = v => String(v ?? "").replace(/,/g, "、").replace(/[\r\n]/g, " ");
+  fs.mkdirSync(path.dirname(file), {recursive:true});
+  if(!fs.existsSync(file)) fs.writeFileSync(file, "date,indicator,signal,twii,note\n");
+  fs.appendFileSync(file,
+    [row.date, row.indicator, row.signal, row.twii, row.note].map(clean).join(",") + "\n");
+}
+
 /* 匯率的前一日錨點。
    er-api 只回當下匯率、沒有前收，所以「日變動」得靠自己記昨天是多少。
    錨點放獨立的 data/fx-usdtwd.csv —— 理由寫在 tools/fx-daily.mjs 的檔頭：
@@ -356,8 +379,42 @@ if(fxEntry && !fxEntry.error && fxEntry.price){
     console.error(`  匯率 ${fxEntry.price}　${fx.asOf}（${fx.asOfVia}）`
       + (fx.prevDay ? `　較 ${fx.prevDay}（${fx.prevGapDays} 天前）${fxEntry.pct>0?"+":""}${fxEntry.pct}%`
                     : "　尚無前一日錨點，日變動留空"));
+
+    /* 燈號判定。門檻從資料檔讀，讀不到就用預設值，不讓一個手改壞的
+       JSON 把整批行情擋下來。 */
+    let cfg = DEFAULTS;
+    try{ cfg = JSON.parse(fs.readFileSync(THRESHOLDS,"utf8")); }
+    catch(e){ console.error("  門檻檔讀不到，用預設值：" + e.message); }
+
+    const series = fx.nextHistory.map(r => r.rate);
+    const sig = evalFx(series, cfg);
+    fxEntry.signal = {
+      lit: sig.lit, reasons: sig.reasons, ready: sig.ready,
+      have: sig.have, need: sig.need,
+      ma5: sig.fast !== null ? +sig.fast.toFixed(4) : null,
+      ma20: sig.slow !== null ? +sig.slow.toFixed(4) : null
+    };
+    // 近 60 日的序列一起給前端畫圖，省得頁面再去讀一次 CSV
+    fxEntry.series = fx.nextHistory.slice(-60);
+
+    /* 訊號紀錄表：只在「由不亮轉成亮」那天記一列。
+       沒有這張表，儀表板只會變成一個很漂亮但你不知道準不準的東西 ——
+       三個月後要能回頭算命中率，就得知道當時亮燈的是哪一條規則、大盤在哪。 */
+    if(sig.ready && fx.shouldWrite){
+      // 昨天亮不亮，用「少掉今天那一點的序列」重算出來，不另外存狀態。
+      // 存狀態就會有狀態走丟的問題；重算永遠跟資料一致。
+      const prevLit = evalFx(series.slice(0, -1), cfg).lit;
+      if(shouldLog(prevLit, sig.lit) && !alreadyLogged(SIGNAL_LOG, fx.asOf, "fx")){
+        appendSignal(SIGNAL_LOG, {
+          date: fx.asOf, indicator: "fx", signal: "台幣走強",
+          twii: (data.twii && data.twii.price) || "",
+          note: sig.reasons.join("；")
+        });
+        console.error(`  ⚡ 匯率燈號亮起並記錄：${sig.reasons.join("；")}`);
+      }
+    }
   }catch(e){
-    console.error("  匯率錨點失敗（不影響其他標的）：" + e.message);
+    console.error("  匯率錨點／燈號失敗（不影響其他標的）：" + e.message);
   }
 }
 

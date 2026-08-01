@@ -105,6 +105,11 @@ GitHub Actions（網路無限制）→ 依序試多個來源 → 算好均線
 - [`.github/workflows/market-data.yml`](./.github/workflows/market-data.yml)：台北 06:50、08:02～08:52 每 10 分鐘、09:02、13:45，也可手動觸發
 - [`tools/fetch-live.mjs`](./tools/fetch-live.mjs)：抓 13 個標的，順便算 20/60/240 日均線、乖離率與台積電 ADR 溢價，寫成 `data/live.json`
 - [`tools/fx-daily.mjs`](./tools/fx-daily.mjs)：USD/TWD 的前一日錨點（`data/fx-usdtwd.csv`）。匯率來源只回當下值、沒有前收，所以日變動要自己記；純邏輯、可離線 `--self-test`
+- [`tools/signals.mjs`](./tools/signals.mjs)：燈號判定（均線、連續日數、均線穿越）。門檻讀 `data/thresholds.json`，可以直接改數字不用改程式；純邏輯、可離線 `--self-test`
+
+**訊號紀錄表**：每次燈由暗轉亮會寫一列到 `data/signals.csv`（日期、指標、當時大盤點位、觸發的規則），
+一天只記一次。過幾個月回頭算命中率，才知道這些門檻值到底準不準 ——
+沒有這張表，儀表板只會是一個很漂亮但你不知道準不準的東西。
 
 **每個標的依序嘗試多個來源**，因為「正確」不能靠單一 API ——
 而且 runner 是資料中心 IP，第一版只用 Yahoo 時 12 檔全部被擋回 429：
