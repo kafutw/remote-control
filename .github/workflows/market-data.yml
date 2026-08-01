@@ -18,6 +18,11 @@ on:
     - cron: '2 1 * * 1-5'     # 台北 09:02　台股開盤後補一筆
     - cron: '45 5 * * 1-5'    # 台北 13:45　台股收盤後
   workflow_dispatch:           # 也可以在 Actions 頁面手動按
+    inputs:
+      rebuild_history:
+        description: '整段重抓歷史日線（以證交所為準覆蓋既有檔案，約 6 分鐘）'
+        type: boolean
+        default: false
 
 concurrency:
   group: market-data
@@ -49,7 +54,13 @@ jobs:
       - name: 補歷史日線
         id: hist
         continue-on-error: true
-        run: node tools/update-history.mjs
+        run: |
+          if [ "${{ inputs.rebuild_history }}" = "true" ]; then
+            echo "整段重抓模式：以證交所為準覆蓋既有檔案"
+            node tools/update-history.mjs --rebuild
+          else
+            node tools/update-history.mjs
+          fi
 
       # 統計從 CSV 重算，寫成 data/history-stats.json，頁面優先讀它。
       # 這一步同時會對帳 watchtower.html 裡寫死的備援值有沒有跟 CSV 脫節；

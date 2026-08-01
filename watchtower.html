@@ -790,7 +790,10 @@ function taipei(){
   var p = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",
     day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})
     .formatToParts(new Date()).reduce(function(a,x){a[x.type]=x.value;return a;},{});
-  return {h:parseInt(p.hour,10)%24, mi:+p.minute, s:+p.second, date:p.year+"-"+p.month+"-"+p.day};
+  var d = p.year+"-"+p.month+"-"+p.day;
+  // 星期幾要用台北的日期算，不能用瀏覽器本地時區 —— 讀者在美國的話會差一天
+  return {h:parseInt(p.hour,10)%24, mi:+p.minute, s:+p.second, date:d,
+          dow:new Date(d+"T12:00:00Z").getUTCDay()};
 }
 
 /* 產生時間戳＋過期提醒 */
@@ -816,10 +819,12 @@ function renderKey(){
     if(!o) return;
     rows.push({label:label, tag:tag, p:o.p, pct:o.pct, live:!!live, dp:dp===undefined?(o.dp||0):dp});
   }
-  // 日韓：有今日盤中就用今日，否則退回前一日收盤
+  // 日韓：有今日的數字就用今日。但「盤中」這兩個字只有在真的開著盤時才寫 ——
+  // 週末看到上週五的收盤標著「盤中」，會讓人以為市場正在動。
   ["日經","KOSPI"].forEach(function(k){
-    var live = find(a.today, k), prev = find(a.prev, k);
-    push(live?live.n:(prev?prev.n:k), live?"盤中":"前收", live||prev, !!live);
+    var t = find(a.today, k), prev = find(a.prev, k);
+    var isLive = !!(t && t.live);
+    push(t?t.n:(prev?prev.n:k), t ? (isLive?"盤中":"最近收盤") : "前收", t||prev, isLive);
   });
   push("費城半導體", "昨夜收盤", find(BRIEF.us, "費城"), false, 2);
   if(BRIEF.adr) rows.push({label:"台積電 ADR", tag:"昨夜收盤", p:BRIEF.adr.price, pct:BRIEF.adr.pct, live:false, dp:2});
@@ -898,25 +903,41 @@ function applyLive(j){
     else if(v.marketState !== "REG_MKT" && s.asOf) return;
     s.p = v.price; s.pct = (v.pct===null||v.pct===undefined)?null:v.pct;
     if(v.ma60) s.ma60 = v.ma60;
-    s.tag = (v.marketState==="REG_MKT" ? "盤中" : "收盤");
+    // 收盤價一定要帶哪一天的收盤。只寫「收盤」，隔天再看就分不出是今天還是上週的。
+    if(v.asOf) s.asOf = v.asOf;
+    s.tag = (v.marketState==="REG_MKT") ? "盤中"
+          : (v.asOf ? v.asOf.slice(5).replace("-","/") + " 收盤" : "收盤");
     used = true;
   });
   if(used){
     BRIEF.holdingsLive = j.generatedAtTaipei || "已更新";
     renderHoldings();
-    // 同一份 live.json 也帶著日韓／美股，順手更新最上面的指標面板
-    var asia = BRIEF.asia, touched = false;
-    [["n225","日經 225","^N225"],["kospi","韓國 KOSPI","^KS11"]].forEach(function(m){
-      var v = d[m[0]];
-      if(!v || v.error || !v.price) return;
-      asia.today = (asia.today||[]).filter(function(x){ return x.n.indexOf(m[1])<0; });
-      asia.today.push({n:m[1], c:m[2]+" · 比台股早 1 小時", p:v.price,
-                       pct:(v.pct===null||v.pct===undefined)?null:v.pct, dp:0});
-      touched = true;
-    });
-    if(touched) renderKey();
-    setStamp(j.generatedAtTaipei);
   }
+
+  // 日韓指標跟台股持股是各自獨立的資料，不要綁在一起：
+  // 證交所盤後結算落後而讓持股那三檔被擋下來時，日韓照樣該更新。
+  var asia = BRIEF.asia, touched = false;
+  [["n225","日經 225","^N225"],["kospi","韓國 KOSPI","^KS11"]].forEach(function(m){
+    var v = d[m[0]];
+    if(!v || v.error || !v.price) return;
+    asia.today = (asia.today||[]).filter(function(x){ return x.n.indexOf(m[1])<0; });
+    asia.today.push({n:m[1], c:m[2]+" · 比台股早 1 小時", p:v.price,
+                     pct:(v.pct===null||v.pct===undefined)?null:v.pct, dp:0,
+                     // 來源在週末仍回報 REG_MKT，所以「盤中」要自己的時鐘也同意才算數
+                     live: v.marketState==="REG_MKT" && asiaSessionNow()});
+    touched = true;
+  });
+  if(touched) renderKey();
+  if(used || touched) setStamp(j.generatedAtTaipei);
+}
+
+/* 日韓現在真的在盤中嗎：平日 08:00–14:30（台北）。
+   資料來源週末照樣回報 REG_MKT，只信它就會在週六把上週五的收盤標成「盤中」。 */
+function asiaSessionNow(){
+  var t = taipei();
+  if(t.dow === 0 || t.dow === 6) return false;
+  var mins = t.h*60 + t.mi;
+  return mins >= 480 && mins <= 870;
 }
 function setStamp(when){
   var el = $("liveStamp");

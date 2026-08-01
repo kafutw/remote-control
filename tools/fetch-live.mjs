@@ -60,6 +60,22 @@ const SYMBOLS = [
 ];
 
 /* ── 證交所 OpenAPI：官方、免金鑰、只有收盤 ── */
+
+/** 證交所同一組端點裡民國年與西元年都出現過（"1150731" 與 "20260731"），
+ *  只認其中一種就會靜靜地拿不到日期。位數本身就分得出是哪一種：
+ *  西元 8 碼、民國 7 碼（民國 100 年以後）或 6 碼。回傳 YYYY-MM-DD 或 null。 */
+function parseTwseDate(src){
+  const d = String(src ?? "").replace(/\D/g, "");
+  let y, md;
+  if(d.length === 8)      { y = +d.slice(0,4);           md = d.slice(4); }
+  else if(d.length === 7) { y = +d.slice(0,3) + 1911;    md = d.slice(3); }
+  else if(d.length === 6) { y = +d.slice(0,2) + 1911;    md = d.slice(2); }
+  else return null;
+  const mo = +md.slice(0,2), da = +md.slice(2,4);
+  if(!(y >= 1990 && y <= 2100) || !(mo >= 1 && mo <= 12) || !(da >= 1 && da <= 31)) return null;
+  return `${y}-${String(mo).padStart(2,"0")}-${String(da).padStart(2,"0")}`;
+}
+
 let twseStocks = null, twseIndexRow = null, twseDate = null;
 async function loadTwse(){
   if(twseStocks !== null) return;
@@ -85,9 +101,12 @@ async function loadTwse(){
     // 證交所是盤後結算才更新，抓取時間 ≠ 資料日期。把資料日期記下來，
     // 讀取端才知道這是哪一天的收盤，不會拿它蓋掉更新的數字。
     if(twseIndexRow){
-      const raw = String(twseIndexRow.Date ?? twseIndexRow.date ?? "").replace(/\D/g,"");
-      if(raw.length === 8) twseDate = `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
-      console.error("證交所資料日期：" + (twseDate || "（無法判讀）"));
+      const rawSrc = String(twseIndexRow.Date ?? twseIndexRow.date ?? "");
+      twseDate = parseTwseDate(rawSrc);
+      // 判讀失敗時把原始字串印出來 —— 只印「無法判讀」的話，
+      // 端點改格式就查不出改成什麼。asOf 是頁面判斷「這是哪一天的收盤」
+      // 唯一的依據，它是 null 的時候整套防呆會退回最保守的行為。
+      console.error("證交所資料日期：" + (twseDate || `（無法判讀，原始值 "${rawSrc}"）`));
     }
   }catch(e){ console.error("證交所指數失敗：" + e.message); }
 }

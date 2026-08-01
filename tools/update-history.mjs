@@ -32,6 +32,16 @@ const SYMBOLS = codes.length ? codes : ["2330", "0050", "0056"];
 const MONTHS = Number(flag("months", 4));      // 往回抓幾個月，蓋掉可能的缺口
 const DELAY = Number(flag("delay", 4000));     // 證交所對連續請求很敏感
 const DRY = argv.includes("--dry-run");
+/* --rebuild：整段重抓，用證交所的價格取代既有檔案。
+   平常不該用 —— 預設的合併模式安全得多。
+   要用的時機是「既有資料本身就是錯的」：2026-08-01 對帳發現 2330 的
+   tw_stocker 資料在 56 個重疊日期裡有 13 天跟證交所對不上（差 0.5%～0.9%，
+   有高有低，像是把當天盤中某根 K 棒當成收盤）。那種情況下補缺口沒有用，
+   錯的那幾天會一直留著，而整份「跌破季線」統計就是建立在這些收盤價上。
+   重抓有嚴格門檻：任何一個月失敗就整檔放棄，否則會用一份有洞的資料
+   取代一份完整的資料。 */
+const REBUILD = argv.includes("--rebuild");
+const FROM = flag("from", null);               // --rebuild 用，預設沿用既有檔案的起始日
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const pad = n => String(n).padStart(2, "0");
@@ -91,9 +101,12 @@ for (const stock of SYMBOLS) {
   const lastHave = existing[existing.length - 1].date;
   console.log(`\n── ${stock} ── 既有 ${existing.length} 列，最後一天 ${lastHave}`);
 
-  // 從最後一天往回退 MONTHS 個月開始抓，重疊的部分正好拿來對帳
-  const start = new Date(lastHave + "T00:00:00Z");
-  start.setUTCMonth(start.getUTCMonth() - (MONTHS - 1));
+  // 合併模式：從最後一天往回退 MONTHS 個月，重疊的部分正好拿來對帳
+  // 重抓模式：從既有資料的第一天開始，整段重來
+  const start = REBUILD
+    ? new Date((FROM || existing[0].date) + "T00:00:00Z")
+    : new Date(lastHave + "T00:00:00Z");
+  if (!REBUILD) start.setUTCMonth(start.getUTCMonth() - (MONTHS - 1));
   const now = new Date();
   const months = [];
   for (let d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
@@ -147,8 +160,44 @@ for (const stock of SYMBOLS) {
     adj.push({ ...fetched[i] });
   }
 
-  // 對帳：重疊日期兩邊必須吻合。對不上就代表基準不同或抓錯標的，整檔放棄。
   const have = new Map(existing.map(r => [r.date, r.close]));
+
+  if (REBUILD) {
+    // 有任何一個月失敗就放棄：抓到一半的資料會在中間留一個看不見的洞，
+    // 而均線是滾動計算的，一個洞會污染它之後 60 天的每一個值。
+    if (failed) {
+      console.error(`✗ ${stock}：重抓時有 ${failed}/${months.length} 個月失敗，`
+                  + `不能拿有缺口的資料取代完整的檔案，原檔不動`);
+      exitCode = 1;
+      summary.push({ stock, status: `重抓失敗 ${failed} 個月`, last: lastHave });
+      continue;
+    }
+    const covered = existing.filter(r => r.date >= adj[0].date && r.date <= adj[adj.length - 1].date);
+    if (adj.length < covered.length * 0.98) {
+      console.error(`✗ ${stock}：重抓只拿到 ${adj.length} 列，既有同區間有 ${covered.length} 列，`
+                  + `少太多，原檔不動`);
+      exitCode = 1;
+      summary.push({ stock, status: "重抓列數過少", last: lastHave });
+      continue;
+    }
+    // 改了哪些天要講出來 —— 重抓是會改動既有數字的操作，不能無聲無息
+    const changed = adj.filter(r => have.has(r.date) && Math.abs(r.close - have.get(r.date)) / have.get(r.date) > 0.005);
+    console.log(`  重抓 ${adj.length} 列（${adj[0].date} ～ ${adj[adj.length-1].date}）`);
+    console.log(`  其中 ${changed.length} 天的收盤價與既有檔案不同，一律以證交所為準`);
+    changed.slice(0, 10).forEach(r =>
+      console.log(`     ${r.date}  ${have.get(r.date)} → ${r.close.toFixed(2)}`));
+    if (changed.length > 10) console.log(`     …還有 ${changed.length - 10} 天`);
+    if (DRY) { console.log("  --dry-run，不寫檔"); }
+    else {
+      writeFileSync(file, "日期,收盤價\n"
+        + adj.map(r => `${r.date},${r.close}`).join("\n") + "\n");
+    }
+    summary.push({ stock, status: DRY ? "重抓試跑" : `已重抓（改 ${changed.length} 天）`,
+                   last: adj[adj.length - 1].date, added: adj.length - existing.length });
+    continue;
+  }
+
+  // 合併模式的對帳：重疊日期兩邊必須吻合。對不上就代表基準不同或資料有問題，整檔放棄。
   let checked = 0;
   const mismatch = [];
   for (const r of adj) {
