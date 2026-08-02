@@ -194,7 +194,9 @@
     display: flex; align-items: center; justify-content: center;
   }
   .ach .m.none { color: var(--ink-faint); font-size: var(--fs-body); }
-  .ach .bar { display: block; width: 76%; height: 6px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  /* flex 子項預設會被壓縮，不鎖住的話這條進度條會被擠成 0 */
+  .ach .bar { display: block; width: 76%; flex: 0 0 6px; height: 6px;
+              border-radius: 99px; background: var(--track); overflow: hidden; }
   .ach .bar i { display: block; height: 100%; border-radius: 99px; background: var(--ink-faint); }
   .ach .bar i.hi { background: var(--mint); }
   .ach .bar i.mid { background: var(--amber); }
@@ -471,6 +473,12 @@
   .wrow .p small { display: block; font-weight: 700; color: var(--ink-faint); white-space: nowrap; }
 
   .foot { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+  /* 首頁上面壓了幾張資訊卡，開始按鈕黏在底部，捲到哪都按得到 */
+  #setup .foot {
+    position: sticky; bottom: 0; z-index: 12;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, transparent, var(--bg) 34%);
+  }
   .tiny { font-size: var(--fs-note); color: var(--ink-faint); text-align: center; margin-top: 16px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -569,6 +577,12 @@
 
   <!-- ══ 設定 ══ -->
   <section class="screen on" id="setup">
+    <div class="card">
+      <h2>最近 7 天<span class="tally" id="calTally"></span></h2>
+      <div class="days7" id="days7"></div>
+      <p class="hint" id="calHint"></p>
+    </div>
+
     <div class="goal" id="goal" hidden></div>
 
     <div class="card">
@@ -695,12 +709,6 @@
 
   <!-- ══ 歷史 ══ -->
   <section class="screen" id="history">
-    <div class="card">
-      <h2>最近 7 天<span class="tally" id="calTally"></span></h2>
-      <div class="days7" id="days7"></div>
-      <p class="hint" id="calHint"></p>
-    </div>
-
     <div class="card">
       <h2>最近 12 次成績</h2>
       <div class="chart" id="chart"></div>
@@ -1589,7 +1597,6 @@
     $('hAvg').textContent = asked ? Math.round(got / asked * 100) + '%' : '—';
     $('hRuns').textContent = all.length;
 
-    renderWeek();
     renderDays();
     renderTables();
     renderUseHint();
@@ -1967,6 +1974,7 @@
   }
 
   function refreshSetup() {
+    renderWeek();
     renderGoal();
     renderAchievements();
     syncPick();
