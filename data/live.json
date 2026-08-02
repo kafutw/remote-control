@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-08-01T02:52:33.598Z",
-  "generatedAtTaipei": "2026-08-01 10:52:33",
+  "generatedAt": "2026-08-02T23:44:30.267Z",
+  "generatedAtTaipei": "2026-08-03 07:44:30",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
   },
-  "ok": 12,
+  "ok": 13,
   "failed": 0,
   "crossCheck": {},
   "data": {
@@ -117,15 +117,27 @@
       "marketState": "REG_MKT",
       "asOf": null
     },
+    "vix": {
+      "name": "VIX 恐慌指數",
+      "group": "vix",
+      "dp": 2,
+      "via": "cnbc:.VIX",
+      "price": 15.99,
+      "prevClose": 17.09,
+      "change": -1.1,
+      "pct": -6.4365,
+      "marketState": "REG_MKT",
+      "asOf": null
+    },
     "n225": {
       "name": "日經 225",
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
       "price": 64362.02,
-      "prevClose": 61867.43,
-      "change": 2494.59,
-      "pct": 4.0322,
+      "prevClose": 64362.02,
+      "change": 0,
+      "pct": 0,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -135,9 +147,9 @@
       "dp": 2,
       "via": "cnbc:.KS11",
       "price": 6595.45,
-      "prevClose": 5593.56,
-      "change": 1001.89,
-      "pct": 17.9115,
+      "prevClose": 6595.45,
+      "change": 0,
+      "pct": 0,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -146,17 +158,189 @@
       "group": "usdtwd",
       "dp": 3,
       "via": "erapi:TWD",
-      "price": 32.28872,
+      "price": 32.308067,
       "prevClose": null,
       "change": null,
       "pct": null,
       "marketState": null,
-      "asOf": null
+      "asOf": "2026-08-02",
+      "rateUnix": 1785628951,
+      "asOfVia": "provider",
+      "prevDay": null,
+      "prevGapDays": null,
+      "signal": {
+        "lit": false,
+        "reasons": [],
+        "ready": false,
+        "have": 1,
+        "need": 21,
+        "ma5": null,
+        "ma20": null
+      },
+      "series": [
+        {
+          "date": "2026-08-02",
+          "rate": 32.308067
+        }
+      ]
     }
   },
+  "volume": {
+    "state": "idle",
+    "lit": false,
+    "reasons": [],
+    "ready": false,
+    "last": null,
+    "armedSince": null,
+    "daysArmed": null,
+    "thresholds": {
+      "quiet": 7000,
+      "breakout": 11000,
+      "overheat": 13000,
+      "armWindow": 30
+    },
+    "complete": 0,
+    "incomplete": 22,
+    "latestPartial": true,
+    "series": [
+      {
+        "date": "2026-07-01",
+        "twse": 13678.18,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-02",
+        "twse": 10835.83,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-03",
+        "twse": 10780.28,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-06",
+        "twse": 10644.32,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-07",
+        "twse": 12281.19,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-08",
+        "twse": 10045.6,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-09",
+        "twse": 9967.89,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-13",
+        "twse": 10676.62,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-14",
+        "twse": 12452.07,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-15",
+        "twse": 10243.86,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-16",
+        "twse": 9331.81,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-17",
+        "twse": 13331.57,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-20",
+        "twse": 10414.57,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-21",
+        "twse": 8662.52,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-22",
+        "twse": 10259.58,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-23",
+        "twse": 9306.12,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-24",
+        "twse": 8271.3,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-27",
+        "twse": 7476.47,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-28",
+        "twse": 8725.75,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-29",
+        "twse": 11491.85,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-30",
+        "twse": 11469.38,
+        "tpex": null,
+        "total": null
+      },
+      {
+        "date": "2026-07-31",
+        "twse": 8877.32,
+        "tpex": null,
+        "total": null
+      }
+    ]
+  },
   "adrPremium": {
-    "converted": 2610.54,
-    "premiumPct": 7.65,
+    "converted": 2612.11,
+    "fxAsOf": "2026-08-02",
+    "premiumPct": 7.72,
     "impliedOpen": 2431,
     "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
