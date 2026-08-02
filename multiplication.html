@@ -171,37 +171,10 @@
   .goal.todo { background: var(--amber-soft); border-color: var(--amber); }
   .goal.todo .txt { color: var(--amber); }
 
-  /* 成就板：一眼看到八段各自練到什麼程度 */
   .card h2 .tally {
     margin-left: auto; font-size: var(--fs-note); font-weight: 800;
     color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap;
   }
-  .achs { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
-  .ach {
-    font-family: inherit; cursor: pointer; color: var(--ink);
-    background: var(--bg); border: 2px solid var(--line); border-radius: 14px;
-    padding: 9px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 5px;
-    transition: all .14s;
-  }
-  .ach:active { transform: translateY(1px); }
-  .ach:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-  .ach.sel { border-color: var(--blue); background: var(--blue-soft); }
-  .ach b { font-size: var(--fs-head); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
-  /* 固定高度，有獎牌和沒獎牌的格子進度條才會對齊在同一條線上 */
-  .ach .m {
-    font-size: calc(var(--icon-medal) * .78); line-height: 1;
-    height: calc(var(--icon-medal) * .82);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .ach .m.none { color: var(--ink-faint); font-size: var(--fs-body); }
-  /* flex 子項預設會被壓縮，不鎖住的話這條進度條會被擠成 0 */
-  .ach .bar { display: block; width: 76%; flex: 0 0 6px; height: 6px;
-              border-radius: 99px; background: var(--track); overflow: hidden; }
-  .ach .bar i { display: block; height: 100%; border-radius: 99px; background: var(--ink-faint); }
-  .ach .bar i.hi { background: var(--mint); }
-  .ach .bar i.mid { background: var(--amber); }
-  .ach .bar i.lo { background: var(--coral); }
-
   .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .tile {
     font-family: inherit; cursor: pointer; color: var(--ink);
@@ -584,12 +557,6 @@
     </div>
 
     <div class="goal" id="goal" hidden></div>
-
-    <div class="card">
-      <h2>目前成就<span class="tally" id="achTally"></span></h2>
-      <div class="achs" id="achs"></div>
-      <p class="hint" id="achHint"></p>
-    </div>
 
     <div class="card">
       <h2><span class="n">1</span>今天要練哪幾段？</h2>
@@ -1928,55 +1895,13 @@
         (days ? '　・　已經達標 ' + days + ' 天' : '') + '</small></span>';
   }
 
-  // 成就板：八段各自的熟練程度，點一下就直接挑戰那一段
-  function renderAchievements() {
-    var box = $('achs');
-    box.innerHTML = '';
-    var got = { '🥇': 0, '🥈': 0, '🥉': 0 }, medalCount = 0, weakest = null;
-
-    TABLES.forEach(function (t) {
-      var s = tableStat(t);
-      var icon = medalOf(t);
-      var pct = s.n ? Math.round(s.rate * 100) : 0;
-      var level = !s.n ? '' : (pct >= 90 ? 'hi' : (pct >= 70 ? 'mid' : 'lo'));
-      if (icon) { got[icon]++; medalCount++; }
-      else if (s.n >= MIN_WINDOW && (!weakest || s.rate < weakest.rate)) weakest = { t: t, rate: s.rate };
-
-      var el = document.createElement('button');
-      el.className = 'ach' + (picked.indexOf(t) >= 0 ? ' sel' : '');
-      el.setAttribute('aria-label', t + ' 段' + (icon ? '，已拿到' + medalName(icon) : ''));
-      el.innerHTML = '<b>' + t + '</b>' +
-        '<span class="m' + (icon ? '' : ' none') + '">' + (icon || '·') + '</span>' +
-        '<span class="bar"><i class="' + level + '" style="width:' + Math.max(pct, s.n ? 4 : 0) + '%"></i></span>';
-      el.addEventListener('click', function () {
-        picked = [t];                 // 點成就板直接換成只練這一段
-        syncPick();
-      });
-      box.appendChild(el);
-    });
-
-    $('achTally').textContent = medalCount
-      ? '🥇 ' + got['🥇'] + '　🥈 ' + got['🥈'] + '　🥉 ' + got['🥉'] : '';
-
-    var hint;
-    if (medalCount === TABLES.length) hint = '👑 八段全部都拿到獎牌了，太厲害了！';
-    else if (weakest) hint = weakest.t + ' 段目前 ' + Math.round(weakest.rate * 100) +
-      '%，是最需要加強的一段。點上面的數字就可以直接挑戰。';
-    else if (medalCount) hint = '已經拿到 ' + medalCount + ' 面獎牌，還有 ' +
-      (TABLES.length - medalCount) + ' 段可以挑戰！點數字就能直接練那一段。';
-    else hint = '點上面的數字就可以直接挑戰那一段，練熟了就會拿到獎牌。';
-    $('achHint').textContent = hint;
-  }
-
-  // 選段數的地方有好幾處，統一用這個更新，成就板才不會跟按鈕不同步
   function syncPick() {
-    buildTiles(); syncStart(); renderAchievements();
+    buildTiles(); syncStart();
   }
 
   function refreshSetup() {
     renderWeek();
     renderGoal();
-    renderAchievements();
     syncPick();
     $('reviewBtn').hidden = !(db.lastWrong && db.lastWrong.length);
   }
