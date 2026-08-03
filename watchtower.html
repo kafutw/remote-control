@@ -197,21 +197,6 @@ section{margin-top:30px}
 }
 .subh::after{content:"";flex:1;height:1px;background:var(--rule)}
 
-/* ── 時間軸 ── */
-.tl{position:relative;padding-left:20px}
-.tl::before{content:"";position:absolute;left:4px;top:9px;bottom:9px;width:1px;background:var(--rule2)}
-.tli{position:relative;padding:6px 0;font-size:12.5px;color:var(--ink2)}
-.tli::before{
-  content:"";position:absolute;left:-19px;top:13px;width:7px;height:7px;border-radius:50%;
-  background:var(--sheet);border:1.5px solid var(--rule2)
-}
-.tli.key::before{background:var(--navy);border-color:var(--navy)}
-.tli.key{color:var(--ink);font-weight:700}
-.tli .t{
-  font-family:ui-monospace,Menlo,monospace;color:var(--navy);font-size:11px;
-  margin-right:9px;font-weight:600;letter-spacing:.02em
-}
-.tli small{color:var(--ink3);font-size:11px}
 .pend{
   background:var(--warnBg);border:1px solid var(--warnLine);border-left-width:3px;border-radius:4px;
   padding:12px 14px;font-size:12.5px;color:var(--warnInk);line-height:1.7;margin-top:10px
@@ -306,17 +291,6 @@ section{margin-top:30px}
 .cal .x small{display:block;color:var(--ink3);font-size:11px;margin-top:1px}
 
 /* ── 連結 ── */
-.links{display:grid;grid-template-columns:1fr;gap:0}
-.links a{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:11px 2px;color:var(--ink);text-decoration:none;font-size:13px;
-  border-bottom:1px solid var(--rule)
-}
-.links a:last-child{border-bottom:none}
-.links a b{font-weight:700}
-.links a span{color:var(--ink3);font-size:10.5px;text-align:right}
-.links a::after{content:"↗";color:var(--navy);font-size:11px;flex:0 0 auto;margin-left:2px}
-
 /* ─────────────────────────────────────────────────────────────
    桌面版：手機是一欄堆疊，寬螢幕改成兩欄並排。
    堆疊清單（共用邊框、只有頭尾有圓角）在 grid 裡會散掉，
@@ -556,30 +530,11 @@ section{margin-top:30px}
     <div class="card" id="cal"></div>
   </section>
 
-  <section>
-    <div class="sec-h"><div class="ic">🔎</div><h2>自己查證</h2><div class="hint">這頁是快照，不是即時</div></div>
-    <div class="card">
-      <div class="tl" id="asiaTl"></div>
-      <div class="links" style="margin-top:14px">
-        <a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener"><b>台指期夜盤</b><span>期交所即時</span></a>
-        <a href="https://tw.stock.yahoo.com/quote/TSM" target="_blank" rel="noopener"><b>台積電 ADR</b><span>TSM 即時報價</span></a>
-        <a href="https://tw.stock.yahoo.com/quote/%5ESOX" target="_blank" rel="noopener"><b>費城半導體</b><span>^SOX</span></a>
-        <a href="https://tw.stock.yahoo.com/quote/%5EN225" target="_blank" rel="noopener"><b>日經 225</b><span>^N225 · 08:00 開，比台股早 1 小時</span></a>
-        <a href="https://tw.stock.yahoo.com/quote/%5EKS11" target="_blank" rel="noopener"><b>韓國 KOSPI</b><span>^KS11 · 08:00 開，比台股早 1 小時</span></a>
-        <a href="https://tw.stock.yahoo.com/quote/2330.TW/technical-analysis" target="_blank" rel="noopener"><b>台積電技術分析</b><span>看 MA60 季線在哪</span></a>
-        <a href="https://mis.twse.com.tw/stock/index.jsp" target="_blank" rel="noopener"><b>台股試撮</b><span>08:30–09:00</span></a>
-        <a href="https://tw.stock.yahoo.com/quote/%5ETWII" target="_blank" rel="noopener"><b>加權指數</b><span>^TWII</span></a>
-      </div>
-      <div class="note">
-        頁面上的每個數字都來自公開新聞與行情頁，<b>產生後就不會再變</b>。真的要下單前，用上面的連結確認一次即時價。
-      </div>
-    </div>
-  </section>
 
   <div class="disc">
     <b>免責聲明</b>：本頁是個人閱讀用的資訊整理，內容來自公開報導，可能有誤植、延遲或轉述失真，<b>不是投資建議</b>，也不保證正確性。所有數字請以證交所、期交所與券商即時報價為準。投資決策與盈虧自負。
   </div>
-  <div class="foot">市場瞭望台 · 每個交易日早上 07:00 重新產生</div>
+  <div class="foot">市場瞭望台 · 每個交易日早上 08:31 重新產生（台股開盤前）</div>
 </div>
 
 <script>
@@ -1403,24 +1358,6 @@ function quoteRow(o){
     + '</div></div>';
 }
 
-var ASIA_TL = [
-  {t:"07:30", x:"韓股盤前集合競價",  s:"首爾 08:30，最早的風向", key:false},
-  {t:"08:00", x:"日經 225、KOSPI 開盤", s:"東京／首爾 09:00 · 比台股早 1 小時", key:true},
-  {t:"08:30", x:"台股試撮",          s:"最後 5 分鐘不可取消，別被騙", key:false},
-  {t:"08:45", x:"台指期日盤開盤",    s:"比現貨再早 15 分鐘", key:false},
-  {t:"09:00", x:"台股開盤",          s:"", key:true},
-  {t:"14:30", x:"日韓收盤",          s:"台股 13:30 就收了，可回頭看尾盤有沒有背離", key:false}
-];
-
-function renderAsia(){
-  /* 日經與 KOSPI 的數字已經在最上面的「今日指標」裡，這裡只留時間軸 ——
-     它回答的是「幾點該看什麼」，跟報價不重複。 */
-  $("asiaTl").innerHTML = '<div class="subh">今天的時間軸　台北時間</div>' + ASIA_TL.map(function(i){
-    return '<div class="tli'+(i.key?" key":"")+'"><span class="t">'+i.t+'</span>'+esc(i.x)
-      + (i.s?'<small style="display:block">'+esc(i.s)+'</small>':'') + '</div>';
-  }).join("");
-}
-
 function renderCross(){
   if(!BRIEF.cross || !BRIEF.cross.length){ $("cross").innerHTML=""; return; }
   $("crossWhen").textContent = BRIEF.crossWhen || "";
@@ -1937,7 +1874,7 @@ function tick(){
   $("clkd").textContent = t.date.slice(5).replace("-","/")+" 台北";
 }
 
-renderStamp(); renderTone(); renderKey(); renderAsia(); renderADR();
+renderStamp(); renderTone(); renderKey(); renderADR();
 renderTW(); renderCross(); renderStocks(); renderPoints(); renderNews(); renderCal();
 renderTsmcCal(); renderSignals();
 tick(); setInterval(tick,1000);
