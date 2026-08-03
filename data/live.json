@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-03T04:34:51.147Z",
-  "generatedAtTaipei": "2026-08-03 12:34:51",
+  "generatedAt": "2026-08-03T08:55:04.631Z",
+  "generatedAtTaipei": "2026-08-03 16:55:04",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -63,10 +63,10 @@
       "dp": 2,
       "via": "cnbc:TSM",
       "price": 404.25,
-      "prevClose": 403.31,
-      "change": 0.94,
-      "pct": 0.2331,
-      "marketState": "POST_MKT",
+      "prevClose": 404.25,
+      "change": 0,
+      "pct": 0,
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -122,10 +122,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 15.99,
-      "prevClose": 17.09,
-      "change": -1.1,
-      "pct": -6.4365,
+      "price": 16.11,
+      "prevClose": 15.99,
+      "change": 0.12,
+      "pct": 0.7505,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -134,10 +134,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 63675.4,
+      "price": 63754.9,
       "prevClose": 64362.02,
-      "change": -686.62,
-      "pct": -1.0668,
+      "change": -607.12,
+      "pct": -0.9433,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -146,10 +146,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6283.09,
+      "price": 6257.45,
       "prevClose": 6595.45,
-      "change": -312.36,
-      "pct": -4.736,
+      "change": -338,
+      "pct": -5.1247,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -189,20 +189,20 @@
     "lit": false,
     "reasons": [],
     "ready": true,
-    "last": 8877.32,
+    "last": 10091.71,
     "reach": {
       "lo": 7476.47,
       "hi": 13678.18,
-      "days": 22,
+      "days": 23,
       "fired": 6,
-      "fireRate": 0.2727272727272727,
+      "fireRate": 0.2608695652173913,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 22,
+    "complete": 23,
     "incomplete": 0,
     "latestPartial": false,
     "series": [
@@ -337,6 +337,12 @@
         "twse": 8877.32,
         "tpex": 0,
         "total": 8877.32
+      },
+      {
+        "date": "2026-08-03",
+        "twse": 8769.45,
+        "tpex": 1322.26,
+        "total": 10091.71
       }
     ]
   },
@@ -344,7 +350,7 @@
     "converted": 2609.71,
     "fxAsOf": "2026-08-03",
     "premiumPct": 7.62,
-    "impliedOpen": 2431,
+    "impliedOpen": 2425,
     "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
 }
