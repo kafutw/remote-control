@@ -448,8 +448,9 @@ const volume = (() => {
       latestPartial: rows.length > 0 && rows[rows.length-1].total === null,
       series: rows.slice(-60)
     };
-    console.error(`  量能 ${sig.last ?? "—"} 億　狀態 ${sig.state}`
-      + (sig.armedSince ? `（自 ${sig.armedSince} 待命 ${sig.daysArmed} 日）` : "")
+    console.error(`  量能 ${sig.last ?? "—"} 億　${sig.lit ? "🟢 亮燈" : "無訊號"}`
+      + (sig.reach ? `　門檻校準：近 ${sig.reach.days} 日有 ${sig.reach.fired} 天會亮`
+                     + `（${Math.round(sig.reach.fireRate*100)}%）` : "")
       + (out.latestPartial ? "　⚠️ 最新一日缺上櫃，不判定" : ""));
 
     if(sig.ready && !out.latestPartial && full.length >= 2){

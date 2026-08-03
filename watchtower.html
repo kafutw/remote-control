@@ -835,8 +835,7 @@ function volChart(series, cfg, w, h){
            + Math.max(bw-0.8,0.6).toFixed(1)+'" height="2" fill="var(--rule2)"/>';
     }
     var y = Y(r.total);
-    var col = r.total > cfg.overheat ? "var(--warnInk)"
-            : r.total < cfg.quiet    ? "var(--ink3)" : "var(--navy)";
+    var col = r.total > cfg.overheat ? "var(--warnInk)" : "var(--navy)";
     // 柱子壓半透明，門檻線才透得出來 —— 這張圖要回答的是
     // 「今天有沒有越過 1.1 兆那條線」，實心柱子會把那條線整個蓋掉
     return '<rect x="'+(pad+i*bw).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'
@@ -857,13 +856,11 @@ function volChart(series, cfg, w, h){
 
   return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" preserveAspectRatio="none" '
        + 'role="img" aria-label="近 '+series.length+' 日成交值，門檻 '
-       +   (cfg.quiet/10000).toFixed(2)+' 兆／'+(cfg.breakout/10000).toFixed(2)+' 兆／'
-       +   (cfg.overheat/10000).toFixed(2)+' 兆">'
+       +   (cfg.breakout/10000).toFixed(2)+' 兆與 '+(cfg.overheat/10000).toFixed(2)+' 兆">'
        + bars
-       // 三條線用虛線疏密＋位置區分，不用顏色 ——
+       // 兩條線用虛線疏密＋位置區分，不用顏色 ——
        // 顏色在這頁已經被「紅漲綠跌」佔走了，門檻線借用會被讀成方向
-       + line(cfg.quiet,    "var(--ink3)",   "2 3")
-       // 突破線是這張圖的主角，畫最粗 —— 其他兩條是配角
+       // 突破線是這張圖的主角，畫最粗
        + line(cfg.breakout, "var(--ink)",    "6 3", 1.6)
        + line(cfg.overheat, "var(--warnInk)","6 3")
        + (md ? '<path d="'+md.trim()+'" fill="none" stroke="var(--navy)" stroke-width="1.4"/>' : "")
@@ -1577,56 +1574,52 @@ function renderSignals(){
 function volumeCardHTML(){
   var v = BRIEF.volume;
   if(!v) return '<div class="pend">⚠️ <b>成交值還沒開始累積。</b>'
-    + 'data/turnover.csv 由 GitHub Actions 每天抓上市（證交所 FMTQIK）與上櫃（TPEx）寫入。'
-    + '<b>那兩個端點在寫這段程式的環境完全連不出去，沒辦法先驗</b> —— '
-    + '第一次跑之後看 Actions 的 log 才知道通不通。</div>';
+    + 'data/turnover.csv 由 GitHub Actions 每天抓上市（證交所 FMTQIK）與上櫃（TPEx）寫入。</div>';
 
   var t = v.thresholds;
-  // 7,000 億寫成「0.70 兆」很難讀，一兆以下就用億
   var tri = function(x){ return x >= 10000 ? (x/10000).toFixed(2) + " 兆" : fmt(x,0) + " 億"; };
 
-  // 三種狀態要分得很開：待命中其實才是最該注意的，不是亮燈
-  // 燈號的顏色由 emoji 承擔，文字用中性色。
-  // --down 是綠色（這頁的綠＝跌），拿它標「亮燈」會被讀成下跌；
-  // 紅綠在這一頁已經有固定意義，燈號不該再借用一次。
   var lamp = v.latestPartial ? {e:"⚠️", t:"資料不全，不判定"}
            : !v.ready        ? {e:"⚪", t:"資料累積中"}
-           : v.state==="fired" ? {e:"🟢", t:"亮燈"}
-           : v.state==="armed" ? {e:"🟡", t:"待命中"}
-                               : {e:"⚫", t:"無訊號"};
-
+           : v.lit           ? {e:"🟢", t:"亮燈"}
+                             : {e:"⚫", t:"無訊號"};
   var sub;
   if(v.latestPartial){
-    // 這是關鍵的誠實點：少了上櫃約低估 15～20%，拿去比門檻會系統性不亮，
-    // 而且看起來就像「今天沒事」
     sub = '最新一日缺上櫃資料。門檻是上市＋上櫃校準的，只用上市會低估 15～20%，'
         + '硬比會系統性不亮 —— 所以寧可不判定';
   }else if(!v.ready){
     sub = '還沒有完整的日成交值';
-  }else if(v.state==="fired"){
+  }else if(v.lit){
     sub = esc(v.reasons.join("；"));
-  }else if(v.state==="armed"){
-    sub = '已出現量縮打底（' + esc(v.armedSince) + '，' + v.daysArmed + ' 個交易日前），'
-        + '等突破 ' + tri(t.breakout) + ' 才亮燈；超過 ' + t.armWindow + ' 個交易日沒突破就失效';
   }else{
-    sub = '還沒出現量縮打底（低於 ' + tri(t.quiet) + '），此時的突破不算數';
+    sub = '今日成交值未達 ' + tri(t.breakout);
   }
 
   var body = '<div class="kv"><span>'+lamp.e+' <b>'+lamp.t+'</b>'
     + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'+sub+'</small></span>'
     + '<b style="color:var(--ink2)">'+(v.last===null||v.last===undefined?'—':fmt(v.last,0)+' 億')+'</b></div>';
 
-  /* 門檻搆不到就要當場講。
-     一個永遠不會亮的燈，畫面上跟「最近沒訊號」長得一模一樣 ——
-     那是這整頁最不能接受的一種失敗：看起來在運作，其實從來不會有結論。 */
-  if(v.reach && !v.reach.quietReachable){
-    body += '<div class="pend" style="margin:0 15px 12px">⚠️ <b>量縮門檻搆不到，這盞燈目前不可能亮。</b>'
-      + '近 '+v.reach.days+' 個交易日的最低量是 <b>'+fmt(v.reach.lo,0)+' 億</b>，'
-      + '從來沒有低於量縮線 '+tri(t.quiet)+' —— 而「先量縮打底」是亮燈的前提。'
-      + '<br>這組門檻是依<b>當時的市值規模</b>抓的經驗值，現在的成交量級距已經整個往上移。'
-      + '要嘛把 <b>data/thresholds.json</b> 的 quietBelow 調高到貼近實際的低量區，'
-      + '要嘛承認現在這個市場沒有「量縮打底」這件事。'
-      + '<b>先別急著調</b> —— 把門檻改到剛好會亮，等於是照著已經發生的行情去配答案。</div>';
+  /* 校準讀數。門檻壞掉是無聲的：太高就永遠不亮（看起來像「最近沒訊號」），
+     太低就天天亮（看起來像「一直有訊號」）。兩種都要在畫面上看得見。 */
+  if(v.reach && v.reach.days >= 5){
+    var pct = Math.round(v.reach.fireRate * 100);
+    var bad = pct >= 50 || pct === 0;
+    body += '<div class="kv"><span>這條門檻的校準'
+      + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'
+      + '近 '+v.reach.days+' 個交易日有 '+v.reach.fired+' 天超過 '+tri(t.breakout)
+      + '　區間 '+fmt(v.reach.lo,0)+'～'+fmt(v.reach.hi,0)+' 億</small></span>'
+      + '<b style="color:'+(bad?'var(--warnInk)':'var(--ink2)')+'">'+pct+'% 會亮</b></div>';
+
+    if(bad) body += '<div class="pend" style="margin:0 15px 12px">⚠️ '
+      + (pct === 0
+          ? '<b>近期沒有一天超過這條線，這盞燈目前不會亮。</b>門檻可能訂得太高。'
+          : '<b>近期有 '+pct+'% 的日子都會亮，這盞燈幾乎沒有資訊量。</b>'
+            + '天天亮的燈跟不會亮的燈一樣沒用。')
+      + '門檻在 <b>data/thresholds.json</b> 可以調，但<b>先別急著調到剛好會亮</b> —— '
+      + '那等於照著已經發生的行情去配答案。'
+      + '<br><b>另外：原本「先量縮打底才算數」那段前置條件已經拿掉了</b>'
+      + '（2026/07 最低量 7,476 億，從沒低於 7,000 億，那個階段在現在的市場不存在）。'
+      + '少了它，這盞燈<b>分不出換手與出貨</b> —— 它只回答「量夠不夠大」，不回答「這個量是好是壞」。</div>';
   }
 
   if(v.series && v.series.length){
@@ -1635,15 +1628,10 @@ function volumeCardHTML(){
       + volChart(v.series, t, 300, 64)
       + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-top:4px">'
       +   '<span>'+esc(d0.slice(5).replace("-","/"))+'</span>'
-      +   '<span>虛線由下而上：'+tri(t.quiet)+' · '+tri(t.breakout)+' · '+tri(t.overheat)+'</span>'
+      +   '<span>虛線：'+tri(t.breakout)+' · '+tri(t.overheat)+'</span>'
       +   '<span>'+esc(d1.slice(5).replace("-","/"))+'</span>'
       + '</div></div>';
   }
-
-  body += '<div class="kv"><span>兩段式判定'
-    + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'
-    + '先低於 '+tri(t.quiet)+' 打底 → 待命 → 突破 '+tri(t.breakout)+'</small></span>'
-    + '<b style="color:var(--ink2)">'+(v.state==="fired"?"已觸發":(v.state==="armed"?"等突破":"等打底"))+'</b></div>';
 
   if(v.incomplete) body += '<div class="kv"><span>資料完整度'
     + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'

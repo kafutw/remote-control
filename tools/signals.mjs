@@ -74,74 +74,58 @@ export function evalFx(rates, cfg){
   };
 }
 
-/* 量能的兩段式狀態機。
+/* 量能：單日成交值突破門檻就亮。
  *
- * 為什麼不能只看「突破 1.1 兆就亮」：高檔爆量跟打底後放量，單日數字長得一模一樣，
- * 但一個是出貨、一個是進場。差別不在那一天，在**它之前發生過什麼**。
- * 所以要先看到量縮打底（< 7,000 億）進入待命，之後的突破才算數。
+ * ── 原本的「量縮打底 → 待命 → 突破」兩段式已經拿掉 ──
+ * 那一段的用意是分辨「打底後放量（進場）」與「高檔爆量（出貨）」——
+ * 單日數字長得一模一樣，差別在它之前發生過什麼。想法是對的，
+ * 但實際資料出來就知道行不通：2026/07 的上市成交值最低 7,476 億，
+ * 22 個交易日沒有一天低於 7,000 億，加上上櫃只會更高。
+ * 「量縮打底」這個階段在現在的市場規模下根本不存在，
+ * 那個前提永遠不會成立，燈永遠不會亮。所以整段移除。
  *
- * 狀態：
- *   idle  ── 沒事
- *   armed ── 出現過量縮，在等突破（這其實是最該注意的狀態，不是亮燈）
- *   fired ── 待命期間內突破了，亮燈；亮完回到 idle，要重新打底才會再亮
- *
- * 待命有沒有期限？原始建議沒說。半年前的量縮配上今天的突破顯然不該算數，
- * 所以我加了一個 armWindow（預設 30 個交易日）並且放進門檻檔可調 ——
- * 這是我補的假設，不是講者給的，標在這裡免得日後被當成原始設定。
+ * ── 移除之後少了什麼，要講清楚 ──
+ * 沒有前置條件，這盞燈就**分不出換手與出貨**。它只回答
+ * 「今天的量有沒有超過某條線」，不回答「這個量是好是壞」。
+ * 為了不讓這件事變成無聲的問題，evalVolume 會一併回報
+ * 這條門檻在手上這段資料會亮幾次（fireRate）——
+ * 一盞每天都亮或永遠不亮的燈，兩種都沒有資訊量，而且要看得見才知道。
  */
 export function evalVolume(series, cfg){
   var c = (cfg && cfg.volume) || {};
-  var quiet    = c.quietBelow    || 7000;      // 億元
-  var breakout = c.breakoutAbove || 11000;
+  var breakout = c.breakoutAbove || 11000;     // 億元
   var overheat = c.overheatAbove || 13000;
-  var win      = c.armWindow     || 30;
 
   var vals = series.map(function(r){ return r.total; });
-  var state = "idle", armedAt = null, firedAt = null, armedDate = null;
-
-  for(var i=0;i<vals.length;i++){
-    var v = vals[i];
-    if(v === null || v === undefined || !isFinite(v)) continue;
-    if(armedAt !== null && (i - armedAt) > win){ armedAt = null; }   // 待命過期
-    if(v < quiet){
-      armedAt = i; armedDate = series[i].date;                      // 量縮，重新計時
-    }else if(armedAt !== null && v > breakout){
-      firedAt = i; armedAt = null;                                  // 觸發後要重新打底
-    }
-  }
-  state = firedAt === vals.length - 1 ? "fired" : (armedAt !== null ? "armed" : "idle");
-
-  /* 門檻搆不搆得到。
-     這一條是實際跑過才發現要加的：2026 年 7 月的上市成交值最低是 7,476 億，
-     22 個交易日沒有一天低於 7,000 億 —— 加上上櫃只會更高。
-     也就是說「量縮打底」這一段**永遠不會成立**，燈永遠不可能亮，
-     而畫面上看到的會是安靜的「等打底」，跟「最近沒有訊號」長得一模一樣。
-     一個永遠不會亮的燈，比沒有這盞燈更危險，所以要自己講出來。 */
   var seen = vals.filter(function(v){ return v !== null && v !== undefined && isFinite(v); });
-  var reach = null;
-  if(seen.length){
-    var lo = Math.min.apply(null, seen), hi = Math.max.apply(null, seen);
-    reach = {
-      lo: lo, hi: hi, days: seen.length,
-      quietReachable:    lo < quiet,        // 這段期間有沒有真的量縮過
-      breakoutReachable: hi > breakout
-    };
-  }
 
   var last = vals.length ? vals[vals.length-1] : null;
+  var lit = last !== null && last !== undefined && isFinite(last) && last > breakout;
+
   var reasons = [];
-  if(state === "fired"){
-    reasons.push("量縮打底後突破 " + (breakout/10000).toFixed(2) + " 兆");
-    // 突破當天就已經爆到過熱區，值得講一句 —— 那正是「高檔爆量」長的樣子
-    if(last > overheat) reasons.push("但同日已達 " + (overheat/10000).toFixed(2) + " 兆過熱區，留意是換手還是出貨");
+  if(lit){
+    reasons.push("成交值突破 " + (breakout/10000).toFixed(2) + " 兆");
+    // 少了打底那一段之後，這句話從「補充說明」變成唯一的警語
+    if(last > overheat)
+      reasons.push("而且已達 " + (overheat/10000).toFixed(2)
+                 + " 兆過熱區 —— 沒有前置條件可以分辨這是換手還是出貨，要自己看");
   }
 
+  /* 這條門檻在手上這段資料會亮幾次。
+     校準壞掉是無聲的：門檻太高就永遠不亮（看起來像「最近沒訊號」），
+     太低就天天亮（看起來像「一直有訊號」）。兩種都要看得見。 */
+  var fired = seen.filter(function(v){ return v > breakout; }).length;
+  var reach = seen.length ? {
+    lo: Math.min.apply(null, seen), hi: Math.max.apply(null, seen), days: seen.length,
+    fired: fired, fireRate: fired / seen.length,
+    breakoutReachable: Math.max.apply(null, seen) > breakout
+  } : null;
+
   return {
-    state: state, lit: state === "fired", reasons: reasons,
-    ready: vals.length > 0,
-    last: last, reach: reach, armedSince: armedAt !== null ? armedDate : null,
-    daysArmed: armedAt !== null ? (vals.length - 1 - armedAt) : null,
-    thresholds: {quiet:quiet, breakout:breakout, overheat:overheat, armWindow:win}
+    lit: lit, reasons: reasons,
+    ready: seen.length > 0,
+    last: last, reach: reach,
+    thresholds: {breakout:breakout, overheat:overheat}
   };
 }
 
@@ -151,7 +135,7 @@ export function shouldLog(wasLit, isLit){ return !wasLit && isLit; }
 
 export const DEFAULTS = {
   fx: { consecutiveDays:3, fastMA:5, slowMA:20 },
-  volume: { quietBelow:7000, breakoutAbove:11000, overheatAbove:13000, armWindow:30 }
+  volume: { breakoutAbove:11000, overheatAbove:13000 }
 };
 
 /* ── 自測 ── */
@@ -215,60 +199,39 @@ function selfTest(){
   ok("由暗轉亮才記錄", shouldLog(false,true) === true && shouldLog(true,true) === false
      && shouldLog(true,false) === false);
 
-  // ── 量能兩段式狀態機 ──
+  // ── 量能 ──
   var V = function(arr){ return arr.map(function(v,i){
     return {date:"2026-09-"+String(i+1).padStart(2,"0"), total:v}; }); };
 
-  // 沒打底就直接爆量 → 不該亮。這是整個狀態機存在的理由。
-  ok("沒量縮直接突破 → 不亮（高檔爆量不是買訊）",
-     evalVolume(V([9000,9500,10000,11500]), DEFAULTS).lit === false,
-     evalVolume(V([9000,9500,10000,11500]), DEFAULTS).state);
+  ok("超過門檻 → 亮", evalVolume(V([9000,11500]), DEFAULTS).lit === true);
+  ok("沒超過 → 不亮", evalVolume(V([9000,10500]), DEFAULTS).lit === false);
+  ok("剛好等於門檻 → 不亮（要嚴格大於）",
+     evalVolume(V([9000,11000]), DEFAULTS).lit === false);
 
-  // 先打底再突破 → 亮
-  var arm = evalVolume(V([9000,6500,8000,9000,11500]), DEFAULTS);
-  ok("量縮打底後突破 → 亮", arm.lit === true && arm.state === "fired", arm);
+  // 過熱區的警語現在是唯一分辨換手／出貨的提示，不能掉
+  var hot = evalVolume(V([13800]), DEFAULTS);
+  ok("突破且過熱 → 兩句話，第二句講分不出換手或出貨",
+     hot.lit === true && hot.reasons.length === 2
+     && hot.reasons[1].indexOf("換手還是出貨") >= 0, hot.reasons);
 
-  // 打底後還沒突破 → armed，不是 idle 也不是亮
-  var waiting = evalVolume(V([9000,6500,8000,9000]), DEFAULTS);
-  ok("打底後等待中 → armed", waiting.state === "armed" && waiting.lit === false, waiting);
-  ok("armed 會記得從哪天開始", waiting.armedSince === "2026-09-02" && waiting.daysArmed === 2, waiting);
+  // 校準讀數：門檻壞掉是無聲的，兩個方向都要看得見
+  var everyDay = evalVolume(V([12000,12500,13000,11500]), DEFAULTS);
+  ok("天天都超過 → fireRate 是 1（門檻太低）",
+     everyDay.reach.fireRate === 1, everyDay.reach);
+  var never = evalVolume(V([9000,9500,8000]), DEFAULTS);
+  ok("從來沒超過 → fireRate 是 0、breakoutReachable false（門檻太高）",
+     never.reach.fireRate === 0 && never.reach.breakoutReachable === false, never.reach);
 
-  // 待命過期：量縮之後太久才突破，不算
-  var stale = [6500]; for(var q=0;q<40;q++) stale.push(9000); stale.push(11500);
-  ok("量縮後超過 armWindow 才突破 → 不亮",
-     evalVolume(V(stale), DEFAULTS).lit === false, evalVolume(V(stale), DEFAULTS).state);
-
-  // 亮完要重新打底
-  var again = evalVolume(V([6500,11500,9000,11800]), DEFAULTS);
-  ok("亮過之後沒重新打底就再突破 → 不亮", again.lit === false, again.state);
-
-  // 過熱區會加註但仍算亮
-  var hot = evalVolume(V([6500,13500]), DEFAULTS);
-  ok("突破當日直接爆到過熱區 → 亮但加註",
-     hot.lit === true && hot.reasons.length === 2 && hot.reasons[1].indexOf("過熱") >= 0, hot.reasons);
-
-  // 門檻搆不搆得到 —— 實際跑過才發現要加的檢查
-  var never = evalVolume(V([9000,10000,8500,12000,9500]), DEFAULTS);
-  ok("整段都沒低於量縮線 → 標記 quietReachable 為 false",
-     never.reach.quietReachable === false && never.reach.lo === 8500, never.reach);
-  var can = evalVolume(V([9000,6500,12000]), DEFAULTS);
-  ok("有量縮過 → quietReachable 為 true", can.reach.quietReachable === true, can.reach);
-  ok("沒人突破過 → breakoutReachable 為 false",
-     evalVolume(V([9000,6500,8000]), DEFAULTS).reach.breakoutReachable === false);
-
-  // 用 2026/07 的真實上市成交值驗：這組資料的量縮線根本搆不到
-  var real = [13678.18,10835.83,10780.28,10644.32,12281.19,10045.6,9967.89,10676.62,
+  // 用 2026/07 真實上市成交值（估算含上櫃 +18%）驗校準
+  var twse = [13678.18,10835.83,10780.28,10644.32,12281.19,10045.6,9967.89,10676.62,
               12452.07,10243.86,9331.81,13331.57,10414.57,8662.52,10259.58,9306.12,
               8271.3,7476.47,8725.75,11491.85,11469.38,8877.32];
-  var rv = evalVolume(V(real), DEFAULTS);
-  ok("2026/07 真實資料 → 量縮線搆不到，燈永遠不會亮",
-     rv.reach.quietReachable === false && rv.lit === false && rv.state === "idle",
-     {lo:rv.reach.lo, state:rv.state});
+  var real = evalVolume(V(twse.map(function(v){ return +(v*1.18).toFixed(2); })), DEFAULTS);
+  ok("2026/07 真實量級 → 這條門檻超過七成的日子都會亮（幾乎沒有資訊量）",
+     real.reach.fireRate > 0.7, {fireRate:real.reach.fireRate, fired:real.reach.fired, days:real.reach.days});
 
-  // 門檻可調：同一組資料換門檻結果要不同
-  ok("門檻調高後同一組資料不亮",
-     evalVolume(V([6500,11500]), {volume:{quietBelow:7000,breakoutAbove:12000,
-       overheatAbove:13000,armWindow:30}}).lit === false);
+  ok("門檻可調：調高之後同一組資料不亮",
+     evalVolume(V([11500]), {volume:{breakoutAbove:12000, overheatAbove:13000}}).lit === false);
 
   console.error(fails.length ? "\n✗ " + fails.length + " 項失敗" : "\n全部通過");
   return fails.length;
