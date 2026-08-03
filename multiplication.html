@@ -171,6 +171,10 @@
   .goal.todo { background: var(--amber-soft); border-color: var(--amber); }
   .goal.todo .txt { color: var(--amber); }
 
+  .card h2 .tally {
+    margin-left: auto; font-size: var(--fs-note); font-weight: 800;
+    color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
   .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .tile {
     font-family: inherit; cursor: pointer; color: var(--ink);
@@ -383,6 +387,26 @@
   .chart .col:last-child b { background: var(--mint); }
   .chart .col em { font-style: normal; font-size: var(--fs-note); color: var(--ink-faint); }
 
+  /* 最近 7 天：一格一天，一眼看出哪天沒練 */
+  .days7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .d7 {
+    background: var(--bg); border: 2px solid var(--line); border-radius: 14px;
+    padding: 9px 2px 10px; text-align: center;
+  }
+  .d7 u { display: block; text-decoration: none; font-size: var(--fs-note);
+          font-weight: 800; color: var(--ink-soft); }
+  .d7 b { display: block; font-size: var(--fs-note); font-weight: 700;
+          color: var(--ink-faint); font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .d7 span { display: block; margin-top: 7px; font-size: var(--fs-body); font-weight: 800;
+             font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+  .d7.lv1 { background: var(--mint-soft); border-color: var(--mint-soft); }
+  .d7.lv2 { background: var(--mint-soft); border-color: var(--mint); }
+  .d7.lv3 { background: var(--mint); border-color: var(--mint); }
+  .d7.lv1 span, .d7.lv2 span { color: var(--mint-ink); }
+  .d7.lv3 span, .d7.lv3 u, .d7.lv3 b { color: #fff; }
+  .d7.today { border-color: var(--blue); }
+  .d7.today u { color: var(--blue-deep); }
+
   .days { display: flex; flex-direction: column; }
   .dayrow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
   .dayrow:first-child { border-top: 0; padding-top: 2px; }
@@ -422,6 +446,12 @@
   .wrow .p small { display: block; font-weight: 700; color: var(--ink-faint); white-space: nowrap; }
 
   .foot { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+  /* 首頁上面壓了幾張資訊卡，開始按鈕黏在底部，捲到哪都按得到 */
+  #setup .foot {
+    position: sticky; bottom: 0; z-index: 12;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, transparent, var(--bg) 34%);
+  }
   .tiny { font-size: var(--fs-note); color: var(--ink-faint); text-align: center; margin-top: 16px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -520,6 +550,12 @@
 
   <!-- ══ 設定 ══ -->
   <section class="screen on" id="setup">
+    <div class="card">
+      <h2>最近 7 天<span class="tally" id="calTally"></span></h2>
+      <div class="days7" id="days7"></div>
+      <p class="hint" id="calHint"></p>
+    </div>
+
     <div class="goal" id="goal" hidden></div>
 
     <div class="card">
@@ -1002,7 +1038,7 @@
           var i = picked.indexOf(t);
           if (i >= 0) picked.splice(i, 1); else picked.push(t);
           picked.sort(function (a, b) { return a - b; });
-          buildTiles(); syncStart();
+          syncPick();
         });
         box.appendChild(el);
       })(t);
@@ -1019,10 +1055,10 @@
   }
 
   $('selAll').addEventListener('click', function () {
-    picked = TABLES.slice(); buildTiles(); syncStart();
+    picked = TABLES.slice(); syncPick();
   });
   $('selNone').addEventListener('click', function () {
-    picked = []; buildTiles(); syncStart();
+    picked = []; syncPick();
   });
   $('selWeak').addEventListener('click', function () {
     var ranked = [];
@@ -1034,7 +1070,7 @@
       return;
     }
     picked = weak.sort(function (a, b) { return a - b; });
-    buildTiles(); syncStart();
+    syncPick();
   });
 
   function segment(boxId, apply) {
@@ -1613,6 +1649,49 @@
     }
   }
 
+  // 最近 7 天有沒有練、各練幾次
+  var WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
+  function renderWeek() {
+    var box = $('days7');
+    box.innerHTML = '';
+    var counts = {};
+    db.runs.forEach(function (r) {
+      var k = dayKey(r.t);
+      counts[k] = (counts[k] || 0) + 1;
+    });
+
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var practised = 0, streak = 0, streakLive = true;
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(today);
+      d.setDate(d.getDate() - i);
+      var n = counts[dayKey(d.getTime())] || 0;
+      if (n) practised++;
+      var el = document.createElement('div');
+      el.className = 'd7' + (n >= 3 ? ' lv3' : n === 2 ? ' lv2' : n ? ' lv1' : '') +
+        (i === 0 ? ' today' : '');
+      el.innerHTML = '<u>' + (i === 0 ? '今天' : WEEKDAY[d.getDay()]) + '</u>' +
+        '<b>' + (d.getMonth() + 1) + '/' + d.getDate() + '</b>' +
+        '<span>' + (n ? n + ' 次' : '—') + '</span>';
+      box.appendChild(el);
+    }
+    // 目前連續幾天（今天還沒練不算中斷）
+    for (var j = 0; j < 60; j++) {
+      var dd = new Date(today); dd.setDate(dd.getDate() - j);
+      var c = counts[dayKey(dd.getTime())] || 0;
+      if (c) streak++;
+      else if (j > 0) break;
+      else streakLive = false;
+    }
+
+    $('calTally').textContent = practised ? '7 天裡練了 ' + practised + ' 天' : '';
+    $('calHint').textContent = !practised
+      ? '這 7 天還沒有練習紀錄。'
+      : (streak > 1 ? '目前連續 ' + streak + ' 天有練習' +
+          (streakLive ? '' : '（今天還沒練）') + '。' : '') +
+        '顏色越深代表那天練越多次。';
+  }
+
   // 每天練了幾次、分別是幾點練的
   function renderDays() {
     var box = $('days');
@@ -1673,7 +1752,7 @@
     var keep = { sound: db.sound, speak: db.speak, tables: db.tables.slice(),
                  mode: db.mode, count: db.count };
     db = Object.assign(blank(), keep);
-    save(); renderHistory(); buildTiles(); syncStart();
+    save(); renderHistory(); syncPick();
   });
 
   /* ────────── 音效開關 ────────── */
@@ -1816,9 +1895,14 @@
         (days ? '　・　已經達標 ' + days + ' 天' : '') + '</small></span>';
   }
 
-  function refreshSetup() {
-    renderGoal();
+  function syncPick() {
     buildTiles(); syncStart();
+  }
+
+  function refreshSetup() {
+    renderWeek();
+    renderGoal();
+    syncPick();
     $('reviewBtn').hidden = !(db.lastWrong && db.lastWrong.length);
   }
 
