@@ -113,6 +113,15 @@ section{margin-top:30px}
   margin-top:2px;letter-spacing:0;text-transform:none;line-height:1.5
 }
 .kx .knote b{font-weight:700;color:var(--ink)}
+/* 這一列真正要看的是「台積電大概開在哪」，不是 ADR 的美元價 ——
+   所以那個數字放大、加粗，並照 ADR 的方向上色 */
+.kx .knote b.kbig{
+  font-size:17px;font-weight:800;letter-spacing:-.01em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;
+  white-space:nowrap
+}
+.kx .knote b.kbig.up{color:var(--up)} .kx .knote b.kbig.down{color:var(--down)}
+.kx .knote b.kbig.flat{color:var(--ink)}
 /* 沒有全域 a 重設，不寫這條就會吃到瀏覽器預設的底線與藍紫色 */
 .kx .knote a{color:var(--navy);text-decoration:none}
 .kx .knote a:hover{text-decoration:underline}
@@ -988,7 +997,8 @@ function renderKey(){
     var io = impliedOpenOf(BRIEF.adr), note = "";
     if(io !== null){
       var gap = io - BRIEF.adr.tsmcClose;
-      note = '若完全反映 ADR 漲跌，台積電約開在 <b>' + fmt(io,0) + ' 元</b>'
+      note = '若完全反映 ADR 漲跌，台積電約開在 <b class="kbig '+cls(BRIEF.adr.pct)+'">'
+           + fmt(io,0) + ' 元</b>'
            + '（昨收 ' + fmt(BRIEF.adr.tsmcClose,0) + (gap>=0?' +':' −') + fmt(Math.abs(gap),0) + '）'
            + ' · <b>上限參考</b>，台股很少補滿，且有 10% 漲跌幅限制'
            + ' · <a href="#adrSec">完整換算與溢價率 ↓</a>';
