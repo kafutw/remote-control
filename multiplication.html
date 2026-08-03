@@ -416,11 +416,17 @@
     font-size: var(--fs-note); font-weight: 800; color: #fff; background: var(--blue);
     border-radius: 99px; padding: 3px 10px; margin-left: auto;
   }
-  .dayrow .ts { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+  /* 一場一列，錯的題目列在該場下面 */
+  .dayrow .ts { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
   .sess {
     font-size: var(--fs-note); font-weight: 700; color: var(--ink-soft);
-    background: var(--bg); border-radius: 9px; padding: 4px 9px;
+    background: var(--bg); border-radius: 10px; padding: 7px 10px;
     font-variant-numeric: tabular-nums;
+  }
+  .sess em { font-style: normal; display: block; }
+  .sess q {
+    display: block; quotes: none; margin-top: 4px; padding-top: 4px;
+    border-top: 1px solid var(--line); color: var(--coral-ink);
   }
   .sess u { text-decoration: none; color: var(--blue-deep); margin-left: 6px; }
   .sess b { color: var(--mint-ink); margin-left: 6px; }
@@ -821,6 +827,8 @@
     var d = new Date(ts);
     return d.getHours() + ':' + pad(d.getMinutes());
   }
+  // 一律以「開始練習」的時間為準；舊紀錄沒有 start 就退回原本的時間
+  function runAt(r) { return r.start || r.t; }
   function dayKey(ts) {
     var d = new Date(ts);
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -900,11 +908,10 @@
     return CN[Math.floor(n / 10)] + '十' + (n % 10 ? CN[n % 10] : '');
   }
 
-  // 公布答案念傳統口訣：九八七十二、二五一十、二三得六
+  // 公布答案念傳統口訣：九八七十二、二五十、二三得六
   function chant(a, b) {
     var ans = a * b;
     if (ans < 10) return cn(a) + cn(b) + '得' + cn(ans);
-    if (ans === 10) return cn(a) + cn(b) + '一十';   // 口訣念「一十」不念「十」
     return cn(a) + cn(b) + cn(ans);
   }
 
@@ -1007,7 +1014,7 @@
     var today = dayKey(Date.now());
     return db.runs.some(function (r) {
       var tot = r.total || 10;
-      return dayKey(r.t) === today && tot && r.correct / tot >= DAILY_MIN_RATE;
+      return dayKey(runAt(r)) === today && tot && r.correct / tot >= DAILY_MIN_RATE;
     });
   }
 
@@ -1016,7 +1023,7 @@
     var days = {};
     db.runs.forEach(function (r) {
       var tot = r.total || 10;
-      if (tot && r.correct / tot >= DAILY_MIN_RATE) days[dayKey(r.t)] = 1;
+      if (tot && r.correct / tot >= DAILY_MIN_RATE) days[dayKey(runAt(r))] = 1;
     });
     return Object.keys(days).length;
   }
@@ -1420,9 +1427,10 @@
     }
     if (completed && !S.reviewMode) {
       db.runs.push({
-        t: Date.now(), tables: S.tables, correct: S.correct,
+        t: Date.now(), start: S.startedAt, tables: S.tables, correct: S.correct,
         wrong: S.wrong, total: S.total, ms: S.ms,
-        timeouts: S.timeouts, worstRun: S.worstRun
+        timeouts: S.timeouts, worstRun: S.worstRun,
+        wrongs: S.wrongList.map(function (q) { return q.a + 'x' + q.b; })
       });
       if (db.runs.length > 60) db.runs = db.runs.slice(-60);
       var b = db.best[S.total];
@@ -1539,7 +1547,7 @@
       chart.innerHTML = '<div class="empty" style="margin:auto">還沒有練習紀錄，先玩一輪吧！</div>';
     } else {
       runs.forEach(function (r) {
-        var d = new Date(r.t);
+        var d = new Date(runAt(r));
         var tot = r.total || 10;
         var col = document.createElement('div');
         col.className = 'col';
@@ -1656,7 +1664,7 @@
     box.innerHTML = '';
     var counts = {};
     db.runs.forEach(function (r) {
-      var k = dayKey(r.t);
+      var k = dayKey(runAt(r));
       counts[k] = (counts[k] || 0) + 1;
     });
 
@@ -1702,7 +1710,7 @@
     }
     var order = [], byDay = {};
     db.runs.forEach(function (r) {
-      var k = dayKey(r.t);
+      var k = dayKey(runAt(r));
       if (!byDay[k]) { byDay[k] = []; order.push(k); }
       byDay[k].push(r);
     });
@@ -1710,7 +1718,7 @@
     var yesterday = dayKey(Date.now() - 86400000);
     order.slice(-7).reverse().forEach(function (k) {
       var runs = byDay[k];
-      var d = new Date(runs[0].t);
+      var d = new Date(runAt(runs[0]));
       var label = (d.getMonth() + 1) + '/' + d.getDate();
       var tag = k === today ? '今天' : (k === yesterday ? '昨天' : '');
       var row = document.createElement('div');
@@ -1718,10 +1726,16 @@
       var sess = runs.map(function (r) {
         var tot = r.total || 10;
         var tb = Array.isArray(r.tables) && r.tables.length ? tableLabel(r.tables) + ' 段' : '';
+        // 那一場錯了哪幾題，直接列出來
+        var wrongs = (r.wrongs || []).map(function (k) {
+          var f = k.split('x');
+          return f[0] + '×' + f[1] + '=' + (f[0] * f[1]);
+        });
         return '<span class="sess' + (r.correct < tot ? ' miss' : '') + '">' +
-          clockOf(r.t) + (tb ? '<u>' + tb + '</u>' : '') +
+          '<em>' + clockOf(runAt(r)) + (tb ? '<u>' + tb + '</u>' : '') +
           '<b>' + r.correct + '/' + tot + '</b>' +
-          (r.mood && MOOD[r.mood] ? '<s>' + MOOD[r.mood] + '</s>' : '') + '</span>';
+          (r.mood && MOOD[r.mood] ? '<s>' + MOOD[r.mood] + '</s>' : '') + '</em>' +
+          (wrongs.length ? '<q>錯：' + wrongs.join('、') + '</q>' : '') + '</span>';
       }).join('');
 
       // 卡住的訊號：時間到沒作答、連續答錯、中途離開
@@ -1875,7 +1889,7 @@
   function renderGoal() {
     var el = $('goal');
     var today = dayKey(Date.now());
-    var todayRuns = db.runs.filter(function (r) { return dayKey(r.t) === today; });
+    var todayRuns = db.runs.filter(function (r) { return dayKey(runAt(r)) === today; });
     if (!todayRuns.length) {          // 今天還沒開始，先不要擺一個沒達成的目標在那裡
       el.hidden = true;
       return;
