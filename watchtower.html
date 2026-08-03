@@ -1616,6 +1616,19 @@ function volumeCardHTML(){
     + '<small style="display:block;color:var(--ink3);font-size:10.5px;font-weight:400">'+sub+'</small></span>'
     + '<b style="color:var(--ink2)">'+(v.last===null||v.last===undefined?'—':fmt(v.last,0)+' 億')+'</b></div>';
 
+  /* 門檻搆不到就要當場講。
+     一個永遠不會亮的燈，畫面上跟「最近沒訊號」長得一模一樣 ——
+     那是這整頁最不能接受的一種失敗：看起來在運作，其實從來不會有結論。 */
+  if(v.reach && !v.reach.quietReachable){
+    body += '<div class="pend" style="margin:0 15px 12px">⚠️ <b>量縮門檻搆不到，這盞燈目前不可能亮。</b>'
+      + '近 '+v.reach.days+' 個交易日的最低量是 <b>'+fmt(v.reach.lo,0)+' 億</b>，'
+      + '從來沒有低於量縮線 '+tri(t.quiet)+' —— 而「先量縮打底」是亮燈的前提。'
+      + '<br>這組門檻是依<b>當時的市值規模</b>抓的經驗值，現在的成交量級距已經整個往上移。'
+      + '要嘛把 <b>data/thresholds.json</b> 的 quietBelow 調高到貼近實際的低量區，'
+      + '要嘛承認現在這個市場沒有「量縮打底」這件事。'
+      + '<b>先別急著調</b> —— 把門檻改到剛好會亮，等於是照著已經發生的行情去配答案。</div>';
+  }
+
   if(v.series && v.series.length){
     var d0 = v.series[0].date, d1 = v.series[v.series.length-1].date;
     body += '<div style="padding:10px 15px 4px">'

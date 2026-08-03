@@ -63,7 +63,8 @@ async function twseMonth(y, m){
   const j = await getJSON(
     `https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?date=${y}${pad(m)}01&response=json`);
   const rows = j.data || j.aaData || [];
-  if(!rows.length) throw new Error("回應裡沒有 data");
+  // 當月還沒有交易日（月初、連假）也會是空的，那不是故障
+  if(!rows.length) throw new Error("回應裡沒有 data（該月可能還沒有交易日）");
   // 欄位順序：日期／成交股數／成交金額／成交筆數／指數／漲跌
   const out = [];
   for(const r of rows){
@@ -74,19 +75,38 @@ async function twseMonth(y, m){
 }
 
 /* ── 上櫃：TPEx。這站改版頻繁，依序試，能通哪個算哪個 ── */
+/** 回應長什麼樣子 —— 解析失敗時印出來。
+ *  第一次上線兩個端點都回「沒有資料列」：它們有回應、是 JSON、但我找不到列。
+ *  光知道「失敗了」修不了，要知道**它到底回了什麼**才有辦法對。
+ *  這個環境連不到 TPEx，所以只能讓下一次 Actions 執行把答案帶回來。 */
+function shape(j, depth = 0){
+  if(j === null || j === undefined) return String(j);
+  if(Array.isArray(j)) return `Array(${j.length})` + (j.length && depth < 2 ? `of ${shape(j[0], depth+1)}` : "");
+  if(typeof j === "object"){
+    const ks = Object.keys(j);
+    return `{${ks.slice(0,12).join(",")}${ks.length>12?",…":""}}`;
+  }
+  return typeof j;
+}
+
 async function tpexMonth(y, m){
   const roc = `${y - 1911}/${pad(m)}`;
   const tries = [
+    // 新版站台（www/ 路徑）優先 —— 舊的 st41_result.php 已知回不出列
+    { url:`https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingIndex?date=${y}${pad(m)}01&response=json`,
+      pick:j => j.tables?.[0]?.data || j.data || j.aaData },
+    { url:`https://www.tpex.org.tw/openapi/v1/tpex_daily_market_stat`,
+      pick:j => Array.isArray(j) ? j : null },
     { url:`https://www.tpex.org.tw/web/stock/aftertrading/daily_trading_index/st41_result.php?l=zh-tw&d=${roc}&o=json`,
       pick:j => j.aaData || j.data },
-    { url:`https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingIndex?date=${y}${pad(m)}01&response=json`,
-      pick:j => j.tables?.[0]?.data || j.data },
   ];
   const errs = [];
   for(const t of tries){
     try{
-      const rows = t.pick(await getJSON(t.url));
-      if(!rows || !rows.length) throw new Error("回應裡沒有資料列");
+      const j = await getJSON(t.url);
+      const rows = t.pick(j);
+      // 失敗時把回應的結構印出來，下一次執行的 log 就會告訴我們該怎麼接
+      if(!rows || !rows.length) throw new Error("回應裡沒有資料列｜結構 " + shape(j));
       const out = [];
       for(const r of rows){
         const d = toISO(r[0]);
@@ -101,9 +121,10 @@ async function tpexMonth(y, m){
         if(amt < 1e9) amt *= 1000;
         out.push({date:d, tpex:toYi(amt)});
       }
-      if(!out.length) throw new Error("解析後沒有可用列");
+      if(!out.length) throw new Error("有列但解析不出日期或金額｜首列 "
+            + JSON.stringify(rows[0]).slice(0,160));
       return out;
-    }catch(e){ errs.push(`${t.url.slice(0,60)}… → ${e.message}`); }
+    }catch(e){ errs.push(`${t.url.replace(/^https:\/\/www\.tpex\.org\.tw/,"")} → ${e.message}`); }
   }
   throw new Error("上櫃全部端點失敗｜" + errs.join(" ｜ "));
 }

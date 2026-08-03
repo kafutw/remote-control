@@ -111,6 +111,23 @@ export function evalVolume(series, cfg){
   }
   state = firedAt === vals.length - 1 ? "fired" : (armedAt !== null ? "armed" : "idle");
 
+  /* 門檻搆不搆得到。
+     這一條是實際跑過才發現要加的：2026 年 7 月的上市成交值最低是 7,476 億，
+     22 個交易日沒有一天低於 7,000 億 —— 加上上櫃只會更高。
+     也就是說「量縮打底」這一段**永遠不會成立**，燈永遠不可能亮，
+     而畫面上看到的會是安靜的「等打底」，跟「最近沒有訊號」長得一模一樣。
+     一個永遠不會亮的燈，比沒有這盞燈更危險，所以要自己講出來。 */
+  var seen = vals.filter(function(v){ return v !== null && v !== undefined && isFinite(v); });
+  var reach = null;
+  if(seen.length){
+    var lo = Math.min.apply(null, seen), hi = Math.max.apply(null, seen);
+    reach = {
+      lo: lo, hi: hi, days: seen.length,
+      quietReachable:    lo < quiet,        // 這段期間有沒有真的量縮過
+      breakoutReachable: hi > breakout
+    };
+  }
+
   var last = vals.length ? vals[vals.length-1] : null;
   var reasons = [];
   if(state === "fired"){
@@ -122,7 +139,7 @@ export function evalVolume(series, cfg){
   return {
     state: state, lit: state === "fired", reasons: reasons,
     ready: vals.length > 0,
-    last: last, armedSince: armedAt !== null ? armedDate : null,
+    last: last, reach: reach, armedSince: armedAt !== null ? armedDate : null,
     daysArmed: armedAt !== null ? (vals.length - 1 - armedAt) : null,
     thresholds: {quiet:quiet, breakout:breakout, overheat:overheat, armWindow:win}
   };
@@ -229,6 +246,24 @@ function selfTest(){
   var hot = evalVolume(V([6500,13500]), DEFAULTS);
   ok("突破當日直接爆到過熱區 → 亮但加註",
      hot.lit === true && hot.reasons.length === 2 && hot.reasons[1].indexOf("過熱") >= 0, hot.reasons);
+
+  // 門檻搆不搆得到 —— 實際跑過才發現要加的檢查
+  var never = evalVolume(V([9000,10000,8500,12000,9500]), DEFAULTS);
+  ok("整段都沒低於量縮線 → 標記 quietReachable 為 false",
+     never.reach.quietReachable === false && never.reach.lo === 8500, never.reach);
+  var can = evalVolume(V([9000,6500,12000]), DEFAULTS);
+  ok("有量縮過 → quietReachable 為 true", can.reach.quietReachable === true, can.reach);
+  ok("沒人突破過 → breakoutReachable 為 false",
+     evalVolume(V([9000,6500,8000]), DEFAULTS).reach.breakoutReachable === false);
+
+  // 用 2026/07 的真實上市成交值驗：這組資料的量縮線根本搆不到
+  var real = [13678.18,10835.83,10780.28,10644.32,12281.19,10045.6,9967.89,10676.62,
+              12452.07,10243.86,9331.81,13331.57,10414.57,8662.52,10259.58,9306.12,
+              8271.3,7476.47,8725.75,11491.85,11469.38,8877.32];
+  var rv = evalVolume(V(real), DEFAULTS);
+  ok("2026/07 真實資料 → 量縮線搆不到，燈永遠不會亮",
+     rv.reach.quietReachable === false && rv.lit === false && rv.state === "idle",
+     {lo:rv.reach.lo, state:rv.state});
 
   // 門檻可調：同一組資料換門檻結果要不同
   ok("門檻調高後同一組資料不亮",
