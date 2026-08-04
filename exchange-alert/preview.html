@@ -1,0 +1,425 @@
+<title>匯率警報器 — 預覽</title>
+<style>
+  :root {
+    --paper: #F7F8F6;
+    --card: #FFFFFF;
+    --ink: #22303B;
+    --ink-2: #5C6B77;
+    --ink-3: #8A97A1;
+    --line: #DDE3E6;
+    --jpy: #2E6BA8;          /* 換日圓方向 */
+    --jpy-zone: rgba(46, 107, 168, 0.14);
+    --jpy-zone-2: rgba(46, 107, 168, 0.28);
+    --twd: #B05A28;          /* 換回台幣方向 */
+    --twd-zone: rgba(176, 90, 40, 0.14);
+    --twd-zone-2: rgba(176, 90, 40, 0.28);
+    --track: #ECEFF0;
+    --serif: "Songti TC", "Noto Serif TC", "PMingLiU", Georgia, serif;
+    --sans: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #21252B; --card: #2A2F36; --ink: #E6EAEE; --ink-2: #A6B0BA;
+      --ink-3: #78838D; --line: #3A414A; --track: #333941;
+      --jpy: #4E92DC; --jpy-zone: rgba(78,146,220,0.18); --jpy-zone-2: rgba(78,146,220,0.36);
+      --twd: #CE7228; --twd-zone: rgba(206,114,40,0.18); --twd-zone-2: rgba(206,114,40,0.36);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #21252B; --card: #2A2F36; --ink: #E6EAEE; --ink-2: #A6B0BA;
+    --ink-3: #78838D; --line: #3A414A; --track: #333941;
+    --jpy: #4E92DC; --jpy-zone: rgba(78,146,220,0.18); --jpy-zone-2: rgba(78,146,220,0.36);
+    --twd: #CE7228; --twd-zone: rgba(206,114,40,0.18); --twd-zone-2: rgba(206,114,40,0.36);
+  }
+  :root[data-theme="light"] {
+    --paper: #F7F8F6; --card: #FFFFFF; --ink: #22303B; --ink-2: #5C6B77;
+    --ink-3: #8A97A1; --line: #DDE3E6; --track: #ECEFF0;
+    --jpy: #2E6BA8; --jpy-zone: rgba(46,107,168,0.14); --jpy-zone-2: rgba(46,107,168,0.28);
+    --twd: #B05A28; --twd-zone: rgba(176,90,40,0.14); --twd-zone-2: rgba(176,90,40,0.28);
+  }
+
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); line-height: 1.7; font-size: 16px;
+    margin: 0; padding: 48px 20px 80px;
+  }
+  main { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.18em; color: var(--ink-2);
+    text-transform: uppercase; font-family: var(--mono);
+  }
+  h1 { font-family: var(--serif); font-size: 40px; line-height: 1.25; margin: 6px 0 10px; text-wrap: balance; }
+  h2 { font-family: var(--serif); font-size: 24px; margin: 0 0 4px; text-wrap: balance; }
+  .lede { color: var(--ink-2); max-width: 40em; margin: 0; }
+  section > p.note { color: var(--ink-2); font-size: 14px; margin: 6px 0 0; max-width: 44em; }
+
+  /* 曲線圖 */
+  .ranges { display: flex; gap: 4px; background: var(--track); border-radius: 6px; padding: 3px; }
+  .ranges button {
+    font: 600 13px var(--sans); color: var(--ink-2); background: transparent;
+    border: 0; border-radius: 4px; padding: 4px 16px; cursor: pointer;
+  }
+  .ranges button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .ranges button:focus-visible { outline: 2px solid var(--jpy); outline-offset: 1px; }
+  .chart { margin-top: 22px; }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+  .chart-head .pair { font-weight: 600; font-size: 15px; }
+  .chart-head .pair small { color: var(--ink-2); font-weight: 400; margin-left: 8px; font-size: 13px; }
+  .chart-head .delta { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); }
+  .chart-wrap { position: relative; margin-top: 6px; }
+  .chart-wrap svg { display: block; width: 100%; height: auto; }
+  .tip {
+    position: absolute; pointer-events: none; display: none; z-index: 2;
+    background: var(--card); border: 1px solid var(--line); border-radius: 5px;
+    padding: 5px 10px; font: 12px var(--mono); font-variant-numeric: tabular-nums;
+    color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,0.15); white-space: nowrap;
+    transform: translate(-50%, -100%);
+  }
+  .tip small { color: var(--ink-2); display: block; font-size: 11px; }
+
+  /* 方向區塊 */
+  .direction { border-top: 3px solid var(--dir); padding-top: 18px; }
+  .direction.jpy { --dir: var(--jpy); --zone: var(--jpy-zone); --zone2: var(--jpy-zone-2); }
+  .direction.twd { --dir: var(--twd); --zone: var(--twd-zone); --zone2: var(--twd-zone-2); }
+  .dir-tag {
+    display: inline-block; font-size: 12px; letter-spacing: 0.12em; font-weight: 600;
+    color: var(--dir); font-family: var(--mono); margin-bottom: 2px;
+  }
+
+  /* 水位計 */
+  .meter { margin: 26px 0 8px; }
+  .meter-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+  .meter-head .pair { font-weight: 600; }
+  .meter-head .pair small { color: var(--ink-2); font-weight: 400; margin-left: 8px; }
+  .meter-head .now { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); }
+  .meter-head .now b { color: var(--ink); font-size: 16px; }
+  .track {
+    position: relative; height: 30px; background: var(--track);
+    border-radius: 4px; margin: 36px 0 4px;
+  }
+  .zone { position: absolute; top: 0; bottom: 0; background: var(--zone); }
+  .zone.strong { background: var(--zone2); }
+  .zone.from-left { border-radius: 4px 0 0 4px; }
+  .zone.to-right { border-radius: 0 4px 4px 0; }
+  .tick {
+    position: absolute; top: -4px; bottom: -4px; width: 2px;
+    background: var(--dir); border-radius: 1px;
+  }
+  .tick i {
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    font-style: normal; font-family: var(--mono); font-size: 12px;
+    color: var(--dir); white-space: nowrap; padding-top: 3px; font-weight: 600;
+  }
+  .ghost { position: absolute; top: 2px; bottom: 2px; width: 2px; background: var(--ink-3); opacity: 0.55; }
+  .ghost i {
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    font-style: normal; font-size: 11px; color: var(--ink-3); white-space: nowrap; padding-top: 5px;
+  }
+  .marker { position: absolute; top: -8px; bottom: -8px; width: 2px; background: var(--ink); }
+  .marker::after {
+    content: ""; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+    width: 9px; height: 9px; border-radius: 50%; background: var(--ink);
+    border: 2px solid var(--paper);
+  }
+  .marker i {
+    position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+    font-style: normal; font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: var(--ink); white-space: nowrap; padding-bottom: 9px;
+  }
+  .meter-cap { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin-top: 22px; }
+  .zone-note { font-size: 13px; color: var(--ink-2); margin: 14px 0 0; }
+  .zone-note b { color: var(--dir); }
+
+  /* 動態規則卡 */
+  .cards { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .card {
+    flex: 1 1 240px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 6px; padding: 12px 14px; font-size: 14px;
+  }
+  .card b { display: block; margin-bottom: 2px; }
+  .card span { color: var(--ink-2); font-size: 13px; }
+  .card.jpy b { color: var(--jpy); } .card.twd b { color: var(--twd); }
+
+  /* Issue 模擬 */
+  .mock-label {
+    display: inline-block; font-size: 12px; font-family: var(--mono); letter-spacing: 0.08em;
+    border: 1px dashed var(--ink-3); color: var(--ink-2); border-radius: 4px;
+    padding: 2px 10px; margin-bottom: 10px;
+  }
+  .issue {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    overflow: hidden;
+  }
+  .issue-head { padding: 16px 20px 14px; border-bottom: 1px solid var(--line); }
+  .issue-head .t { font-size: 17px; font-weight: 600; line-height: 1.5; }
+  .issue-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+  .pill {
+    background: #2DA44E; color: #fff; border-radius: 999px; padding: 2px 12px;
+    font-size: 12px; font-weight: 600;
+  }
+  .issue-body { padding: 16px 20px 20px; font-size: 15px; }
+  .issue-body h3 { font-size: 15px; margin: 14px 0 8px; }
+  .issue-body h3:first-child { margin-top: 0; }
+  .issue-body ul { margin: 0; padding-left: 22px; }
+  .issue-body li { margin: 4px 0; }
+  .rates { border-collapse: collapse; margin-top: 4px; font-size: 14px; }
+  .rates th, .rates td { border: 1px solid var(--line); padding: 6px 14px; text-align: left; }
+  .rates th { background: var(--track); font-weight: 600; }
+  .rates td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .issue-body blockquote {
+    margin: 14px 0 0; padding: 6px 14px; border-left: 3px solid var(--line);
+    color: var(--ink-2); font-size: 14px;
+  }
+  .issue-body code { font-family: var(--mono); font-size: 13px; background: var(--track); border-radius: 3px; padding: 1px 5px; }
+
+  /* 設定表 */
+  .knobs { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+  .knobs th, .knobs td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .knobs th { font-size: 12px; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+  .knobs code { font-family: var(--mono); font-size: 13px; background: var(--track); border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+  .knobs td.v { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .callout {
+    border: 1px solid var(--line); border-left: 4px solid var(--twd);
+    background: var(--card); border-radius: 6px; padding: 14px 18px; font-size: 15px;
+  }
+  .callout b { color: var(--twd); }
+  footer { color: var(--ink-3); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+  .scroll-x { overflow-x: auto; }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">EXCHANGE RATE ALERTER · 預覽 · <span id="updated">行情更新:2026-08-04</span></div>
+    <h1>匯率警報器</h1>
+    <p class="lede">自動盯 <strong>日圓兌台幣</strong>、<strong>美元兌台幣</strong> 兩組匯率，到了適合換匯的位階就開
+    GitHub Issue 通知你（GitHub 會寄 email）。下面是警報位階的水位圖、觸發時你會收到的通知樣貌，以及可以調整的地方。</p>
+  </header>
+
+  <section>
+    <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">
+      <h2>過去一年的走勢</h2>
+      <div class="ranges" role="group" aria-label="時間範圍">
+        <button data-range="week">週</button>
+        <button data-range="month">月</button>
+        <button data-range="year" class="on">年</button>
+      </div>
+    </div>
+    <p class="note">滑過曲線可以看每天的數值。虛線是警報門檻——曲線碰到虛線的那天，你就會收到通知。</p>
+    <div id="charts"></div>
+    <p class="note" style="font-size:12.5px; color:var(--ink-3);">曲線為依公開行情（央行收盤價、國際報價）整理的<b>近似走勢</b>，用來看形狀與相對位置。警報器正式啟用後，會逐日累積台灣銀行的真實牌告匯率。</p>
+  </section>
+
+  <section class="direction jpy">
+    <span class="dir-tag">方向 A</span>
+    <h2>換日圓 — 日圓夠便宜時提醒</h2>
+    <p class="note">拿台幣去換日圓。線上的<b style="color:var(--jpy)">藍色區域</b>就是警報區：黑點（目前匯率）一走進去就會通知你。</p>
+
+    <div class="meter">
+      <div class="meter-head">
+        <span class="pair">JPY/TWD <small>1 日圓換多少台幣 — 越低日圓越便宜</small></span>
+        <span class="now">目前 <b>0.2076</b></span>
+      </div>
+      <div class="track" title="JPY/TWD ≤ 0.200 甜甜價;≤ 0.195 超甜價">
+        <div class="zone strong from-left" style="left:0; width:29.2%"></div>
+        <div class="zone" style="left:29.2%; width:20.8%"></div>
+        <div class="tick" style="left:29.2%"><i>0.195 超甜</i></div>
+        <div class="tick" style="left:50%"><i>0.200 甜甜價</i></div>
+        <div class="marker" style="left:81.7%"><i>0.2076</i></div>
+      </div>
+      <div class="meter-cap"><span>0.188</span><span>0.212</span></div>
+      <p class="zone-note">6 月下旬日圓曾在 <b>0.195</b> 附近的超甜區，上週美日聯手干預匯市後急升到 0.2076（近 10 個月高點）。若回落到 <b>0.200</b> 以下就會通知你。</p>
+    </div>
+
+  </section>
+
+  <section class="direction twd">
+    <span class="dir-tag">方向 B</span>
+    <h2>美元換回台幣 — 美元夠貴時提醒</h2>
+    <p class="note">美元定存到期或想獲利了結時，把美元換回台幣。<b style="color:var(--twd)">銅色區域</b>是警報區，分兩段：32 先提醒一次「偏高」，32.5 再提醒一次「好時機」。</p>
+
+    <div class="meter">
+      <div class="meter-head">
+        <span class="pair">USD/TWD <small>1 美元換多少台幣 — 越高美元換回台幣越划算</small></span>
+        <span class="now">目前 <b>32.42</b></span>
+      </div>
+      <div class="track" title="USD/TWD ≥ 32.0 偏高;≥ 32.5 好時機">
+        <div class="zone" style="left:50%; width:16.7%"></div>
+        <div class="zone strong to-right" style="left:66.7%; right:0"></div>
+        <div class="tick" style="left:50%"><i>32.0 偏高</i></div>
+        <div class="tick" style="left:66.7%"><i>32.5 好時機</i></div>
+        <div class="marker" style="left:64%"><i>32.42</i></div>
+      </div>
+      <div class="meter-cap"><span>30.5</span><span>33.5</span></div>
+      <p class="zone-note">7/6 貶破 32 元後一路走貶，目前 <b>32.42 已站上 32.0 的警報區</b>——正式啟用後第一次檢查就會收到「偏高」提醒，再 0.08 就到 32.5「好時機」。若覺得 32.0 太容易觸發，可以把兩段門檻上調（例如 32.5 / 33.0）。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>另外兩條「創新高／新低」動態警報</h2>
+    <p class="note">不用碰到固定門檻——只要走出 90 天以來的極端值就提醒（累積 20 天資料後自動啟用），這就是你說的「日圓到新低點就叫我」。</p>
+    <div class="cards">
+      <div class="card jpy"><b>JPY/TWD 創 90 日新低</b><span>日圓比過去三個月任何時候都便宜 → 換日圓</span></div>
+      <div class="card twd"><b>USD/TWD 創 90 日新高</b><span>美元比過去三個月都值錢 → 美元換回台幣</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>觸發時你會收到這樣的通知</h2>
+    <span class="mock-label">模擬範例 — 假設某天日圓跌到 0.1990</span>
+    <div class="issue">
+      <div class="issue-head">
+        <div class="t">💱 匯率警報 2026-08-12：日圓甜甜價（0.20 以下），適合台幣換日圓；日圓兌台幣創 90 日新低（日圓變便宜）</div>
+        <div class="issue-meta"><span class="pill">Open</span><span>github-actions bot 開了這個 Issue · 同時寄 email 到你的信箱</span></div>
+      </div>
+      <div class="issue-body">
+        <h3>觸發條件（2026-08-12，資料來源：台灣銀行牌告匯率（即期中價））</h3>
+        <ul>
+          <li>⚠️ 日圓甜甜價（0.20 以下），適合台幣換日圓 — JPY/TWD = 0.1990（門檻 ≤ 0.2）</li>
+          <li>⚠️ 日圓兌台幣創 90 日新低（日圓變便宜） — JPY/TWD = 0.1990（前 90 日最低 0.1998）</li>
+        </ul>
+        <h3>目前匯率</h3>
+        <div class="scroll-x">
+          <table class="rates">
+            <tr><th>貨幣對</th><th>匯率</th><th>意義</th></tr>
+            <tr><td>USD/TWD</td><td class="num">32.35</td><td>1 美元換多少台幣</td></tr>
+            <tr><td>JPY/TWD</td><td class="num">0.1990</td><td>1 日圓換多少台幣</td></tr>
+          </table>
+        </div>
+        <blockquote>想調整警報門檻，改 <code>exchange-alert/config.json</code> 即可。</blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>之後想調整，改這幾個數字就好</h2>
+    <div class="scroll-x">
+      <table class="knobs">
+        <tr><th>設定</th><th>目前值</th><th>說明</th></tr>
+        <tr><td><code>jpy_cheap</code> / <code>jpy_very_cheap</code></td><td class="v">0.200 / 0.195</td><td>日圓甜甜價、超甜價門檻</td></tr>
+        <tr><td><code>usdtwd_high</code> / <code>usdtwd_very_high</code></td><td class="v">32.0 / 32.5</td><td>美元換回台幣的兩段門檻</td></tr>
+        <tr><td><code>cooldown_days</code></td><td class="v">2</td><td>同一條件幾天內不重複提醒</td></tr>
+        <tr><td><code>lookback_days</code></td><td class="v">90</td><td>創新高／新低的回看天數</td></tr>
+      </table>
+    </div>
+    <p class="note">全部都在 <code style="font-family:var(--mono); font-size:13px">exchange-alert/config.json</code>，直接跟我說「32 改成 31.8」也可以，我來改。</p>
+  </section>
+
+  <section class="callout">
+    <b>啟用前的最後一步：</b>GitHub 排程只在 repo 的預設分支上執行。目前程式在
+    <span style="font-family:var(--mono); font-size:13px">claude/usd-jpy-exchange-alert-gbfh8n</span>
+    分支，門檻調整滿意後合併進預設分支，警報器就會開始自動跑（也可以到 Actions 頁手動跑一次測試）。
+  </section>
+
+  <footer>
+    「目前匯率」為 2026-08-04 的行情（USD/TWD ≈ 32.42、JPY/TWD ≈ 0.2076，日圓為即期中價估算）。
+    這個預覽頁每個交易日 17:30（台北）自動更新一次;警報器本體每次檢查都直接抓台灣銀行的最新牌告匯率。
+  </footer>
+</main>
+
+<script>
+const SERIES = [["2025-08-04",29.845,147.15,0.20282],["2025-08-05",29.846,147.42,0.20246],["2025-08-06",29.844,146.77,0.20334],["2025-08-07",29.857,147.16,0.20289],["2025-08-08",29.835,147.31,0.20254],["2025-08-11",29.838,147.75,0.20195],["2025-08-12",29.847,147.49,0.20237],["2025-08-13",29.792,147.21,0.20238],["2025-08-14",29.821,147.97,0.20153],["2025-08-15",29.807,147.61,0.20193],["2025-08-18",29.804,147.41,0.20218],["2025-08-19",29.767,148.07,0.20104],["2025-08-20",29.802,147.92,0.20148],["2025-08-21",29.778,148.13,0.20102],["2025-08-22",29.785,147.79,0.20154],["2025-08-25",29.76,147.84,0.2013],["2025-08-26",29.644,148.16,0.20007],["2025-08-27",29.699,148.65,0.19979],["2025-08-28",29.75,148.06,0.20093],["2025-08-29",29.754,148.16,0.20083],["2025-09-01",29.717,148.41,0.20023],["2025-09-02",29.724,148.75,0.19983],["2025-09-03",29.742,148.62,0.20012],["2025-09-04",29.742,148.67,0.20005],["2025-09-05",29.697,148.34,0.2002],["2025-09-08",29.699,148.8,0.1996],["2025-09-09",29.706,149.39,0.19885],["2025-09-10",29.684,148.4,0.20003],["2025-09-11",29.739,149.2,0.19932],["2025-09-12",29.728,149.07,0.19942],["2025-09-15",29.756,148.95,0.19978],["2025-09-16",29.654,148.87,0.1992],["2025-09-17",29.736,148.64,0.20005],["2025-09-18",29.702,149.2,0.19907],["2025-09-19",29.689,149.39,0.19873],["2025-09-22",29.716,150.01,0.19809],["2025-09-23",29.716,149.17,0.19921],["2025-09-24",29.674,149.14,0.19897],["2025-09-25",29.726,149.25,0.19917],["2025-09-26",29.689,149.67,0.19836],["2025-09-29",29.665,149.41,0.19855],["2025-09-30",29.626,149.18,0.1986],["2025-10-01",29.672,149.63,0.1983],["2025-10-02",29.737,149.51,0.1989],["2025-10-03",29.711,149.59,0.19862],["2025-10-06",29.773,149.91,0.1986],["2025-10-07",29.759,149.39,0.1992],["2025-10-08",29.798,149.86,0.19883],["2025-10-09",29.827,149.8,0.19911],["2025-10-10",29.871,149.76,0.19946],["2025-10-13",29.921,150.1,0.19933],["2025-10-14",29.869,149.8,0.19939],["2025-10-15",29.904,150.64,0.19851],["2025-10-16",29.96,150.49,0.19908],["2025-10-17",29.87,150.57,0.19838],["2025-10-20",30.037,150.4,0.19971],["2025-10-21",30.015,150.63,0.19926],["2025-10-22",30.117,150.38,0.20027],["2025-10-23",30.059,151.16,0.19885],["2025-10-24",30.075,150.7,0.19957],["2025-10-27",30.132,150.56,0.20014],["2025-10-28",30.146,150.6,0.20017],["2025-10-29",30.175,150.98,0.19986],["2025-10-30",30.229,151.08,0.20008],["2025-10-31",30.198,150.61,0.2005],["2025-11-03",30.154,151.17,0.19948],["2025-11-04",30.226,150.62,0.20068],["2025-11-05",30.207,151.36,0.19957],["2025-11-06",30.235,151.47,0.1996],["2025-11-07",30.193,151.19,0.19971],["2025-11-10",30.184,151.71,0.19896],["2025-11-11",30.235,152.37,0.19843],["2025-11-12",30.234,151.98,0.19894],["2025-11-13",30.215,151.88,0.19894],["2025-11-14",30.294,152.37,0.19882],["2025-11-17",30.381,152.49,0.19924],["2025-11-18",30.305,152.76,0.19839],["2025-11-19",30.377,152.89,0.19869],["2025-11-20",30.348,153.19,0.1981],["2025-11-21",30.388,153.17,0.1984],["2025-11-24",30.463,153.42,0.19856],["2025-11-25",30.438,153.96,0.1977],["2025-11-26",30.444,153.29,0.1986],["2025-11-27",30.446,153.87,0.19786],["2025-11-28",30.45,153.62,0.19821],["2025-12-01",30.492,153.35,0.19884],["2025-12-02",30.392,153.61,0.19785],["2025-12-03",30.464,153.37,0.19863],["2025-12-04",30.49,153.77,0.19828],["2025-12-05",30.43,153.79,0.19786],["2025-12-08",30.478,153.39,0.1987],["2025-12-09",30.509,153.89,0.19824],["2025-12-10",30.475,154.15,0.1977],["2025-12-11",30.528,153.9,0.19836],["2025-12-12",30.534,154.47,0.19767],["2025-12-15",30.525,154.57,0.19749],["2025-12-16",30.56,155.23,0.19687],["2025-12-17",30.505,154.85,0.19699],["2025-12-18",30.569,154.71,0.19759],["2025-12-19",30.657,154.83,0.198],["2025-12-22",30.696,154.96,0.19809],["2025-12-23",30.638,155.02,0.19763],["2025-12-24",30.609,155.26,0.19715],["2025-12-25",30.63,155.36,0.19715],["2025-12-26",30.572,155.96,0.19602],["2025-12-29",30.652,156.0,0.19649],["2025-12-30",30.624,155.58,0.19684],["2025-12-31",30.771,155.24,0.19822],["2026-01-01",30.618,155.36,0.19708],["2026-01-02",30.716,155.79,0.19716],["2026-01-05",30.916,155.89,0.19832],["2026-01-06",30.892,156.0,0.19802],["2026-01-07",31.074,156.45,0.19861],["2026-01-08",31.047,156.49,0.19839],["2026-01-09",31.249,157.32,0.19863],["2026-01-12",31.447,157.28,0.19995],["2026-01-13",31.443,157.06,0.20019],["2026-01-14",31.533,157.57,0.20012],["2026-01-15",31.58,157.33,0.20072],["2026-01-16",31.53,157.27,0.20049],["2026-01-19",31.536,157.67,0.20002],["2026-01-20",31.5,157.35,0.20019],["2026-01-21",31.603,157.88,0.20017],["2026-01-22",31.596,157.7,0.20036],["2026-01-23",31.588,157.14,0.20102],["2026-01-26",31.606,157.7,0.20042],["2026-01-27",31.675,157.34,0.20131],["2026-01-28",31.768,157.14,0.20216],["2026-01-29",31.684,157.19,0.20156],["2026-01-30",31.666,157.74,0.20074],["2026-02-02",31.761,156.48,0.20297],["2026-02-03",31.705,156.98,0.20197],["2026-02-04",31.757,156.4,0.20305],["2026-02-05",31.661,156.19,0.20271],["2026-02-06",31.748,156.69,0.20262],["2026-02-09",31.788,156.37,0.20328],["2026-02-10",31.74,155.97,0.20351],["2026-02-11",31.8,156.66,0.20299],["2026-02-12",31.828,156.77,0.20303],["2026-02-13",31.79,156.92,0.20259],["2026-02-16",31.795,156.3,0.20343],["2026-02-17",31.783,156.31,0.20333],["2026-02-18",31.726,156.52,0.2027],["2026-02-19",31.812,156.34,0.20347],["2026-02-20",31.78,156.54,0.20302],["2026-02-23",31.873,156.34,0.20387],["2026-02-24",31.798,156.11,0.2037],["2026-02-25",31.817,155.86,0.20414],["2026-02-26",31.819,156.21,0.2037],["2026-02-27",31.892,156.42,0.20389],["2026-03-02",31.877,155.75,0.20467],["2026-03-03",31.869,155.56,0.20487],["2026-03-04",31.861,155.96,0.20429],["2026-03-05",31.828,156.37,0.20354],["2026-03-06",31.88,155.13,0.2055],["2026-03-09",31.894,155.38,0.20527],["2026-03-10",31.88,155.57,0.20492],["2026-03-11",31.899,154.75,0.20613],["2026-03-12",31.85,155.53,0.20478],["2026-03-13",31.941,155.8,0.20501],["2026-03-16",31.973,154.42,0.20705],["2026-03-17",31.941,154.4,0.20687],["2026-03-18",31.975,155.0,0.20629],["2026-03-19",31.883,155.47,0.20508],["2026-03-20",31.949,154.25,0.20713],["2026-03-23",31.947,154.45,0.20684],["2026-03-24",31.944,154.5,0.20676],["2026-03-25",31.99,154.17,0.2075],["2026-03-26",31.956,155.12,0.20601],["2026-03-27",31.918,154.61,0.20644],["2026-03-30",31.957,154.3,0.20711],["2026-03-31",31.973,154.53,0.2069],["2026-04-01",31.914,155.01,0.20589],["2026-04-02",31.968,154.38,0.20708],["2026-04-03",31.907,154.11,0.20704],["2026-04-06",31.923,153.93,0.20739],["2026-04-07",31.876,153.77,0.2073],["2026-04-08",31.862,153.64,0.20738],["2026-04-09",31.847,153.47,0.20751],["2026-04-10",31.831,153.59,0.20725],["2026-04-13",31.756,152.81,0.2078],["2026-04-14",31.72,152.8,0.20759],["2026-04-15",31.716,153.26,0.20694],["2026-04-16",31.747,153.48,0.20685],["2026-04-17",31.826,153.05,0.20795],["2026-04-20",31.674,153.11,0.20687],["2026-04-21",31.716,152.87,0.20748],["2026-04-22",31.7,153.5,0.20651],["2026-04-23",31.681,153.3,0.20667],["2026-04-24",31.659,154.18,0.20533],["2026-04-27",31.639,153.81,0.2057],["2026-04-28",31.617,154.49,0.20466],["2026-04-29",31.591,154.49,0.20448],["2026-04-30",31.625,154.72,0.2044],["2026-05-01",31.634,154.48,0.20477],["2026-05-04",31.581,154.85,0.20395],["2026-05-05",31.514,155.58,0.20256],["2026-05-06",31.544,155.35,0.20305],["2026-05-07",31.461,155.64,0.20214],["2026-05-08",31.469,155.31,0.20262],["2026-05-11",31.442,155.93,0.20164],["2026-05-12",31.384,156.02,0.20115],["2026-05-13",31.46,155.79,0.20194],["2026-05-14",31.487,156.17,0.20162],["2026-05-15",31.429,155.8,0.20173],["2026-05-18",31.466,155.79,0.20197],["2026-05-19",31.424,156.23,0.20114],["2026-05-20",31.432,156.69,0.2006],["2026-05-21",31.423,157.2,0.19989],["2026-05-22",31.421,157.01,0.20012],["2026-05-25",31.345,158.11,0.19825],["2026-05-26",31.397,158.58,0.19799],["2026-05-27",31.345,158.38,0.19791],["2026-05-28",31.362,158.55,0.1978],["2026-05-29",31.359,158.24,0.19817],["2026-06-01",31.379,159.2,0.19711],["2026-06-02",31.391,159.69,0.19657],["2026-06-03",31.344,159.05,0.19707],["2026-06-04",31.361,159.72,0.19635],["2026-06-05",31.308,159.38,0.19643],["2026-06-08",31.35,158.87,0.19733],["2026-06-09",31.344,159.4,0.19664],["2026-06-10",31.466,159.72,0.197],["2026-06-11",31.435,159.81,0.1967],["2026-06-12",31.479,160.01,0.19673],["2026-06-15",31.544,160.55,0.19647],["2026-06-16",31.484,161.04,0.1955],["2026-06-17",31.522,161.57,0.1951],["2026-06-18",31.535,160.9,0.19599],["2026-06-19",31.519,161.19,0.19554],["2026-06-22",31.575,161.62,0.19537],["2026-06-23",31.553,161.77,0.19505],["2026-06-24",31.558,161.49,0.19542],["2026-06-25",31.613,162.02,0.19512],["2026-06-26",31.642,161.49,0.19593],["2026-06-29",31.753,161.96,0.19606],["2026-06-30",31.821,161.91,0.19654],["2026-07-01",31.824,162.17,0.19624],["2026-07-02",31.888,161.67,0.19725],["2026-07-03",32.01,161.54,0.19816],["2026-07-06",32.027,162.02,0.19767],["2026-07-07",31.998,162.42,0.19701],["2026-07-08",32.092,161.46,0.19876],["2026-07-09",31.999,162.36,0.19709],["2026-07-10",32.018,162.08,0.19754],["2026-07-13",32.12,162.71,0.19741],["2026-07-14",32.125,162.63,0.19753],["2026-07-15",32.123,163.1,0.19696],["2026-07-16",32.149,162.9,0.19735],["2026-07-17",32.162,162.91,0.19742],["2026-07-20",32.194,162.95,0.19757],["2026-07-21",32.167,163.19,0.19711],["2026-07-22",32.259,162.91,0.19801],["2026-07-23",32.245,162.94,0.1979],["2026-07-24",32.263,162.61,0.19841],["2026-07-27",32.257,162.46,0.19856],["2026-07-28",32.26,161.34,0.19995],["2026-07-29",32.273,160.0,0.2017],["2026-07-30",32.28,160.12,0.20159],["2026-07-31",32.363,158.35,0.20438],["2026-08-03",32.432,156.6,0.2071],["2026-08-04",32.42,156.2,0.20755]]; // [date, usd_twd, usd_jpy, jpy_twd]
+const CHARTS = [
+  { key: 3, id: "jpytwd", pair: "JPY/TWD", sub: "1 日圓換多少台幣", cls: "jpy", dec: 4,
+    thresholds: [{ v: 0.200, label: "0.200 甜甜價" }, { v: 0.195, label: "0.195 超甜" }] },
+  { key: 1, id: "usdtwd", pair: "USD/TWD", sub: "1 美元換多少台幣", cls: "twd", dec: 2,
+    thresholds: [{ v: 32.0, label: "32.0 偏高" }, { v: 32.5, label: "32.5 好時機" }] },
+];
+const RANGES = { week: 7, month: 22, year: Infinity };
+const W = 860, H = 230, PAD = { t: 16, r: 10, b: 24, l: 56 };
+const fmtD = (iso) => { const [y, m, d] = iso.split("-"); return `${y}/${+m}/${+d}`; };
+
+function niceTicks(lo, hi, n) {
+  const span = hi - lo, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const step = [1, 2, 2.5, 5, 10].map(k => k * mag).find(s => span / s <= n) || 10 * mag;
+  const ticks = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) ticks.push(v);
+  return ticks;
+}
+
+function draw(cfg, rangeKey) {
+  const rows = SERIES.slice(RANGES[rangeKey] === Infinity ? 0 : -RANGES[rangeKey]);
+  const vals = rows.map(r => r[cfg.key]);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad0 = (hi - lo || hi * 0.01) * 0.12;
+  lo -= pad0; hi += pad0;
+  // 門檻若離資料不遠(20% 以內)就納入視野
+  for (const t of cfg.thresholds) {
+    const span = hi - lo;
+    if (t.v > hi && t.v - hi < span * 0.6) hi = t.v + span * 0.08;
+    if (t.v < lo && lo - t.v < span * 0.6) lo = t.v - span * 0.08;
+  }
+  const x = i => PAD.l + (i / (rows.length - 1)) * (W - PAD.l - PAD.r);
+  const y = v => PAD.t + (1 - (v - lo) / (hi - lo)) * (H - PAD.t - PAD.b);
+  const color = cfg.cls === "jpy" ? "var(--jpy)" : "var(--twd)";
+
+  let s = "";
+  for (const tv of niceTicks(lo, hi, 4)) {
+    s += `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(tv)}" y2="${y(tv)}" stroke="var(--line)" stroke-width="1"/>`
+       + `<text x="${PAD.l - 8}" y="${y(tv) + 4}" text-anchor="end" style="font:11px var(--mono);fill:var(--ink-3)">${tv.toFixed(cfg.dec)}</text>`;
+  }
+  const nx = Math.min(4, rows.length - 1);
+  for (let k = 0; k <= nx; k++) {
+    const i = Math.round(k * (rows.length - 1) / nx);
+    s += `<text x="${x(i)}" y="${H - 6}" text-anchor="${k === 0 ? "start" : k === nx ? "end" : "middle"}" style="font:11px var(--mono);fill:var(--ink-3)">${fmtD(rows[i][0])}</text>`;
+  }
+  for (const t of cfg.thresholds) {
+    if (t.v < lo || t.v > hi) continue;
+    s += `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(t.v)}" y2="${y(t.v)}" stroke="${color}" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.75"/>`
+       + `<text x="${W - PAD.r}" y="${y(t.v) - 5}" text-anchor="end" style="font:600 11px var(--mono);fill:${color}">${t.label}</text>`;
+  }
+  const pts = rows.map((r, i) => `${x(i).toFixed(1)},${y(r[cfg.key]).toFixed(1)}`);
+  s += `<path d="M${pts.join("L")}L${x(rows.length - 1)},${y(lo)}L${x(0)},${y(lo)}Z" fill="${color}" opacity="0.09"/>`
+     + `<path d="M${pts.join("L")}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>`;
+  const li = rows.length - 1, lv = rows[li][cfg.key];
+  s += `<circle cx="${x(li)}" cy="${y(lv)}" r="4.5" fill="${color}" stroke="var(--paper)" stroke-width="2"/>`
+     + `<line class="xh" y1="${PAD.t}" y2="${H - PAD.b}" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>`
+     + `<circle class="hd" r="4" fill="${color}" stroke="var(--paper)" stroke-width="2" style="display:none"/>`;
+
+  const wrap = document.querySelector(`#${cfg.id} .chart-wrap`);
+  wrap.querySelector("svg").innerHTML = s;
+  const first = rows[0][cfg.key], delta = lv - first, pct = (delta / first) * 100;
+  document.querySelector(`#${cfg.id} .delta`).textContent =
+    `${rangeKey === "week" ? "近一週" : rangeKey === "month" ? "近一月" : "近一年"} ${delta >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}%`;
+
+  const svg = wrap.querySelector("svg"), tip = wrap.querySelector(".tip");
+  const xh = svg.querySelector(".xh"), hd = svg.querySelector(".hd");
+  svg.onpointermove = (e) => {
+    const rect = svg.getBoundingClientRect();
+    const fx = PAD.l + ((e.clientX - rect.left) / rect.width) * W;
+    const i = Math.max(0, Math.min(rows.length - 1,
+      Math.round((fx - PAD.l) / (W - PAD.l - PAD.r) * (rows.length - 1))));
+    const cx = x(i), cy = y(rows[i][cfg.key]);
+    xh.setAttribute("x1", cx); xh.setAttribute("x2", cx); xh.style.display = "";
+    hd.setAttribute("cx", cx); hd.setAttribute("cy", cy); hd.style.display = "";
+    tip.style.display = "block";
+    tip.style.left = (cx / W * 100) + "%";
+    tip.style.top = (cy / H * rect.height - 10) + "px";
+    tip.innerHTML = `<small>${fmtD(rows[i][0])}</small>${rows[i][cfg.key].toFixed(cfg.dec)}`;
+  };
+  svg.onpointerleave = () => { tip.style.display = "none"; xh.style.display = "none"; hd.style.display = "none"; };
+}
+
+let currentRange = "year";
+const holder = document.getElementById("charts");
+for (const cfg of CHARTS) {
+  const div = document.createElement("div");
+  div.className = "chart"; div.id = cfg.id;
+  div.innerHTML = `<div class="chart-head">
+      <span class="pair" style="color:${cfg.cls === "jpy" ? "var(--jpy)" : "var(--twd)"}">${cfg.pair}<small>${cfg.sub}</small></span>
+      <span class="delta"></span></div>
+    <div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${cfg.pair} 歷史走勢圖"></svg><div class="tip"></div></div>`;
+  holder.appendChild(div);
+}
+const redraw = () => CHARTS.forEach(c => draw(c, currentRange));
+document.querySelectorAll(".ranges button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".ranges button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on"); currentRange = b.dataset.range; redraw();
+  };
+});
+redraw();
+</script>
+
