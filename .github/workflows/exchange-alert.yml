@@ -1,0 +1,51 @@
+name: 匯率警報器
+
+on:
+  schedule:
+    # 台北時間平日 09:30 / 13:30 / 17:30(UTC+8 → UTC 01:30 / 05:30 / 09:30)
+    - cron: '30 1,5,9 * * 1-5'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: exchange-alert
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 回補歷史匯率(僅第一次生效)
+        run: python exchange-alert/backfill_history.py || echo "回補失敗,不影響本次檢查"
+
+      - name: 檢查匯率
+        run: python exchange-alert/check_rates.py
+
+      - name: 更新匯率歷史資料
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add exchange-alert/history.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: 更新匯率歷史資料"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: 發出警報(開 Issue,GitHub 會寄 email 通知)
+        if: ${{ hashFiles('exchange-alert/alert_body.md') != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "$(cat exchange-alert/alert_title.txt)" \
+            --body-file exchange-alert/alert_body.md
