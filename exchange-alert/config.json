@@ -1,0 +1,59 @@
+{
+  "cooldown_days": 2,
+  "lookback_days": 90,
+  "min_observations": 20,
+  "rules": [
+    {
+      "id": "jpy_cheap",
+      "pair": "JPY/TWD",
+      "direction": "below",
+      "threshold": 0.2,
+      "note": "日圓甜甜價(0.20 以下),適合台幣換日圓"
+    },
+    {
+      "id": "jpy_very_cheap",
+      "pair": "JPY/TWD",
+      "direction": "below",
+      "threshold": 0.195,
+      "note": "日圓超甜價(0.195 以下),歷史少見的低點"
+    },
+    {
+      "id": "usdjpy_high",
+      "pair": "USD/JPY",
+      "direction": "above",
+      "threshold": 160.0,
+      "note": "美元對日圓強勢(160 以上),適合美元定存換日圓"
+    },
+    {
+      "id": "usdtwd_high",
+      "pair": "USD/TWD",
+      "direction": "above",
+      "threshold": 32.0,
+      "note": "美元對台幣偏高(32 以上),可考慮美元換回台幣"
+    },
+    {
+      "id": "usdtwd_very_high",
+      "pair": "USD/TWD",
+      "direction": "above",
+      "threshold": 32.5,
+      "note": "美元對台幣高點(32.5 以上),美元換回台幣的好時機"
+    }
+  ],
+  "rolling": [
+    {
+      "pair": "JPY/TWD",
+      "direction": "low",
+      "note": "日圓兌台幣創 90 日新低(日圓變便宜)"
+    },
+    {
+      "pair": "USD/JPY",
+      "direction": "high",
+      "note": "美元兌日圓創 90 日新高(美元換日圓變划算)"
+    },
+    {
+      "pair": "USD/TWD",
+      "direction": "high",
+      "note": "美元兌台幣創 90 日新高(美元換回台幣變划算)"
+    }
+  ]
+}
