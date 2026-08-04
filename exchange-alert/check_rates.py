@@ -80,6 +80,7 @@ def fetch_rates() -> dict:
         try:
             return fetcher()
         except Exception as exc:  # noqa: BLE001 - 換下一個來源
+            print(f"(警告) {fetcher.__name__} 失敗: {exc}")
             errors.append(f"{fetcher.__name__}: {exc}")
     raise RuntimeError("所有匯率來源都失敗:\n" + "\n".join(errors))
 
