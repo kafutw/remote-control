@@ -41,7 +41,13 @@ function toISO(roc){
   return `${+m[1] + 1911}-${pad(+m[2])}-${pad(+m[3])}`;
 }
 const num = v => {
-  const n = Number(String(v ?? "").replace(/[,\s]/g, ""));
+  // 空字串一定要回 null，不能回 0 —— Number("") 是 0 而且 isFinite(0) 為真。
+  // 這條漏掉的後果：CSV 裡「上櫃還沒抓到」的空欄位被讀成 0，
+  // total 算成「只有上市」卻標記為完整，判定端就拿一個少了 15% 的數字去比門檻。
+  // 這正是整支腳本設計來避免的那種無聲錯誤，卻從讀檔這一端漏進來。
+  const t = String(v ?? "").replace(/[,\s]/g, "");
+  if(t === "") return null;
+  const n = Number(t);
   return isFinite(n) ? n : null;
 };
 /** 元 → 億元。門檻用億元寫，讀起來才跟「7,000 億」對得上 */
@@ -74,7 +80,15 @@ async function twseMonth(y, m){
   return out;
 }
 
-/* ── 上櫃：TPEx。這站改版頻繁，依序試，能通哪個算哪個 ── */
+/* ── 上櫃：TPEx ──
+ * 2026-08-04 用 tools/probe-sources.mjs 從 runner 實測的結果：
+ *   www/zh-tw/afterTrading/tradingIndex  → HTTP 200，{ tables, date, flagField, stat }，
+ *                                          資料在 tables[0].data，**但只回一列（最近一個交易日）**
+ *   openapi/v1/tpex_mainboard_daily_close_quotes → 200，10,199 列，但那是逐檔報價不是市場合計
+ *   web/.../st41_result.php              → 200，同樣只回一列
+ * 也就是說這個端點**沒辦法一次補一個月**，跟上市的 FMTQIK 不一樣。
+ * 所以歷史只能靠每天跑一次慢慢累積；已經過去而當時沒抓到的日子補不回來，
+ * 那些日子的 total 會留空，判定端看到空值就跳過 —— 這是對的行為。 */
 /** 回應長什麼樣子 —— 解析失敗時印出來。
  *  第一次上線兩個端點都回「沒有資料列」：它們有回應、是 JSON、但我找不到列。
  *  光知道「失敗了」修不了，要知道**它到底回了什麼**才有辦法對。
