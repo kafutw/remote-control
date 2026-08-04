@@ -1,33 +1,83 @@
 {
-  "generatedAt": "2026-08-04T06:17:54.172Z",
-  "generatedAtTaipei": "2026-08-04 14:17:54",
+  "generatedAt": "2026-08-04T08:08:52.208Z",
+  "generatedAtTaipei": "2026-08-04 16:08:52",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
   },
-  "ok": 10,
-  "failed": 4,
-  "crossCheck": {},
+  "ok": 14,
+  "failed": 0,
+  "crossCheck": {
+    "tsmc": {
+      "primary": 2320,
+      "via": "mis:2330",
+      "twse": 2370,
+      "agree": null,
+      "note": "跳過對帳：mis:2330 是 2026-08-04、證交所是 2026-08-03，不同交易日"
+    },
+    "e0050": {
+      "primary": 100.65,
+      "via": "mis:0050",
+      "twse": 102,
+      "agree": null,
+      "note": "跳過對帳：mis:0050 是 2026-08-04、證交所是 2026-08-03，不同交易日"
+    },
+    "e0056": {
+      "primary": 50.6,
+      "via": "mis:0056",
+      "twse": 49.82,
+      "agree": null,
+      "note": "跳過對帳：mis:0056 是 2026-08-04、證交所是 2026-08-03，不同交易日"
+    }
+  },
   "data": {
     "twii": {
       "name": "加權指數",
       "group": "twii",
-      "error": "全部來源都失敗｜mis:t00 → MIS 沒有這一檔：t00 ｜ twseIndex:- → 證交所指數沒有資料 ｜ stooq:^twse → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ stooq:^tai → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:^TWII → HTTP 429"
+      "dp": 2,
+      "via": "mis:t00",
+      "price": 43360.66,
+      "prevClose": 43386.41,
+      "change": -25.75,
+      "pct": -0.0594,
+      "marketState": "CLOSED",
+      "asOf": "2026-08-04"
     },
     "tsmc": {
       "name": "台積電",
       "group": "tsmc",
-      "error": "全部來源都失敗｜mis:2330 → MIS 沒有這一檔：2330 ｜ twseStock:2330 → 證交所查無此代號 ｜ stooq:2330.tw → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:2330.TW → HTTP 429"
+      "dp": 2,
+      "via": "mis:2330",
+      "price": 2320,
+      "prevClose": 2370,
+      "change": -50,
+      "pct": -2.1097,
+      "marketState": "CLOSED",
+      "asOf": "2026-08-04"
     },
     "e0050": {
       "name": "元大台灣50",
       "group": "e0050",
-      "error": "全部來源都失敗｜mis:0050 → MIS 沒有這一檔：0050 ｜ twseStock:0050 → 證交所查無此代號 ｜ stooq:0050.tw → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:0050.TW → HTTP 429"
+      "dp": 2,
+      "via": "mis:0050",
+      "price": 100.65,
+      "prevClose": 102,
+      "change": -1.35,
+      "pct": -1.3235,
+      "marketState": "CLOSED",
+      "asOf": "2026-08-04"
     },
     "e0056": {
       "name": "元大高股息",
       "group": "e0056",
-      "error": "全部來源都失敗｜mis:0056 → MIS 沒有這一檔：0056 ｜ twseStock:0056 → 證交所查無此代號 ｜ stooq:0056.tw → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:0056.TW → HTTP 429"
+      "dp": 2,
+      "via": "mis:0056",
+      "price": 50.6,
+      "prevClose": 49.82,
+      "change": 0.78,
+      "pct": 1.5656,
+      "marketState": "CLOSED",
+      "asOf": "2026-08-04"
     },
     "adr": {
       "name": "台積電 ADR",
@@ -38,7 +88,7 @@
       "prevClose": 406.11,
       "change": 0,
       "pct": 0,
-      "marketState": "POST_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -94,10 +144,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 15.86,
+      "price": 15.71,
       "prevClose": 15.86,
-      "change": 0,
-      "pct": 0,
+      "change": -0.15,
+      "pct": -0.9458,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -106,10 +156,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 63939.44,
+      "price": 63957.53,
       "prevClose": 63754.9,
-      "change": 184.54,
-      "pct": 0.2895,
+      "change": 202.63,
+      "pct": 0.3178,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -118,10 +168,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6320.76,
+      "price": 6358.95,
       "prevClose": 6257.45,
-      "change": 63.31,
-      "pct": 1.0118,
+      "change": 101.5,
+      "pct": 1.6221,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -175,23 +225,25 @@
     }
   },
   "volume": {
-    "lit": false,
-    "reasons": [],
+    "lit": true,
+    "reasons": [
+      "成交值突破 1.10 兆"
+    ],
     "ready": true,
-    "last": 10177.32,
+    "last": 12349.09,
     "reach": {
       "lo": 10177.32,
-      "hi": 10177.32,
-      "days": 1,
-      "fired": 0,
-      "fireRate": 0,
-      "breakoutReachable": false
+      "hi": 12349.09,
+      "days": 2,
+      "fired": 1,
+      "fireRate": 0.5,
+      "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 1,
+    "complete": 2,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
@@ -332,7 +384,20 @@
         "twse": 8855.06,
         "tpex": 1322.26,
         "total": 10177.32
+      },
+      {
+        "date": "2026-08-04",
+        "twse": 10754.2,
+        "tpex": 1594.89,
+        "total": 12349.09
       }
     ]
+  },
+  "adrPremium": {
+    "converted": 2626.49,
+    "fxAsOf": "2026-08-04",
+    "premiumPct": 13.21,
+    "impliedOpen": 2320,
+    "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
 }
