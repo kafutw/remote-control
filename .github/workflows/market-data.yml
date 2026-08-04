@@ -151,12 +151,11 @@ jobs:
               }
               const cc = d.crossCheck || {};
               if (Object.keys(cc).length) {
-                console.log("\n── 雙來源對帳 Yahoo vs 證交所 ──");
+                console.log("\n── 雙來源對帳（主來源 vs 證交所官方收盤）──");
                 for (const [k, v] of Object.entries(cc))
-                  console.log(" ", (v.agree ? "✅" : "⚠️ "), k.padEnd(7),
-                              "Yahoo", String(v.yahoo).padStart(10),
-                              "證交所", String(v.twse).padStart(10),
-                              "差", v.diffPct + "%");
+                  console.log(" ", (v.agree === null ? "➖" : v.agree ? "✅" : "⚠️ "), k.padEnd(7),
+                              v.agree === null ? v.note
+                                : v.via + " " + v.primary + "　證交所 " + v.twse + "　差 " + v.diffPct + "%");
               } else {
                 console.log("\n⚠️ 沒有對帳結果 —— 證交所那邊可能整個沒抓到，今天的台股數字只有單一來源");
               }

@@ -569,6 +569,9 @@ var BRIEF = {
     // 帶上日期才有辦法跟即時值比新舊。**永遠不拿它去算日變動** ——
     // 不知道它真正的時點，硬算就會生出一個假的漲跌。
     {n:"USD／TWD", c:"open.er-api.com", p:32.38, pct:null, dp:3, asOf:"2026-07-31"},
+    // 台指期含夜盤，是台股收盤後唯一還在動的台灣報價。
+    // 沒有備援來源，抓不到就顯示「—」並在小字說明。
+    {n:"台指期", c:"期交所 · 含夜盤", p:null, pct:null, dp:0},
     {n:"三星電子",  c:"005930 · 財報強勁，KOSPI 的引信", p:null,   pct:null,  dp:0},
     {n:"SK 海力士", c:"000660 · 帶動記憶體全面漲停",    p:null,   pct:null,  dp:0}
   ],
@@ -630,7 +633,7 @@ var BRIEF = {
         {k:"Q2 EPS",     v:"27.25 元",   s:"歷史新高，毛利率 67.7% 超財測上緣"},
         {k:"2026 資本支出", v:"600–640 億美元", s:"由 520–560 億上調，市場曾據此殺盤"}
       ],
-      hist:{breaks:12, eff:6, fake:6, perYear:4.93, deepMed:-6.22,
+      hist:{breaks:13, eff:6, fake:7, perYear:5.33, deepMed:-6.22,
             deepQ:"−11.73% ～ −1.18%", backMed:5, backMax:51, r60Med:6.57, win:60,
             events:[13.51, 6.57, 0, -8.47, 29.02], pending:1} },
     { code:"0050", n:"元大台灣 50", price:102.85, pct:10.0, dp:2, ma60:null,
@@ -652,7 +655,7 @@ var BRIEF = {
         {k:"連續配息",   v:"第 16 年", s:"首檔達成存股 0 成本的高股息 ETF"},
         {k:"可分配收益", v:"4.54 元",  s:"另有資本平準金 23.24 元（6/30）"}
       ],
-      hist:{breaks:16, eff:12, fake:4, perYear:6.58, deepMed:-1.61,
+      hist:{breaks:16, eff:12, fake:4, perYear:6.55, deepMed:-1.61,
             deepQ:"−4.63% ～ −0.67%", backMed:7, backMax:79, r60Med:1.45, win:55,
             events:[-4.32, -4.16, -5.56, -6.62, -5.47, 2.37, 1.45, 3.92, 6.12, 7.02, 35.93], pending:1} }],
 
@@ -1000,6 +1003,16 @@ function renderKey(){
     push("USD／TWD", "匯率", fxRow, false, 3);
     rows[rows.length-1].note = fnote;
   }
+  // 台指期：台股 13:30 收盤後它還開到隔天 05:00，是晚上唯一能看的台灣報價
+  var txf = find(BRIEF.cross, "台指期");
+  if(txf){
+    push("台指期", txf.live ? "夜盤" : "含夜盤", txf, !!txf.live, 0);
+    var tr = rows[rows.length-1];
+    tr.note = txf.p === null
+      ? '期交所的即時報價，<a href="https://mis.taifex.com.tw/futures/" target="_blank" rel="noopener">自己查 ↗</a>'
+      : (txf.contract ? esc(txf.contract) + ' · ' : '')
+        + '台股 13:30 收盤後開到隔天 05:00 —— 晚上唯一還在動的台灣報價';
+  }
 
   // 橫條共用一個對稱尺度，domain 取當日最大絕對漲跌幅。跨三組共用同一個尺度，
   // 才能直接比較「日韓的漲幅」和「昨夜美股的漲幅」誰大。
@@ -1177,6 +1190,18 @@ function applyLive(j){
       }
       touched = true; crossTouched = true;
     }
+  }
+
+  // 台指期
+  var tx = d.txf, txRow = (BRIEF.cross||[]).filter(function(x){ return x.n.indexOf("台指期")>=0; })[0];
+  if(tx && !tx.error && tx.price && txRow){
+    txRow.p = tx.price;
+    txRow.pct = (tx.pct===null||tx.pct===undefined) ? null : tx.pct;
+    txRow.contract = tx.contract || null;
+    // 夜盤時段：台北 15:00～次日 05:00
+    var th = taipei().h;
+    txRow.live = (th >= 15 || th < 5);
+    touched = true;
   }
 
   // ADR 本身也從來沒被接過 —— 整張卡片（價格、漲跌、隱含開盤）都是靜態快照。

@@ -47,7 +47,7 @@ const num = v => {
 /* 每個標的的候選來源，依序嘗試。symbol 寫法各站不同，所以連代號一起帶。 */
 const SYMBOLS = [
   { key:"twii",  name:"加權指數",   dp:2, ma:true,
-    srcs:[["mis","twii"],["twseIndex",""],["stooq","^twse"],["stooq","^tai"],["yahoo","^TWII"]] },
+    srcs:[["mis","t00"],["twseIndex",""],["stooq","^twse"],["stooq","^tai"],["yahoo","^TWII"]] },
   { key:"tsmc",  name:"台積電",     dp:2, ma:true,
     srcs:[["mis","2330"],["twseStock","2330"],["stooq","2330.tw"],["yahoo","2330.TW"]] },
   { key:"e0050", name:"元大台灣50", dp:2, ma:true,
@@ -73,6 +73,9 @@ const SYMBOLS = [
     srcs:[["cnbc",".N225"],["twelve","N225"],["stooq","^nkx"],["yahoo","^N225"]] },
   { key:"kospi", name:"韓國 KOSPI", dp:2, ma:false,
     srcs:[["cnbc",".KS11"],["twelve","KS11"],["stooq","^kospi"],["yahoo","^KS11"]] },
+  // 台指期（含夜盤）。沒有備援來源：這個數字只有期交所給，
+  // 抓不到就會留下 error 欄位，讀取端據此顯示「自己查」。
+  { key:"txf",   name:"台指期",     dp:0, ma:false, srcs:[["taifex","TXF"]] },
   { key:"usdtwd",name:"USD／TWD",   dp:3, ma:false,
     srcs:[["erapi","TWD"],["stooq","usdtwd"],["yahoo","TWD=X"]] }
 ];
@@ -141,8 +144,11 @@ async function loadTwse(){
  * z 在沒有成交的那一瞬間會是 "-"，要往下退到前一筆成交價，
  * 再退到買賣五檔的中價 —— 直接把 "-" 當成 0 會生出一個假的崩盤。
  */
+/* 我們用的代號 → MIS 的頻道字串。
+   注意 msgArray 每一列的 c 是「證券代號」，指數是 t00 不是 twii ——
+   第一次上線就是這裡對不上，加權指數靜靜地退回了 OpenAPI 的昨收。 */
 const MIS_MAP = { "2330":"tse_2330.tw", "0050":"tse_0050.tw",
-                  "0056":"tse_0056.tw", "twii":"tse_t00.tw" };
+                  "0056":"tse_0056.tw", "t00":"tse_t00.tw" };
 let misRows = null;
 async function loadMis(){
   if(misRows !== null) return;
@@ -195,6 +201,38 @@ function taipeiNow(){
   const date = `${p.year}-${p.month}-${p.day}`;
   return {date, h:parseInt(p.hour,10)%24, mi:+p.minute,
           dow:new Date(date+"T12:00:00Z").getUTCDay()};
+}
+
+/* ── 期交所 MIS：台指期，含夜盤 ──
+ * 一開始判定「擋機房」是錯的：GET 回的是 405 Method Not Allowed 而不是 403，
+ * 代表主機通、只是方法不對。2026-08-04 用 POST 實測成功。
+ * 回傳 { RtCode, RtMsg, RtData:{ QuoteList:[…] } }，第一筆是臺指現貨（SymbolID 以 -S 結尾），
+ * 後面才是各月份期貨。夜盤時段一樣有值，這是台股收盤後唯一還在動的台灣報價。
+ */
+async function taifexQuote(){
+  const r = await fetch("https://mis.taifex.com.tw/futures/api/getQuoteList", {
+    method:"POST",
+    headers:{ "User-Agent":UA, "Content-Type":"application/json", Accept:"application/json",
+              Origin:"https://mis.taifex.com.tw",
+              Referer:"https://mis.taifex.com.tw/futures/RegularSession/EquityIndices/" },
+    body: JSON.stringify({MarketType:"0",SymbolType:"F",KindID:"1",CID:"TXF",
+                          ExpireMonth:"",RowSize:"全部",PageNo:"",SortColumn:"",AscDesc:"A"})
+  });
+  const body = await r.text();
+  if(!r.ok) throw new Error(`HTTP ${r.status}｜${body.slice(0,80)}`);
+  const j = JSON.parse(body);
+  const list = j?.RtData?.QuoteList;
+  if(!Array.isArray(list) || !list.length) throw new Error("回應裡沒有 QuoteList｜RtMsg " + j?.RtMsg);
+
+  // -S 結尾是現貨，要的是期貨；取第一個非現貨的（近月）
+  const fut = list.filter(x => !String(x.SymbolID||"").endsWith("-S"));
+  const row = fut[0] || list[0];
+  const price = num(row.CLastPrice), prev = num(row.CRefPrice);
+  if(price === null) throw new Error("沒有 CLastPrice（可能非交易時段）");
+  console.error(`  台指期 ${row.DispCName||row.SymbolID}　${price}`
+    + (prev !== null ? `　參考價 ${prev}` : "") + `　狀態 ${row.Status||"-"}`);
+  return { price, prevClose: prev, marketState: null,
+           contract: row.DispCName || row.SymbolID || null };
 }
 
 /** 從一列裡挑出第一個 key 含指定字樣的數字，欄位改名也不會整支壞掉 */
@@ -296,7 +334,9 @@ async function resolve(s){
   for(const [src, sym] of s.srcs){
     try{
       let out = null;
-      if(src === "mis"){
+      if(src === "taifex"){
+        out = await taifexQuote();
+      } else if(src === "mis"){
         await loadMis();
         out = misQuote(sym);
       } else if(src === "twseStock"){
@@ -374,6 +414,7 @@ for(const s of SYMBOLS){
       marketState: r.marketState || null,
       asOf: r.asOf || null,
       rateUnix: r.rateUnix || undefined,      // 匯率專用：供應商自己的更新時戳
+      contract: r.contract || undefined,      // 台指期專用：哪一個月份的合約
       triedBefore: (r.tried && r.tried.length) ? r.tried : undefined
     };
     if(s.ma && r.closes && r.closes.length){
