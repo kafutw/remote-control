@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+exchange-alert/alert_title.txt
+exchange-alert/alert_body.md

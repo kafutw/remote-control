@@ -1,0 +1,14 @@
+{
+  "observations": [
+    {
+      "date": "2026-08-04",
+      "usd_twd": 32.3372,
+      "usd_jpy": 157.167,
+      "jpy_twd": 0.20575,
+      "source": "open.er-api.com(國際中價)"
+    }
+  ],
+  "last_alerts": {
+    "usdtwd_high": "2026-08-04"
+  }
+}
