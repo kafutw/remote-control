@@ -1,12 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- 頁面的底色 -->
-  <rect width="512" height="512" rx="114" fill="#131722"/>
-  <!-- 基準線，對應報表裡的髮絲線 -->
-  <line x1="86" y1="400" x2="426" y2="400" stroke="#2A3140" stroke-width="12" stroke-linecap="round"/>
-  <!-- 先跌後彈：綠跌紅漲，台股慣例，也剛好是這波行情的形狀 -->
-  <polyline points="86,176 164,246 238,326" fill="none" stroke="#2EBD85" stroke-width="30"
-            stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
-  <polyline points="238,326 320,240 424,124" fill="none" stroke="#F6465D" stroke-width="34"
-            stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="424" cy="124" r="33" fill="#F6465D"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
+     role="img" aria-label="市場瞭望台">
+  <!--
+    瞭望台 ＋ 燈號。名字就是這個意思，頁面現在也真的有一組燈號，
+    所以畫的是「一座在看、看到就亮燈」的塔。
+
+    形狀選實心的塔身而不是細腳架：第一版用平台加外八的腳，
+    縮小之後看起來像板凳，而且細線在 32px 會糊掉。
+    實心漸縮的輪廓在小尺寸仍然認得出來。
+
+    ⚠️ 內容全部保持在中央 76%（x,y ∈ 約 [112, 400]）以內。
+    manifest 宣告 maskable，Android 會用自己的遮罩切（可能切成圓形），
+    畫到邊緣就會被裁掉。底色則必須滿版，否則遮罩後會露出透明角。
+  -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%">
+      <stop offset="0%"   stop-color="#F6465D" stop-opacity=".62"/>
+      <stop offset="55%"  stop-color="#F6465D" stop-opacity=".16"/>
+      <stop offset="100%" stop-color="#F6465D" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1B2233"/>
+      <stop offset="100%" stop-color="#0E121A"/>
+    </linearGradient>
+    <linearGradient id="tower" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#96A5BA"/>
+      <stop offset="45%"  stop-color="#D3DCE8"/>
+      <stop offset="100%" stop-color="#8B9AAF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 底色滿版、不做圓角：iOS 與 Android 都會自己套遮罩，這裡再圓一次會圓兩層 -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- 燈光的暈。縮到 32px 細節會消失，但會留下「上半部比較亮」的印象 -->
+  <circle cx="256" cy="168" r="118" fill="url(#glow)"/>
+
+  <!-- 塔身：上窄下寬的實心梯形。這是整個圖示的辨識度來源 -->
+  <path d="M222 232 L290 232 L318 372 L194 372 Z" fill="url(#tower)"/>
+
+  <!-- 兩道分層線，讓它讀起來是一座塔而不是一個梯形色塊 -->
+  <path d="M231 278 L281 278 M223 322 L289 322"
+        stroke="#1B2233" stroke-width="13" stroke-linecap="round" opacity=".85"/>
+
+  <!-- 觀景平台：比塔身寬，這一節是「瞭望」的關鍵 -->
+  <rect x="186" y="206" width="140" height="30" rx="15" fill="#DCE4EE"/>
+
+  <!-- 燈室與燈。燈直接坐在平台上，不要浮在空中 -->
+  <rect x="226" y="150" width="60" height="58" rx="16" fill="#C2CCDA"/>
+  <circle cx="256" cy="179" r="23" fill="#F6465D"/>
+
+  <!-- 塔基 -->
+  <rect x="176" y="368" width="160" height="26" rx="13" fill="#8B9AAF"/>
+
+  <!-- 地平線，對應報表裡的髮絲線 -->
+  <line x1="126" y1="404" x2="386" y2="404"
+        stroke="#39435A" stroke-width="14" stroke-linecap="round"/>
 </svg>
