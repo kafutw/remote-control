@@ -156,7 +156,6 @@ def build_alert(hits: list, rates: dict, today: str) -> tuple:
         "| 貨幣對 | 匯率 | 意義 |",
         "|---|---|---|",
         f"| USD/TWD | {rates['usd_twd']} | 1 美元換多少台幣 |",
-        f"| USD/JPY | {rates['usd_jpy']} | 1 美元換多少日圓 |",
         f"| JPY/TWD | {rates['jpy_twd']} | 1 日圓換多少台幣 |",
         "",
         "> 想調整警報門檻,改 `exchange-alert/config.json` 即可。",

@@ -18,13 +18,6 @@
       "note": "日圓超甜價(0.195 以下),歷史少見的低點"
     },
     {
-      "id": "usdjpy_high",
-      "pair": "USD/JPY",
-      "direction": "above",
-      "threshold": 160.0,
-      "note": "美元對日圓強勢(160 以上),適合美元定存換日圓"
-    },
-    {
       "id": "usdtwd_high",
       "pair": "USD/TWD",
       "direction": "above",
@@ -44,11 +37,6 @@
       "pair": "JPY/TWD",
       "direction": "low",
       "note": "日圓兌台幣創 90 日新低(日圓變便宜)"
-    },
-    {
-      "pair": "USD/JPY",
-      "direction": "high",
-      "note": "美元兌日圓創 90 日新高(美元換日圓變划算)"
     },
     {
       "pair": "USD/TWD",
