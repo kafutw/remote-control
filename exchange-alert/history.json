@@ -1,6 +1,1819 @@
 {
   "observations": [
     {
+      "date": "2025-08-04",
+      "usd_twd": 29.815,
+      "jpy_twd": 0.20235,
+      "usd_jpy": 147.343,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-05",
+      "usd_twd": 29.8841,
+      "jpy_twd": 0.20358,
+      "usd_jpy": 146.793,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-06",
+      "usd_twd": 29.9374,
+      "jpy_twd": 0.20288,
+      "usd_jpy": 147.56,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-07",
+      "usd_twd": 29.9147,
+      "jpy_twd": 0.20323,
+      "usd_jpy": 147.193,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-08",
+      "usd_twd": 29.8081,
+      "jpy_twd": 0.203,
+      "usd_jpy": 146.837,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-11",
+      "usd_twd": 29.851,
+      "jpy_twd": 0.20215,
+      "usd_jpy": 147.664,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-12",
+      "usd_twd": 29.948,
+      "jpy_twd": 0.20218,
+      "usd_jpy": 148.125,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-13",
+      "usd_twd": 29.8781,
+      "jpy_twd": 0.20221,
+      "usd_jpy": 147.758,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-14",
+      "usd_twd": 29.9397,
+      "jpy_twd": 0.20351,
+      "usd_jpy": 147.12,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-15",
+      "usd_twd": 30.079,
+      "jpy_twd": 0.20366,
+      "usd_jpy": 147.691,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-18",
+      "usd_twd": 29.989,
+      "jpy_twd": 0.20364,
+      "usd_jpy": 147.264,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-19",
+      "usd_twd": 30.0251,
+      "jpy_twd": 0.20299,
+      "usd_jpy": 147.916,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-20",
+      "usd_twd": 30.1073,
+      "jpy_twd": 0.2038,
+      "usd_jpy": 147.731,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-21",
+      "usd_twd": 30.2801,
+      "jpy_twd": 0.20554,
+      "usd_jpy": 147.318,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-22",
+      "usd_twd": 30.516,
+      "jpy_twd": 0.20565,
+      "usd_jpy": 148.386,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-25",
+      "usd_twd": 30.3673,
+      "jpy_twd": 0.20628,
+      "usd_jpy": 147.215,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-26",
+      "usd_twd": 30.444,
+      "jpy_twd": 0.20595,
+      "usd_jpy": 147.822,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-27",
+      "usd_twd": 30.5466,
+      "jpy_twd": 0.20715,
+      "usd_jpy": 147.462,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-28",
+      "usd_twd": 30.575,
+      "jpy_twd": 0.20755,
+      "usd_jpy": 147.316,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-08-29",
+      "usd_twd": 30.4928,
+      "jpy_twd": 0.20773,
+      "usd_jpy": 146.79,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-01",
+      "usd_twd": 30.5605,
+      "jpy_twd": 0.20776,
+      "usd_jpy": 147.097,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-02",
+      "usd_twd": 30.6253,
+      "jpy_twd": 0.20822,
+      "usd_jpy": 147.084,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-03",
+      "usd_twd": 30.744,
+      "jpy_twd": 0.20696,
+      "usd_jpy": 148.548,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-04",
+      "usd_twd": 30.722,
+      "jpy_twd": 0.20761,
+      "usd_jpy": 147.98,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-05",
+      "usd_twd": 30.694,
+      "jpy_twd": 0.20687,
+      "usd_jpy": 148.375,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-08",
+      "usd_twd": 30.479,
+      "jpy_twd": 0.20546,
+      "usd_jpy": 148.344,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-09",
+      "usd_twd": 30.3311,
+      "jpy_twd": 0.20582,
+      "usd_jpy": 147.364,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-10",
+      "usd_twd": 30.3516,
+      "jpy_twd": 0.20592,
+      "usd_jpy": 147.392,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-11",
+      "usd_twd": 30.2368,
+      "jpy_twd": 0.20523,
+      "usd_jpy": 147.332,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-12",
+      "usd_twd": 30.29,
+      "jpy_twd": 0.20574,
+      "usd_jpy": 147.224,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-15",
+      "usd_twd": 30.2849,
+      "jpy_twd": 0.20509,
+      "usd_jpy": 147.666,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-16",
+      "usd_twd": 30.1941,
+      "jpy_twd": 0.20484,
+      "usd_jpy": 147.405,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-17",
+      "usd_twd": 30.0472,
+      "jpy_twd": 0.20522,
+      "usd_jpy": 146.413,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-18",
+      "usd_twd": 30.0864,
+      "jpy_twd": 0.20482,
+      "usd_jpy": 146.891,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-19",
+      "usd_twd": 30.1105,
+      "jpy_twd": 0.20352,
+      "usd_jpy": 147.947,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-22",
+      "usd_twd": 30.216,
+      "jpy_twd": 0.20403,
+      "usd_jpy": 148.095,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-23",
+      "usd_twd": 30.2177,
+      "jpy_twd": 0.20455,
+      "usd_jpy": 147.725,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-24",
+      "usd_twd": 30.274,
+      "jpy_twd": 0.20509,
+      "usd_jpy": 147.613,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-25",
+      "usd_twd": 30.3641,
+      "jpy_twd": 0.20413,
+      "usd_jpy": 148.751,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-26",
+      "usd_twd": 30.5615,
+      "jpy_twd": 0.20393,
+      "usd_jpy": 149.861,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-29",
+      "usd_twd": 30.444,
+      "jpy_twd": 0.20377,
+      "usd_jpy": 149.405,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-09-30",
+      "usd_twd": 30.4582,
+      "jpy_twd": 0.20497,
+      "usd_jpy": 148.595,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-01",
+      "usd_twd": 30.4421,
+      "jpy_twd": 0.20569,
+      "usd_jpy": 147.997,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-02",
+      "usd_twd": 30.447,
+      "jpy_twd": 0.20701,
+      "usd_jpy": 147.083,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-03",
+      "usd_twd": 30.4638,
+      "jpy_twd": 0.20703,
+      "usd_jpy": 147.15,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-06",
+      "usd_twd": 30.42,
+      "jpy_twd": 0.20333,
+      "usd_jpy": 149.606,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-07",
+      "usd_twd": 30.5105,
+      "jpy_twd": 0.20296,
+      "usd_jpy": 150.331,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-08",
+      "usd_twd": 30.5367,
+      "jpy_twd": 0.20083,
+      "usd_jpy": 152.051,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-09",
+      "usd_twd": 30.525,
+      "jpy_twd": 0.19993,
+      "usd_jpy": 152.68,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-10",
+      "usd_twd": 30.5833,
+      "jpy_twd": 0.19994,
+      "usd_jpy": 152.965,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-13",
+      "usd_twd": 30.665,
+      "jpy_twd": 0.20167,
+      "usd_jpy": 152.056,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-14",
+      "usd_twd": 30.691,
+      "jpy_twd": 0.20134,
+      "usd_jpy": 152.434,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-15",
+      "usd_twd": 30.6839,
+      "jpy_twd": 0.20223,
+      "usd_jpy": 151.731,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-16",
+      "usd_twd": 30.6098,
+      "jpy_twd": 0.20275,
+      "usd_jpy": 150.974,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-17",
+      "usd_twd": 30.6119,
+      "jpy_twd": 0.20392,
+      "usd_jpy": 150.12,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-20",
+      "usd_twd": 30.6219,
+      "jpy_twd": 0.20293,
+      "usd_jpy": 150.9,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-21",
+      "usd_twd": 30.5973,
+      "jpy_twd": 0.20293,
+      "usd_jpy": 150.774,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-22",
+      "usd_twd": 30.6773,
+      "jpy_twd": 0.20197,
+      "usd_jpy": 151.893,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-23",
+      "usd_twd": 30.7451,
+      "jpy_twd": 0.20233,
+      "usd_jpy": 151.954,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-24",
+      "usd_twd": 30.775,
+      "jpy_twd": 0.20167,
+      "usd_jpy": 152.602,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-27",
+      "usd_twd": 30.8333,
+      "jpy_twd": 0.20144,
+      "usd_jpy": 153.061,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-28",
+      "usd_twd": 30.6011,
+      "jpy_twd": 0.20041,
+      "usd_jpy": 152.692,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-29",
+      "usd_twd": 30.5431,
+      "jpy_twd": 0.2013,
+      "usd_jpy": 151.731,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-30",
+      "usd_twd": 30.6652,
+      "jpy_twd": 0.20079,
+      "usd_jpy": 152.722,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-10-31",
+      "usd_twd": 30.7307,
+      "jpy_twd": 0.19968,
+      "usd_jpy": 153.9,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-03",
+      "usd_twd": 30.7818,
+      "jpy_twd": 0.19963,
+      "usd_jpy": 154.195,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-04",
+      "usd_twd": 30.9031,
+      "jpy_twd": 0.2004,
+      "usd_jpy": 154.204,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-05",
+      "usd_twd": 30.919,
+      "jpy_twd": 0.20135,
+      "usd_jpy": 153.557,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-06",
+      "usd_twd": 30.8929,
+      "jpy_twd": 0.20051,
+      "usd_jpy": 154.073,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-07",
+      "usd_twd": 30.9788,
+      "jpy_twd": 0.20254,
+      "usd_jpy": 152.948,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-10",
+      "usd_twd": 30.9668,
+      "jpy_twd": 0.20132,
+      "usd_jpy": 153.817,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-11",
+      "usd_twd": 30.9668,
+      "jpy_twd": 0.20089,
+      "usd_jpy": 154.146,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-12",
+      "usd_twd": 30.9643,
+      "jpy_twd": 0.20097,
+      "usd_jpy": 154.075,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-13",
+      "usd_twd": 31.0641,
+      "jpy_twd": 0.20079,
+      "usd_jpy": 154.713,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-14",
+      "usd_twd": 31.1249,
+      "jpy_twd": 0.20128,
+      "usd_jpy": 154.633,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-17",
+      "usd_twd": 30.5545,
+      "jpy_twd": 0.19766,
+      "usd_jpy": 154.585,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-18",
+      "usd_twd": 31.175,
+      "jpy_twd": 0.20078,
+      "usd_jpy": 155.273,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-19",
+      "usd_twd": 31.1032,
+      "jpy_twd": 0.19996,
+      "usd_jpy": 155.548,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-20",
+      "usd_twd": 31.183,
+      "jpy_twd": 0.19863,
+      "usd_jpy": 156.992,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-21",
+      "usd_twd": 31.3521,
+      "jpy_twd": 0.19923,
+      "usd_jpy": 157.369,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-24",
+      "usd_twd": 31.3386,
+      "jpy_twd": 0.20001,
+      "usd_jpy": 156.688,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-25",
+      "usd_twd": 31.4261,
+      "jpy_twd": 0.20024,
+      "usd_jpy": 156.939,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-26",
+      "usd_twd": 31.3881,
+      "jpy_twd": 0.20091,
+      "usd_jpy": 156.23,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-27",
+      "usd_twd": 31.2489,
+      "jpy_twd": 0.20001,
+      "usd_jpy": 156.239,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-11-28",
+      "usd_twd": 31.3147,
+      "jpy_twd": 0.20037,
+      "usd_jpy": 156.284,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-01",
+      "usd_twd": 31.3769,
+      "jpy_twd": 0.20123,
+      "usd_jpy": 155.928,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-02",
+      "usd_twd": 31.396,
+      "jpy_twd": 0.20183,
+      "usd_jpy": 155.557,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-03",
+      "usd_twd": 31.402,
+      "jpy_twd": 0.20154,
+      "usd_jpy": 155.807,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-04",
+      "usd_twd": 31.3147,
+      "jpy_twd": 0.20189,
+      "usd_jpy": 155.107,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-05",
+      "usd_twd": 31.365,
+      "jpy_twd": 0.20217,
+      "usd_jpy": 155.142,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-08",
+      "usd_twd": 31.274,
+      "jpy_twd": 0.20133,
+      "usd_jpy": 155.34,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-09",
+      "usd_twd": 31.1647,
+      "jpy_twd": 0.19997,
+      "usd_jpy": 155.844,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-10",
+      "usd_twd": 31.151,
+      "jpy_twd": 0.19862,
+      "usd_jpy": 156.838,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-11",
+      "usd_twd": 31.077,
+      "jpy_twd": 0.19948,
+      "usd_jpy": 155.79,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-12",
+      "usd_twd": 31.1801,
+      "jpy_twd": 0.20043,
+      "usd_jpy": 155.567,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-15",
+      "usd_twd": 31.3201,
+      "jpy_twd": 0.20091,
+      "usd_jpy": 155.888,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-16",
+      "usd_twd": 31.3287,
+      "jpy_twd": 0.2021,
+      "usd_jpy": 155.015,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-17",
+      "usd_twd": 31.469,
+      "jpy_twd": 0.20332,
+      "usd_jpy": 154.778,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-18",
+      "usd_twd": 31.6321,
+      "jpy_twd": 0.20343,
+      "usd_jpy": 155.495,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-19",
+      "usd_twd": 31.5141,
+      "jpy_twd": 0.20255,
+      "usd_jpy": 155.586,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-22",
+      "usd_twd": 31.5039,
+      "jpy_twd": 0.1998,
+      "usd_jpy": 157.676,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-23",
+      "usd_twd": 31.5322,
+      "jpy_twd": 0.201,
+      "usd_jpy": 156.877,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-24",
+      "usd_twd": 31.4895,
+      "jpy_twd": 0.20163,
+      "usd_jpy": 156.176,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-26",
+      "usd_twd": 31.5702,
+      "jpy_twd": 0.20226,
+      "usd_jpy": 156.09,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-29",
+      "usd_twd": 31.38,
+      "jpy_twd": 0.20056,
+      "usd_jpy": 156.463,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-30",
+      "usd_twd": 31.3178,
+      "jpy_twd": 0.20074,
+      "usd_jpy": 156.013,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2025-12-31",
+      "usd_twd": 31.2436,
+      "jpy_twd": 0.19975,
+      "usd_jpy": 156.413,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-02",
+      "usd_twd": 31.3035,
+      "jpy_twd": 0.19973,
+      "usd_jpy": 156.731,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-05",
+      "usd_twd": 31.3587,
+      "jpy_twd": 0.19975,
+      "usd_jpy": 156.989,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-06",
+      "usd_twd": 31.4746,
+      "jpy_twd": 0.20095,
+      "usd_jpy": 156.626,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-07",
+      "usd_twd": 31.4921,
+      "jpy_twd": 0.201,
+      "usd_jpy": 156.68,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-08",
+      "usd_twd": 31.4491,
+      "jpy_twd": 0.20066,
+      "usd_jpy": 156.731,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-09",
+      "usd_twd": 31.5448,
+      "jpy_twd": 0.20108,
+      "usd_jpy": 156.88,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-12",
+      "usd_twd": 31.5933,
+      "jpy_twd": 0.19977,
+      "usd_jpy": 158.149,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-13",
+      "usd_twd": 31.5699,
+      "jpy_twd": 0.19983,
+      "usd_jpy": 157.986,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-14",
+      "usd_twd": 31.6169,
+      "jpy_twd": 0.19862,
+      "usd_jpy": 159.179,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-15",
+      "usd_twd": 31.5107,
+      "jpy_twd": 0.19893,
+      "usd_jpy": 158.402,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-16",
+      "usd_twd": 31.5642,
+      "jpy_twd": 0.19902,
+      "usd_jpy": 158.596,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-19",
+      "usd_twd": 31.608,
+      "jpy_twd": 0.20064,
+      "usd_jpy": 157.535,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-20",
+      "usd_twd": 31.549,
+      "jpy_twd": 0.19945,
+      "usd_jpy": 158.177,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-21",
+      "usd_twd": 31.6823,
+      "jpy_twd": 0.20032,
+      "usd_jpy": 158.162,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-22",
+      "usd_twd": 31.64,
+      "jpy_twd": 0.19968,
+      "usd_jpy": 158.456,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-23",
+      "usd_twd": 31.584,
+      "jpy_twd": 0.19927,
+      "usd_jpy": 158.501,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-26",
+      "usd_twd": 31.3708,
+      "jpy_twd": 0.20218,
+      "usd_jpy": 155.166,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-27",
+      "usd_twd": 31.4405,
+      "jpy_twd": 0.20371,
+      "usd_jpy": 154.336,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-28",
+      "usd_twd": 31.1103,
+      "jpy_twd": 0.20406,
+      "usd_jpy": 152.453,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-29",
+      "usd_twd": 31.2696,
+      "jpy_twd": 0.20425,
+      "usd_jpy": 153.096,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-01-30",
+      "usd_twd": 31.3617,
+      "jpy_twd": 0.20476,
+      "usd_jpy": 153.162,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-02",
+      "usd_twd": 31.583,
+      "jpy_twd": 0.2035,
+      "usd_jpy": 155.202,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-03",
+      "usd_twd": 31.5771,
+      "jpy_twd": 0.20314,
+      "usd_jpy": 155.443,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-04",
+      "usd_twd": 31.5732,
+      "jpy_twd": 0.20265,
+      "usd_jpy": 155.799,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-05",
+      "usd_twd": 31.6571,
+      "jpy_twd": 0.20174,
+      "usd_jpy": 156.917,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-06",
+      "usd_twd": 31.6488,
+      "jpy_twd": 0.20186,
+      "usd_jpy": 156.784,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-09",
+      "usd_twd": 31.575,
+      "jpy_twd": 0.2008,
+      "usd_jpy": 157.244,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-10",
+      "usd_twd": 31.5612,
+      "jpy_twd": 0.20214,
+      "usd_jpy": 156.132,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-11",
+      "usd_twd": 31.4787,
+      "jpy_twd": 0.20377,
+      "usd_jpy": 154.482,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-12",
+      "usd_twd": 31.337,
+      "jpy_twd": 0.20446,
+      "usd_jpy": 153.269,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-13",
+      "usd_twd": 31.4169,
+      "jpy_twd": 0.20558,
+      "usd_jpy": 152.821,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-16",
+      "usd_twd": 31.369,
+      "jpy_twd": 0.20532,
+      "usd_jpy": 152.779,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-17",
+      "usd_twd": 31.327,
+      "jpy_twd": 0.20394,
+      "usd_jpy": 153.609,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-18",
+      "usd_twd": 31.376,
+      "jpy_twd": 0.20487,
+      "usd_jpy": 153.149,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-19",
+      "usd_twd": 31.5291,
+      "jpy_twd": 0.20382,
+      "usd_jpy": 154.693,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-20",
+      "usd_twd": 31.579,
+      "jpy_twd": 0.20353,
+      "usd_jpy": 155.16,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-23",
+      "usd_twd": 31.511,
+      "jpy_twd": 0.20417,
+      "usd_jpy": 154.339,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-24",
+      "usd_twd": 31.4348,
+      "jpy_twd": 0.20328,
+      "usd_jpy": 154.635,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-25",
+      "usd_twd": 31.3771,
+      "jpy_twd": 0.20129,
+      "usd_jpy": 155.88,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-26",
+      "usd_twd": 31.2691,
+      "jpy_twd": 0.20019,
+      "usd_jpy": 156.2,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-02-27",
+      "usd_twd": 31.2468,
+      "jpy_twd": 0.20048,
+      "usd_jpy": 155.859,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-02",
+      "usd_twd": 31.375,
+      "jpy_twd": 0.20031,
+      "usd_jpy": 156.633,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-03",
+      "usd_twd": 31.535,
+      "jpy_twd": 0.20053,
+      "usd_jpy": 157.257,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-04",
+      "usd_twd": 31.734,
+      "jpy_twd": 0.20114,
+      "usd_jpy": 157.773,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-05",
+      "usd_twd": 31.63,
+      "jpy_twd": 0.20149,
+      "usd_jpy": 156.983,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-06",
+      "usd_twd": 31.9059,
+      "jpy_twd": 0.20253,
+      "usd_jpy": 157.534,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-09",
+      "usd_twd": 31.8023,
+      "jpy_twd": 0.20074,
+      "usd_jpy": 158.427,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-10",
+      "usd_twd": 31.802,
+      "jpy_twd": 0.20147,
+      "usd_jpy": 157.848,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-11",
+      "usd_twd": 31.7739,
+      "jpy_twd": 0.20096,
+      "usd_jpy": 158.114,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-12",
+      "usd_twd": 31.8115,
+      "jpy_twd": 0.19998,
+      "usd_jpy": 159.075,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-13",
+      "usd_twd": 31.8958,
+      "jpy_twd": 0.20034,
+      "usd_jpy": 159.206,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-16",
+      "usd_twd": 32.1631,
+      "jpy_twd": 0.20156,
+      "usd_jpy": 159.568,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-17",
+      "usd_twd": 31.945,
+      "jpy_twd": 0.20078,
+      "usd_jpy": 159.105,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-18",
+      "usd_twd": 31.885,
+      "jpy_twd": 0.20067,
+      "usd_jpy": 158.889,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-19",
+      "usd_twd": 32.0312,
+      "jpy_twd": 0.20045,
+      "usd_jpy": 159.795,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-20",
+      "usd_twd": 31.8021,
+      "jpy_twd": 0.20138,
+      "usd_jpy": 157.924,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-23",
+      "usd_twd": 32.0217,
+      "jpy_twd": 0.2011,
+      "usd_jpy": 159.234,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-24",
+      "usd_twd": 31.862,
+      "jpy_twd": 0.20105,
+      "usd_jpy": 158.479,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-25",
+      "usd_twd": 31.9258,
+      "jpy_twd": 0.20115,
+      "usd_jpy": 158.718,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-26",
+      "usd_twd": 31.9359,
+      "jpy_twd": 0.20037,
+      "usd_jpy": 159.384,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-27",
+      "usd_twd": 31.93,
+      "jpy_twd": 0.19993,
+      "usd_jpy": 159.704,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-30",
+      "usd_twd": 31.977,
+      "jpy_twd": 0.19956,
+      "usd_jpy": 160.234,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-03-31",
+      "usd_twd": 32.039,
+      "jpy_twd": 0.20044,
+      "usd_jpy": 159.841,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-01",
+      "usd_twd": 31.9379,
+      "jpy_twd": 0.2014,
+      "usd_jpy": 158.579,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-02",
+      "usd_twd": 32.002,
+      "jpy_twd": 0.20167,
+      "usd_jpy": 158.688,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-03",
+      "usd_twd": 31.9381,
+      "jpy_twd": 0.20025,
+      "usd_jpy": 159.491,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-06",
+      "usd_twd": 31.963,
+      "jpy_twd": 0.20004,
+      "usd_jpy": 159.78,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-07",
+      "usd_twd": 31.914,
+      "jpy_twd": 0.19986,
+      "usd_jpy": 159.683,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-08",
+      "usd_twd": 31.894,
+      "jpy_twd": 0.20095,
+      "usd_jpy": 158.716,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-09",
+      "usd_twd": 31.7204,
+      "jpy_twd": 0.19995,
+      "usd_jpy": 158.642,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-10",
+      "usd_twd": 31.7258,
+      "jpy_twd": 0.19939,
+      "usd_jpy": 159.112,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-13",
+      "usd_twd": 31.767,
+      "jpy_twd": 0.19894,
+      "usd_jpy": 159.68,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-14",
+      "usd_twd": 31.6412,
+      "jpy_twd": 0.19873,
+      "usd_jpy": 159.214,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-15",
+      "usd_twd": 31.517,
+      "jpy_twd": 0.19848,
+      "usd_jpy": 158.792,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-16",
+      "usd_twd": 31.587,
+      "jpy_twd": 0.1989,
+      "usd_jpy": 158.809,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-17",
+      "usd_twd": 31.558,
+      "jpy_twd": 0.19823,
+      "usd_jpy": 159.195,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-20",
+      "usd_twd": 31.468,
+      "jpy_twd": 0.19771,
+      "usd_jpy": 159.161,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-21",
+      "usd_twd": 31.419,
+      "jpy_twd": 0.1978,
+      "usd_jpy": 158.844,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-22",
+      "usd_twd": 31.482,
+      "jpy_twd": 0.19754,
+      "usd_jpy": 159.373,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-23",
+      "usd_twd": 31.4668,
+      "jpy_twd": 0.1973,
+      "usd_jpy": 159.488,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-24",
+      "usd_twd": 31.53,
+      "jpy_twd": 0.19737,
+      "usd_jpy": 159.747,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-27",
+      "usd_twd": 31.44,
+      "jpy_twd": 0.19702,
+      "usd_jpy": 159.576,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-28",
+      "usd_twd": 31.4557,
+      "jpy_twd": 0.19739,
+      "usd_jpy": 159.357,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-29",
+      "usd_twd": 31.513,
+      "jpy_twd": 0.19751,
+      "usd_jpy": 159.552,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-04-30",
+      "usd_twd": 31.6265,
+      "jpy_twd": 0.19744,
+      "usd_jpy": 160.184,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-01",
+      "usd_twd": 31.569,
+      "jpy_twd": 0.2011,
+      "usd_jpy": 156.978,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-04",
+      "usd_twd": 31.554,
+      "jpy_twd": 0.20118,
+      "usd_jpy": 156.846,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-05",
+      "usd_twd": 31.598,
+      "jpy_twd": 0.20101,
+      "usd_jpy": 157.194,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-06",
+      "usd_twd": 31.545,
+      "jpy_twd": 0.20006,
+      "usd_jpy": 157.677,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-07",
+      "usd_twd": 31.3985,
+      "jpy_twd": 0.20062,
+      "usd_jpy": 156.508,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-08",
+      "usd_twd": 31.3921,
+      "jpy_twd": 0.20017,
+      "usd_jpy": 156.829,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-11",
+      "usd_twd": 31.301,
+      "jpy_twd": 0.19955,
+      "usd_jpy": 156.858,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-12",
+      "usd_twd": 31.3518,
+      "jpy_twd": 0.1994,
+      "usd_jpy": 157.231,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-13",
+      "usd_twd": 31.5011,
+      "jpy_twd": 0.19979,
+      "usd_jpy": 157.671,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-14",
+      "usd_twd": 31.559,
+      "jpy_twd": 0.19993,
+      "usd_jpy": 157.851,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-15",
+      "usd_twd": 31.5644,
+      "jpy_twd": 0.19929,
+      "usd_jpy": 158.382,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-18",
+      "usd_twd": 31.587,
+      "jpy_twd": 0.19886,
+      "usd_jpy": 158.844,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-19",
+      "usd_twd": 31.5541,
+      "jpy_twd": 0.19863,
+      "usd_jpy": 158.861,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-20",
+      "usd_twd": 31.7292,
+      "jpy_twd": 0.19951,
+      "usd_jpy": 159.035,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-21",
+      "usd_twd": 31.5912,
+      "jpy_twd": 0.19883,
+      "usd_jpy": 158.888,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-22",
+      "usd_twd": 31.5508,
+      "jpy_twd": 0.19841,
+      "usd_jpy": 159.018,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-25",
+      "usd_twd": 31.439,
+      "jpy_twd": 0.1978,
+      "usd_jpy": 158.946,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-26",
+      "usd_twd": 31.4484,
+      "jpy_twd": 0.19785,
+      "usd_jpy": 158.954,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-27",
+      "usd_twd": 31.4459,
+      "jpy_twd": 0.19747,
+      "usd_jpy": 159.243,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-28",
+      "usd_twd": 31.4659,
+      "jpy_twd": 0.19719,
+      "usd_jpy": 159.568,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-05-29",
+      "usd_twd": 31.424,
+      "jpy_twd": 0.1973,
+      "usd_jpy": 159.27,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-01",
+      "usd_twd": 31.4129,
+      "jpy_twd": 0.19713,
+      "usd_jpy": 159.353,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-02",
+      "usd_twd": 31.3305,
+      "jpy_twd": 0.19626,
+      "usd_jpy": 159.636,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-03",
+      "usd_twd": 31.4782,
+      "jpy_twd": 0.19678,
+      "usd_jpy": 159.968,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-04",
+      "usd_twd": 31.5055,
+      "jpy_twd": 0.19698,
+      "usd_jpy": 159.94,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-05",
+      "usd_twd": 31.503,
+      "jpy_twd": 0.19691,
+      "usd_jpy": 159.99,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-08",
+      "usd_twd": 31.5881,
+      "jpy_twd": 0.19702,
+      "usd_jpy": 160.327,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-09",
+      "usd_twd": 31.582,
+      "jpy_twd": 0.19717,
+      "usd_jpy": 160.174,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-10",
+      "usd_twd": 31.5409,
+      "jpy_twd": 0.19666,
+      "usd_jpy": 160.384,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-11",
+      "usd_twd": 31.6498,
+      "jpy_twd": 0.19716,
+      "usd_jpy": 160.527,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-12",
+      "usd_twd": 31.579,
+      "jpy_twd": 0.19721,
+      "usd_jpy": 160.13,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-15",
+      "usd_twd": 31.613,
+      "jpy_twd": 0.19764,
+      "usd_jpy": 159.955,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-16",
+      "usd_twd": 31.5186,
+      "jpy_twd": 0.19671,
+      "usd_jpy": 160.229,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-17",
+      "usd_twd": 31.5639,
+      "jpy_twd": 0.19676,
+      "usd_jpy": 160.419,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-18",
+      "usd_twd": 31.6384,
+      "jpy_twd": 0.197,
+      "usd_jpy": 160.6,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-19",
+      "usd_twd": 31.6359,
+      "jpy_twd": 0.19614,
+      "usd_jpy": 161.289,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-22",
+      "usd_twd": 31.702,
+      "jpy_twd": 0.19638,
+      "usd_jpy": 161.433,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-23",
+      "usd_twd": 31.687,
+      "jpy_twd": 0.19612,
+      "usd_jpy": 161.57,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-24",
+      "usd_twd": 31.7021,
+      "jpy_twd": 0.19618,
+      "usd_jpy": 161.599,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-25",
+      "usd_twd": 31.808,
+      "jpy_twd": 0.19663,
+      "usd_jpy": 161.763,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-26",
+      "usd_twd": 31.86,
+      "jpy_twd": 0.1969,
+      "usd_jpy": 161.805,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-29",
+      "usd_twd": 31.847,
+      "jpy_twd": 0.19685,
+      "usd_jpy": 161.787,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-06-30",
+      "usd_twd": 31.8659,
+      "jpy_twd": 0.1968,
+      "usd_jpy": 161.923,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-01",
+      "usd_twd": 31.8344,
+      "jpy_twd": 0.19575,
+      "usd_jpy": 162.628,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-02",
+      "usd_twd": 31.8948,
+      "jpy_twd": 0.19623,
+      "usd_jpy": 162.539,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-03",
+      "usd_twd": 31.9309,
+      "jpy_twd": 0.19778,
+      "usd_jpy": 161.449,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-06",
+      "usd_twd": 31.928,
+      "jpy_twd": 0.19776,
+      "usd_jpy": 161.452,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-07",
+      "usd_twd": 32.0549,
+      "jpy_twd": 0.19776,
+      "usd_jpy": 162.088,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-08",
+      "usd_twd": 32.1359,
+      "jpy_twd": 0.19793,
+      "usd_jpy": 162.363,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-09",
+      "usd_twd": 32.1092,
+      "jpy_twd": 0.19755,
+      "usd_jpy": 162.539,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-10",
+      "usd_twd": 32.0972,
+      "jpy_twd": 0.19769,
+      "usd_jpy": 162.363,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-13",
+      "usd_twd": 32.0991,
+      "jpy_twd": 0.19829,
+      "usd_jpy": 161.878,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-14",
+      "usd_twd": 32.162,
+      "jpy_twd": 0.19801,
+      "usd_jpy": 162.429,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-15",
+      "usd_twd": 32.1339,
+      "jpy_twd": 0.19813,
+      "usd_jpy": 162.187,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-16",
+      "usd_twd": 32.2109,
+      "jpy_twd": 0.19874,
+      "usd_jpy": 162.072,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-17",
+      "usd_twd": 32.2643,
+      "jpy_twd": 0.1987,
+      "usd_jpy": 162.376,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-20",
+      "usd_twd": 32.313,
+      "jpy_twd": 0.19883,
+      "usd_jpy": 162.512,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-21",
+      "usd_twd": 32.2759,
+      "jpy_twd": 0.19864,
+      "usd_jpy": 162.487,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-22",
+      "usd_twd": 32.3254,
+      "jpy_twd": 0.19809,
+      "usd_jpy": 163.186,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-23",
+      "usd_twd": 32.3791,
+      "jpy_twd": 0.19855,
+      "usd_jpy": 163.081,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-24",
+      "usd_twd": 32.299,
+      "jpy_twd": 0.19715,
+      "usd_jpy": 163.832,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-27",
+      "usd_twd": 32.3223,
+      "jpy_twd": 0.19756,
+      "usd_jpy": 163.611,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-28",
+      "usd_twd": 32.302,
+      "jpy_twd": 0.19724,
+      "usd_jpy": 163.771,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-29",
+      "usd_twd": 32.3638,
+      "jpy_twd": 0.1975,
+      "usd_jpy": 163.864,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-30",
+      "usd_twd": 32.3489,
+      "jpy_twd": 0.19809,
+      "usd_jpy": 163.3,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-07-31",
+      "usd_twd": 32.395,
+      "jpy_twd": 0.20224,
+      "usd_jpy": 160.183,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
+      "date": "2026-08-03",
+      "usd_twd": 32.2931,
+      "jpy_twd": 0.20493,
+      "usd_jpy": 157.582,
+      "source": "Yahoo Finance(國際收盤中價,回補)"
+    },
+    {
       "date": "2026-08-04",
       "usd_twd": 32.3372,
       "usd_jpy": 157.167,
@@ -10,5 +1823,6 @@
   ],
   "last_alerts": {
     "usdtwd_high": "2026-08-04"
-  }
+  },
+  "backfilled": true
 }
