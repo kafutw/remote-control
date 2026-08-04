@@ -1,13 +1,35 @@
 {
-  "generatedAt": "2026-08-04T05:47:00.072Z",
-  "generatedAtTaipei": "2026-08-04 13:47:00",
+  "generatedAt": "2026-08-04T06:11:49.603Z",
+  "generatedAtTaipei": "2026-08-04 14:11:49",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
   },
   "ok": 13,
   "failed": 0,
-  "crossCheck": {},
+  "crossCheck": {
+    "tsmc": {
+      "primary": 2320,
+      "via": "mis:2330",
+      "twse": 2370,
+      "agree": null,
+      "note": "跳過對帳：mis:2330 是 2026-08-04、證交所是 2026-08-03，不同交易日"
+    },
+    "e0050": {
+      "primary": 100.65,
+      "via": "mis:0050",
+      "twse": 102,
+      "agree": null,
+      "note": "跳過對帳：mis:0050 是 2026-08-04、證交所是 2026-08-03，不同交易日"
+    },
+    "e0056": {
+      "primary": 50.6,
+      "via": "mis:0056",
+      "twse": 49.82,
+      "agree": null,
+      "note": "跳過對帳：mis:0056 是 2026-08-04、證交所是 2026-08-03，不同交易日"
+    }
+  },
   "data": {
     "twii": {
       "name": "加權指數",
@@ -19,43 +41,46 @@
       "change": null,
       "pct": null,
       "marketState": "CLOSED",
-      "asOf": "2026-08-03"
+      "asOf": "2026-08-03",
+      "triedBefore": [
+        "mis:twii → MIS 沒有這一檔：twii"
+      ]
     },
     "tsmc": {
       "name": "台積電",
       "group": "tsmc",
       "dp": 2,
-      "via": "twseStock:2330",
-      "price": 2370,
-      "prevClose": null,
-      "change": null,
-      "pct": null,
+      "via": "mis:2330",
+      "price": 2320,
+      "prevClose": 2370,
+      "change": -50,
+      "pct": -2.1097,
       "marketState": "CLOSED",
-      "asOf": "2026-08-03"
+      "asOf": "2026-08-04"
     },
     "e0050": {
       "name": "元大台灣50",
       "group": "e0050",
       "dp": 2,
-      "via": "twseStock:0050",
-      "price": 102,
-      "prevClose": null,
-      "change": null,
-      "pct": null,
+      "via": "mis:0050",
+      "price": 100.65,
+      "prevClose": 102,
+      "change": -1.35,
+      "pct": -1.3235,
       "marketState": "CLOSED",
-      "asOf": "2026-08-03"
+      "asOf": "2026-08-04"
     },
     "e0056": {
       "name": "元大高股息",
       "group": "e0056",
       "dp": 2,
-      "via": "twseStock:0056",
-      "price": 49.82,
-      "prevClose": 49.48,
-      "change": 0.34,
-      "pct": 0.6871,
+      "via": "mis:0056",
+      "price": 50.6,
+      "prevClose": 49.82,
+      "change": 0.78,
+      "pct": 1.5656,
       "marketState": "CLOSED",
-      "asOf": "2026-08-03"
+      "asOf": "2026-08-04"
     },
     "adr": {
       "name": "台積電 ADR",
@@ -63,9 +88,9 @@
       "dp": 2,
       "via": "cnbc:TSM",
       "price": 406.11,
-      "prevClose": 404.25,
-      "change": 1.86,
-      "pct": 0.4601,
+      "prevClose": 406.11,
+      "change": 0,
+      "pct": 0,
       "marketState": "POST_MKT",
       "asOf": null
     },
@@ -123,9 +148,9 @@
       "dp": 2,
       "via": "cnbc:.VIX",
       "price": 15.86,
-      "prevClose": 15.99,
-      "change": -0.13,
-      "pct": -0.813,
+      "prevClose": 15.86,
+      "change": 0,
+      "pct": 0,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -134,10 +159,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 63598.09,
+      "price": 63937.03,
       "prevClose": 63754.9,
-      "change": -156.81,
-      "pct": -0.246,
+      "change": 182.13,
+      "pct": 0.2857,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -146,10 +171,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6203.47,
+      "price": 6295.61,
       "prevClose": 6257.45,
-      "change": -53.98,
-      "pct": -0.8627,
+      "change": 38.16,
+      "pct": 0.6098,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -195,152 +220,152 @@
     "ready": true,
     "last": 10177.32,
     "reach": {
-      "lo": 7476.47,
-      "hi": 13678.18,
-      "days": 23,
-      "fired": 6,
-      "fireRate": 0.2608695652173913,
-      "breakoutReachable": true
+      "lo": 10177.32,
+      "hi": 10177.32,
+      "days": 1,
+      "fired": 0,
+      "fireRate": 0,
+      "breakoutReachable": false
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 23,
-    "incomplete": 0,
+    "complete": 1,
+    "incomplete": 22,
     "latestPartial": false,
     "series": [
       {
         "date": "2026-07-01",
         "twse": 13678.18,
-        "tpex": 0,
-        "total": 13678.18
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-02",
         "twse": 10835.83,
-        "tpex": 0,
-        "total": 10835.83
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-03",
         "twse": 10780.28,
-        "tpex": 0,
-        "total": 10780.28
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-06",
         "twse": 10644.32,
-        "tpex": 0,
-        "total": 10644.32
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-07",
         "twse": 12281.19,
-        "tpex": 0,
-        "total": 12281.19
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-08",
         "twse": 10045.6,
-        "tpex": 0,
-        "total": 10045.6
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-09",
         "twse": 9967.89,
-        "tpex": 0,
-        "total": 9967.89
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-13",
         "twse": 10676.62,
-        "tpex": 0,
-        "total": 10676.62
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-14",
         "twse": 12452.07,
-        "tpex": 0,
-        "total": 12452.07
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-15",
         "twse": 10243.86,
-        "tpex": 0,
-        "total": 10243.86
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-16",
         "twse": 9331.81,
-        "tpex": 0,
-        "total": 9331.81
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-17",
         "twse": 13331.57,
-        "tpex": 0,
-        "total": 13331.57
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-20",
         "twse": 10414.57,
-        "tpex": 0,
-        "total": 10414.57
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-21",
         "twse": 8662.52,
-        "tpex": 0,
-        "total": 8662.52
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-22",
         "twse": 10259.58,
-        "tpex": 0,
-        "total": 10259.58
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-23",
         "twse": 9306.12,
-        "tpex": 0,
-        "total": 9306.12
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-24",
         "twse": 8271.3,
-        "tpex": 0,
-        "total": 8271.3
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-27",
         "twse": 7476.47,
-        "tpex": 0,
-        "total": 7476.47
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-28",
         "twse": 8725.75,
-        "tpex": 0,
-        "total": 8725.75
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-29",
         "twse": 11491.85,
-        "tpex": 0,
-        "total": 11491.85
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-30",
         "twse": 11469.38,
-        "tpex": 0,
-        "total": 11469.38
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-07-31",
         "twse": 8877.32,
-        "tpex": 0,
-        "total": 8877.32
+        "tpex": null,
+        "total": null
       },
       {
         "date": "2026-08-03",
@@ -353,8 +378,8 @@
   "adrPremium": {
     "converted": 2626.49,
     "fxAsOf": "2026-08-04",
-    "premiumPct": 10.82,
-    "impliedOpen": 2381,
+    "premiumPct": 13.21,
+    "impliedOpen": 2320,
     "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
 }
