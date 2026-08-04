@@ -24,6 +24,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: 回補歷史匯率(僅第一次生效)
+        run: python exchange-alert/backfill_history.py || echo "回補失敗,不影響本次檢查"
+
       - name: 檢查匯率
         run: python exchange-alert/check_rates.py
 
