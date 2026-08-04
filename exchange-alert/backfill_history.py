@@ -56,6 +56,27 @@ def fetch_stooq(symbol: str, d1: str, d2: str) -> dict:
             out[parts[0]] = float(parts[4])
         except ValueError:
             continue
+    if not out:
+        print(f"(診斷) stooq {symbol} 回應無法解析,前 100 字: {text[:100]!r}")
+    return out
+
+
+def fetch_yahoo(symbol: str) -> dict:
+    """Yahoo Finance 行情 API 每日收盤價,第二備援。symbol 如 TWD=X(USD/TWD)。"""
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1y&interval=1d"
+    text = http_get(url)
+    try:
+        result = json.loads(text)["chart"]["result"][0]
+        stamps = result["timestamp"]
+        closes = result["indicators"]["quote"][0]["close"]
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
+        print(f"(診斷) yahoo {symbol} 回應無法解析({exc}),前 100 字: {text[:100]!r}")
+        return {}
+    out = {}
+    for ts, close in zip(stamps, closes):
+        if close:
+            day = datetime.fromtimestamp(ts, TAIPEI).date().isoformat()
+            out[day] = float(close)
     return out
 
 
@@ -98,7 +119,7 @@ def main() -> int:
             for d in set(usd) & set(jpy)}
     print(f"台銀回補: {len(rows)} 天")
 
-    # 台銀抓不齊(例如封鎖 GitHub 主機)時,退回 stooq 國際收盤價
+    # 台銀抓不齊(例如封鎖 GitHub 主機)時,依序退回國際收盤價來源
     if len(rows) < 150:
         d1 = (today - timedelta(days=400)).strftime("%Y%m%d")
         d2 = today.strftime("%Y%m%d")
@@ -112,6 +133,18 @@ def main() -> int:
             print(f"stooq 回補後共 {len(rows)} 天")
         except Exception as exc:  # noqa: BLE001
             print(f"stooq 備援失敗: {exc}")
+
+    if len(rows) < 150:
+        try:
+            y_twd = fetch_yahoo("TWD=X")
+            y_jpy = fetch_yahoo("JPY=X")
+            for day in set(y_twd) & set(y_jpy):
+                if day not in rows:
+                    rows[day] = (y_twd[day], y_twd[day] / y_jpy[day],
+                                 "Yahoo Finance(國際收盤中價,回補)")
+            print(f"yahoo 回補後共 {len(rows)} 天")
+        except Exception as exc:  # noqa: BLE001
+            print(f"yahoo 備援失敗: {exc}")
 
     existing = {o["date"] for o in history["observations"]}
     added = 0
