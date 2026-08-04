@@ -49,11 +49,11 @@ const SYMBOLS = [
   { key:"twii",  name:"加權指數",   dp:2, ma:true,
     srcs:[["mis","t00"],["twseIndex",""],["stooq","^twse"],["stooq","^tai"],["yahoo","^TWII"]] },
   { key:"tsmc",  name:"台積電",     dp:2, ma:true,
-    srcs:[["mis","2330"],["twseStock","2330"],["stooq","2330.tw"],["yahoo","2330.TW"]] },
+    srcs:[["mis","2330"],["twseStock","2330"],["finmind","2330"],["stooq","2330.tw"],["yahoo","2330.TW"]] },
   { key:"e0050", name:"元大台灣50", dp:2, ma:true,
-    srcs:[["mis","0050"],["twseStock","0050"],["stooq","0050.tw"],["yahoo","0050.TW"]] },
+    srcs:[["mis","0050"],["twseStock","0050"],["finmind","0050"],["stooq","0050.tw"],["yahoo","0050.TW"]] },
   { key:"e0056", name:"元大高股息", dp:2, ma:true,
-    srcs:[["mis","0056"],["twseStock","0056"],["stooq","0056.tw"],["yahoo","0056.TW"]] },
+    srcs:[["mis","0056"],["twseStock","0056"],["finmind","0056"],["stooq","0056.tw"],["yahoo","0056.TW"]] },
   { key:"adr",   name:"台積電 ADR", dp:2, ma:false,
     srcs:[["cnbc","TSM"],["twelve","TSM"],["stooq","tsm.us"],["yahoo","TSM"]] },
   { key:"sox",   name:"費城半導體", dp:2, ma:false,
@@ -163,7 +163,12 @@ async function loadMis(){
     if(!r.ok){ console.error("MIS 即時 HTTP " + r.status); return; }
     const j = JSON.parse(await r.text());
     for(const row of (j.msgArray || [])) misRows.set(String(row.c || "").trim(), row);
-    console.error(`MIS 即時：${misRows.size} 檔　rtcode ${j.rtcode ?? "-"}`);
+    // 空的要當場喊。不然下游每一檔各自報「沒有這一檔」，
+    // 看起來像四個獨立的問題，其實是同一次限流。
+    if(!misRows.size)
+      console.error(`⚠️ MIS 回了但沒有任何一檔　rtcode ${j.rtcode ?? "-"}　rtmessage ${j.rtmessage ?? "-"}`);
+    else
+      console.error(`MIS 即時：${misRows.size} 檔（${[...misRows.keys()].join(",")}）　rtcode ${j.rtcode ?? "-"}`);
   }catch(e){ console.error("MIS 即時失敗：" + e.message); }
 }
 /** 五檔字串 "2325.0000_2330.0000_…" → 第一檔的數字 */
@@ -201,6 +206,32 @@ function taipeiNow(){
   const date = `${p.year}-${p.month}-${p.day}`;
   return {date, h:parseInt(p.hour,10)%24, mi:+p.minute,
           dow:new Date(date+"T12:00:00Z").getUTCDay()};
+}
+
+/* ── FinMind：台股的第三個來源 ──
+ * 2026-08-04 實測不帶 token 就能拿到資料（有免費額度）。
+ * 加這個是因為那天出現了一次「MIS 與證交所 OpenAPI 同時回不出東西」——
+ * 我在 20 分鐘內手動觸發了三次，八成是自己打到限流。
+ * 但那一次暴露了真正的問題：Stooq 與 Yahoo 對機房是永久封鎖，
+ * 所以台股其實只有兩個來源，兩個都是證交所自家的。
+ * 只要證交所那邊限流或維護，四檔台股就會同時掛掉 —— 那天就是這樣。
+ *
+ * 回傳 { msg, status, data:[{date, stock_id, open, max, min, close, …}] }，
+ * 依日期排序，最後一筆是最新。
+ */
+async function finmindQuote(sym){
+  const from = new Date(Date.now() - 20*86400000).toISOString().slice(0,10);
+  const j = JSON.parse(await getText(
+    `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice`
+    + `&data_id=${encodeURIComponent(sym)}&start_date=${from}`));
+  const rows = (j && j.data) || [];
+  if(!rows.length) throw new Error("回應裡沒有 data（msg: " + (j && j.msg) + "）");
+  rows.sort((a,b) => a.date < b.date ? -1 : 1);
+  const last = rows[rows.length-1], prev = rows[rows.length-2];
+  const price = num(last.close);
+  if(price === null) throw new Error("最後一筆沒有 close");
+  return { price, prevClose: prev ? num(prev.close) : null,
+           marketState: "CLOSED", asOf: last.date };
 }
 
 /* ── 期交所 MIS：台指期，含夜盤 ──
@@ -334,7 +365,9 @@ async function resolve(s){
   for(const [src, sym] of s.srcs){
     try{
       let out = null;
-      if(src === "taifex"){
+      if(src === "finmind"){
+        out = await finmindQuote(sym);
+      } else if(src === "taifex"){
         out = await taifexQuote();
       } else if(src === "mis"){
         await loadMis();
