@@ -35,18 +35,25 @@ const TURNOVER   = "data/turnover.csv";
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/125 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const sma = (a, n) => a.length < n ? null : a.slice(-n).reduce((x, y) => x + y, 0) / n;
-const num = v => { const n = Number(String(v).replace(/,/g, "").trim()); return isFinite(n) ? n : null; };
+const num = v => {
+  // 空字串要回 null 不能回 0：Number("") 是 0 且 isFinite(0) 為真。
+  // MIS 的欄位在沒成交時會是 "-" 或空的，讀成 0 就會生出一個假的崩盤。
+  const t = String(v ?? "").replace(/,/g, "").trim();
+  if(t === "") return null;
+  const n = Number(t);
+  return isFinite(n) ? n : null;
+};
 
 /* 每個標的的候選來源，依序嘗試。symbol 寫法各站不同，所以連代號一起帶。 */
 const SYMBOLS = [
   { key:"twii",  name:"加權指數",   dp:2, ma:true,
-    srcs:[["twseIndex",""],["stooq","^twse"],["stooq","^tai"],["yahoo","^TWII"]] },
+    srcs:[["mis","twii"],["twseIndex",""],["stooq","^twse"],["stooq","^tai"],["yahoo","^TWII"]] },
   { key:"tsmc",  name:"台積電",     dp:2, ma:true,
-    srcs:[["twseStock","2330"],["stooq","2330.tw"],["yahoo","2330.TW"]] },
+    srcs:[["mis","2330"],["twseStock","2330"],["stooq","2330.tw"],["yahoo","2330.TW"]] },
   { key:"e0050", name:"元大台灣50", dp:2, ma:true,
-    srcs:[["twseStock","0050"],["stooq","0050.tw"],["yahoo","0050.TW"]] },
+    srcs:[["mis","0050"],["twseStock","0050"],["stooq","0050.tw"],["yahoo","0050.TW"]] },
   { key:"e0056", name:"元大高股息", dp:2, ma:true,
-    srcs:[["twseStock","0056"],["stooq","0056.tw"],["yahoo","0056.TW"]] },
+    srcs:[["mis","0056"],["twseStock","0056"],["stooq","0056.tw"],["yahoo","0056.TW"]] },
   { key:"adr",   name:"台積電 ADR", dp:2, ma:false,
     srcs:[["cnbc","TSM"],["twelve","TSM"],["stooq","tsm.us"],["yahoo","TSM"]] },
   { key:"sox",   name:"費城半導體", dp:2, ma:false,
@@ -121,6 +128,75 @@ async function loadTwse(){
     }
   }catch(e){ console.error("證交所指數失敗：" + e.message); }
 }
+/* ── 證交所 MIS：台股唯一免費免註冊的「盤中即時」，約 5 秒更新 ──
+ *
+ * 2026-08-04 用 probe-sources.mjs 從 runner 實測可用（HTTP 200，回 msgArray）。
+ * 這是 OpenAPI 給不了的東西：OpenAPI 只有盤後結算的收盤，
+ * MIS 在盤中就有價，收盤後也比 OpenAPI 早拿到當天收盤。
+ *
+ * 欄位是縮寫：z=最近成交價 y=昨收 o=開盤 h=最高 l=最低 v=累積成交量
+ *            tv=當盤量 b/a=五檔買賣 d=最近成交日期 t=時刻 tlong=時間戳
+ * 沒有官方文件，隨時可能改，所以它只是「優先嘗試」，後面照樣有備援。
+ *
+ * z 在沒有成交的那一瞬間會是 "-"，要往下退到前一筆成交價，
+ * 再退到買賣五檔的中價 —— 直接把 "-" 當成 0 會生出一個假的崩盤。
+ */
+const MIS_MAP = { "2330":"tse_2330.tw", "0050":"tse_0050.tw",
+                  "0056":"tse_0056.tw", "twii":"tse_t00.tw" };
+let misRows = null;
+async function loadMis(){
+  if(misRows !== null) return;
+  misRows = new Map();
+  const chans = Object.values(MIS_MAP).join("|");
+  try{
+    // 一次要完所有標的：MIS 對連續請求很敏感，分開打反而容易被限流
+    const r = await fetch(
+      `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(chans)}&json=1&delay=0`,
+      {headers:{"User-Agent":UA, Accept:"application/json",
+                Referer:"https://mis.twse.com.tw/stock/fibest.jsp"}});
+    if(!r.ok){ console.error("MIS 即時 HTTP " + r.status); return; }
+    const j = JSON.parse(await r.text());
+    for(const row of (j.msgArray || [])) misRows.set(String(row.c || "").trim(), row);
+    console.error(`MIS 即時：${misRows.size} 檔　rtcode ${j.rtcode ?? "-"}`);
+  }catch(e){ console.error("MIS 即時失敗：" + e.message); }
+}
+/** 五檔字串 "2325.0000_2330.0000_…" → 第一檔的數字 */
+function misTop(s){
+  const v = String(s ?? "").split("_").filter(Boolean)[0];
+  return num(v);
+}
+function misQuote(code){
+  const row = misRows.get(code);
+  if(!row) throw new Error("MIS 沒有這一檔：" + code);
+  // 價格的退路：最近成交 → 前一筆成交 → 買賣中價。全都沒有才算失敗。
+  let price = num(row.z);
+  if(price === null) price = num(row.pz);
+  if(price === null){
+    const bid = misTop(row.b), ask = misTop(row.a);
+    if(bid !== null && ask !== null) price = (bid + ask) / 2;
+  }
+  if(price === null) throw new Error("MIS 沒有可用價格（z/pz/五檔都是空的）");
+
+  const asOf = parseTwseDate(row.d) || null;      // d 是最近成交日期
+  // 盤中與否由「資料日期是不是今天」＋「台北現在是不是交易時段」共同決定。
+  // 只信其中一個都會出錯：週末 MIS 照樣回上一個交易日的資料。
+  const t = taipeiNow();
+  const inSession = t.dow >= 1 && t.dow <= 5 &&
+                    (t.h*60 + t.mi) >= 9*60 && (t.h*60 + t.mi) <= 13*60+30;
+  const marketState = (asOf === t.date && inSession) ? "REG_MKT" : "CLOSED";
+  return { price, prevClose: num(row.y), marketState, asOf };
+}
+
+/** 台北的現在（日期＋時分＋星期），MIS 判斷盤中要用 */
+function taipeiNow(){
+  const p = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",
+    day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false})
+    .formatToParts(new Date()).reduce((a,x)=>(a[x.type]=x.value,a),{});
+  const date = `${p.year}-${p.month}-${p.day}`;
+  return {date, h:parseInt(p.hour,10)%24, mi:+p.minute,
+          dow:new Date(date+"T12:00:00Z").getUTCDay()};
+}
+
 /** 從一列裡挑出第一個 key 含指定字樣的數字，欄位改名也不會整支壞掉 */
 function pick(row, ...needles){
   for(const n of needles)
@@ -220,7 +296,10 @@ async function resolve(s){
   for(const [src, sym] of s.srcs){
     try{
       let out = null;
-      if(src === "twseStock"){
+      if(src === "mis"){
+        await loadMis();
+        out = misQuote(sym);
+      } else if(src === "twseStock"){
         await loadTwse();
         const row = twseStocks.get(sym);
         if(!row) throw new Error("證交所查無此代號");
@@ -328,6 +407,16 @@ for(const [key, code] of Object.entries({tsmc:"2330", e0050:"0050", e0056:"0056"
   if(!y || y.error || !y.price || String(y.via).startsWith("twse")) continue;
   const row = twseStocks.get(code); if(!row) continue;
   const official = pick(row,"ClosingPrice","Closing","Close"); if(official === null) continue;
+  // **只有兩邊指的是同一個交易日才能對帳。**
+  // 接上 MIS 之後這條變成必要的：MIS 盤中價跟證交所「上一個結算日」的收盤
+  // 本來就不會相等，硬比會判定不一致，然後拿昨天的收盤蓋掉今天的即時價 ——
+  // 那是把新資料換成舊資料，比不對帳更糟。
+  const officialDate = parseTwseDate(row.Date ?? row.date ?? "") || twseDate;
+  if(y.asOf && officialDate && y.asOf !== officialDate){
+    crossCheck[key] = { primary:y.price, via:y.via, twse:official, agree:null,
+                        note:`跳過對帳：${y.via} 是 ${y.asOf}、證交所是 ${officialDate}，不同交易日` };
+    continue;
+  }
   const diffPct = (y.price/official - 1)*100;
   const agree = Math.abs(diffPct) <= 0.5;
   crossCheck[key] = { primary:y.price, via:y.via, twse:official, diffPct:+diffPct.toFixed(3), agree,

@@ -34,9 +34,10 @@ const TARGETS = [
    "https://openapi.twse.com.tw/v1/indicesReport/MI_5MINS_HIST", "加權指數"],
   ["證交所 www 日成交值 FMTQIK",
    `https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?date=${ym}01&response=json`, "上市每日成交值"],
-  ["證交所 MIS 即時",
-   "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_2330.tw&json=1&delay=0",
-   "★ 台股真正的盤中即時，約 5 秒更新"],
+  ["證交所 MIS 即時（四檔一次）",
+   "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=" +
+     encodeURIComponent("tse_t00.tw|tse_2330.tw|tse_0050.tw|tse_0056.tw") + "&json=1&delay=0",
+   "★ 台股盤中即時。一次要四檔，順便看批次會不會被限流"],
   ["證交所 三大法人 BFI82U",
    `https://www.twse.com.tw/rwd/zh/fund/BFI82U?dayDate=${ym}01&type=day&response=json`, "外資買賣超"],
   ["櫃買 TPEx 新版路徑",
@@ -57,8 +58,6 @@ const TARGETS = [
    "已知擋機房 IP，測來對照"],
   ["Stooq",
    "https://stooq.com/q/l/?s=2330.tw&f=sd2t2ohlcv&h&e=csv", "已知擋機房 IP，測來對照"],
-  ["期交所 MIS",
-   "https://mis.taifex.com.tw/futures/api/getQuoteList", "台指期夜盤，已知擋機房"],
   ["FinMind",
    "https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=2330&start_date=2026-07-01",
    "免費額度，沒帶 token 看它回什麼"],
@@ -74,6 +73,53 @@ function shape(j, d = 0){
     return `{ ${k.slice(0, 14).join(", ")}${k.length > 14 ? ", …" : ""} }`;
   }
   return typeof j;
+}
+
+/* 期交所單獨處理：GET 回的是 405 Method Not Allowed，不是 403 ——
+   代表主機通，只是要 POST。試幾種 payload 看哪一種被接受。 */
+async function probeTaifex(){
+  const url = "https://mis.taifex.com.tw/futures/api/getQuoteList";
+  const bodies = [
+    { label:"台指期全月份",
+      body:{MarketType:"0",SymbolType:"F",KindID:"1",CID:"TXF",ExpireMonth:"",
+            RowSize:"全部",PageNo:"",SortColumn:"",AscDesc:"A"} },
+    { label:"台指期近月",
+      body:{MarketType:"0",SymbolType:"F",KindID:"1",CID:"TXF",ExpireMonth:"999999",
+            RowSize:"100",PageNo:"1",SortColumn:"",AscDesc:"A"} },
+    { label:"最精簡",
+      body:{SymbolType:"F",KindID:"1",CID:"TXF"} },
+  ];
+  console.log(`\n── 期交所 POST\n   ★ 台指期夜盤 —— GET 回 405，改試 POST\n   mis.taifex.com.tw`);
+  for(const b of bodies){
+    try{
+      const r = await fetch(url, {
+        method:"POST",
+        headers:{ "User-Agent":UA, "Content-Type":"application/json",
+                  Accept:"application/json",
+                  Origin:"https://mis.taifex.com.tw",
+                  Referer:"https://mis.taifex.com.tw/futures/RegularSession/EquityIndices/" },
+        body: JSON.stringify(b.body),
+        signal: AbortSignal.timeout(20000)
+      });
+      const t = await r.text();
+      console.log(`   [${b.label}] HTTP ${r.status}  ${t.length}B`);
+      if(!r.ok){ console.log(`     ✗ ${t.slice(0,160).replace(/\s+/g," ")}`); continue; }
+      let j = null; try{ j = JSON.parse(t); }catch{}
+      if(j){
+        console.log(`     ✓ 結構 ${shape(j)}`);
+        const list = j.RtData?.QuoteList || j.RtData?.quoteList || j.QuoteList;
+        if(Array.isArray(list) && list.length){
+          console.log(`     ✓ ${list.length} 筆，第一筆：${JSON.stringify(list[0]).slice(0,320)}`);
+          return true;
+        }
+        console.log(`     ⚠️ 沒有 QuoteList：${JSON.stringify(j).slice(0,240)}`);
+      }else{
+        console.log(`     ⚠️ 非 JSON：${t.slice(0,160)}`);
+      }
+    }catch(e){ console.log(`   [${b.label}] ✗ ${e.name}: ${e.message}`); }
+    await sleep(900);
+  }
+  return false;
 }
 
 let ok = 0, blocked = 0, weird = 0;
@@ -123,6 +169,8 @@ for(const [name, url, why] of TARGETS){
   }
   await sleep(900);          // 對證交所連續請求要客氣一點
 }
+
+await probeTaifex();
 
 console.log(`\n═══ 從這台機器：可用 ${ok} ／ 連不到或被擋 ${blocked} ／ 通了但格式對不上 ${weird} ═══`);
 console.log("（「格式對不上」才是能修的；「被擋」多半只能換來源）");
