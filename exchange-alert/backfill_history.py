@@ -44,6 +44,21 @@ def parse_history_csv(text: str) -> dict:
     return out
 
 
+def fetch_stooq(symbol: str, d1: str, d2: str) -> dict:
+    """stooq 每日收盤 CSV(Date,Open,High,Low,Close,Volume),備援用。"""
+    text = http_get(f"https://stooq.com/q/d/l/?s={symbol}&d1={d1}&d2={d2}&i=d")
+    out = {}
+    for line in text.splitlines()[1:]:
+        parts = line.split(",")
+        if len(parts) < 5 or not re.match(r"^\d{4}-\d{2}-\d{2}$", parts[0]):
+            continue
+        try:
+            out[parts[0]] = float(parts[4])
+        except ValueError:
+            continue
+    return out
+
+
 def month_list(today: date) -> list:
     months, y, m = [], today.year, today.month
     for _ in range(MONTHS_BACK):
@@ -64,26 +79,52 @@ def main() -> int:
 
     today = datetime.now(TAIPEI).date()
     usd, jpy = {}, {}
+    debug_shown = False
     for month in month_list(today):
         for cur, store in (("USD", usd), ("JPY", jpy)):
             url = f"https://rate.bot.com.tw/xrt/flcsv/0/{month}/{cur}"
             try:
-                store.update(parse_history_csv(http_get(url)))
+                text = http_get(url)
+                parsed = parse_history_csv(text)
+                if not parsed and not debug_shown:
+                    print(f"(診斷) 台銀 {month} {cur} 回應無法解析,前 100 字: {text[:100]!r}")
+                    debug_shown = True
+                store.update(parsed)
             except Exception as exc:  # noqa: BLE001 - 單月失敗不中斷
                 print(f"略過 {month} {cur}: {exc}")
 
+    # 依日期彙整:台銀資料優先
+    rows = {d: (usd[d], jpy[d], "台灣銀行歷史牌告(即期中價,回補)")
+            for d in set(usd) & set(jpy)}
+    print(f"台銀回補: {len(rows)} 天")
+
+    # 台銀抓不齊(例如封鎖 GitHub 主機)時,退回 stooq 國際收盤價
+    if len(rows) < 150:
+        d1 = (today - timedelta(days=400)).strftime("%Y%m%d")
+        d2 = today.strftime("%Y%m%d")
+        try:
+            s_twd = fetch_stooq("usdtwd", d1, d2)
+            s_jpy = fetch_stooq("usdjpy", d1, d2)
+            for day in set(s_twd) & set(s_jpy):
+                if day not in rows:
+                    rows[day] = (s_twd[day], s_twd[day] / s_jpy[day],
+                                 "stooq(國際收盤中價,回補)")
+            print(f"stooq 回補後共 {len(rows)} 天")
+        except Exception as exc:  # noqa: BLE001
+            print(f"stooq 備援失敗: {exc}")
+
     existing = {o["date"] for o in history["observations"]}
     added = 0
-    for day in sorted(set(usd) & set(jpy)):
+    for day in sorted(rows):
         if day in existing:
             continue
-        u, j = usd[day], jpy[day]
+        u, j, src = rows[day]
         history["observations"].append({
             "date": day,
             "usd_twd": round(u, 4),
             "jpy_twd": round(j, 5),
             "usd_jpy": round(u / j, 3),
-            "source": "台灣銀行歷史牌告(即期中價,回補)",
+            "source": src,
         })
         added += 1
     history["observations"].sort(key=lambda o: o["date"])
@@ -91,7 +132,7 @@ def main() -> int:
     # 至少要補到七成的交易日才算成功,否則下次再試
     if added >= 150:
         history["backfilled"] = True
-    print(f"回補 {added} 天(USD {len(usd)} 天、JPY {len(jpy)} 天,backfilled={history.get('backfilled', False)})")
+    print(f"回補 {added} 天,backfilled={history.get('backfilled', False)}")
 
     hist_path.write_text(json.dumps(history, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
