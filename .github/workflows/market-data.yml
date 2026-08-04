@@ -23,6 +23,10 @@ on:
         description: '整段重抓歷史日線（以證交所為準覆蓋既有檔案，約 6 分鐘）'
         type: boolean
         default: false
+      probe_sources:
+        description: '探測各家行情來源通不通（不改任何檔案，只印 log）'
+        type: boolean
+        default: false
 
 concurrency:
   group: market-data
@@ -43,6 +47,14 @@ jobs:
       # 匯率的前一日錨點是純邏輯，離線就能驗。它守著一條沒有症狀的錯誤：
       # 換日規則寫錯的話「日變動」會永遠是 0，頁面看起來完全正常。
       # 所以這一步不加 continue-on-error —— 它只花幾十毫秒，但錯了就是靜靜地錯。
+      # 只在手動勾選時跑。回答的是「從 runner 這台機器看，哪些來源通、回什麼格式」——
+      # 這問題沒辦法在別處回答：Yahoo 與 Stooq 從家用網路正常、從機房全滅，
+      # 而寫這專案的沙盒連證交所都連不出去。
+      - name: 探測行情來源
+        if: inputs.probe_sources
+        continue-on-error: true
+        run: node tools/probe-sources.mjs
+
       - name: 驗匯率換日邏輯
         run: node tools/fx-daily.mjs --self-test
 
