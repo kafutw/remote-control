@@ -1,0 +1,113 @@
+name: 日韓盤中取樣
+
+# 日經與 KOSPI 台北 08:00 開盤，比台股早一小時。使用者是在 08:10 看這頁
+# 決定今天怎麼做，所以開盤後那段走勢是這頁最有價值的東西 ——
+# 但單一個時間點看不出方向，要一條線。
+#
+# ⚠️ 為什麼不用 `*/5` 的 cron
+# 那正是 2026-08-04／05 壞掉的東西。market-data.yml 原本在 08:02～08:52
+# 排了每 10 分鐘共 6 班，**連兩天一班都沒觸發**。GitHub 對排程本來就不保證
+# 執行，密集的 cron 又是最先被丟掉的。排成每 5 分鐘只會讓同一個病更嚴重，
+# 而且症狀無聲：畫出來是一條有洞的線，不是一則錯誤。
+#
+# 所以：**一班 cron 起一個 job，取樣迴圈跑在 job 裡面。**
+# 那一班有觸發，後面 19 個點就全部拿得到；沒觸發就整條線都沒有，一眼看得出來。
+# 用「1 次不確定」換掉「19 次各自不確定」。
+#
+# ⚠️ 排程觸發只在預設分支生效（目前是 claude/baby-travel-packing-list-hwk2gb）。
+
+on:
+  schedule:
+    # cron 是 UTC，台北 = UTC+8。23:55 UTC 週日～週四 ＝ 台北 07:55 週一～週五。
+    # 提早 5 分鐘起：GitHub 排程常延遲數分鐘，而且腳本自己會等到 08:00 才開始取樣
+    # （非交易時段它安靜結束，迴圈照跑）。
+    - cron: '55 23 * * 0-4'
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: '要取樣多久（分鐘）'
+        default: '95'
+      every:
+        description: '每幾秒取一次'
+        default: '300'
+
+concurrency:
+  group: intraday          # 跟 market-data 分開，兩者不互相取消
+  cancel-in-progress: false
+
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    # 迴圈自己會結束；這個是保險絲，避免哪天邏輯寫錯把 runner 佔滿六小時
+    timeout-minutes: 110
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # 附加／換日／未開盤這幾條規則錯了都不會有錯誤訊息，只會畫出一條
+      # 看起來正常但不對的線。所以先驗，且不加 continue-on-error。
+      - name: 驗取樣合併邏輯
+        run: node tools/intraday.mjs --self-test
+
+      - name: 盤中取樣（台北 08:00 起，每 5 分鐘）
+        env:
+          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
+          MINUTES: ${{ inputs.minutes || '95' }}
+          EVERY:   ${{ inputs.every   || '300' }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          END=$(( $(date -u +%s) + MINUTES * 60 ))
+          n=0
+          while [ "$(date -u +%s)" -lt "$END" ]; do
+            n=$((n+1))
+            echo "── 第 $n 次　$(TZ=Asia/Taipei date '+%H:%M') 台北"
+            # 單次抓取失敗不中斷迴圈：下一次五分鐘後就會再試，
+            # 線上少一個點遠好過整條線在第一次網路抖動就沒了
+            if node tools/intraday.mjs -o data/intraday.json; then
+              git add data/intraday.json
+              if git diff --staged --quiet; then
+                echo "沒有新的點"
+              else
+                git commit -q -m "盤中取樣 $(TZ=Asia/Taipei date '+%m-%d %H:%M') 台北"
+                # market-data.yml 在 08:05 與 09:05 也會推，兩邊改的是不同檔案，
+                # rebase 接得起來。被拒就重試，不要讓一次撞車吃掉後面所有的點。
+                pushed=0
+                for i in 1 2 3; do
+                  if git pull --rebase --autostash -q origin "$GITHUB_REF_NAME" && git push -q; then
+                    pushed=1; break
+                  fi
+                  echo "push 失敗，第 $i 次重試"; sleep $((i*5))
+                done
+                [ "$pushed" = "1" ] || echo "⚠️ 這一輪沒推上去，下一輪會連同這個點一起推"
+              fi
+            else
+              echo "⚠️ 這一輪取樣失敗，繼續等下一輪"
+            fi
+            sleep "$EVERY"
+          done
+
+      - name: 摘要
+        if: always()
+        run: |
+          if [ -f data/intraday.json ]; then
+            node -e '
+              const d = require("./data/intraday.json");
+              console.log("日期", d.date, "最後更新", d.updatedTaipei, "台北");
+              for (const [k, v] of Object.entries(d.series || {})) {
+                const p = v.points || [];
+                if (!p.length) { console.log("  ➖", v.name, "整天沒有點"); continue; }
+                const first = p[0], last = p[p.length - 1];
+                const pct = v.prevClose ? ((last[1] / v.prevClose - 1) * 100).toFixed(2) : "—";
+                console.log("  ✓", (v.name || k).padEnd(12), p.length, "個點　",
+                            first[0], "→", last[0], "　", last[1],
+                            "　較前收 " + (pct === "—" ? "—" : (pct > 0 ? "+" : "") + pct + "%"));
+              }
+            '
+          else
+            echo "⚠️ 沒有產生 data/intraday.json —— 整天一個點都沒抓到"
+          fi

@@ -102,11 +102,20 @@ GitHub Actions（網路無限制）→ 依序試多個來源 → 算好均線
    → commit data/live.json → raw.githubusercontent.com → 晨報排程讀得到
 ```
 
-- [`.github/workflows/market-data.yml`](./.github/workflows/market-data.yml)：台北 06:50、08:02～08:52 每 10 分鐘、09:02、13:45，也可手動觸發
+- [`.github/workflows/market-data.yml`](./.github/workflows/market-data.yml)：台北 06:50、08:05、09:05、10:30、12:00、13:45，也可手動觸發
+- [`.github/workflows/intraday.yml`](./.github/workflows/intraday.yml)：台北 07:55 起一班，**取樣迴圈跑在 job 裡面**，08:00～09:30 每 5 分鐘記一次日經與 KOSPI
+- [`tools/intraday.mjs`](./tools/intraday.mjs)：單次取樣並併進 `data/intraday.json`（換日重來、同分鐘覆蓋、未開盤不取樣）；純邏輯部分可離線 `--self-test`
 - [`tools/fetch-live.mjs`](./tools/fetch-live.mjs)：抓 13 個標的，順便算 20/60/240 日均線、乖離率與台積電 ADR 溢價，寫成 `data/live.json`
 - [`tools/fx-daily.mjs`](./tools/fx-daily.mjs)：USD/TWD 的前一日錨點（`data/fx-usdtwd.csv`）。匯率來源只回當下值、沒有前收，所以日變動要自己記；純邏輯、可離線 `--self-test`
 - [`tools/signals.mjs`](./tools/signals.mjs)：燈號判定（均線、連續日數、均線穿越、量能兩段式狀態機）。門檻讀 `data/thresholds.json`，可以直接改數字不用改程式；純邏輯、可離線 `--self-test`
 - [`tools/fetch-turnover.mjs`](./tools/fetch-turnover.mjs)：每日成交值（證交所 FMTQIK ＋ TPEx），寫進 `data/turnover.csv`
+
+**排程為什麼長這樣**：2026-08-04 與 08-05 連兩天，原本排在 08:02～08:52 的六班 cron
+**一班都沒觸發**，`data/live.json` 卡在前一天清晨，而頁面上只寫「最後更新 07:44」，
+看起來跟正常沒兩樣。GitHub 對排程本來就不保證執行，密集的 cron 又是最先被丟掉的。
+兩個對策：(1) market-data 改成班次少、間隔開；(2) 需要密集取樣的日韓盤中走勢
+改成**一班 cron 起一個 job、迴圈跑在 job 裡面** —— 用「1 次不確定」換掉「19 次各自不確定」。
+另外頁面現在會自己講：盤中超過 30 分鐘沒更新，「最後更新」會寫出幾小時前並轉成警示色。
 
 **量能規則已經簡化**：原本是「先量縮打底（低於 7,000 億）→ 待命 → 突破 1.1 兆才亮」的兩段式，
 用意是分辨換手與出貨。想法對，但實際資料出來不成立 —— 2026/07 的上市成交值最低 7,476 億，

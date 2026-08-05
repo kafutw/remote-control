@@ -149,6 +149,26 @@ section{margin-top:30px}
   letter-spacing:.02em;text-align:right;min-width:0
 }
 .grp .kx:last-child{border-bottom:none}
+/* 日韓開盤後的走勢線。掛在「今早日韓」那一組底下，
+   跟上面兩列共用一個邊界，讀起來才是同一件事的兩種呈現 */
+.idc{padding:4px 14px 12px}
+/* 高度由 viewBox 的長寬比決定。桌機不讓它無限拉寬 —— 一個上午 19 個點
+   攤在 1200px 上，斜率會被壓平到看不出方向，那正是這張圖唯一要傳達的東西 */
+.idc svg{display:block;width:100%;max-width:520px;height:auto}
+.idh{
+  display:flex;align-items:baseline;gap:6px;
+  font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--ink2);margin-bottom:2px
+}
+.idh span{margin-left:auto;font-size:9.5px;font-weight:600;color:var(--ink3);letter-spacing:.02em}
+.idg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:3px}
+.idl{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink2)}
+.idl i{width:12px;height:2.5px;border-radius:2px;flex:0 0 auto;background:var(--c)}
+/* 虛線那條的圖例也要是虛的，否則圖上分得出來、圖例分不出來 */
+.idl i.dash{
+  border-radius:0;background:none;
+  background-image:repeating-linear-gradient(to right,var(--c) 0 4px,transparent 4px 6.5px)
+}
+.idl b{font-weight:800}
 .kx .bar{flex:0 0 70px;display:block}
 /* .inv＝要提醒的情況（VIX 漲，或是低檔還在跌的自滿）用琥珀色；
    .inv2＝單純的好消息（恐慌消退）用一般輔助色。
@@ -901,6 +921,97 @@ function dotPlot(events, mid, domain, w){
   return s + '</svg>';
 }
 
+/* 圖⑥　日韓開盤後的盤中走勢。
+   由 .github/workflows/intraday.yml 從台北 08:00 起每 5 分鐘取樣一次，
+   寫進 data/intraday.json。一個時間點看不出方向，要一條線才知道
+   「開高走低」還是「開低走高」—— 台股 09:00 開盤前唯一還在動的東西。
+
+   Y 軸畫的是**較前收的百分比**，不是點數。這樣日經（六萬多點）與
+   KOSPI（六千多點）才能疊在同一張圖上比較；畫點數的話兩條線
+   差十倍，其中一條會被壓成直線。
+
+   零線＝前收，用虛線畫、不上色。線本身照台股慣例上紅綠：
+   這裡的漲跌方向意義是單一的（漲就是漲），不像匯率那樣兩義，
+   所以上色是誠實的。 */
+/** 頁面慣例：負號用 U+2212，不是 ASCII 的 -（後者在數字旁邊太細） */
+function sign(v){ return v > 0 ? "+" : (v < 0 ? "\u2212" : ""); }
+function intradayChart(series, w, h){
+  var lines = Object.keys(series||{}).map(function(k){
+    var v = series[k], pts = (v && v.points) || [];
+    if(!v || !v.prevClose || pts.length < 2) return null;
+    return { name:v.name,
+             pct: pts.map(function(p){ return [p[0], (p[1]/v.prevClose - 1) * 100]; }) };
+  }).filter(Boolean);
+  if(!lines.length) return "";
+
+  var pad = 16, padR = 44, iw = w - pad - padR, ih = h - pad*2;
+  var all = lines.reduce(function(a,l){ return a.concat(l.pct.map(function(p){ return p[1]; })); }, []);
+  var span = Math.max(0.5, Math.max.apply(null, all.map(Math.abs)) * 1.15);  // 對稱、含零線
+  // 時間軸用「開盤後第幾分鐘」而不是點的序號 —— 中間漏抓幾筆時
+  // 用序號會把缺口壓掉，線看起來仍然連續，等於把資料的洞藏起來。
+  var mins = function(hhmm){ return (+hhmm.slice(0,2))*60 + (+hhmm.slice(3,5)); };
+  var t0 = Math.min.apply(null, lines.map(function(l){ return mins(l.pct[0][0]); }));
+  var t1 = Math.max.apply(null, lines.map(function(l){ return mins(l.pct[l.pct.length-1][0]); }));
+  if(t1 <= t0) t1 = t0 + 5;
+  var X = function(m){ return pad + (m - t0)/(t1 - t0) * iw; };
+  var Y = function(v){ return pad + (1 - (v + span)/(span*2)) * ih; };
+
+  var COLS = ["var(--navy)", "var(--ink2)"];
+  /* 兩條線除了顏色還要有虛實之分。亮色模式下 --navy(#1B3A6B) 與
+     --ink2(#43566B) 幾乎是同一個深藍灰，光靠顏色分不出哪條是日經、
+     哪條是 KOSPI —— 這是實際截圖才看出來的。紅綠不能拿來當識別色，
+     它們在這頁固定代表漲跌。所以第二條走虛線，圖例的色塊也跟著虛。 */
+  var DASH = ["", "4 2.5"];
+  // 尺寸交給 CSS（.idc svg 用 width:100%;max-width）。這裡不寫 width/height：
+  // 寫死 height 又 width:100% 的話，桌機上 preserveAspectRatio 會把整張圖
+  // 縮到中間一小塊；改用 preserveAspectRatio="none" 拉滿又會把裡面的
+  // 文字橫向拉扁。留給 viewBox 的長寬比自己決定高度最單純。
+  var s = '<svg viewBox="0 0 '+w+' '+h+'" '
+        + 'role="img" aria-label="日韓開盤後盤中走勢，較前收百分比">';
+  // 零線＝前收
+  s += '<line x1="'+pad+'" y1="'+Y(0).toFixed(1)+'" x2="'+(pad+iw)+'" y2="'+Y(0).toFixed(1)+'" '
+     + 'stroke="var(--rule2)" stroke-width="1" stroke-dasharray="3 3"/>'
+     + '<text x="'+(pad+iw+4)+'" y="'+(Y(0)+3).toFixed(1)+'" fill="var(--ink3)" font-size="9">前收</text>';
+
+  lines.forEach(function(l, i){
+    var d = l.pct.map(function(p, j){
+      return (j?"L":"M") + X(mins(p[0])).toFixed(1) + " " + Y(p[1]).toFixed(1);
+    }).join(" ");
+    var last = l.pct[l.pct.length-1];
+    s += '<path d="'+d+'" fill="none" stroke="'+COLS[i % COLS.length]+'" stroke-width="1.6" '
+       + (DASH[i % DASH.length] ? 'stroke-dasharray="'+DASH[i % DASH.length]+'" ' : '')
+       + 'stroke-linejoin="round" stroke-linecap="round"/>'
+       + '<circle cx="'+X(mins(last[0])).toFixed(1)+'" cy="'+Y(last[1]).toFixed(1)+'" r="2.6" '
+       +   'fill="'+(last[1]>0?"var(--up)":(last[1]<0?"var(--down)":"var(--ink3)"))+'"/>'
+       + '<text x="'+(X(mins(last[0]))+5).toFixed(1)+'" y="'+(Y(last[1])+3).toFixed(1)+'" '
+       +   'fill="'+(last[1]>0?"var(--up)":(last[1]<0?"var(--down)":"var(--ink3)"))+'" font-size="9.5">'
+       +   sign(last[1]) + Math.abs(last[1]).toFixed(2) + '%</text>';
+  });
+  // 時間軸只標頭尾。中間再標會跟線打架，而頭尾才是「走了多久」的資訊
+  var lab = function(m){ return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); };
+  s += '<text x="'+pad+'" y="'+(h-3)+'" fill="var(--ink3)" font-size="9">'+lab(t0)+'</text>'
+     + '<text x="'+(pad+iw)+'" y="'+(h-3)+'" fill="var(--ink3)" font-size="9" text-anchor="end">'+lab(t1)+'</text>';
+  return s + '</svg>';
+}
+
+/** 圖例：哪條線是誰、各自走了多少。顏色在小尺寸不見得分得出來，所以也寫數字 */
+function intradayLegend(series){
+  var COLS = ["var(--navy)", "var(--ink2)"];
+  var DASH = [false, true];          // 要跟 intradayChart 的 DASH 對得上
+  var out = [], i = 0;
+  Object.keys(series||{}).forEach(function(k){
+    var v = series[k], pts = (v && v.points) || [];
+    if(!v || !v.prevClose || !pts.length) return;
+    var last = pts[pts.length-1][1], pct = (last/v.prevClose - 1) * 100;
+    out.push('<span class="idl"><i'+(DASH[i % DASH.length]?' class="dash"':'')
+      + ' style="--c:'+COLS[i % COLS.length]+'"></i>'
+      + esc(v.name) + ' ' + fmt(last, v.dp)
+      + ' <b class="'+cls(pct)+'">'+sign(pct)+Math.abs(pct).toFixed(2)+'%</b></span>');
+    i++;
+  });
+  return out.join("");
+}
+
 function taipei(){
   var p = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",
     day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})
@@ -978,6 +1089,21 @@ function renderKey(){
     push(t?t.n:(prev?prev.n:k), tag, t||prev, isLive);
     if(noSess) rows[rows.length-1].noSession = true;
   });
+  // 開盤後的走勢線接在這一組下面。一個時間點看不出「開高走低」還是
+  // 「開低走高」，而那正是 09:00 台股開盤前最想知道的事。
+  var id = BRIEF.intraday;
+  if(id && id.series && intradayChart(id.series, 320, 96)){
+    var stale = id.date !== taipei().date;
+    groups[groups.length-1].after =
+        '<div class="idc">'
+      + '<div class="idh">開盤後走勢<span>'
+      +   (stale ? esc(id.date.slice(5).replace("-","/")) + ' 的紀錄（不是今天）'
+                 : '08:00 起每 5 分鐘 · 最後 ' + esc(id.updatedTaipei || "—"))
+      + '</span></div>'
+      + intradayChart(id.series, 320, 96)
+      + '<div class="idg">' + intradayLegend(id.series) + '</div>'
+      + '</div>';
+  }
 
   // ③ 台股與匯率 —— 09:00 才開，這裡放的是昨天的收盤
   group("🇹🇼", "台股與匯率", BRIEF.twWhen);
@@ -1054,6 +1180,7 @@ function renderKey(){
       + '<div class="grp-h"><span class="gi">'+g.icon+'</span>'+esc(g.title)
       +   (g.hint ? '<span class="gh">'+esc(g.hint)+'</span>' : '') + '</div>'
       + '<div class="gr">' + g.rows.map(rowHTML).join("") + '</div>'
+      + (g.after || "")
       + '</div>';
   }).join("");
 
@@ -1341,6 +1468,26 @@ function tryHistoryStats(){
     })
     .catch(function(){ /* 抓不到就用寫死的備援，下面會標明它涵蓋到哪一天 */ });
 }
+/* 日韓盤中走勢：由 intraday.yml 每 5 分鐘寫一次 data/intraday.json。
+   抓不到就完全不畫這塊 —— 沒有線遠好過畫一條說不出時點的線。
+   日期不是今天也照畫，但標題會寫明是哪一天的紀錄（週末看昨天的仍有意義，
+   讓它假裝是今天才是問題）。 */
+function tryIntraday(){
+  if(typeof fetch !== "function") return;
+  fetch("data/intraday.json?t=" + Date.now(), {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
+    .then(function(j){
+      if(!j || !j.series) return;
+      var sig = j.date + " " + j.updatedTaipei;
+      if(sig === lastIntraday) return;       // 沒有新的點就不重繪
+      lastIntraday = sig;
+      BRIEF.intraday = j;
+      renderKey();
+    })
+    .catch(function(){ /* 還沒有這個檔（第一次上線、或那天整個沒觸發）就不畫 */ });
+}
+var lastIntraday = null;
+
 /* 負數用 U+2212 減號，跟頁面其他地方一致（ASCII 的 - 在數字旁邊太細） */
 function fmtPct(v){
   return (v===null||v===undefined||!isFinite(v)) ? "—"
@@ -1383,10 +1530,10 @@ function taipeiClock(){
 function markLiveStamp(){ setStamp("0000-00-00 " + taipeiClock()); }
 
 function startPolling(){
-  tryLive(); tryTwelveData();
+  tryLive(); tryTwelveData(); tryIntraday();
   setInterval(function(){
     if(!inLiveWindow()) return;    // 收盤後不再打，省額度也避免製造「還在更新」的錯覺
-    tryLive(); tryTwelveData();
+    tryLive(); tryTwelveData(); tryIntraday();
   }, LIVE.pollMs);
 }
 
