@@ -25,11 +25,11 @@ on:
   workflow_dispatch:
     inputs:
       minutes:
-        description: '要取樣多久（分鐘）'
-        default: '95'
+        description: '要取樣多久（分鐘）。留空＝跑到台北 13:35'
+        default: ''
       every:
-        description: '每幾秒取一次'
-        default: '300'
+        description: '每幾秒取一次。留空＝09:30 前 5 分鐘、之後 15 分鐘'
+        default: ''
 
 concurrency:
   group: intraday          # 跟 market-data 分開，兩者不互相取消
@@ -38,8 +38,9 @@ concurrency:
 jobs:
   sample:
     runs-on: ubuntu-latest
-    # 迴圈自己會結束；這個是保險絲，避免哪天邏輯寫錯把 runner 佔滿六小時
-    timeout-minutes: 110
+    # 07:55 起跑到台北 13:35 大約 340 分鐘。迴圈自己會用台北時鐘停，
+    # 這個只是保險絲，避免哪天時鐘判斷寫錯把 runner 佔滿六小時上限。
+    timeout-minutes: 360
     permissions:
       contents: write
     steps:
@@ -53,17 +54,36 @@ jobs:
       - name: 驗取樣合併邏輯
         run: node tools/intraday.mjs --self-test
 
-      - name: 盤中取樣（台北 08:00 起，每 5 分鐘）
+      # 取樣密度分兩段。日韓開到台北 14:30，但「開盤後那一段」跟「中午」
+      # 的價值差很多：09:00 台股開盤前每一筆都在改變今天怎麼看，開盤之後
+      # 它就退回背景參考。而且每推一次就觸發一次 GitHub Pages 重建
+      # （分支型 Pages 的軟上限大約每小時 10 次），整天 5 分鐘一次會超過，
+      # 超過的結果是頁面靜靜地落後。所以密的地方密、疏的地方疏。
+      - name: 盤中取樣（台北 08:00 起）
         env:
           TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
-          MINUTES: ${{ inputs.minutes || '95' }}
-          EVERY:   ${{ inputs.every   || '300' }}
+          MINUTES: ${{ inputs.minutes }}
+          EVERY:   ${{ inputs.every }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          END=$(( $(date -u +%s) + MINUTES * 60 ))
+
+          # 結束時間用台北時鐘算，不是「跑滿 N 分鐘」——
+          # 排程延遲 10 分鐘起跑時，用時長算會拖到 13:45 才收工，
+          # 用時鐘算才會準時停在 13:35（台股 13:30 收盤後那一筆）。
+          if [ -n "$MINUTES" ]; then
+            END=$(( $(date -u +%s) + MINUTES * 60 ))
+          else
+            END=$(( $(date -u +%s) + 5*60 ))          # 先給個底，下面每輪重算
+          fi
           n=0
-          while [ "$(date -u +%s)" -lt "$END" ]; do
+          while :; do
+            NOW_M=$(( 10#$(TZ=Asia/Taipei date '+%H') * 60 + 10#$(TZ=Asia/Taipei date '+%M') ))
+            if [ -z "$MINUTES" ]; then
+              [ "$NOW_M" -ge $((13*60+35)) ] && { echo "台北 13:35，收工"; break; }
+            else
+              [ "$(date -u +%s)" -ge "$END" ] && break
+            fi
             n=$((n+1))
             echo "── 第 $n 次　$(TZ=Asia/Taipei date '+%H:%M') 台北"
             # 單次抓取失敗不中斷迴圈：下一次五分鐘後就會再試，
@@ -88,7 +108,14 @@ jobs:
             else
               echo "⚠️ 這一輪取樣失敗，繼續等下一輪"
             fi
-            sleep "$EVERY"
+            # 09:30 台北之前每 5 分鐘，之後每 15 分鐘
+            if [ -n "$EVERY" ]; then
+              sleep "$EVERY"
+            elif [ "$NOW_M" -lt $((9*60+30)) ]; then
+              sleep 300
+            else
+              sleep 900
+            fi
           done
 
       - name: 摘要
