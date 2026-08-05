@@ -442,8 +442,13 @@ for(const s of SYMBOLS){
     const o = {
       name:s.name, group:s.key, dp:s.dp, via:r.via, price,
       prevClose: prev,
-      change: prev !== null ? +(price - prev).toFixed(6) : null,
-      pct: prev ? +(((price/prev)-1)*100).toFixed(4) : null,
+      // 最新價跟前收「完全相等」代表那個市場還沒開盤，不是今天平盤。
+      // 指數是連續變動的，盤中要剛好等於前收到小數點下兩位幾乎不可能；
+      // 反過來說，開盤前的來源就是把前收當成最新價回給你。
+      // 這時候算出來的 0.00% 會被讀成「開了但沒動」—— 那是假的，寧可留空。
+      change: (prev !== null && price !== prev) ? +(price - prev).toFixed(6) : null,
+      pct: (prev && price !== prev) ? +(((price/prev)-1)*100).toFixed(4) : null,
+      noSessionData: (prev !== null && price === prev) ? true : undefined,
       marketState: r.marketState || null,
       asOf: r.asOf || null,
       rateUnix: r.rateUnix || undefined,      // 匯率專用：供應商自己的更新時戳

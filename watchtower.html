@@ -971,7 +971,12 @@ function renderKey(){
   ["日經","KOSPI"].forEach(function(k){
     var t = find(a.today, k), prev = find(a.prev, k);
     var isLive = !!(t && t.live);
-    push(t?t.n:(prev?prev.n:k), t ? (isLive?"盤中":"最近收盤") : "前收", t||prev, isLive);
+    // 抓取當下還沒開盤的話，那個價格是昨收被當成最新價回來的 ——
+    // 標成「尚未開盤」，不要標「最近收盤」讓人以為是今天的結果
+    var noSess = !!(t && t.noSession);
+    var tag = noSess ? "尚未開盤" : (t ? (isLive ? "盤中" : "最近收盤") : "前收");
+    push(t?t.n:(prev?prev.n:k), tag, t||prev, isLive);
+    if(noSess) rows[rows.length-1].noSession = true;
   });
 
   // ③ 台股與匯率 —— 09:00 才開，這裡放的是昨天的收盤
@@ -1034,7 +1039,9 @@ function renderKey(){
                     : '<small>'+esc(r.tag)+'</small>')
       + '</div>'
       + (r.p===null||r.p===undefined ? '' : '<div class="v">'+fmt(r.p, r.dp)+'</div>')
-      + '<div class="c '+cls(r.pct)+'">'+(r.pct>0?"+":"")+ (r.pct===null||r.pct===undefined?"—":r.pct.toFixed(2)+"%") +'</div>'
+      + '<div class="c '+(r.noSession?"flat":cls(r.pct))+'">'
+      +   (r.noSession ? "—" : (r.pct>0?"+":"") + (r.pct===null||r.pct===undefined?"—":r.pct.toFixed(2)+"%"))
+      + '</div>'
       + (r.invert ? '<span class="bar nobar">不同尺度</span>' : pctBar(r.pct, domain, 70, 20))
       // 換算後的意義獨佔一整列，不擠在左邊那個窄欄裡 ——
       // ADR 報 404 美元本身讀不出什麼，「換成台股大概開在哪」才是要看的東西。
@@ -1113,10 +1120,13 @@ function applyLive(j){
     var v = d[m[0]];
     if(!v || v.error || !v.price) return;
     asia.today = (asia.today||[]).filter(function(x){ return x.n.indexOf(m[1])<0; });
+    // noSessionData：抓取的當下那個市場還沒開盤，來源把前收當成最新價回來。
+    // 這種列不能顯示 0.00%（會被讀成「開了但平盤」），要講「尚未開盤」。
     asia.today.push({n:m[1], c:m[2]+" · 比台股早 1 小時", p:v.price,
                      pct:(v.pct===null||v.pct===undefined)?null:v.pct, dp:0,
+                     noSession: !!v.noSessionData,
                      // 來源在週末仍回報 REG_MKT，所以「盤中」要自己的時鐘也同意才算數
-                     live: v.marketState==="REG_MKT" && asiaSessionNow()});
+                     live: v.marketState==="REG_MKT" && !v.noSessionData && asiaSessionNow()});
     touched = true;
   });
   if(d.vix && !d.vix.error && d.vix.price){
@@ -1228,9 +1238,29 @@ function asiaSessionNow(){
   var mins = t.h*60 + t.mi;
   return mins >= 480 && mins <= 870;
 }
+/* 「最後更新」不能只印時間。GitHub 的排程常常整批被丟掉（實測 08:02～09:02
+   那幾班連兩天沒觸發），live.json 就會卡在幾小時前 —— 而畫面上只寫個時間，
+   看起來跟正常沒兩樣。盤中超過 30 分鐘沒更新就把它講出來並上警示色。 */
 function setStamp(when){
   var el = $("liveStamp");
-  if(el && when) el.textContent = "最後更新 " + String(when).slice(11, 16);
+  if(!el || !when) return;
+  var hhmm = String(when).slice(11, 16);
+  var t = taipei();
+  var mins = null;
+  if(/^\d{2}:\d{2}/.test(hhmm) && String(when).slice(0,10) === t.date)
+    mins = (t.h*60 + t.mi) - (+hhmm.slice(0,2)*60 + +hhmm.slice(3,5));
+  else if(String(when).slice(0,10) < t.date)
+    mins = 9999;                       // 不是今天的資料，直接當成很舊
+
+  // 台股 09:00–13:30、日韓 08:00–14:30：這段時間資料該是會動的
+  var inSession = t.dow>=1 && t.dow<=5 && (t.h*60+t.mi) >= 8*60 && (t.h*60+t.mi) <= 14*60+30;
+  var stale = mins !== null && mins >= 30;
+
+  el.textContent = "最後更新 " + hhmm
+    + (stale ? (mins >= 9999 ? "（不是今天的資料）"
+                             : "（" + Math.floor(mins/60) + " 小時 " + (mins%60) + " 分前）") : "");
+  el.style.color = (stale && inSession) ? "var(--warnInk)" : "";
+  el.title = stale ? "data/live.json 沒有更新 —— GitHub Actions 的排程可能被略過了" : "";
 }
 /* ══════════════════════════════════════════════════════════
    即時更新設定
