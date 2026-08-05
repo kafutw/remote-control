@@ -994,6 +994,24 @@ function intradayChart(series, w, h){
   return s + '</svg>';
 }
 
+/** 這條線實際涵蓋的時間範圍與點數。標題要講的是這個，不是排程本來想抓什麼 */
+function intradaySpan(series){
+  var all = [];
+  Object.keys(series||{}).forEach(function(k){
+    ((series[k] && series[k].points) || []).forEach(function(p){ all.push(p[0]); });
+  });
+  if(!all.length) return {from:"—", to:"—", n:0, late:false};
+  // 兩條線各有一組時間點，但它們是同一批取樣。直接數會變成兩倍，
+  // 「6 個點」其實只有 3 次取樣 —— 要數不重複的時刻
+  all = all.filter(function(v, i, a){ return a.indexOf(v) === i; });
+  all.sort();
+  var from = all[0];
+  // 開盤是 08:00。第一個點晚於 08:15 就代表那一段沒抓到（排程被略過、
+  // 或是中途才手動補跑），這件事要講出來而不是讓線自己從半路開始
+  var late = (+from.slice(0,2))*60 + (+from.slice(3,5)) > 8*60 + 15;
+  return {from:from, to:all[all.length-1], n:all.length, late:late};
+}
+
 /** 圖例：哪條線是誰、各自走了多少。顏色在小尺寸不見得分得出來，所以也寫數字 */
 function intradayLegend(series){
   var COLS = ["var(--navy)", "var(--ink2)"];
@@ -1094,11 +1112,16 @@ function renderKey(){
   var id = BRIEF.intraday;
   if(id && id.series && intradayChart(id.series, 320, 96)){
     var stale = id.date !== taipei().date;
+    // 標題寫**這條線實際涵蓋到哪裡**，不要寫「08:00 起每 5 分鐘」——
+    // 那是排程的意圖，不是資料。排程被略過、或中途才手動補跑時，
+    // 兩者會差好幾個小時，而寫死的那句話會把差距蓋掉。
+    var cov = intradaySpan(id.series);
     groups[groups.length-1].after =
         '<div class="idc">'
       + '<div class="idh">開盤後走勢<span>'
       +   (stale ? esc(id.date.slice(5).replace("-","/")) + ' 的紀錄（不是今天）'
-                 : '08:00 起每 5 分鐘 · 最後 ' + esc(id.updatedTaipei || "—"))
+                 : esc(cov.from + "–" + cov.to) + ' · ' + cov.n + ' 個點'
+                   + (cov.late ? ' · <b>08:00 起那段沒抓到</b>' : ''))
       + '</span></div>'
       + intradayChart(id.series, 320, 96)
       + '<div class="idg">' + intradayLegend(id.series) + '</div>'
