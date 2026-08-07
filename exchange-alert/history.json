@@ -1833,6 +1833,13 @@
       "usd_jpy": 157.61,
       "jpy_twd": 0.20431,
       "source": "open.er-api.com(國際中價)"
+    },
+    {
+      "date": "2026-08-07",
+      "usd_twd": 32.2107,
+      "usd_jpy": 158.205,
+      "jpy_twd": 0.2036,
+      "source": "open.er-api.com(國際中價)"
     }
   ],
   "last_alerts": {
