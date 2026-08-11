@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-11T01:57:56.464Z",
-  "generatedAtTaipei": "2026-08-11 09:57:56",
+  "generatedAt": "2026-08-11T03:15:49.120Z",
+  "generatedAtTaipei": "2026-08-11 11:15:49",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -16,14 +16,14 @@
       "note": "跳過對帳：mis:2330 是 2026-08-11、證交所是 2026-08-10，不同交易日"
     },
     "e0050": {
-      "primary": 103.775,
+      "primary": 104.15,
       "via": "mis:0050",
       "twse": 104.25,
       "agree": null,
       "note": "跳過對帳：mis:0050 是 2026-08-11、證交所是 2026-08-10，不同交易日"
     },
     "e0056": {
-      "primary": 51.975,
+      "primary": 52.025,
       "via": "mis:0056",
       "twse": 52.45,
       "agree": null,
@@ -36,10 +36,10 @@
       "group": "twii",
       "dp": 2,
       "via": "mis:t00",
-      "price": 44813.92,
+      "price": 44919.04,
       "prevClose": 44928.76,
-      "change": -114.84,
-      "pct": -0.2556,
+      "change": -9.72,
+      "pct": -0.0216,
       "marketState": "REG_MKT",
       "asOf": "2026-08-11"
     },
@@ -60,10 +60,10 @@
       "group": "e0050",
       "dp": 2,
       "via": "mis:0050",
-      "price": 103.775,
+      "price": 104.15,
       "prevClose": 104.25,
-      "change": -0.475,
-      "pct": -0.4556,
+      "change": -0.1,
+      "pct": -0.0959,
       "marketState": "REG_MKT",
       "asOf": "2026-08-11"
     },
@@ -72,10 +72,10 @@
       "group": "e0056",
       "dp": 2,
       "via": "mis:0056",
-      "price": 51.975,
+      "price": 52.025,
       "prevClose": 52.45,
-      "change": -0.475,
-      "pct": -0.9056,
+      "change": -0.425,
+      "pct": -0.8103,
       "marketState": "REG_MKT",
       "asOf": "2026-08-11"
     },
@@ -168,10 +168,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6301.25,
+      "price": 6346.31,
       "prevClose": 6299.66,
-      "change": 1.59,
-      "pct": 0.0252,
+      "change": 46.65,
+      "pct": 0.7405,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -180,10 +180,10 @@
       "group": "txf",
       "dp": 0,
       "via": "taifex:TXF",
-      "price": 44741,
+      "price": 44904,
       "prevClose": 44990,
-      "change": -249,
-      "pct": -0.5535,
+      "change": -86,
+      "pct": -0.1912,
       "marketState": null,
       "asOf": null,
       "contract": "臺指期086"
