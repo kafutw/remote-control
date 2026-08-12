@@ -18,10 +18,18 @@ name: 日韓盤中取樣
 
 on:
   schedule:
-    # cron 是 UTC，台北 = UTC+8。23:55 UTC 週日～週四 ＝ 台北 07:55 週一～週五。
-    # 提早 5 分鐘起：GitHub 排程常延遲數分鐘，而且腳本自己會等到 08:00 才開始取樣
-    # （非交易時段它安靜結束，迴圈照跑）。
-    - cron: '55 23 * * 0-4'
+    # cron 是 UTC，台北 = UTC+8。21:40 UTC 週日～週四 ＝ 台北 05:40 週一～週五。
+    #
+    # ⚠️ 為什麼要提早兩個多小時起跑
+    # 原本排 07:55（開盤前 5 分鐘），實測三天，線的第一個點分別是
+    # 10:06、08:57、09:04 —— **一次都沒有涵蓋到 08:00–09:00**，
+    # 而那正是使用者唯一會看的那一段。原因不是沒觸發，是 GitHub 的排程
+    # 延遲了一到兩個小時才真的開始跑。
+    #
+    # 延遲擋不掉，但可以用「提早起跑」吸收：05:40 起跑代表被延遲 2 小時 20 分
+    # 也還趕得上 08:00。非交易時段腳本自己會安靜跳過（不取樣、不 commit），
+    # 所以早起的代價只是 runner 空轉，這個 repo 是公開的，時數不計費。
+    - cron: '40 21 * * 0-4'
   workflow_dispatch:
     inputs:
       minutes:
@@ -38,9 +46,11 @@ concurrency:
 jobs:
   sample:
     runs-on: ubuntu-latest
-    # 07:55 起跑到台北 13:35 大約 340 分鐘。迴圈自己會用台北時鐘停，
-    # 這個只是保險絲，避免哪天時鐘判斷寫錯把 runner 佔滿六小時上限。
-    timeout-minutes: 360
+    # GitHub 對單一 job 的硬上限是 6 小時，超過直接砍掉、當次視為失敗。
+    # 05:40 起跑到 13:35 是 7 小時 55 分，會撞到上限，所以迴圈自己也有
+    # 5 小時 45 分的時數上限（見下面的 HARD_CAP）：準時起跑就跑到 11:25，
+    # 被延遲起跑就往後平移，兩種情況下 08:00–09:30 那段都在涵蓋範圍內。
+    timeout-minutes: 350
     permissions:
       contents: write
     steps:
@@ -73,16 +83,18 @@ jobs:
           # 用時鐘算才會準時停在 13:35（台股 13:30 收盤後那一筆）。
           if [ -n "$MINUTES" ]; then
             END=$(( $(date -u +%s) + MINUTES * 60 ))
-          else
-            END=$(( $(date -u +%s) + 5*60 ))          # 先給個底，下面每輪重算
           fi
+          # 硬上限：GitHub 砍 job 的門檻是 6 小時，被砍的那次整個算失敗。
+          # 自己先在 5 小時 45 分收工，才會走到下面的「摘要」那步留下紀錄。
+          HARD_CAP=$(( $(date -u +%s) + 345 * 60 ))
           n=0
           while :; do
             NOW_M=$(( 10#$(TZ=Asia/Taipei date '+%H') * 60 + 10#$(TZ=Asia/Taipei date '+%M') ))
-            if [ -z "$MINUTES" ]; then
-              [ "$NOW_M" -ge $((13*60+35)) ] && { echo "台北 13:35，收工"; break; }
-            else
+            if [ -n "$MINUTES" ]; then
               [ "$(date -u +%s)" -ge "$END" ] && break
+            else
+              [ "$NOW_M" -ge $((13*60+35)) ] && { echo "台北 13:35，收工"; break; }
+              [ "$(date -u +%s)" -ge "$HARD_CAP" ] && { echo "已跑滿 5 小時 45 分，收工避免被 GitHub 砍"; break; }
             fi
             n=$((n+1))
             echo "── 第 $n 次　$(TZ=Asia/Taipei date '+%H:%M') 台北"
