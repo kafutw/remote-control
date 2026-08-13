@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-13T00:18:16.328Z",
-  "generatedAtTaipei": "2026-08-13 08:18:16",
+  "generatedAt": "2026-08-13T00:26:52.791Z",
+  "generatedAtTaipei": "2026-08-13 08:26:52",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -146,10 +146,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 68420,
+      "price": 68745.44,
       "prevClose": 67524.06,
-      "change": 895.94,
-      "pct": 1.3268,
+      "change": 1221.38,
+      "pct": 1.8088,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -158,11 +158,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6579.04,
+      "price": 6861.86,
       "prevClose": 6579.04,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 282.82,
+      "pct": 4.2988,
       "marketState": "REG_MKT",
       "asOf": null
     },
