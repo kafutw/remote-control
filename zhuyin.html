@@ -388,6 +388,26 @@
   .recnote { font-size: var(--fs-note); color: var(--ink-soft); font-weight: 700; margin: 9px 0 0; }
   .recnote.err { color: var(--coral); }
 
+  /* 一次錄完 37 個：一個一個問 */
+  .guided { background: var(--bg-2); border-radius: 16px; padding: 15px; }
+  .gprog { display: flex; align-items: center; gap: 11px; }
+  .gprog span { font-size: var(--fs-note); font-weight: 800; color: var(--grn-deep); white-space: nowrap;
+                font-variant-numeric: tabular-nums; }
+  .gprog i { flex: 1; height: 9px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .gprog i b { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--grn);
+               transition: width .3s; }
+  .gnow { display: flex; align-items: center; gap: 15px; margin: 14px 0 4px; }
+  .gsym {
+    font-size: 3.4rem; font-weight: 800; line-height: 1; width: 92px; height: 92px; flex: none;
+    display: grid; place-items: center; border-radius: 20px;
+    background: var(--surface); border: 2px solid var(--grn); color: var(--ink);
+  }
+  .gsym.done { background: var(--grn); border-color: var(--grn); color: #fff; }
+  .gword { display: flex; flex-direction: column; gap: 3px; }
+  .gword b { font-size: var(--fs-head); font-weight: 800; }
+  .gword small { font-size: var(--fs-note); font-weight: 700; color: var(--ink-soft); }
+  .gsym.rec-live { border-color: var(--coral); animation: pulse .85s ease-in-out infinite; }
+
   /* ── 休息畫面 ── */
   .breakscreen {
     position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px;
@@ -606,6 +626,31 @@
       </div>
       <p class="hint" id="rateVal" style="text-align:center"></p>
       <button class="btn grow" type="button" id="testBtn" style="width:100%;margin-top:10px">🔊 試聽「ㄅ」</button>
+    </div>
+
+    <div class="card">
+      <h2>用自己的聲音念（最準）</h2>
+      <p class="hint" style="margin:0 0 14px">
+        照著順序把 37 個注音念一次，錄過的就會用你的聲音，沒錄的還是用系統語音。
+        錄音存在這台裝置裡，不會上傳，也不會跟著網址跑到別台裝置。</p>
+      <div class="guided">
+        <div class="gprog"><span id="gDone">已錄 0／37</span><i><b id="gFill"></b></i></div>
+        <div class="gnow">
+          <span class="gsym zy" id="gSym">ㄅ</span>
+          <span class="gword"><b id="gWord"></b><small id="gState"></small></span>
+        </div>
+        <div class="trow">
+          <button class="btn" type="button" id="gPrev">← 上一個</button>
+          <button class="btn primary" type="button" id="gRec">🎙️ 開始錄</button>
+          <button class="btn" type="button" id="gNext">下一個 →</button>
+        </div>
+        <div class="trow">
+          <button class="btn ghost" type="button" id="gPlay">▶ 試聽</button>
+          <button class="btn ghost" type="button" id="gJump">跳到還沒錄的</button>
+          <button class="btn ghost danger" type="button" id="gClear">刪掉這個</button>
+        </div>
+        <p class="recnote" id="gNote">按「開始錄」，念一次上面的注音，再按一次停止。錄完會自動跳下一個。</p>
+      </div>
     </div>
 
     <div class="card">
@@ -1386,7 +1431,7 @@
   }
 
   /* ══════════ 發音設定畫面 ══════════ */
-  let tuneSym = null, mediaRec = null, recStream = null, recChunks = [], recNote = '';
+  let tuneSym = null, mediaRec = null, recStream = null, recChunks = [], recNote = '', recTarget = null;
 
   function renderTune() {
     const box = $('voiceList');
@@ -1423,7 +1468,74 @@
     $('autoPlay').checked = db.auto;
     $('showSym').checked = db.showSym;
     $('vibr').checked = db.vibrate;
-    renderPGrid(); renderTuner();
+    renderPGrid(); renderTuner(); renderGuided();
+  }
+
+  /* ── 一次錄完：一個一個問，錄完自動跳下一個 ── */
+  let gIdx = 0;
+
+  function renderGuided() {
+    const d = DATA[gIdx];
+    const done = recSet.has(d.s);
+    $('gDone').textContent = '已錄 ' + recSet.size + '／' + DATA.length;
+    $('gFill').style.width = (recSet.size / DATA.length * 100) + '%';
+    const sym = $('gSym');
+    sym.textContent = d.s;
+    sym.className = 'gsym zy' + (done ? ' done' : '') + (guidedRecording() ? ' rec-live' : '');
+    $('gWord').textContent = '像「' + d.w + '」的 ' + d.s;
+    $('gState').textContent = done ? '✅ 已經錄好了，可以重錄蓋掉' : '還沒錄，現在用系統語音念「' + readOf(d.s) + '」';
+    const b = $('gRec');
+    b.textContent = guidedRecording() ? '⏹ 停止' : (done ? '🎙️ 重新錄' : '🎙️ 開始錄');
+    b.classList.toggle('rec-on', guidedRecording());
+    b.classList.toggle('primary', !guidedRecording());
+    $('gClear').disabled = !done;
+  }
+  const guidedRecording = () => !!(mediaRec && mediaRec.state === 'recording' && recTarget === DATA[gIdx].s);
+
+  function gMove(step) {
+    if (guidedRecording()) stopRec();
+    gIdx = (gIdx + step + DATA.length) % DATA.length;
+    renderGuided();
+    saySymbol(DATA[gIdx].s);
+  }
+
+  function bindGuided() {
+    $('gPrev').addEventListener('click', () => gMove(-1));
+    $('gNext').addEventListener('click', () => gMove(1));
+    $('gPlay').addEventListener('click', () => saySymbol(DATA[gIdx].s));
+    $('gRec').addEventListener('click', () => {
+      if (guidedRecording()) stopRec();
+      else startRec(DATA[gIdx].s, () => {
+        // 錄好了就自動往下一個沒錄過的跳，讓家長可以一路念下去
+        renderGuided();
+        setTimeout(() => {
+          const next = nextUnrecorded(gIdx);
+          if (next < 0) { $('gNote').textContent = '37 個全部錄完了！🎉'; return; }
+          gIdx = next; renderGuided();
+        }, 700);
+      });
+    });
+    $('gJump').addEventListener('click', () => {
+      const next = nextUnrecorded(gIdx - 1);
+      if (next < 0) { $('gNote').textContent = '37 個都錄好了，沒有漏掉的 🎉'; return; }
+      gIdx = next; renderGuided(); saySymbol(DATA[gIdx].s);
+    });
+    $('gClear').addEventListener('click', () => {
+      const s = DATA[gIdx].s;
+      recDel(s).then(() => {
+        recSet.delete(s);
+        if (recUrl[s]) { URL.revokeObjectURL(recUrl[s]); delete recUrl[s]; }
+        $('gNote').textContent = '刪掉了，這個注音改回用系統語音。';
+        renderGuided(); renderPGrid(); renderTuner();
+      }).catch(() => { $('gNote').textContent = '⚠️ 刪不掉，請再試一次。'; });
+    });
+  }
+  function nextUnrecorded(from) {
+    for (let i = 1; i <= DATA.length; i++) {
+      const j = (from + i + DATA.length) % DATA.length;
+      if (!recSet.has(DATA[j].s)) return j;
+    }
+    return -1;
   }
 
   function renderPGrid() {
@@ -1482,42 +1594,46 @@
     });
   }
 
-  function startRec(sym) {
+  // 逐一調整面板和「一次錄完」共用這一套；done 是錄好之後的回呼
+  function startRec(sym, done) {
+    const fail = msg => { recNote = msg; $('gNote').textContent = msg; renderTuner(); renderGuided(); };
     if (!navigator.mediaDevices || !window.MediaRecorder) {
-      recNote = '⚠️ 這個瀏覽器不支援錄音，用 Safari 或 Chrome 開這一頁試試看。';
-      return renderTuner();
+      return fail('⚠️ 這個瀏覽器不支援錄音，用 Safari 或 Chrome 開這一頁試試看。');
     }
-    const go2 = stream => {
-      recStream = stream; recChunks = [];
+    const begin = stream => {
+      recStream = stream; recChunks = []; recTarget = sym;
       try { mediaRec = new MediaRecorder(stream); }
-      catch (e) { recNote = '⚠️ 沒辦法開始錄音：' + e.message; return renderTuner(); }
+      catch (e) { return fail('⚠️ 沒辦法開始錄音：' + e.message); }
       mediaRec.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
       mediaRec.onstop = () => {
         const blob = new Blob(recChunks, { type: (mediaRec && mediaRec.mimeType) || 'audio/webm' });
-        if (!blob.size) { recNote = '⚠️ 沒有錄到聲音，再試一次。'; return renderTuner(); }
+        recTarget = null;
+        if (!blob.size) return fail('⚠️ 沒有錄到聲音，再試一次。');
         recPut(sym, blob).then(() => {
           recSet.add(sym);
           if (recUrl[sym]) { URL.revokeObjectURL(recUrl[sym]); delete recUrl[sym]; }
           recNote = '錄好了！這個注音現在用你的聲音。';
-          renderTuner(); renderPGrid();
+          $('gNote').textContent = '「' + sym + '」錄好了 ✅';
+          renderTuner(); renderPGrid(); renderGuided();
           setTimeout(() => saySymbol(sym), 200);
-        }).catch(() => { recNote = '⚠️ 存不起來，可能是裝置空間不足。'; renderTuner(); });
+          done && done();
+        }).catch(() => fail('⚠️ 存不起來，可能是裝置空間不足。'));
       };
       mediaRec.start();
       recNote = '錄音中…念一次「' + sym + '」，念完按停止。';
-      renderTuner();
+      $('gNote').textContent = '錄音中…念一次「' + sym + '」，念完按停止。';
+      renderTuner(); renderGuided();
     };
-    if (recStream && recStream.active) return go2(recStream);
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(go2).catch(err => {
-      recNote = /NotAllowed|Permission/i.test((err && err.name) || '')
+    if (recStream && recStream.active) return begin(recStream);
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(begin).catch(err => {
+      fail(/NotAllowed|Permission/i.test((err && err.name) || '')
         ? '⚠️ 要先允許使用麥克風才能錄音。'
-        : '⚠️ 打不開麥克風：' + ((err && err.message) || '未知錯誤');
-      renderTuner();
+        : '⚠️ 打不開麥克風：' + ((err && err.message) || '未知錯誤'));
     });
   }
   function stopRec() {
     try { if (mediaRec && mediaRec.state === 'recording') mediaRec.stop(); } catch (e) {}
-    renderTuner();
+    renderTuner(); renderGuided();
   }
 
   /* ══════════ 綁定 ══════════ */
@@ -1607,6 +1723,11 @@
   paintSound();
   renderSetup();
   if (hasTTS) { pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); }
-  loadRecKeys().then(() => { if ($('tune').classList.contains('on')) renderPGrid(); });
+  bindGuided();
+  loadRecKeys().then(() => {
+    const first = nextUnrecorded(-1);
+    if (first >= 0) gIdx = first;
+    if ($('tune').classList.contains('on')) { renderPGrid(); renderGuided(); }
+  });
   if (db.breakUntil > Date.now()) showBreak();
 </script>
