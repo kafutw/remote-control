@@ -218,6 +218,7 @@
     margin: 14px 2px 8px; letter-spacing: .04em;
   }
   .sub-h:first-of-type { margin-top: 0; }
+  #wordSetup .sub-h:first-of-type { margin-top: 14px; }
 
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .modes.three { grid-template-columns: repeat(3, 1fr); }
@@ -709,25 +710,27 @@
 
     <div class="card">
       <h2><span class="n">1</span>今天練什麼？</h2>
-      <div class="sub-h">教材來源</div>
-      <div class="modes three" id="sources">
-        <button class="mode sel" data-source="all"><b>📚 全部</b><i>字最多</i></button>
-        <button class="mode" data-source="moe"><b>🏫 教育部</b><i>1200 字表內</i></button>
-        <button class="mode" data-source="hess"><b>🅷 何嘉仁</b><i>課本原字</i></button>
+      <div class="modes" id="subjects">
+        <button class="mode sel" data-subject="letters"><b>🔤 練字母</b><i>ABC 26 個，大小寫和發音</i></button>
+        <button class="mode" data-subject="words"><b>🔠 練單字</b><i>看圖、聽音、認字</i></button>
       </div>
-      <p class="hint" id="sourceHint"></p>
-      <div class="sub-h">練習內容</div>
-      <div class="modes three" id="subjects">
-        <button class="mode sel" data-subject="letters"><b>🔤 字母</b><i>ABC 26 個</i></button>
-        <button class="mode" data-subject="w1"><b>1️⃣ 小一單字</b><i>顏色、數字、動物、家人</i></button>
-        <button class="mode" data-subject="w2"><b>2️⃣ 小二單字</b><i>食物、學校、身體、交通</i></button>
+      <div id="sourceBox" hidden>
+        <div class="sub-h">單字從哪裡來？</div>
+        <div class="modes three" id="sources">
+          <button class="mode sel" data-source="all"><b>📚 都要</b><i>兩邊一起練</i></button>
+          <button class="mode" data-source="moe"><b>🏫 教育部</b><i>1200 字表內</i></button>
+          <button class="mode" data-source="hess"><b>🅷 何嘉仁</b><i>課本上的字</i></button>
+        </div>
+        <p class="hint" id="sourceHint"></p>
       </div>
+      <div id="letterSetup">
       <div class="sub-h">題型</div>
       <div class="modes" id="kinds">
         <button class="mode sel" data-kind="all"><b>三種都出</b><i>輪流換，練得比較全</i></button>
         <button class="mode" data-kind="listen"><b>🔊 聽聲音</b><i>聽到什麼字母就選它</i></button>
         <button class="mode" data-kind="case"><b>🔠 大寫找小寫</b><i>看 A 選 a</i></button>
         <button class="mode" data-kind="case2"><b>🔡 小寫找大寫</b><i>看 a 選 A</i></button>
+      </div>
       </div>
       <div id="wordSetup" hidden>
         <div class="sub-h">題型</div>
@@ -742,8 +745,8 @@
       </div>
       <div class="sub-h">出題方式</div>
       <div class="modes" id="modes">
-        <button class="mode sel" data-mode="smart"><b>聰明出題</b><i>常錯的字母會多出現</i></button>
-        <button class="mode" data-mode="even"><b>平均出題</b><i>每個字母機會都一樣</i></button>
+        <button class="mode sel" data-mode="smart"><b>聰明出題</b><i>常錯的會多出現</i></button>
+        <button class="mode" data-mode="even"><b>平均出題</b><i>每個機會都一樣</i></button>
       </div>
       <p class="hint" id="poolHint"></p>
     </div>
@@ -1010,8 +1013,8 @@
   /* ────────── 資料：26 個字母 ──────────
      代表單字＝何嘉仁 Fun World 課本「我會唸字母和單字」單元的主字（黑字），
      26 個字母全部照課本，來源是課本內頁（第 1 冊 A–M、第 2 冊 N–Z）。
-     m: 0  = 這個字不在教育部「國中小基本英語字彙 1200 字」表內（jet、net、quilt、yo-yo）；
-     moe   = 教材來源選「教育部」時改用這個表內的字（其餘 22 個字母兩邊同一個字）。
+     m: 0  = 這個字不在教育部「國中小基本英語字彙 1200 字」表內（jet、net、quilt、yo-yo），
+     其餘 22 個字母的代表字兩邊都收。字母卡一律照課本，不跟著單字的教材來源換。
      X 開頭在教育部清單裡沒有任何字，課本用的也是字尾有 x 的 box。
      phon = 這個字母常見的發音（自然發音法）
      word / zh / emoji = 代表單字、中文、圖案
@@ -1026,17 +1029,14 @@
     { c: 'G', phon: '/g/',  word: 'goat',     zh: '山羊',   emoji: '🐐', near: 'CJQ' },
     { c: 'H', phon: '/h/',  word: 'hen',      zh: '母雞',   emoji: '🐔', near: 'NKM' },
     { c: 'I', phon: '/ɪ/',  word: 'insect',   zh: '昆蟲',   emoji: '🐞', near: 'LJT' },
-    { c: 'J', phon: '/dʒ/', word: 'jet',      zh: '噴射機', emoji: '✈️', near: 'GIK', m: 0,
-      moe: { word: 'juice', zh: '果汁', emoji: '🧃' } },
+    { c: 'J', phon: '/dʒ/', word: 'jet',      zh: '噴射機', emoji: '✈️', near: 'GIK', m: 0 },
     { c: 'K', phon: '/k/',  word: 'kite',     zh: '風箏',   emoji: '🪁', near: 'CXH' },
     { c: 'L', phon: '/l/',  word: 'lion',     zh: '獅子',   emoji: '🦁', near: 'IJT' },
     { c: 'M', phon: '/m/',  word: 'monkey',   zh: '猴子',   emoji: '🐵', near: 'NWH' },
-    { c: 'N', phon: '/n/',  word: 'net',      zh: '網子',   emoji: '🥅', near: 'MHU', m: 0,
-      moe: { word: 'nose', zh: '鼻子', emoji: '👃' } },
+    { c: 'N', phon: '/n/',  word: 'net',      zh: '網子',   emoji: '🥅', near: 'MHU', m: 0 },
     { c: 'O', phon: '/ɒ/',  word: 'ox',       zh: '牛',     emoji: '🐂', near: 'QUA' },
     { c: 'P', phon: '/p/',  word: 'pig',      zh: '豬',     emoji: '🐷', near: 'BDR' },
-    { c: 'Q', phon: '/kw/', word: 'quilt',    zh: '被子',   emoji: '🛏️', near: 'OGP', m: 0,
-      moe: { word: 'queen', zh: '皇后', emoji: '👑' } },
+    { c: 'Q', phon: '/kw/', word: 'quilt',    zh: '被子',   emoji: '🛏️', near: 'OGP', m: 0 },
     { c: 'R', phon: '/r/',  word: 'red',      zh: '紅色',   emoji: '🔴', near: 'PBA' },
     { c: 'S', phon: '/s/',  word: 'sun',      zh: '太陽',   emoji: '☀️', near: 'ZCX' },
     { c: 'T', phon: '/t/',  word: 'toy',      zh: '玩具',   emoji: '🧸', near: 'DIF' },
@@ -1045,8 +1045,7 @@
     { c: 'W', phon: '/w/',  word: 'watch',    zh: '手錶',   emoji: '⌚', near: 'VMU' },
     { c: 'X', phon: '/ks/', word: 'box',      zh: '盒子',   emoji: '📦', near: 'KYS',
       note: 'x 通常出現在字尾，像 box、fox、six' },
-    { c: 'Y', phon: '/j/',  word: 'yo-yo',    zh: '溜溜球', emoji: '🪀', near: 'VXJ', m: 0,
-      moe: { word: 'yellow', zh: '黃色', emoji: '💛' } },
+    { c: 'Y', phon: '/j/',  word: 'yo-yo',    zh: '溜溜球', emoji: '🪀', near: 'VXJ', m: 0 },
     { c: 'Z', phon: '/z/',  word: 'zoo',      zh: '動物園', emoji: '🐘🦁', near: 'SXN' }
   ];
 
@@ -1067,7 +1066,7 @@
     // ── 小一：顏色、數字、動物、家人、水果、身邊的東西 ──
     { w: 'red',    zh: '紅色',   e: '🔴', g: 1, t: '顏色', hb: 2 },
     { w: 'blue',   zh: '藍色',   e: '🔵', g: 1, t: '顏色' },
-    { w: 'yellow', zh: '黃色',   e: '🟡', g: 1, t: '顏色', hb: 2, hx: 1 },
+    { w: 'yellow', zh: '黃色',   e: '🟡', g: 1, t: '顏色', hb: 2 },
     { w: 'green',  zh: '綠色',   e: '🟢', g: 1, t: '顏色' },
     { w: 'orange', zh: '橘色',   e: '🟠', g: 1, t: '顏色' },
     { w: 'purple', zh: '紫色',   e: '🟣', g: 1, t: '顏色' },
@@ -1085,17 +1084,17 @@
     { w: 'ten',    zh: '十', e: '🔟', g: 1, t: '數字' },
     { w: 'cat',    zh: '貓',   e: '🐱', g: 1, t: '動物', hb: 1 },
     { w: 'dog',    zh: '狗',   e: '🐶', g: 1, t: '動物', hb: 1 },
-    { w: 'bird',   zh: '鳥',   e: '🐦', g: 1, t: '動物', grp: 'bird', hb: 1, hx: 1 },
+    { w: 'bird',   zh: '鳥',   e: '🐦', g: 1, t: '動物', grp: 'bird', hb: 1 },
     { w: 'fish',   zh: '魚',   e: '🐟', g: 1, t: '動物', hb: 1 },
     { w: 'pig',    zh: '豬',   e: '🐷', g: 1, t: '動物', hb: 2 },
     { w: 'cow',    zh: '牛',   e: '🐮', g: 1, t: '動物' },
-    { w: 'duck',   zh: '鴨子', e: '🦆', g: 1, t: '動物', grp: 'bird', hb: 1, hx: 1 },
-    { w: 'rabbit', zh: '兔子', e: '🐰', g: 1, t: '動物', hb: 2, hx: 1 },
+    { w: 'duck',   zh: '鴨子', e: '🦆', g: 1, t: '動物', grp: 'bird' },
+    { w: 'rabbit', zh: '兔子', e: '🐰', g: 1, t: '動物' },
     { w: 'bear',   zh: '熊',   e: '🐻', g: 1, t: '動物' },
     { w: 'monkey', zh: '猴子', e: '🐵', g: 1, t: '動物', hb: 1 },
-    { w: 'elephant', zh: '大象', e: '🐘', g: 1, t: '動物', hb: 1, hx: 1 },
+    { w: 'elephant', zh: '大象', e: '🐘', g: 1, t: '動物', hb: 1 },
     { w: 'lion',   zh: '獅子', e: '🦁', g: 1, t: '動物', hb: 1 },
-    { w: 'mom',    zh: '媽媽', e: '👩', g: 1, t: '家人', p: 0 , m: 0, hb: 1, hx: 1 },
+    { w: 'mom',    zh: '媽媽', e: '👩', g: 1, t: '家人', p: 0 , m: 0 },
     { w: 'dad',    zh: '爸爸', e: '👨', g: 1, t: '家人', p: 0 , m: 0 },
     { w: 'baby',   zh: '寶寶', e: '👶', g: 1, t: '家人', p: 0 },
     { w: 'brother', zh: '哥哥、弟弟', e: '👦', g: 1, t: '家人', p: 0 },
@@ -1107,7 +1106,7 @@
     { w: 'strawberry', zh: '草莓', e: '🍓', g: 1, t: '水果' },
     { w: 'watermelon', zh: '西瓜', e: '🍉', g: 1, t: '水果' },
     { w: 'book',   zh: '書',   e: '📖', g: 1, t: '身邊的東西', hb: 1 },
-    { w: 'ball',   zh: '球',   e: '⚽', g: 1, t: '身邊的東西' },
+    { w: 'ball',   zh: '球',   e: '⚽', g: 1, t: '身邊的東西', hb: 2 },
     { w: 'toy',    zh: '玩具', e: '🧸', g: 1, t: '身邊的東西', hb: 2 },
     { w: 'balloon', zh: '氣球', e: '🎈', g: 1, t: '身邊的東西' , m: 0 },
 
@@ -1124,7 +1123,7 @@
     { w: 'cookie', zh: '餅乾', e: '🍪', g: 2, t: '食物' },
     { w: 'hamburger', zh: '漢堡', e: '🍔', g: 2, t: '食物' },
     { w: 'pizza',  zh: '披薩', e: '🍕', g: 2, t: '食物' },
-    { w: 'pencil', zh: '鉛筆', e: '✏️', g: 2, t: '學校用品', grp: 'write', hb: 2, hx: 1 },
+    { w: 'pencil', zh: '鉛筆', e: '✏️', g: 2, t: '學校用品', grp: 'write' },
     { w: 'pen',    zh: '原子筆', e: '🖊️', g: 2, t: '學校用品', grp: 'write' },
     { w: 'crayon', zh: '蠟筆', e: '🖍️', g: 2, t: '學校用品', grp: 'write' , m: 0 },
     { w: 'ruler',  zh: '尺',   e: '📏', g: 2, t: '學校用品' },
@@ -1134,7 +1133,7 @@
     { w: 'chair',  zh: '椅子', e: '🪑', g: 2, t: '學校用品' },
     { w: 'eye',    zh: '眼睛', e: '👁️', g: 2, t: '身體' },
     { w: 'ear',    zh: '耳朵', e: '👂', g: 2, t: '身體' },
-    { w: 'nose',   zh: '鼻子', e: '👃', g: 2, t: '身體', hb: 2, hx: 1 },
+    { w: 'nose',   zh: '鼻子', e: '👃', g: 2, t: '身體', hb: 2 },
     { w: 'mouth',  zh: '嘴巴', e: '👄', g: 2, t: '身體' },
     { w: 'tooth',  zh: '牙齒', e: '🦷', g: 2, t: '身體' },
     { w: 'hand',   zh: '手',   e: '✋', g: 2, t: '身體' },
@@ -1155,44 +1154,47 @@
     { w: 'cloud',  zh: '雲',   e: '☁️', g: 2, t: '天氣', grp: 'sky' , m: 0 },
     { w: 'snow',   zh: '雪',   e: '❄️', g: 2, t: '天氣', grp: 'sky' },
     { w: 'rainbow', zh: '彩虹', e: '🌈', g: 2, t: '天氣' },
-    { w: 'hat',    zh: '帽子', e: '🎩', g: 2, t: '衣物', hb: 1, hx: 1 },
+    { w: 'hat',    zh: '帽子', e: '🎩', g: 2, t: '衣物' },
     { w: 'shirt',  zh: '襯衫', e: '👕', g: 2, t: '衣物' },
     { w: 'shoes',  zh: '鞋子', e: '👟', g: 2, t: '衣物' , m: 0 },
     { w: 'socks',  zh: '襪子', e: '🧦', g: 2, t: '衣物' },
     { w: 'umbrella', zh: '雨傘', e: '☂️', g: 2, t: '衣物', hb: 2 },
 
     // ── 何嘉仁 Fun World 課本裡、上面還沒收到的字 ──
-    // hb = 冊別（1 = A–M、2 = N–Z），hx: 1 = 課本標藍色的延伸補充單字
-    { w: 'ant',    zh: '螞蟻', e: '🐜', t: '動物', grp: 'bug', hb: 1, hx: 1 },
-    { w: 'cup',    zh: '杯子', e: '☕', t: '身邊的東西', hb: 1, hx: 1 },
-    { w: 'fan',    zh: '風扇', e: '🪭', t: '身邊的東西', hb: 1, hx: 1 },
+    // hb = 課本教到這個字的冊別：1 = 小一上 Fun World 1（a–m，17 字）、
+    // 2 = 小一下 Fun World 2（n–z，18 字）。照課本各單元的單字表貼的，
+    // 沒有 hb 的字就是課本沒教（有些只出現在字母頁的延伸補充區）。
+    { w: 'ant',    zh: '螞蟻', e: '🐜', t: '動物', grp: 'bug', hb: 1 },
+    { w: 'sheep',  zh: '綿羊', e: '🐑', t: '動物', grp: 'hoof', hb: 2 },
+    { w: 'cup',    zh: '杯子', e: '☕', t: '身邊的東西', hb: 1 },
+    { w: 'fan',    zh: '風扇', e: '🪭', t: '身邊的東西' },
     { w: 'goat',   zh: '山羊', e: '🐐', t: '動物', grp: 'hoof', hb: 1 },
-    { w: 'girl',   zh: '女孩', e: '👧', t: '家人', p: 0, hb: 1, hx: 1 },
+    { w: 'girl',   zh: '女孩', e: '👧', t: '家人', p: 0 },
     { w: 'hen',    zh: '母雞', e: '🐔', t: '動物', hb: 1 },
     { w: 'insect', zh: '昆蟲', e: '🐞', t: '動物', grp: 'bug', hb: 1 },
-    { w: 'igloo',  zh: '冰屋', e: '🛖', t: '身邊的東西', hb: 1, hx: 1, m: 0 },
-    { w: 'jet',    zh: '噴射機', e: '✈️', t: '交通', hb: 1, m: 0 },
-    { w: 'jam',    zh: '果醬', e: '🫙', t: '食物', hb: 1, hx: 1, m: 0 },
+    { w: 'igloo',  zh: '冰屋', e: '🛖', t: '身邊的東西', m: 0 },
+    { w: 'jet',    zh: '噴射機', e: '✈️', t: '交通', m: 0, hb: 1 },
+    { w: 'jam',    zh: '果醬', e: '🫙', t: '食物', m: 0 },
     { w: 'kite',   zh: '風箏', e: '🪁', t: '玩具', hb: 1 },
-    { w: 'key',    zh: '鑰匙', e: '🔑', t: '身邊的東西', hb: 1, hx: 1 },
-    { w: 'lamp',   zh: '檯燈', e: '💡', t: '身邊的東西', hb: 1, hx: 1 },
-    { w: 'net',    zh: '網子', e: '🥅', t: '身邊的東西', grp: 'grid', hb: 2, m: 0 },
+    { w: 'key',    zh: '鑰匙', e: '🔑', t: '身邊的東西' },
+    { w: 'lamp',   zh: '檯燈', e: '💡', t: '身邊的東西' },
+    { w: 'net',    zh: '網子', e: '🥅', t: '身邊的東西', grp: 'grid', m: 0, hb: 2 },
     { w: 'ox',     zh: '牛',   e: '🐂', t: '動物', grp: 'hoof', hb: 2 },
-    { w: 'octopus', zh: '章魚', e: '🐙', t: '動物', hb: 2, hx: 1, m: 0 },
-    { w: 'quilt',  zh: '被子', e: '🛏️', t: '身邊的東西', hb: 2, m: 0 },
-    { w: 'queen',  zh: '皇后', e: '👑', t: '人', hb: 2, hx: 1 },
-    { w: 'snake',  zh: '蛇',   e: '🐍', t: '動物', hb: 2, hx: 1 },
-    { w: 'turtle', zh: '烏龜', e: '🐢', t: '動物', hb: 2, hx: 1 },
-    { w: 'up',     zh: '向上', e: '⬆️', t: '方位', hb: 2, hx: 1 },
+    { w: 'octopus', zh: '章魚', e: '🐙', t: '動物', m: 0 },
+    { w: 'quilt',  zh: '被子', e: '🛏️', t: '身邊的東西', m: 0, hb: 2 },
+    { w: 'queen',  zh: '皇后', e: '👑', t: '人' },
+    { w: 'snake',  zh: '蛇',   e: '🐍', t: '動物' },
+    { w: 'turtle', zh: '烏龜', e: '🐢', t: '動物' },
+    { w: 'up',     zh: '向上', e: '⬆️', t: '方位' },
     { w: 'vest',   zh: '背心', e: '🦺', t: '衣物', hb: 2 },
-    { w: 'van',    zh: '箱型車', e: '🚐', t: '交通', grp: 'car', hb: 2, hx: 1, m: 0 },
+    { w: 'van',    zh: '箱型車', e: '🚐', t: '交通', grp: 'car', m: 0 },
     { w: 'watch',  zh: '手錶', e: '⌚', t: '身邊的東西', hb: 2 },
-    { w: 'window', zh: '窗戶', e: '🪟', t: '身邊的東西', grp: 'grid', hb: 2, hx: 1 },
+    { w: 'window', zh: '窗戶', e: '🪟', t: '身邊的東西', grp: 'grid', hb: 2 },
     { w: 'box',    zh: '盒子', e: '📦', t: '身邊的東西', hb: 2 },
-    { w: 'fox',    zh: '狐狸', e: '🦊', t: '動物', hb: 2, hx: 1 },
-    { w: 'yo-yo',  zh: '溜溜球', e: '🪀', t: '玩具', hb: 2, m: 0 },
+    { w: 'fox',    zh: '狐狸', e: '🦊', t: '動物' },
+    { w: 'yo-yo',  zh: '溜溜球', e: '🪀', t: '玩具', m: 0, hb: 2 },
     { w: 'zoo',    zh: '動物園', e: '🐘🦁', t: '地方', p: 0, hb: 2 },
-    { w: 'zebra',  zh: '斑馬', e: '🦓', t: '動物', hb: 2, hx: 1 }
+    { w: 'zebra',  zh: '斑馬', e: '🦓', t: '動物' }
   ];
 
   /* ────────── 注音 ──────────
@@ -1200,6 +1202,7 @@
      疊字和輕聲（媽媽、耳朵、鑰匙…）另外用詞表蓋過去。 */
   var BPMF = {
     /* 何嘉仁課本單字用到的字 */
+    '綿':'ㄇㄧㄢˊ',
     '上':'ㄕㄤˋ','動':'ㄉㄨㄥˋ','向':'ㄒㄧㄤˋ','噴':'ㄆㄣ','園':'ㄩㄢˊ','型':'ㄒㄧㄥˊ','女':'ㄋㄩˇ',
     '孩':'ㄏㄞˊ','射':'ㄕㄜˋ','屋':'ㄨ','山':'ㄕㄢ','戶':'ㄏㄨˋ','扇':'ㄕㄢˋ','昆':'ㄎㄨㄣ',
     '杯':'ㄅㄟ','母':'ㄇㄨˇ','溜':'ㄌㄧㄡ','烏':'ㄨ','物':'ㄨˋ','狐':'ㄏㄨˊ','狸':'ㄌㄧˊ',
@@ -1334,7 +1337,8 @@
     if (['smart', 'even'].indexOf(db.mode) < 0) db.mode = DEF.mode;
     if (['all', 'listen', 'case', 'case2'].indexOf(db.kind) < 0) db.kind = DEF.kind;
     if (['all', 'wpic', 'wlisten', 'wread', 'wzh', 'wcloze'].indexOf(db.wkind) < 0) db.wkind = DEF.wkind;
-    if (['letters', 'w1', 'w2'].indexOf(db.subject) < 0) db.subject = DEF.subject;
+    if (db.subject === 'w1' || db.subject === 'w2') db.subject = 'words';   // 舊版存的年級
+    if (['letters', 'words'].indexOf(db.subject) < 0) db.subject = DEF.subject;
     if (['all', 'moe', 'hess'].indexOf(db.source) < 0) db.source = DEF.source;
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
@@ -1374,15 +1378,7 @@
     return arr;
   }
   function stat(c) { return db.perQ[c] || { n: 0, w: 0 }; }
-  // 代表單字會隨教材來源換：選教育部 1200 字時，jam / mom 改成表內的 juice / monkey
-  function letterOf(c) {
-    var L = LETTERS[IDX[c]];
-    if (!L.moe || !db || db.source !== 'moe') return L;
-    var o = {}, k;
-    for (k in L) if (L.hasOwnProperty(k)) o[k] = L[k];
-    o.word = L.moe.word; o.zh = L.moe.zh; o.emoji = L.moe.emoji;
-    return o;
-  }
+  function letterOf(c) { return LETTERS[IDX[c]]; }
   // A,B,C,F → 「A–C、F」，選很多字母時標題才不會爆掉
   function letterLabel(list) {
     var s = list.slice().sort(), out = [], i = 0;
@@ -1766,21 +1762,12 @@
   segment('sources', function (m) { db.source = m.dataset.source; syncSource(); });
 
   var SOURCE_HINT = {
-    all: '字母 26 個的代表字照何嘉仁課本；單字是我照主題整理的小一 / 小二字表。',
-    moe: '只出【國中小基本英語字彙 1200 字】表內的字。' +
-         '課本的 jet、net、quilt、yo-yo 不在表內，字母卡會換成 juice、nose、queen、yellow。',
-    hess: '完全照何嘉仁 Fun World 課本「我會唸字母和單字」：' +
-          '26 個字母的代表字（黑字）＋ 每個字母的延伸補充單字（藍字），' +
-          '第 1 冊 A–M、第 2 冊 N–Z 各 26 個字。'
+    all: '兩邊的字都收，重複的算同一個。',
+    moe: '只出【國中小基本英語字彙 1200 字】表內的字，照顏色、數字、動物、食物這些主題挑的。',
+    hess: '照課本各單元的單字表：小一上 Fun World 1（a–m）17 個字、' +
+          '小一下 Fun World 2（n–z）18 個字，兩冊一起練。'
   };
   function syncSource() {
-    var L = SUBJECT_LABEL[db.source];
-    document.querySelectorAll('#subjects .mode').forEach(function (m) {
-      var k = m.dataset.subject;
-      if (!L[k]) return;
-      m.querySelector('b').textContent = L[k][0];
-      m.querySelector('i').textContent = L[k][1];
-    });
     $('sourceHint').textContent = SOURCE_HINT[db.source];
     syncSubject();
   }
@@ -1788,14 +1775,16 @@
   // 換科目：題型按鈕換一組，開始鈕和「先認識」的字也跟著改
   function syncSubject() {
     var w = wordMode();
-    $('kinds').hidden = w;
+    $('letterSetup').hidden = w;
     $('wordSetup').hidden = !w;
+    $('sourceBox').hidden = !w;         // 只有練單字才要選教材來源
     $('learnBtn').textContent = w ? '先認識單字 🖼️' : '先認識字母 🔤';
     $('subtitle').textContent = subjectName(db.subject) + ' ・ ' + db.count + ' 題 ・ ' +
       (db.secs ? db.secs + ' 秒' : '不限時');
     var n = subjectPool().length;
-    $('poolHint').textContent = '這次的題庫有 ' + n + (w ? ' 個單字' : ' 個字母') +
-      '，都會練到，常錯的會多出現幾次。';
+    $('poolHint').textContent = w
+      ? '這次的題庫有 ' + n + ' 個單字，都會練到，常錯的會多出現幾次。'
+      : '26 個字母都會練到，常錯的會多出現幾次。';
     syncStart();
     refreshSetup();
   }
@@ -1964,25 +1953,18 @@
     wzh:    '🈶 這個意思的英文是哪一個？',
     wcloze: '🔤 這個字缺了一個字母'
   };
-  var SUBJECT_LABEL = {
-    all:  { w1: ['1️⃣ 小一單字', '顏色、數字、動物、家人'], w2: ['2️⃣ 小二單字', '食物、學校、身體、交通'] },
-    moe:  { w1: ['1️⃣ 小一單字', '顏色、數字、動物、家人'], w2: ['2️⃣ 小二單字', '食物、學校、身體、交通'] },
-    hess: { w1: ['1️⃣ 第 1 冊', '課本 A–M 的單字'], w2: ['2️⃣ 第 2 冊', '課本 N–Z 的單字'] }
-  };
-  function subjectName(k) {
-    if (k === 'letters') return 'ABC 字母';
-    return SUBJECT_LABEL[db.source][k][0].replace(/^\S+\s/, '');
-  }
+  var SOURCE_NAME = { all: '單字', moe: '教育部單字', hess: '何嘉仁單字' };
+  function subjectName(k) { return k === 'letters' ? 'ABC 字母' : SOURCE_NAME[db.source]; }
 
   function wordMode() { return db.subject !== 'letters'; }
   // 這次要練的題庫：字母 26 個，或某一個年級的單字
   function subjectPool() {
-    if (!wordMode()) return ALL.slice();      // 26 個字母三種來源都一樣
-    var n = db.subject === 'w1' ? 1 : 2;
+    if (!wordMode()) return ALL.slice();      // 字母永遠是完整的 26 個
     return WORDS.filter(function (x) {
-      if (db.source === 'hess') return x.hb === n;       // 課本第 1 / 2 冊
-      if (db.source === 'moe') return x.g === n && x.m !== 0;
-      return x.g === n;
+      // hb = 何嘉仁課本收的字；g = 教育部 1200 字表挑出來的小一小二字（m: 0 是表外的）
+      if (db.source === 'hess') return !!x.hb;
+      if (db.source === 'moe') return !!x.g && x.m !== 0;
+      return true;
     }).map(function (x) { return 'w:' + x.w; });
   }
   var S = null;
