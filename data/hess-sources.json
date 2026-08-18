@@ -1,6 +1,6 @@
 {
   "source": "何嘉仁 Fun World 數位練習平台（hessdigi）",
-  "fetchedAt": "2026-08-18T05:45:39.335Z",
+  "fetchedAt": "2026-08-18T05:50:45.938Z",
   "books": [
     {
       "book": 1,
@@ -13,8 +13,14 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/533",
           "targets": [
-            "https://wordwall.net/resource/33782827",
-            "https://wordwall.net/resource/33599817"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/33782827"
+            },
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/33599817"
+            }
           ]
         },
         {
@@ -22,8 +28,14 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/534",
           "targets": [
-            "https://wordwall.net/resource/33600323",
-            "https://wordwall.net/resource/33783002"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/33600323"
+            },
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/33783002"
+            }
           ]
         },
         {
@@ -31,7 +43,10 @@
           "unit": "Review 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/535",
           "targets": [
-            "https://wordwall.net/resource/19534367"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/19534367"
+            }
           ]
         },
         {
@@ -39,8 +54,14 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/536",
           "targets": [
-            "https://wordwall.net/resource/33783070",
-            "https://wordwall.net/resource/33600597"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/33783070"
+            },
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/33600597"
+            }
           ]
         },
         {
@@ -48,8 +69,14 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/537",
           "targets": [
-            "https://wordwall.net/resource/33601021",
-            "https://wordwall.net/resource/33783227"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/33601021"
+            },
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/33783227"
+            }
           ]
         },
         {
@@ -57,7 +84,10 @@
           "unit": "Review 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/538",
           "targets": [
-            "https://wordwall.net/resource/19535262"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/19535262"
+            }
           ]
         },
         {
@@ -65,7 +95,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/557",
           "targets": [
-            "https://quizlet.com/tw/601778996/fun-world-1-unit-1-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/601778996/fun-world-1-unit-1-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -73,7 +106,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/558",
           "targets": [
-            "https://quizlet.com/tw/601779370/fun-world-1-unit-2%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/601779370/fun-world-1-unit-2%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -81,7 +117,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/559",
           "targets": [
-            "https://quizlet.com/tw/601779849/fun-world-1-unit-3%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/601779849/fun-world-1-unit-3%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -89,7 +128,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/560",
           "targets": [
-            "https://quizlet.com/tw/601780536/fun-world-1-unit-4%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/601780536/fun-world-1-unit-4%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -97,7 +139,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/561",
           "targets": [
-            "https://dashboard.blooket.com/set/60f14ac59933c3001b7ad06b"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f14ac59933c3001b7ad06b"
+            }
           ]
         },
         {
@@ -105,7 +150,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/562",
           "targets": [
-            "https://dashboard.blooket.com/set/60f155c149f39c0021176837"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f155c149f39c0021176837"
+            }
           ]
         },
         {
@@ -113,7 +161,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/563",
           "targets": [
-            "https://dashboard.blooket.com/set/60f155f57d7c03001b126ecb"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f155f57d7c03001b126ecb"
+            }
           ]
         },
         {
@@ -121,7 +172,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/564",
           "targets": [
-            "https://dashboard.blooket.com/set/60f15620ad0ad4001bee1e0d"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f15620ad0ad4001bee1e0d"
+            }
           ]
         },
         {
@@ -129,7 +183,10 @@
           "unit": "Review 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/589",
           "targets": [
-            "https://create.kahoot.it/share/halloween-r1/dfa11a74-8737-4e4c-ae7f-bde78a3cebf1"
+            {
+              "label": "",
+              "url": "https://create.kahoot.it/share/halloween-r1/dfa11a74-8737-4e4c-ae7f-bde78a3cebf1"
+            }
           ]
         },
         {
@@ -137,7 +194,10 @@
           "unit": "Review 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/590",
           "targets": [
-            "https://create.kahoot.it/share/christmas-r2/da031155-7e01-4acf-aa61-3e3d01ca145f"
+            {
+              "label": "",
+              "url": "https://create.kahoot.it/share/christmas-r2/da031155-7e01-4acf-aa61-3e3d01ca145f"
+            }
           ]
         },
         {
@@ -178,8 +238,14 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/539",
           "targets": [
-            "https://wordwall.net/tc/resource/39498037",
-            "https://wordwall.net/tc/resource/39498258"
+            {
+              "label": "",
+              "url": "https://wordwall.net/tc/resource/39498037"
+            },
+            {
+              "label": "",
+              "url": "https://wordwall.net/tc/resource/39498258"
+            }
           ]
         },
         {
@@ -187,8 +253,14 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/540",
           "targets": [
-            "https://wordwall.net/tc/resource/39498336",
-            "https://wordwall.net/tc/resource/39498435"
+            {
+              "label": "",
+              "url": "https://wordwall.net/tc/resource/39498336"
+            },
+            {
+              "label": "",
+              "url": "https://wordwall.net/tc/resource/39498435"
+            }
           ]
         },
         {
@@ -196,7 +268,10 @@
           "unit": "Review 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/541",
           "targets": [
-            "https://wordwall.net/resource/23400513"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23400513"
+            }
           ]
         },
         {
@@ -204,8 +279,14 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/542",
           "targets": [
-            "https://wordwall.net/tc/resource/39498520",
-            "https://wordwall.net/tc/resource/39498629"
+            {
+              "label": "",
+              "url": "https://wordwall.net/tc/resource/39498520"
+            },
+            {
+              "label": "",
+              "url": "https://wordwall.net/tc/resource/39498629"
+            }
           ]
         },
         {
@@ -213,8 +294,14 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/543",
           "targets": [
-            "https://wordwall.net/tc/resource/39499011",
-            "https://wordwall.net/tc/resource/39498908"
+            {
+              "label": "",
+              "url": "https://wordwall.net/tc/resource/39499011"
+            },
+            {
+              "label": "",
+              "url": "https://wordwall.net/tc/resource/39498908"
+            }
           ]
         },
         {
@@ -222,7 +309,10 @@
           "unit": "Review 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/544",
           "targets": [
-            "https://wordwall.net/resource/23400880"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23400880"
+            }
           ]
         },
         {
@@ -230,7 +320,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/565",
           "targets": [
-            "https://quizlet.com/tw/600319439/fun-world-2-unit-1-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/600319439/fun-world-2-unit-1-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -238,7 +331,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/566",
           "targets": [
-            "https://quizlet.com/tw/600319021/fun-world-2-unit-2-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/600319021/fun-world-2-unit-2-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -246,7 +342,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/567",
           "targets": [
-            "https://quizlet.com/tw/600102210/fun-world-2-unit-3-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/600102210/fun-world-2-unit-3-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -254,7 +353,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/568",
           "targets": [
-            "https://quizlet.com/tw/600101209/fun-world-2-unit-4-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/600101209/fun-world-2-unit-4-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -262,7 +364,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/569",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53e86599974001b1f9755"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53e86599974001b1f9755"
+            }
           ]
         },
         {
@@ -270,7 +375,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/570",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53ea6e117b100232b9a76"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53ea6e117b100232b9a76"
+            }
           ]
         },
         {
@@ -278,7 +386,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/571",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53ec0b6a8bf001bc15a99"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53ec0b6a8bf001bc15a99"
+            }
           ]
         },
         {
@@ -286,7 +397,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/572",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53ed8689f8a0021468525"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53ed8689f8a0021468525"
+            }
           ]
         },
         {
@@ -294,7 +408,10 @@
           "unit": "Review 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/591",
           "targets": [
-            "https://create.kahoot.it/share/easter/f3bf34b5-66e7-4fa4-ac2a-214a3a5df489"
+            {
+              "label": "",
+              "url": "https://create.kahoot.it/share/easter/f3bf34b5-66e7-4fa4-ac2a-214a3a5df489"
+            }
           ]
         },
         {
@@ -302,7 +419,10 @@
           "unit": "Review 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/592",
           "targets": [
-            "https://create.kahoot.it/share/dragon-boat-festival/92f9d7a8-3cac-45d8-8663-b2c73d6325fa"
+            {
+              "label": "",
+              "url": "https://create.kahoot.it/share/dragon-boat-festival/92f9d7a8-3cac-45d8-8663-b2c73d6325fa"
+            }
           ]
         },
         {
@@ -343,7 +463,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/545",
           "targets": [
-            "https://wordwall.net/resource/20002307"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/20002307"
+            }
           ]
         },
         {
@@ -351,7 +474,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/546",
           "targets": [
-            "https://wordwall.net/resource/20002472"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/20002472"
+            }
           ]
         },
         {
@@ -359,7 +485,10 @@
           "unit": "Review 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/547",
           "targets": [
-            "https://wordwall.net/resource/23398928"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23398928"
+            }
           ]
         },
         {
@@ -367,7 +496,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/548",
           "targets": [
-            "https://wordwall.net/resource/20003652"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/20003652"
+            }
           ]
         },
         {
@@ -375,7 +507,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/549",
           "targets": [
-            "https://wordwall.net/resource/20003958"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/20003958"
+            }
           ]
         },
         {
@@ -383,7 +518,10 @@
           "unit": "Review 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/550",
           "targets": [
-            "https://wordwall.net/resource/23400094"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23400094"
+            }
           ]
         },
         {
@@ -391,7 +529,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/573",
           "targets": [
-            "https://quizlet.com/tw/601780948/fun-world-3-unit-1-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/601780948/fun-world-3-unit-1-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -399,7 +540,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/574",
           "targets": [
-            "https://quizlet.com/tw/601781228/fun-world-3-unit-2%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/601781228/fun-world-3-unit-2%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -407,7 +551,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/575",
           "targets": [
-            "https://quizlet.com/tw/601781556/fun-world-3-unit-3%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/601781556/fun-world-3-unit-3%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -415,7 +562,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/576",
           "targets": [
-            "https://quizlet.com/tw/601781827/fun-world-3-unit-4%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/601781827/fun-world-3-unit-4%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -423,7 +573,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/577",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53ef6979e8e001b2eea05"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53ef6979e8e001b2eea05"
+            }
           ]
         },
         {
@@ -431,7 +584,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/578",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53f10e4c04c0022911aba"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53f10e4c04c0022911aba"
+            }
           ]
         },
         {
@@ -439,7 +595,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/579",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53f319c8c6500217669c8"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53f319c8c6500217669c8"
+            }
           ]
         },
         {
@@ -447,7 +606,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/580",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53f49986534002266b4b0"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53f49986534002266b4b0"
+            }
           ]
         },
         {
@@ -455,7 +617,10 @@
           "unit": "Review 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/593",
           "targets": [
-            "https://create.kahoot.it/share/moon-festival/2297d054-6730-4bb0-9777-e8548b884c4b"
+            {
+              "label": "",
+              "url": "https://create.kahoot.it/share/moon-festival/2297d054-6730-4bb0-9777-e8548b884c4b"
+            }
           ]
         },
         {
@@ -463,7 +628,10 @@
           "unit": "Review 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/594",
           "targets": [
-            "https://create.kahoot.it/share/chinese-new-year/3d1de17e-f895-4a5c-a924-4f3f9f6ea0ee"
+            {
+              "label": "",
+              "url": "https://create.kahoot.it/share/chinese-new-year/3d1de17e-f895-4a5c-a924-4f3f9f6ea0ee"
+            }
           ]
         },
         {
@@ -504,7 +672,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/551",
           "targets": [
-            "https://wordwall.net/resource/23662238"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23662238"
+            }
           ]
         },
         {
@@ -512,7 +683,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/552",
           "targets": [
-            "https://wordwall.net/resource/23662656"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23662656"
+            }
           ]
         },
         {
@@ -520,7 +694,10 @@
           "unit": "Review 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/553",
           "targets": [
-            "https://wordwall.net/resource/23663857"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23663857"
+            }
           ]
         },
         {
@@ -528,7 +705,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/554",
           "targets": [
-            "https://wordwall.net/resource/23663156"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23663156"
+            }
           ]
         },
         {
@@ -536,7 +716,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/555",
           "targets": [
-            "https://wordwall.net/resource/23663457"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23663457"
+            }
           ]
         },
         {
@@ -544,7 +727,10 @@
           "unit": "Review 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/556",
           "targets": [
-            "https://wordwall.net/resource/23664298"
+            {
+              "label": "",
+              "url": "https://wordwall.net/resource/23664298"
+            }
           ]
         },
         {
@@ -552,7 +738,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/581",
           "targets": [
-            "https://quizlet.com/tw/600332251/fun-world-4-unit-1-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/600332251/fun-world-4-unit-1-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -560,7 +749,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/582",
           "targets": [
-            "https://quizlet.com/tw/600332636/fun-world-4-unit-2-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/600332636/fun-world-4-unit-2-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -568,7 +760,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/583",
           "targets": [
-            "https://quizlet.com/tw/600098826/fun-world-4-unit-3-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/600098826/fun-world-4-unit-3-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -576,7 +771,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/584",
           "targets": [
-            "https://quizlet.com/tw/600098198/fun-world-4-unit-4-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            {
+              "label": "",
+              "url": "https://quizlet.com/tw/600098198/fun-world-4-unit-4-%E5%96%AE%E5%AD%97%E7%94%9F%E6%B4%BB%E7%94%A8%E8%AA%9E-flash-cards/?i=268wv3&x=1jqt"
+            }
           ]
         },
         {
@@ -584,7 +782,10 @@
           "unit": "Unit 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/585",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53fcb3fcea90023c998ae"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53fcb3fcea90023c998ae"
+            }
           ]
         },
         {
@@ -592,7 +793,10 @@
           "unit": "Unit 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/586",
           "targets": [
-            "https://dashboard.blooket.com/set/60f53fe37fec5600211954bc"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f53fe37fec5600211954bc"
+            }
           ]
         },
         {
@@ -600,7 +804,10 @@
           "unit": "Unit 3",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/587",
           "targets": [
-            "https://dashboard.blooket.com/set/60f54004b6a8bf001bc15aab"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f54004b6a8bf001bc15aab"
+            }
           ]
         },
         {
@@ -608,7 +815,10 @@
           "unit": "Unit 4",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/588",
           "targets": [
-            "https://dashboard.blooket.com/set/60f5401d66b5760023d9f53d"
+            {
+              "label": "",
+              "url": "https://dashboard.blooket.com/set/60f5401d66b5760023d9f53d"
+            }
           ]
         },
         {
@@ -616,7 +826,10 @@
           "unit": "Review 1",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/595",
           "targets": [
-            "https://create.kahoot.it/share/mother-s-day/9b15c41c-825c-4ddf-8bda-44fc0b3aa65e"
+            {
+              "label": "",
+              "url": "https://create.kahoot.it/share/mother-s-day/9b15c41c-825c-4ddf-8bda-44fc0b3aa65e"
+            }
           ]
         },
         {
@@ -624,7 +837,10 @@
           "unit": "Review 2",
           "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/596",
           "targets": [
-            "https://create.kahoot.it/share/summer-activity/b472b03b-35d1-4a9c-b280-ba8534f2aa79"
+            {
+              "label": "",
+              "url": "https://create.kahoot.it/share/summer-activity/b472b03b-35d1-4a9c-b280-ba8534f2aa79"
+            }
           ]
         },
         {
