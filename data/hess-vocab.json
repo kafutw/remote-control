@@ -2,7 +2,7 @@
   "source": "何嘉仁 Fun World（國小英語課本）",
   "via": "hessdigi 數位練習平台 → Wordwall 活動頁的 meta description",
   "note": "只有英文。Wordwall 是英文配圖的活動，沒有中文；有中文的是 Quizlet，但它擋機房 IP（403）。",
-  "fetchedAt": "2026-08-18T05:55:45.847Z",
+  "fetchedAt": "2026-08-18T06:01:12.435Z",
   "books": [
     {
       "book": 1,
@@ -122,11 +122,9 @@
         {
           "unit": "Unit 3",
           "words": [
-            "True",
             "goat",
             "hen",
             "insect",
-            "False",
             "apple"
           ],
           "letters": [],
@@ -140,11 +138,9 @@
             {
               "title": "Fun World 1_U3_反應大挑戰 - True or false",
               "words": [
-                "True",
                 "goat",
                 "hen",
                 "insect",
-                "False",
                 "goat",
                 "apple",
                 "hen"
@@ -280,10 +276,7 @@
             "sun",
             "yellow"
           ],
-          "letters": [
-            "假",
-            "真"
-          ],
+          "letters": [],
           "activities": [
             {
               "title": "Fun World 2_U2_找到夥伴(字母) - 查找匹配項",
@@ -301,10 +294,7 @@
                 "yellow",
                 "sun"
               ],
-              "letters": [
-                "真",
-                "假"
-              ],
+              "letters": [],
               "url": "https://wordwall.net/tc/resource/39498435"
             }
           ]
@@ -502,14 +492,12 @@
         {
           "unit": "Review 1",
           "words": [
-            "Correct",
             "ant",
             "bird",
             "cup",
             "elephant",
             "duck",
             "fan",
-            "Incorrect",
             "cat",
             "book",
             "apple",
@@ -522,14 +510,12 @@
             {
               "title": "Fun World 3 Review 1_A-F單字配對 - Whack-a-mole",
               "words": [
-                "Correct",
                 "ant",
                 "bird",
                 "cup",
                 "elephant",
                 "duck",
                 "fan",
-                "Incorrect",
                 "cat",
                 "book",
                 "apple",
@@ -560,7 +546,7 @@
             "cat",
             "duck",
             "bird",
-            "fish."
+            "fish"
           ],
           "letters": [],
           "activities": [
@@ -592,7 +578,7 @@
                 "duck",
                 "dog",
                 "bird",
-                "fish."
+                "fish"
               ],
               "letters": [],
               "url": "https://wordwall.net/resource/20003652"
@@ -842,7 +828,6 @@
         {
           "unit": "Review 2",
           "words": [
-            "Correct",
             "turtle",
             "up",
             "van",
@@ -850,7 +835,6 @@
             "fox",
             "yellow",
             "zebra",
-            "Incorrect",
             "fish",
             "goat",
             "igloo",
@@ -864,7 +848,6 @@
             {
               "title": "Fun World 4 Review 2_N-Z單字配對 - Whack-a-mole",
               "words": [
-                "Correct",
                 "turtle",
                 "up",
                 "van",
@@ -872,7 +855,6 @@
                 "fox",
                 "yellow",
                 "zebra",
-                "Incorrect",
                 "fish",
                 "goat",
                 "igloo",
@@ -889,5 +871,5 @@
       ]
     }
   ],
-  "totalWords": 203
+  "totalWords": 197
 }

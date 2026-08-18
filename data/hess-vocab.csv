@@ -19,11 +19,9 @@ book,grade,unit,word
 1,小一上,Review 1,dog
 1,小一上,Review 1,egg
 1,小一上,Review 1,fish
-1,小一上,Unit 3,True
 1,小一上,Unit 3,goat
 1,小一上,Unit 3,hen
 1,小一上,Unit 3,insect
-1,小一上,Unit 3,False
 1,小一上,Unit 3,apple
 1,小一上,Unit 4,jet
 1,小一上,Unit 4,kite
@@ -94,14 +92,12 @@ book,grade,unit,word
 3,小二上,Unit 2,dog
 3,小二上,Unit 2,egg
 3,小二上,Unit 2,fish
-3,小二上,Review 1,Correct
 3,小二上,Review 1,ant
 3,小二上,Review 1,bird
 3,小二上,Review 1,cup
 3,小二上,Review 1,elephant
 3,小二上,Review 1,duck
 3,小二上,Review 1,fan
-3,小二上,Review 1,Incorrect
 3,小二上,Review 1,cat
 3,小二上,Review 1,book
 3,小二上,Review 1,apple
@@ -123,7 +119,7 @@ book,grade,unit,word
 3,小二上,Unit 3,cat
 3,小二上,Unit 3,duck
 3,小二上,Unit 3,bird
-3,小二上,Unit 3,fish.
+3,小二上,Unit 3,fish
 3,小二上,Unit 4,jam
 3,小二上,Unit 4,key
 3,小二上,Unit 4,lamp
@@ -186,7 +182,6 @@ book,grade,unit,word
 4,小二下,Unit 4,yo-yo
 4,小二下,Unit 4,zebra
 4,小二下,Unit 4,zoo
-4,小二下,Review 2,Correct
 4,小二下,Review 2,turtle
 4,小二下,Review 2,up
 4,小二下,Review 2,van
@@ -194,7 +189,6 @@ book,grade,unit,word
 4,小二下,Review 2,fox
 4,小二下,Review 2,yellow
 4,小二下,Review 2,zebra
-4,小二下,Review 2,Incorrect
 4,小二下,Review 2,fish
 4,小二下,Review 2,goat
 4,小二下,Review 2,igloo
