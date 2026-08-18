@@ -221,6 +221,16 @@ if (argv.includes("--self-test")) {
     console.error(`✗ 字母與單字要分開\n   實得 ${JSON.stringify(gotABC)}`);
   } else console.error("✓ 字母與單字分開（字母表活動不會被當成單字）");
 
+  // 真假遊戲、對錯遊戲的選項會混進 meta，長得跟單字一模一樣。
+  // 不擋掉，小孩就會背到 True 和 Incorrect —— 而且資料看起來完全正常。
+  const NOISE = '<title>x</title><meta name="description" content="True, goat, hen, False, fish., ' +
+    '&#x771F;, Correct, insect, Incorrect">';
+  const gotNoise = parseWordwall(NOISE);
+  if (JSON.stringify(gotNoise.words) !== JSON.stringify(["goat", "hen", "fish", "insect"])) {
+    bad++;
+    console.error(`✗ 遊戲選項要濾掉\n   實得 ${JSON.stringify(gotNoise.words)}`);
+  } else console.error("✓ 遊戲選項與標點（True／False／Correct／中文／fish.）不會混進單字");
+
   process.exit(bad ? 1 : 0);
 }
 
@@ -291,13 +301,19 @@ function parseWordwall(html) {
   const meta = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i);
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   const items = (meta ? unescapeHtml(meta[1]) : "")
-    .split(/\s*,\s*/).map(w => w.trim()).filter(Boolean);
+    .split(/\s*,\s*/)
+    .map(w => w.trim().replace(/[.,;:!?]+$/, ""))     // "fish." 這種尾巴要削掉
+    .filter(Boolean)
+    // 遊戲的作答按鈕不是單字。真假遊戲、對錯遊戲的選項會混進 meta 裡，
+    // 而它們長得跟單字一模一樣 —— 不擋掉，小孩就會背到 True 和 Incorrect。
+    .filter(w => !/^(true|false|correct|incorrect|yes|no)$/i.test(w))
+    .filter(w => !/[一-鿿]/.test(w));                  // 中文（「真」「假」）同理
   return {
     title: title ? unescapeHtml(title[1]).replace(/\s+/g, " ").trim() : "",
     // 一個字母的是字母表活動（a, b, c…），不是單字。分開放，不要混在一起，
     // 但也不要丟掉 —— 小一上本來就在教字母。
     words: items.filter(w => w.length > 1),
-    letters: items.filter(w => w.length === 1),
+    letters: items.filter(w => w.length === 1 && /^[a-z]$/i.test(w)),
   };
 }
 
