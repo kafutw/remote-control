@@ -372,6 +372,21 @@
   .opt.bad { background: var(--coral); border-color: var(--coral); color: #fff; }
   .opt.dim { opacity: .38; }
 
+  /* 單字題：選項是英文字或圖片，字級要比字母小才排得下 */
+  .opt.word { font-size: var(--fs-head); letter-spacing: .01em; padding: 14px 6px; }
+  .opt.pic { font-family: var(--font); font-size: var(--fs-q); }
+  .qemoji.big { font-size: calc(var(--fs-q) * 1.5); }
+  .qtext.word { font-size: var(--fs-q); letter-spacing: .01em; }
+
+  /* 認識單字：一格一個字，圖＋英文＋中文 */
+  .abcgrid.words { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+  .cell.wordcell { aspect-ratio: auto; padding: 12px 6px 10px; gap: 2px; }
+  .cell .wemoji { font-size: var(--fs-head); line-height: 1.2; }
+  .cell .wen { font-family: var(--abc); font-size: var(--fs-body); font-weight: 700;
+               color: var(--hue); line-height: 1.2; text-align: center; word-break: break-word; }
+  .cell .wzh { font-size: var(--fs-note); color: var(--ink-soft); font-weight: 700; }
+  .cell.known .wzh { color: var(--mint-ink); }
+
   .fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
   .spark { position: absolute; font-size: var(--fs-opt); animation: fly .9s ease-out forwards; }
   @keyframes fly {
@@ -602,12 +617,24 @@
     <div class="goal" id="goal" hidden></div>
 
     <div class="card">
-      <h2><span class="n">1</span>要出什麼題？</h2>
+      <h2><span class="n">1</span>今天練什麼？</h2>
+      <div class="modes three" id="subjects">
+        <button class="mode sel" data-subject="letters"><b>🔤 字母</b><i>ABC 26 個</i></button>
+        <button class="mode" data-subject="w1"><b>1️⃣ 小一單字</b><i>顏色、數字、動物、家人</i></button>
+        <button class="mode" data-subject="w2"><b>2️⃣ 小二單字</b><i>食物、學校、身體、交通</i></button>
+      </div>
+      <div class="sub-h">題型</div>
       <div class="modes" id="kinds">
         <button class="mode sel" data-kind="all"><b>三種都出</b><i>輪流換，練得比較全</i></button>
         <button class="mode" data-kind="listen"><b>🔊 聽聲音</b><i>聽到什麼字母就選它</i></button>
         <button class="mode" data-kind="case"><b>🔠 大寫找小寫</b><i>看 A 選 a</i></button>
         <button class="mode" data-kind="case2"><b>🔡 小寫找大寫</b><i>看 a 選 A</i></button>
+      </div>
+      <div class="modes" id="wkinds" hidden>
+        <button class="mode sel" data-wkind="all"><b>三種都出</b><i>輪流換，練得比較全</i></button>
+        <button class="mode" data-wkind="wpic"><b>🖼️ 看圖選字</b><i>看圖片選英文字</i></button>
+        <button class="mode" data-wkind="wlisten"><b>🔊 聽發音選字</b><i>聽到什麼就選它</i></button>
+        <button class="mode" data-wkind="wread"><b>🔡 看字選圖</b><i>看英文字選圖片</i></button>
       </div>
       <div class="sub-h">出題方式</div>
       <div class="modes" id="modes">
@@ -638,15 +665,15 @@
   <!-- ══ 認識字母 ══ -->
   <section class="screen" id="learn">
     <div class="card">
-      <h2>點一個字母，聽它怎麼念</h2>
+      <h2 id="learnTitle">點一個字母，聽它怎麼念</h2>
       <div class="abcgrid" id="abcgrid"></div>
-      <div class="legend">
+      <div class="legend" id="learnLegend">
         <div><b>🥇</b><span>金牌<i>最近 10 題對 9 題</i></span></div>
         <div><b>🥈</b><span>銀牌<i>對 8 題</i></span></div>
         <div><b>🥉</b><span>銅牌<i>對 7 題</i></span></div>
         <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
       </div>
-      <p class="hint">大寫在上、小寫在下，左上角是這個字母的獎牌。學會了在字母卡上按 ⭐，會記在這台裝置上。有鍵盤的話直接按鍵盤上的字母也可以。</p>
+      <p class="hint" id="learnHint">大寫在上、小寫在下，左上角是這個字母的獎牌。學會了在字母卡上按 ⭐，會記在這台裝置上。有鍵盤的話直接按鍵盤上的字母也可以。</p>
     </div>
     <div class="foot">
       <button class="btn primary big" id="learnBackBtn">回到首頁</button>
@@ -861,16 +888,17 @@
   'use strict';
 
   /* ────────── 資料：26 個字母 ──────────
-     26 個代表單字都取自教育部「國中小基本英語字彙 1200 字」
-     （十二年國教課綱語文領域－英語文 附錄五，加底線的 1200 字子集），
-     挑的是清單裡最具體、能用圖案表達的名詞。
+     代表單字優先對齊何嘉仁 Fun World（小一小二用的教材，官方影片確認的有
+     A=apple、B=book、C=cat、J=jam、K=key、L=lamp、M=mom、T=toy、U=umbrella、V=vest）；
+     其餘字母取自教育部「國中小基本英語字彙 1200 字」裡最具體、能用圖案表達的名詞。
+     註：jam 和 mom 不在教育部 1200 字表內（該表收的是 mother），但何嘉仁教的是這個。
      X 開頭在官方清單裡沒有任何字，所以用字尾有 x 的 box（清單內另有 fox、six、ox）。
      phon = 這個字母常見的發音（自然發音法）
      word / zh / emoji = 代表單字、中文、圖案
      near = 最容易混淆的字母，出選項時優先拿來當干擾項 */
   var LETTERS = [
     { c: 'A', phon: '/æ/',  word: 'apple',      zh: '蘋果',   emoji: '🍎', near: 'EIO' },
-    { c: 'B', phon: '/b/',  word: 'bear',       zh: '熊',     emoji: '🐻', near: 'DPR' },
+    { c: 'B', phon: '/b/',  word: 'book',       zh: '書',     emoji: '📖', near: 'DPR' },
     { c: 'C', phon: '/k/',  word: 'cat',        zh: '貓',     emoji: '🐱', near: 'GKS' },
     { c: 'D', phon: '/d/',  word: 'dog',        zh: '狗',     emoji: '🐶', near: 'BPT' },
     { c: 'E', phon: '/e/',  word: 'egg',        zh: '蛋',     emoji: '🥚', near: 'AIF' },
@@ -878,19 +906,19 @@
     { c: 'G', phon: '/g/',  word: 'grape',      zh: '葡萄',   emoji: '🍇', near: 'CJQ' },
     { c: 'H', phon: '/h/',  word: 'hat',        zh: '帽子',   emoji: '🎩', near: 'NKM' },
     { c: 'I', phon: '/ɪ/',  word: 'ice cream',  zh: '冰淇淋', emoji: '🍦', near: 'LJT' },
-    { c: 'J', phon: '/dʒ/', word: 'juice',      zh: '果汁',   emoji: '🧃', near: 'GIK' },
+    { c: 'J', phon: '/dʒ/', word: 'jam',        zh: '果醬',   emoji: '🫙', near: 'GIK' },
     { c: 'K', phon: '/k/',  word: 'key',        zh: '鑰匙',   emoji: '🔑', near: 'CXH' },
-    { c: 'L', phon: '/l/',  word: 'lion',       zh: '獅子',   emoji: '🦁', near: 'IJT' },
-    { c: 'M', phon: '/m/',  word: 'milk',       zh: '牛奶',   emoji: '🥛', near: 'NWH' },
+    { c: 'L', phon: '/l/',  word: 'lamp',       zh: '檯燈',   emoji: '💡', near: 'IJT' },
+    { c: 'M', phon: '/m/',  word: 'mom',        zh: '媽媽',   emoji: '👩', near: 'NWH' },
     { c: 'N', phon: '/n/',  word: 'nose',       zh: '鼻子',   emoji: '👃', near: 'MHU' },
     { c: 'O', phon: '/ɒ/',  word: 'orange',     zh: '柳橙',   emoji: '🍊', near: 'QUA' },
     { c: 'P', phon: '/p/',  word: 'pig',        zh: '豬',     emoji: '🐷', near: 'BDR' },
     { c: 'Q', phon: '/kw/', word: 'queen',      zh: '皇后',   emoji: '👑', near: 'OGP' },
     { c: 'R', phon: '/r/',  word: 'rabbit',     zh: '兔子',   emoji: '🐰', near: 'PBA' },
     { c: 'S', phon: '/s/',  word: 'sun',        zh: '太陽',   emoji: '☀️', near: 'ZCX' },
-    { c: 'T', phon: '/t/',  word: 'tiger',      zh: '老虎',   emoji: '🐯', near: 'DIF' },
+    { c: 'T', phon: '/t/',  word: 'toy',        zh: '玩具',   emoji: '🧸', near: 'DIF' },
     { c: 'U', phon: '/ʌ/',  word: 'umbrella',   zh: '雨傘',   emoji: '☂️', near: 'VNO' },
-    { c: 'V', phon: '/v/',  word: 'violin',     zh: '小提琴', emoji: '🎻', near: 'UWY' },
+    { c: 'V', phon: '/v/',  word: 'vest',       zh: '背心',   emoji: '🦺', near: 'UWY' },
     { c: 'W', phon: '/w/',  word: 'watermelon', zh: '西瓜',   emoji: '🍉', near: 'VMU' },
     { c: 'X', phon: '/ks/', word: 'box',        zh: '盒子',   emoji: '📦', near: 'KYS',
       note: 'x 通常出現在字尾，像 box、fox、six' },
@@ -902,9 +930,134 @@
   LETTERS.forEach(function (L, i) { IDX[L.c] = i; });
   var ALL = LETTERS.map(function (L) { return L.c; });
 
+  /* ────────── 單字表：小一 / 小二 ──────────
+     g = 1 小一、2 小二，依主題分組，挑的是具體、能用圖案表達的名詞。
+     台灣低年級英語沒有全國統一字表（課綱從小三才有英語，低年級是彈性課程），
+     所以分級是參考 GEPT Kids 主題字表、宜蘭員山國小的一二年級各 50 字，
+     再對照教育部 1200 字挑出來的，不是哪一家出版社的官方清單。 */
+  var WORDS = [
+    // ── 小一：顏色、數字、動物、家人、水果、身邊的東西 ──
+    { w: 'red',    zh: '紅色',   e: '🔴', g: 1, t: '顏色' },
+    { w: 'blue',   zh: '藍色',   e: '🔵', g: 1, t: '顏色' },
+    { w: 'yellow', zh: '黃色',   e: '🟡', g: 1, t: '顏色' },
+    { w: 'green',  zh: '綠色',   e: '🟢', g: 1, t: '顏色' },
+    { w: 'orange', zh: '橘色',   e: '🟠', g: 1, t: '顏色' },
+    { w: 'purple', zh: '紫色',   e: '🟣', g: 1, t: '顏色' },
+    { w: 'black',  zh: '黑色',   e: '⚫', g: 1, t: '顏色' },
+    { w: 'white',  zh: '白色',   e: '⚪', g: 1, t: '顏色' },
+    { w: 'one',    zh: '一', e: '1️⃣', g: 1, t: '數字' },
+    { w: 'two',    zh: '二', e: '2️⃣', g: 1, t: '數字' },
+    { w: 'three',  zh: '三', e: '3️⃣', g: 1, t: '數字' },
+    { w: 'four',   zh: '四', e: '4️⃣', g: 1, t: '數字' },
+    { w: 'five',   zh: '五', e: '5️⃣', g: 1, t: '數字' },
+    { w: 'six',    zh: '六', e: '6️⃣', g: 1, t: '數字' },
+    { w: 'seven',  zh: '七', e: '7️⃣', g: 1, t: '數字' },
+    { w: 'eight',  zh: '八', e: '8️⃣', g: 1, t: '數字' },
+    { w: 'nine',   zh: '九', e: '9️⃣', g: 1, t: '數字' },
+    { w: 'ten',    zh: '十', e: '🔟', g: 1, t: '數字' },
+    { w: 'cat',    zh: '貓',   e: '🐱', g: 1, t: '動物' },
+    { w: 'dog',    zh: '狗',   e: '🐶', g: 1, t: '動物' },
+    { w: 'bird',   zh: '鳥',   e: '🐦', g: 1, t: '動物' },
+    { w: 'fish',   zh: '魚',   e: '🐟', g: 1, t: '動物' },
+    { w: 'pig',    zh: '豬',   e: '🐷', g: 1, t: '動物' },
+    { w: 'cow',    zh: '牛',   e: '🐮', g: 1, t: '動物' },
+    { w: 'duck',   zh: '鴨子', e: '🦆', g: 1, t: '動物' },
+    { w: 'rabbit', zh: '兔子', e: '🐰', g: 1, t: '動物' },
+    { w: 'bear',   zh: '熊',   e: '🐻', g: 1, t: '動物' },
+    { w: 'monkey', zh: '猴子', e: '🐵', g: 1, t: '動物' },
+    { w: 'elephant', zh: '大象', e: '🐘', g: 1, t: '動物' },
+    { w: 'lion',   zh: '獅子', e: '🦁', g: 1, t: '動物' },
+    { w: 'mom',    zh: '媽媽', e: '👩', g: 1, t: '家人' },
+    { w: 'dad',    zh: '爸爸', e: '👨', g: 1, t: '家人' },
+    { w: 'baby',   zh: '寶寶', e: '👶', g: 1, t: '家人' },
+    { w: 'brother', zh: '哥哥、弟弟', e: '👦', g: 1, t: '家人' },
+    { w: 'sister', zh: '姐姐、妹妹', e: '👧', g: 1, t: '家人' },
+    { w: 'grandma', zh: '奶奶、外婆', e: '👵', g: 1, t: '家人' },
+    { w: 'apple',  zh: '蘋果', e: '🍎', g: 1, t: '水果' },
+    { w: 'banana', zh: '香蕉', e: '🍌', g: 1, t: '水果' },
+    { w: 'grape',  zh: '葡萄', e: '🍇', g: 1, t: '水果' },
+    { w: 'strawberry', zh: '草莓', e: '🍓', g: 1, t: '水果' },
+    { w: 'watermelon', zh: '西瓜', e: '🍉', g: 1, t: '水果' },
+    { w: 'book',   zh: '書',   e: '📖', g: 1, t: '身邊的東西' },
+    { w: 'ball',   zh: '球',   e: '⚽', g: 1, t: '身邊的東西' },
+    { w: 'toy',    zh: '玩具', e: '🧸', g: 1, t: '身邊的東西' },
+    { w: 'balloon', zh: '氣球', e: '🎈', g: 1, t: '身邊的東西' },
+
+    // ── 小二：食物、學校用品、身體、交通、天氣、衣物 ──
+    { w: 'rice',   zh: '飯',   e: '🍚', g: 2, t: '食物' },
+    { w: 'noodles', zh: '麵',  e: '🍜', g: 2, t: '食物' },
+    { w: 'bread',  zh: '麵包', e: '🍞', g: 2, t: '食物' },
+    { w: 'egg',    zh: '蛋',   e: '🥚', g: 2, t: '食物' },
+    { w: 'milk',   zh: '牛奶', e: '🥛', g: 2, t: '食物' },
+    { w: 'water',  zh: '水',   e: '💧', g: 2, t: '食物' },
+    { w: 'juice',  zh: '果汁', e: '🧃', g: 2, t: '食物' },
+    { w: 'cake',   zh: '蛋糕', e: '🍰', g: 2, t: '食物' },
+    { w: 'ice cream', zh: '冰淇淋', e: '🍦', g: 2, t: '食物' },
+    { w: 'cookie', zh: '餅乾', e: '🍪', g: 2, t: '食物' },
+    { w: 'hamburger', zh: '漢堡', e: '🍔', g: 2, t: '食物' },
+    { w: 'pizza',  zh: '披薩', e: '🍕', g: 2, t: '食物' },
+    { w: 'pencil', zh: '鉛筆', e: '✏️', g: 2, t: '學校用品' },
+    { w: 'pen',    zh: '原子筆', e: '🖊️', g: 2, t: '學校用品' },
+    { w: 'crayon', zh: '蠟筆', e: '🖍️', g: 2, t: '學校用品' },
+    { w: 'ruler',  zh: '尺',   e: '📏', g: 2, t: '學校用品' },
+    { w: 'scissors', zh: '剪刀', e: '✂️', g: 2, t: '學校用品' },
+    { w: 'notebook', zh: '筆記本', e: '📓', g: 2, t: '學校用品' },
+    { w: 'backpack', zh: '書包', e: '🎒', g: 2, t: '學校用品' },
+    { w: 'chair',  zh: '椅子', e: '🪑', g: 2, t: '學校用品' },
+    { w: 'eye',    zh: '眼睛', e: '👁️', g: 2, t: '身體' },
+    { w: 'ear',    zh: '耳朵', e: '👂', g: 2, t: '身體' },
+    { w: 'nose',   zh: '鼻子', e: '👃', g: 2, t: '身體' },
+    { w: 'mouth',  zh: '嘴巴', e: '👄', g: 2, t: '身體' },
+    { w: 'tooth',  zh: '牙齒', e: '🦷', g: 2, t: '身體' },
+    { w: 'hand',   zh: '手',   e: '✋', g: 2, t: '身體' },
+    { w: 'foot',   zh: '腳',   e: '🦶', g: 2, t: '身體' },
+    { w: 'leg',    zh: '腿',   e: '🦵', g: 2, t: '身體' },
+    { w: 'car',    zh: '汽車', e: '🚗', g: 2, t: '交通' },
+    { w: 'bus',    zh: '公車', e: '🚌', g: 2, t: '交通' },
+    { w: 'bike',   zh: '腳踏車', e: '🚲', g: 2, t: '交通' },
+    { w: 'train',  zh: '火車', e: '🚆', g: 2, t: '交通' },
+    { w: 'plane',  zh: '飛機', e: '✈️', g: 2, t: '交通' },
+    { w: 'boat',   zh: '船',   e: '⛵', g: 2, t: '交通' },
+    { w: 'taxi',   zh: '計程車', e: '🚕', g: 2, t: '交通' },
+    { w: 'truck',  zh: '卡車', e: '🚚', g: 2, t: '交通' },
+    { w: 'sun',    zh: '太陽', e: '☀️', g: 2, t: '天氣' },
+    { w: 'moon',   zh: '月亮', e: '🌙', g: 2, t: '天氣' },
+    { w: 'star',   zh: '星星', e: '⭐', g: 2, t: '天氣' },
+    { w: 'rain',   zh: '雨',   e: '🌧️', g: 2, t: '天氣' },
+    { w: 'cloud',  zh: '雲',   e: '☁️', g: 2, t: '天氣' },
+    { w: 'snow',   zh: '雪',   e: '❄️', g: 2, t: '天氣' },
+    { w: 'rainbow', zh: '彩虹', e: '🌈', g: 2, t: '天氣' },
+    { w: 'hat',    zh: '帽子', e: '🎩', g: 2, t: '衣物' },
+    { w: 'shirt',  zh: '襯衫', e: '👕', g: 2, t: '衣物' },
+    { w: 'shoes',  zh: '鞋子', e: '👟', g: 2, t: '衣物' },
+    { w: 'socks',  zh: '襪子', e: '🧦', g: 2, t: '衣物' },
+    { w: 'umbrella', zh: '雨傘', e: '☂️', g: 2, t: '衣物' }
+  ];
+  var WMAP = {};
+  WORDS.forEach(function (x) { WMAP['w:' + x.w] = x; });
+
+  // 題目的 key：字母是 'A'，單字是 'w:apple'。統計、獎牌、弱點都共用同一套。
+  function isWord(k) { return k.indexOf('w:') === 0; }
+  function hashHue(str) {
+    var h = 0;
+    for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 26;
+    return h;
+  }
+  function itemOf(k) {
+    if (isWord(k)) {
+      var x = WMAP[k];
+      return { isWord: true, word: x.w, zh: x.zh, emoji: x.e, label: x.w,
+               topic: x.t, hue: hashHue(x.w) };
+    }
+    var L = LETTERS[IDX[k]];
+    return { isWord: false, word: L.word, zh: L.zh, emoji: L.emoji, label: k,
+             topic: '', hue: IDX[k] };
+  }
+
   /* ────────── 資料儲存 ────────── */
   var KEY = 'abc_v1';
-  var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', count: 10,
+  var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', wkind: 'all',
+              subject: 'letters', count: 10,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
@@ -953,6 +1106,8 @@
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if (['smart', 'even'].indexOf(db.mode) < 0) db.mode = DEF.mode;
     if (['all', 'listen', 'case', 'case2'].indexOf(db.kind) < 0) db.kind = DEF.kind;
+    if (['all', 'wpic', 'wlisten', 'wread'].indexOf(db.wkind) < 0) db.wkind = DEF.wkind;
+    if (['letters', 'w1', 'w2'].indexOf(db.subject) < 0) db.subject = DEF.subject;
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
     if (['none', 'letter', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
@@ -1208,8 +1363,8 @@
 
   // 真的念不出來：把「聽聲音」題型收起來，目前這題也換一種問法
   function onSpeechBroken() {
-    if (S && S.q && S.q.kind === 'listen' && !lock) {
-      S.q.kind = 'case';
+    if (S && S.q && (S.q.kind === 'listen' || S.q.kind === 'wlisten') && !lock) {
+      S.q.kind = S.q.kind === 'wlisten' ? 'wpic' : 'case';
       renderQuestion(S.q);
       paintOptions();
     }
@@ -1280,6 +1435,15 @@
   function sayFull(c, delay, onDone) {
     speak([[lower(c), 1], [letterOf(c).word, 1.25]], delay, onDone);
   }
+  // 題目要念什麼：字母題念字母，單字題念那個單字
+  function sayItem(k, delay, onDone) {
+    if (isWord(k)) speak([[itemOf(k).word, 1.15]], delay, onDone);
+    else sayLetter(k, delay, onDone);
+  }
+  function sayItemFull(k, delay, onDone) {
+    if (isWord(k)) speak([[itemOf(k).word, 1.15]], delay, onDone);
+    else sayFull(k, delay, onDone);
+  }
   function hushSpeech() {
     if (!canSpeak) return;
     try { window.speechSynthesis.cancel(); } catch (e) {}
@@ -1338,7 +1502,7 @@
     return Object.keys(days).length;
   }
 
-  // 26 個字母一律全練，只更新開始鈕上的題數
+  // 題庫一律全練，只更新開始鈕上的題數
   function syncStart() {
     $('startBtn').textContent = '開始測驗（' + db.count + ' 題）🚀';
   }
@@ -1356,6 +1520,18 @@
   segment('counts', function (m) { db.count = Number(m.dataset.count); syncStart(); });
   segment('modes', function (m) { db.mode = m.dataset.mode; });
   segment('kinds', function (m) { db.kind = m.dataset.kind; });
+  segment('wkinds', function (m) { db.wkind = m.dataset.wkind; });
+  segment('subjects', function (m) { db.subject = m.dataset.subject; syncSubject(); });
+
+  // 換科目：題型按鈕換一組，開始鈕和「先認識」的字也跟著改
+  function syncSubject() {
+    var w = wordMode();
+    $('kinds').hidden = w;
+    $('wkinds').hidden = !w;
+    $('learnBtn').textContent = w ? '先認識單字 🖼️' : '先認識字母 🔤';
+    $('subtitle').textContent = SUBJECT_NAME[db.subject] + ' ・ ' + db.count + ' 題';
+    syncStart();
+  }
   segment('rates', function (m) { db.rate = Number(m.dataset.rate); tryVoice(); });
   segment('pitches', function (m) { db.pitch = Number(m.dataset.pitch); tryVoice(); });
   segment('rights', function (m) { db.sayOnRight = m.dataset.right; });
@@ -1399,6 +1575,11 @@
   /* ────────── 認識字母 ────────── */
   var cells = [];
   function buildGrid() {
+    if (wordMode()) return buildWordGrid();
+    $('learnTitle').textContent = '點一個字母，聽它怎麼念';
+    $('learnHint').textContent = '大寫在上、小寫在下，左上角是這個字母的獎牌。' +
+      '學會了在字母卡上按 ⭐，會記在這台裝置上。有鍵盤的話直接按鍵盤上的字母也可以。';
+    $('abcgrid').className = 'abcgrid';
     var box = $('abcgrid');
     box.innerHTML = '';
     cells = [];
@@ -1418,13 +1599,46 @@
   }
   function paintGrid() {
     cells.forEach(function (b, i) {
-      var c = LETTERS[i].c;
+      var c = b.dataset.key || LETTERS[i].c;
       b.classList.toggle('known', db.known.indexOf(c) >= 0);
       var medal = medalOf(c);
       b.querySelector('.mk').innerHTML = medal
         ? '<span class="mark cup">' + medal + '</span>'
         : (letterRisk(c) >= 0.25 ? '<span class="mark warn">●</span>' : '');
     });
+  }
+
+  // 單字模式的「認識單字」：一格一個字，點了就念
+  function buildWordGrid() {
+    $('learnTitle').textContent = '點一個單字，聽它怎麼念';
+    $('learnHint').textContent = '左上角是這個字的獎牌。學會了按一下 ⭐ 記起來，' +
+      '紀錄存在這台裝置上。';
+    var box = $('abcgrid');
+    box.className = 'abcgrid words';
+    box.innerHTML = '';
+    cells = [];
+    subjectPool().forEach(function (k) {
+      var it = itemOf(k);
+      var b = document.createElement('button');
+      b.className = 'cell wordcell';
+      b.style.setProperty('--hue', colorOf(it.hue));
+      b.dataset.key = k;
+      b.setAttribute('aria-label', it.word + ' ' + it.zh);
+      b.innerHTML = '<span class="star">⭐</span><span class="mk"></span>' +
+        '<span class="wemoji">' + it.emoji + '</span>' +
+        '<span class="wen">' + it.word + '</span>' +
+        '<span class="wzh">' + it.zh + '</span>';
+      b.addEventListener('click', function () {
+        unlockSpeech();
+        sayItem(k);
+        var i = db.known.indexOf(k);
+        if (i >= 0) db.known.splice(i, 1); else { db.known.push(k); sparks('⭐'); }
+        save(); paintGrid();
+      });
+      box.appendChild(b);
+      cells.push(b);
+    });
+    paintGrid();
   }
 
   var cur = 'A';
@@ -1476,18 +1690,36 @@
   var KIND_LABEL = {
     listen: '🔊 聽聲音，這是哪個字母？',
     case:   '🔠 大寫的朋友是哪個小寫？',
-    case2:  '🔡 小寫的朋友是哪個大寫？'
+    case2:  '🔡 小寫的朋友是哪個大寫？',
+    wpic:   '🖼️ 這是哪一個字？',
+    wlisten:'🔊 聽聲音，這是哪一個字？',
+    wread:  '🔡 這個字是哪一張圖？'
   };
+  var SUBJECT_NAME = { letters: 'ABC 字母', w1: '小一單字', w2: '小二單字' };
+
+  function wordMode() { return db.subject !== 'letters'; }
+  // 這次要練的題庫：字母 26 個，或某一個年級的單字
+  function subjectPool() {
+    if (!wordMode()) return ALL.slice();
+    var g = db.subject === 'w1' ? 1 : 2;
+    return WORDS.filter(function (x) { return x.g === g; })
+                .map(function (x) { return 'w:' + x.w; });
+  }
   var S = null;
 
-  // 這個 App 只練字母本身：聽發音、大寫找小寫、小寫找大寫。
-  // 不考拼單字 —— 那是認得整個字，不是認字母。
+  // 字母只練字母本身（聽發音、大小寫互找），不考拼單字；
+  // 單字模式則是看圖選字、聽發音選字、看字選圖。
   function kindsAvailable() {
-    var ks = db.kind === 'all' ? ['listen', 'case', 'case2'] : [db.kind];
-    // 這台裝置念不出聲音就別出「聽聲音」，不然小朋友會卡住
+    var ks;
+    if (wordMode()) {
+      ks = db.wkind === 'all' ? ['wpic', 'wlisten', 'wread'] : [db.wkind];
+    } else {
+      ks = db.kind === 'all' ? ['listen', 'case', 'case2'] : [db.kind];
+    }
+    // 這台裝置念不出聲音就別出聽力題，不然小朋友會卡住
     if (!speechUsable()) {
-      ks = ks.filter(function (k) { return k !== 'listen'; });
-      if (!ks.length) ks = ['case', 'case2'];
+      ks = ks.filter(function (k) { return k !== 'listen' && k !== 'wlisten'; });
+      if (!ks.length) ks = wordMode() ? ['wpic', 'wread'] : ['case', 'case2'];
     }
     return ks;
   }
@@ -1519,13 +1751,20 @@
     return { c: c, kind: ks[Math.floor(Math.random() * ks.length)] };
   }
 
-  // 干擾項先用最容易混淆的字母（b/d/p、m/n、u/v/w…），不夠再隨機補
+  // 干擾項：字母用最容易混淆的（b/d/p、m/n、u/v/w…），
+  // 單字先用同一個主題的（顏色配顏色、動物配動物），不夠再隨機補
   function makeOptions(c) {
     var set = [];
-    function add(x) { if (x !== c && set.indexOf(x) < 0 && IDX[x] !== undefined) set.push(x); }
-    shuffle(letterOf(c).near.split('')).forEach(add);
-    shuffle(S.pool.slice()).forEach(add);
-    shuffle(ALL.slice()).forEach(add);
+    function add(x) { if (x !== c && set.indexOf(x) < 0) set.push(x); }
+    if (isWord(c)) {
+      var topic = itemOf(c).topic;
+      shuffle(S.pool.filter(function (k) { return itemOf(k).topic === topic; })).forEach(add);
+      shuffle(S.pool.slice()).forEach(add);
+    } else {
+      shuffle(letterOf(c).near.split('')).filter(function (x) { return IDX[x] !== undefined; }).forEach(add);
+      shuffle(S.pool.slice()).forEach(add);
+      shuffle(ALL.slice()).forEach(add);
+    }
     return shuffle([c, set[0], set[1], set[2]]);
   }
 
@@ -1549,10 +1788,10 @@
     };
     // 先記下開始前的獎牌，結算時才知道這一輪升了哪幾個字母
     S.medalsBefore = {};
-    ALL.forEach(function (c) { S.medalsBefore[c] = medalOf(c); });
+    subjectPool().forEach(function (c) { S.medalsBefore[c] = medalOf(c); });
     $('subtitle').textContent = review
-      ? '錯字母複習 ・ ' + total + ' 題'
-      : letterLabel(letters) + ' ・ ' + total + ' 題';
+      ? '複習錯的 ・ ' + total + ' 題'
+      : SUBJECT_NAME[db.subject] + ' ・ ' + total + ' 題';
     renderDots();
     $('qcard').className = 'qcard';
     $('streakTxt').textContent = '';
@@ -1614,10 +1853,32 @@
   }
 
   function renderQuestion(q) {
-    var L = letterOf(q.c);
-    $('qcard').style.setProperty('--hue', colorOf(IDX[q.c]));
+    var it = itemOf(q.c);
+    $('qcard').style.setProperty('--hue', colorOf(it.hue));
     $('qkind').textContent = KIND_LABEL[q.kind];
     var body = $('qbody');
+    if (q.kind === 'wpic') {
+      body.innerHTML = '<div class="qemoji big">' + it.emoji + '</div>' +
+        '<div class="qzh">' + it.zh + '</div>';
+      return;
+    }
+    if (q.kind === 'wread') {
+      body.innerHTML = '<div class="qtext word">' + it.word + '</div>';
+      sayItem(q.c, 150);
+      return;
+    }
+    if (q.kind === 'wlisten') {
+      body.innerHTML = '<button class="speaker" id="playBtn" aria-label="再聽一次">🔊</button>' +
+        '<button class="btn ghost" id="noHearBtn" style="margin-top:10px">聽不到？換個問法</button>';
+      $('playBtn').addEventListener('click', function () { sayItem(q.c); });
+      $('noHearBtn').addEventListener('click', function () {
+        q.kind = 'wpic';
+        renderQuestion(q); paintOptions();
+      });
+      sayItem(q.c, 150);
+      return;
+    }
+    var L = letterOf(q.c);
     if (q.kind === 'listen') {
       body.innerHTML = '<button class="speaker" id="playBtn" aria-label="再聽一次">🔊</button>' +
         '<button class="btn ghost" id="noHearBtn" style="margin-top:10px">聽不到？換個問法</button>';
@@ -1635,14 +1896,20 @@
     }
   }
 
-  // 題目給大寫就選小寫，給小寫就選大寫
-  function optionFace(c, kind) { return kind === 'case' ? lower(c) : c.toUpperCase(); }
+  // 題目給大寫就選小寫，給小寫就選大寫；單字題選項則是英文字或圖片
+  function optionFace(c, kind) {
+    if (kind === 'wread') return itemOf(c).emoji;          // 看字選圖
+    if (kind === 'wpic' || kind === 'wlisten') return itemOf(c).word;
+    return kind === 'case' ? lower(c) : c.toUpperCase();
+  }
 
   function paintOptions() {
+    var kind = S.q.kind;
+    var wordFace = (kind === 'wpic' || kind === 'wlisten');
     document.querySelectorAll('.opt').forEach(function (btn, i) {
       var c = S.opts[i];
-      btn.className = 'opt';
-      btn.textContent = optionFace(c, S.q.kind);
+      btn.className = 'opt' + (wordFace ? ' word' : '') + (kind === 'wread' ? ' pic' : '');
+      btn.textContent = optionFace(c, kind);
       btn.dataset.val = c;
       btn.disabled = false;
     });
@@ -1687,12 +1954,15 @@
   }
 
   function showAnswer(q, note) {
-    var L = letterOf(q.c);
-    $('qbody').innerHTML = '<div class="qtext"><b class="ans">' + q.c + ' ' + lower(q.c) +
-      '</b></div><div class="qemoji">' + L.emoji + '</div>' +
-      '<div class="qzh">' + L.word + '　' + L.zh + '</div>';
+    var it = itemOf(q.c);
+    $('qbody').innerHTML = it.isWord
+      ? '<div class="qtext word"><b class="ans">' + it.word + '</b></div>' +
+        '<div class="qemoji">' + it.emoji + '</div><div class="qzh">' + it.zh + '</div>'
+      : '<div class="qtext"><b class="ans">' + q.c + ' ' + lower(q.c) + '</b></div>' +
+        '<div class="qemoji">' + it.emoji + '</div>' +
+        '<div class="qzh">' + it.word + '　' + it.zh + '</div>';
     $('streakTxt').textContent = note;
-    sayFull(q.c, 320);   // 讓答錯的音效先響完
+    sayItemFull(q.c, 320);   // 讓答錯的音效先響完
     S.canSkip = false;
     clearReveal();
     skipTimer = setTimeout(function () {
@@ -1760,8 +2030,8 @@
       if (db.sayOnRight === 'none' || !speakable()) {
         setTimeout(go, 700);
       } else {
-        if (db.sayOnRight === 'full') sayFull(q.c, 240, go);
-        else sayLetter(q.c, 240, go);
+        if (db.sayOnRight === 'full') sayItemFull(q.c, 240, go);
+        else sayItem(q.c, 240, go);
         setTimeout(go, 3000);
       }
     } else {
@@ -1869,12 +2139,14 @@
     if (!S.wrongList.length) {
       box.innerHTML = '<div class="empty">' + (done ? '這一輪沒有答錯，太棒了！🎊' : '還沒有作答紀錄') + '</div>';
     } else {
-      S.wrongList.forEach(function (c) {
-        var L = letterOf(c);
+      S.wrongList.forEach(function (k) {
+        var it = itemOf(k);
         var el = document.createElement('span');
         el.className = 'wchip';
-        el.innerHTML = '<u>' + c + ' ' + lower(c) + '</u>' + L.emoji + ' ' + L.word +
-                       '<small>' + L.zh + '</small>';
+        el.innerHTML = it.isWord
+          ? '<u>' + it.word + '</u>' + it.emoji + '<small>' + it.zh + '</small>'
+          : '<u>' + k + ' ' + lower(k) + '</u>' + it.emoji + ' ' + it.word +
+            '<small>' + it.zh + '</small>';
         box.appendChild(el);
       });
     }
@@ -1890,9 +2162,9 @@
   // 這一輪讓哪幾個字母升級了？只報進步，不報退步
   function renderLevelUp() {
     var ups = [];
-    ALL.forEach(function (c) {
+    Object.keys(S.medalsBefore).forEach(function (c) {
       var before = S.medalsBefore[c], after = medalOf(c);
-      if (after && rankOf(after) > rankOf(before)) ups.push({ c: c, icon: after });
+      if (after && rankOf(after) > rankOf(before)) ups.push({ c: itemOf(c).label, icon: after });
     });
     var el = $('rLevel');
     if (!ups.length) { el.hidden = true; return; }
@@ -1985,7 +2257,7 @@
     });
 
     // 哪幾個字母最熟 / 最需要加強
-    var rows = ALL.map(function (c) {
+    var rows = subjectPool().map(function (c) {
       var s = letterStat(c);
       return { c: c, n: s.n, rate: s.rate, w: s.w };
     }).filter(function (x) { return x.n > 0; });
@@ -2008,11 +2280,12 @@
       var pct = Math.round(x.rate * 100);
       // 練不到 3 題就先不下判斷，用灰色表示「資料還不夠」
       var cls = x.n < 3 ? 'thin' : pct >= 80 ? 'hi' : pct >= 60 ? 'mid' : '';
-      var L = letterOf(x.c);
+      var it = itemOf(x.c);
       var row = document.createElement('div');
       row.className = 'wrow';
-      row.innerHTML = '<span class="q">' + x.c + ' ' + lower(x.c) +
-          '<small>' + L.word + '</small></span>' +
+      row.innerHTML = '<span class="q">' +
+          (it.isWord ? it.emoji + ' ' + it.word : x.c + ' ' + lower(x.c) + '<small>' + it.word + '</small>') +
+          '</span>' +
         '<span class="t"><i class="' + cls + '" style="width:' + pct + '%"></i></span>' +
         '<span class="p ' + cls + '">' + pct + '%<small>' + x.n + ' 題</small></span>';
       box.appendChild(row);
@@ -2188,8 +2461,7 @@
   $('startBtn').addEventListener('click', function () {
     initAudioIfOn();   // 趁著這個手勢把音訊解鎖
     unlockSpeech();    // 語音也一樣，只有真的手勢裡才解得開
-    picked = ALL.slice();
-    db.letters = picked.slice();
+    picked = subjectPool();
     save();
     startUseClock();
     startGame(picked);
@@ -2197,7 +2469,7 @@
   $('reviewBtn').addEventListener('click', function () {
     initAudioIfOn(); unlockSpeech();
     startUseClock();
-    startGame(picked.length ? picked : db.letters.slice(), { pool: db.lastWrong.slice() });
+    startGame(subjectPool(), { pool: db.lastWrong.slice() });
   });
 
   var speechUnlocked = false;
@@ -2223,6 +2495,12 @@
   document.querySelectorAll('#kinds .mode').forEach(function (m) {
     m.classList.toggle('sel', m.dataset.kind === db.kind);
   });
+  document.querySelectorAll('#wkinds .mode').forEach(function (m) {
+    m.classList.toggle('sel', m.dataset.wkind === db.wkind);
+  });
+  document.querySelectorAll('#subjects .mode').forEach(function (m) {
+    m.classList.toggle('sel', m.dataset.subject === db.subject);
+  });
   document.querySelectorAll('#rates .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.rate) === db.rate);
   });
@@ -2242,6 +2520,7 @@
     window.speechSynthesis.addEventListener('voiceschanged', function () { pickVoice(); syncSpeak(); });
   }
 
+  syncSubject();
   refreshSetup();
   renderUseHint();
   if (db.breakUntil > Date.now()) showBreak();   // 關掉重開也繞不過去
