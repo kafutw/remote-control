@@ -92,6 +92,37 @@ node tools/ma-analysis.mjs 2330.csv --ma 240     # 年線
 
 `ma-analysis.mjs` 也吃你自己準備的 CSV，只要有「日期」和「收盤價」兩欄就行（證交所、Google 試算表、券商匯出的格式都可以，民國年也認得）。它會把**假跌破**（幾天內站回）和**有效跌破**（連續 3 天以上收在均線下）分開統計。
 
+### 🔤 何嘉仁 Fun World 單字
+
+小孩的英語課本（何嘉仁國小英語 Fun World 第 1～4 冊＝小一上～小二下）的單字，
+抓下來放在 [`data/hess-vocab.json`](./data/hess-vocab.json) 與 `.csv`，
+每個單元附著來源網址可回查；各單元在數位練習平台上的連結另存
+[`data/hess-sources.json`](./data/hess-sources.json)。
+
+- [`tools/fetch-hess-vocab.mjs`](./tools/fetch-hess-vocab.mjs)：`--self-test` 離線驗解析規則、`--probe` 只探測不寫檔
+- [`.github/workflows/hess-vocab.yml`](./.github/workflows/hess-vocab.yml)：push 就跑。跟行情同理 —— 沙盒連不到 hess.com.tw（proxy 回 CONNECT 403），Actions 的 runner 沒有限制
+
+**抓到什麼**：四冊 197 筆、去重 56 個單字。結構是字母關鍵字，小一走一遍 A–Z
+（apple, book, cat…），小二換第二組再走一遍（ant, bird, cup…）。
+另有 8 份 Kahoot 節慶複習（萬聖節、聖誕節、復活節、端午、中秋、過年、母親節、暑假），
+約 30 個節慶詞，過年那份還帶中文。
+
+**抓不到什麼**（這段是重點，免得下次重走）：
+
+| 來源 | 內容 | 從 runner 連的結果 |
+|---|---|---|
+| Wordwall | 只有字母與單字 | ✅ 單字就在 `<meta name="description">` |
+| Kahoot | 節慶題庫 | ✅ `play.kahoot.it/rest/kahoots/{uuid}` 回完整 JSON |
+| Quizlet | **單字＋生活用語** | ❌ 403 Captcha，一般頁／嵌入頁／webapi 全擋 |
+| Blooket | **單字＋生活用語** | ❌ 403 Cloudflare，api／dashboard／play 全擋 |
+| CDOnline | 只有音軌清單 | ✅ 通，但一個單字都沒有 |
+| AI 小幫手 | 提示詞產生器 | ✅ 通，但提示詞不在 HTML 裡 |
+
+所以**沒有中文、也沒有「Good morning」那類生活用語** —— 有句子的兩家都在
+Cloudflare 後面，而且是同一種擋法，不是端點沒找對。DigiLink 內部有「文法句型」
+這個分類，但 32 個 Wordwall 活動全是字母／單字，一個句型活動都沒有。
+這兩塊要補，只能從課本本身來。
+
 ### 📡 行情資料管線
 
 執行 Claude 的環境擋掉了幾乎所有行情來源（Yahoo Finance、證交所、FinMind、Alpha Vantage…），
