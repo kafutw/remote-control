@@ -173,6 +173,17 @@ if (argv.includes("--self-test")) {
     console.error(`✗ DigiLink 單元連結\n   預期 ${JSON.stringify(wantLinks)}\n   實得 ${JSON.stringify(gotLinks)}`);
   } else console.error("✓ DigiLink 單元連結（平台歸屬、站內相對路徑）");
 
+  // 網址裡的 &amp; 不還原會抓成 404 或抓到別組單字 —— 而且看起來一切正常。
+  const SUB = '<a href="https://quizlet.com/tw/601778996/fun-world-1-unit-1-flash-cards/?i=268wv3&amp;x=1jqt" ' +
+    'class="btn">前往</a> <link href="https://use.fontawesome.com/releases/v5.0.9/css/all.css" /> ' +
+    '<a href="/DigiLink/05/16">回上頁</a>';
+  const wantTargets = ["https://quizlet.com/tw/601778996/fun-world-1-unit-1-flash-cards/?i=268wv3&x=1jqt"];
+  const gotTargets = extractTargets(SUB);
+  if (JSON.stringify(gotTargets) !== JSON.stringify(wantTargets)) {
+    bad++;
+    console.error(`✗ 練習網址\n   預期 ${JSON.stringify(wantTargets)}\n   實得 ${JSON.stringify(gotTargets)}`);
+  } else console.error("✓ 練習網址（還原 &amp;、濾掉 CDN 與站內連結）");
+
   process.exit(bad ? 1 : 0);
 }
 
@@ -202,6 +213,27 @@ function extractUnitLinks(html, base) {
   return out;
 }
 
+/** 只還原實體，不動標籤 —— 網址裡的 &amp; 不還原會抓成 404。 */
+function unescapeHtml(s) {
+  return s.replace(/&(#?\w+);/g, (m, e) => ENTITIES[e] ?? (e[0] === "#" ? String.fromCharCode(+e.slice(1)) : m));
+}
+
+/**
+ * 站內頁 /DigiLink/05/16/557 → 真正的練習網址。第四次探測看到的樣子：
+ *   Quizlet  → https://quizlet.com/tw/601778996/fun-world-1-unit-1-…-flash-cards/?i=…&x=…
+ *   Wordwall → https://wordwall.net/resource/33782827（一頁可能有好幾個活動）
+ *   Blooket  → https://dashboard.blooket.com/set/60f14ac59933c3001b7ad06b
+ *   Kahoot   → https://create.kahoot.it/share/halloween-r1/…
+ * 頁面本身沒有 iframe，就是一顆按鈕連出去，所以抓站外網址就好。
+ */
+function extractTargets(html) {
+  // 樣式表、字型、社群按鈕不是練習網址。這條 regex 直接寫在這裡而不抽成常數，
+  // 因為 const 不會提升，而自我測試在檔案更前面就會呼叫這支函式。
+  const noise = /fontawesome|bootstrap|jquery|googleapis|gstatic|w3\.org|schema\.org|facebook|line\.me/i;
+  const urls = [...html.matchAll(/https?:\/\/(?!\w*\.?hess\.com\.tw)[^"'\s<>]+/gi)].map(m => unescapeHtml(m[0]));
+  return [...new Set(urls)].filter(u => !noise.test(u));
+}
+
 /** DigiLink 頁面上「數位練習平台」下一行就是教材名（Fun World 1、Super Fun 1…）。 */
 function bookLabel(text) {
   const lines = text.split("\n");
@@ -213,38 +245,36 @@ const isFunWorld = label => /^Fun World\s*[1-4]$/i.test(label);
 
 // ── 探測模式：先看清楚長什麼樣，再談解析 ──────────────────────────────
 if (probe) {
-  // 第三次探測（同日）：連結的形狀弄清楚了，接著往下一層 ——
-  // /DigiLink/05/16/{頁} 這種站內頁點下去是轉去 Wordwall／Quizlet，
-  // 還是把練習嵌在自己頁面上（iframe），決定單字要從哪裡撈。
-  const FW1 = "https://hessdigi.hess.com.tw/DigiLink/05/16";
+  // 第四次探測看到：站內頁 /DigiLink/05/16/557 裡直接寫著
+  //   https://quizlet.com/tw/601778996/fun-world-1-unit-1-單字生活用語-flash-cards/
+  // 那組就是「Fun World 1 Unit 1 單字＋生活用語」，英中對照，正是要的東西。
+  // 剩下唯一的問題：Quizlet 認不認 runner 的機房 IP、單字在不在 HTML 裡。
+  // 三種取法各試一次 —— 一般頁、嵌入頁、以及網站自己在用的 JSON API。
+  const SET = "601778996";
+  const tries = [
+    ["一般頁", `https://quizlet.com/tw/${SET}/fun-world-1-unit-1-flash-cards/`],
+    ["嵌入頁", `https://quizlet.com/${SET}/flashcards/embed`],
+    ["JSON API", `https://quizlet.com/webapi/3.4/studiable-item-documents` +
+      `?filters%5BstudiableContainerId%5D=${SET}&filters%5BstudiableContainerType%5D=1&perPage=200`],
+    ["Wordwall", "https://wordwall.net/resource/33599817"],
+  ];
 
-  const res = await get(FW1);
-  const links = extractUnitLinks(res.body, FW1);
-  console.log(`── Fun World 1 的單元連結（${links.length} 個）──`);
-  for (const l of links) console.log(`  ${l.platform.padEnd(10)} ${l.unit.padEnd(10)} ${l.href}`);
+  for (const [name, url] of tries) {
+    const r = await get(url);
+    const text = r.ok ? toText(r.body) : "";
+    console.log(`\n${"═".repeat(72)}\n${name}　${url}`);
+    console.log(`  HTTP ${r.status}${r.error ? "  " + r.error : ""}  ${r.body.length} bytes  text ${text.length} chars`);
+    if (!r.ok) { console.log("  " + r.body.slice(0, 300).replace(/\s+/g, " ")); await sleep(1500); continue; }
 
-  // 每個平台各挖一個單元。單字有沒有在 HTML 裡、那些站認不認 runner 的 IP，
-  // 是兩件不同的事，只有真的抓一次才知道。
-  const seen = new Set();
-  for (const l of links) {
-    if (seen.has(l.platform) || /AI|提示詞/.test(l.platform)) continue;
-    seen.add(l.platform);
-    const sub = await get(l.href);
-    const text = sub.ok ? toText(sub.body) : "";
-    console.log(`\n${"═".repeat(72)}\n${l.platform} ${l.unit}　${l.href}`);
-    console.log(`  HTTP ${sub.status}${sub.error ? "  " + sub.error : ""}  html ${sub.body.length} bytes  text ${text.length} chars`);
-    if (!sub.ok) continue;
-
-    const frames = [...sub.body.matchAll(/<iframe[^>]*src=["']([^"']+)["']/gi)].map(m => m[1]);
-    console.log(`  iframe：${frames.length ? frames.join("  ") : "無"}`);
-    const ext = [...new Set([...sub.body.matchAll(/https?:\/\/(?!\w*\.?hess\.com\.tw)[^"'\s<>]+/gi)].map(m => m[0]))]
-      .filter(u => !/fontawesome|bootstrap|jquery|googleapis|gstatic|w3\.org/i.test(u));
-    console.log(`  站外網址（${ext.length} 個，最多印 12）：`);
-    ext.slice(0, 12).forEach(u => console.log("    " + u));
+    // 這類站多半把內容塞在 HTML 裡的 JSON，不在可見文字上。
+    for (const key of ["word", "definition", "cardSides", "studiableItem", "terms", "activityContent"]) {
+      const at = r.body.indexOf(`"${key}"`);
+      if (at >= 0) console.log(`  含 "${key}" @${at}：${r.body.slice(at, at + 260).replace(/\s+/g, " ")}`);
+    }
     console.log(`  直接解析：${extractUnits(text).reduce((n, u) => n + u.words.length, 0)} 個字`);
-    console.log("  ── 可見文字（前 800 字）──");
-    console.log(text.slice(0, 800).split("\n").map(x => "  | " + x).join("\n"));
-    await sleep(1000);
+    console.log("  ── 可見文字（前 900 字）──");
+    console.log(text.slice(0, 900).split("\n").map(x => "  | " + x).join("\n"));
+    await sleep(1500);
   }
 
   console.log("\n看完再決定單字要從哪裡撈。");
@@ -264,7 +294,18 @@ for (const url of DIGI) {
   const n = Number(label.match(/(\d)$/)[1]);
   const meta = BOOKS[n - 1];
   const links = extractUnitLinks(res.body, url);
-  console.error(`✓ ${label}（${meta.grade}）${links.length} 個練習連結　${url}`);
+
+  // 再往下一層：站內頁裡才有真正的練習網址（Quizlet／Wordwall／Blooket／Kahoot）。
+  // AI 小幫手是提示詞產生器，沒有單字，跳過省請求。
+  for (const l of links) {
+    if (/AI|提示詞/.test(l.platform)) continue;
+    const sub = await get(l.href);
+    if (sub.ok) l.targets = extractTargets(sub.body);
+    await sleep(500);
+  }
+
+  const withTarget = links.filter(l => l.targets?.length).length;
+  console.error(`✓ ${label}（${meta.grade}）${links.length} 個單元連結，其中 ${withTarget} 個問到了練習網址　${url}`);
   sources.books.push({ book: n, grade: meta.grade, label, digiUrl: url, links });
   await sleep(600);
 }

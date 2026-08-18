@@ -80,10 +80,10 @@ jobs:
               const d = require("./data/hess-sources.json");
               console.log("抓於", d.fetchedAt);
               for (const b of d.books) {
-                console.log("  ✓", b.grade, b.label, "—", b.links.length, "個練習連結", b.digiUrl);
-                const byHost = {};
-                for (const l of b.links) (byHost[l.host] ||= []).push(l.label);
-                for (const [h, us] of Object.entries(byHost)) console.log("      ", h, ":", us.join(", "));
+                console.log("  ✓", b.grade, b.label, "—", b.links.length, "個單元連結", b.digiUrl);
+                const by = {};
+                for (const l of b.links) (by[l.platform] ||= []).push(l.unit + (l.targets?.length ? "" : "（沒問到網址）"));
+                for (const [pf, us] of Object.entries(by)) console.log("      ", pf, ":", us.join(", "));
               }
             '
           fi
