@@ -390,7 +390,10 @@
   .qtext.word { font-size: var(--fs-q); letter-spacing: .01em; }
   .qtext.zh { font-family: var(--font); font-size: var(--fs-q); font-weight: 800; }
   .qtext.cloze { letter-spacing: .12em; }
-  .qtext.cloze .blank { color: var(--coral-ink); border-bottom: 4px solid var(--coral); }
+  .qtext.cloze .blank {
+    display: inline-block; width: .62em; border-bottom: .09em solid var(--coral);
+    margin: 0 .04em;
+  }
   .qtext.cloze .sp { padding: 0 .18em; }
   .opt.letter { font-size: var(--fs-opt); }
   .qzh.bpmf, .wzh.bpmf { line-height: 1.9; }
@@ -2011,7 +2014,7 @@
     if (q.kind === 'wcloze') {
       var w = it.word, html = '';
       for (var i = 0; i < w.length; i++) {
-        html += (i === q.at) ? '<span class="blank">＿</span>'
+        html += (i === q.at) ? '<span class="blank">&nbsp;</span>'
                              : (w.charAt(i) === ' ' ? '<span class="sp"> </span>' : w.charAt(i));
       }
       body.innerHTML = '<div class="qemoji">' + it.emoji + '</div>' +
