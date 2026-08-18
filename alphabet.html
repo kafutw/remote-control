@@ -217,8 +217,7 @@
     font-size: var(--fs-note); font-weight: 800; color: var(--ink-soft);
     margin: 14px 2px 8px; letter-spacing: .04em;
   }
-  .sub-h:first-of-type { margin-top: 0; }
-  #wordSetup .sub-h:first-of-type { margin-top: 14px; }
+  .card > .sub-h:first-of-type { margin-top: 0; }
 
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .modes.three { grid-template-columns: repeat(3, 1fr); }
@@ -234,6 +233,21 @@
   .mode b { display: block; font-size: var(--fs-body); font-weight: 800; }
   .mode i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); margin-top: 3px; }
   .mode.sel i { color: var(--key-deep); }
+
+  /* 「練字母」和「練單字」是最上面的岔路，用大圖示和不同顏色分開 */
+  #subjects .mode { text-align: center; padding: 15px 8px 14px; }
+  #subjects .mode b { font-size: var(--fs-head); }
+  #subjects .ic { display: block; font-size: 38px; line-height: 1; margin-bottom: 8px; }
+  #subjects .mode[data-subject="letters"].sel {
+    border-color: var(--mint); background: var(--mint-soft);
+  }
+  #subjects .mode[data-subject="letters"].sel b,
+  #subjects .mode[data-subject="letters"].sel i { color: var(--mint-ink); }
+  #subjects .mode[data-subject="words"].sel {
+    border-color: var(--coral); background: var(--coral-soft);
+  }
+  #subjects .mode[data-subject="words"].sel b,
+  #subjects .mode[data-subject="words"].sel i { color: var(--coral-ink); }
 
   select.voice {
     font-family: inherit; font-size: var(--fs-body); font-weight: 700; color: var(--ink);
@@ -711,8 +725,10 @@
     <div class="card">
       <h2><span class="n">1</span>今天練什麼？</h2>
       <div class="modes" id="subjects">
-        <button class="mode sel" data-subject="letters"><b>🔤 練字母</b><i>ABC 26 個，大小寫和發音</i></button>
-        <button class="mode" data-subject="words"><b>🔠 練單字</b><i>看圖、聽音、認字</i></button>
+        <button class="mode sel" data-subject="letters">
+          <span class="ic">🔤</span><b>練字母</b><i>ABC 26 個，大小寫和發音</i></button>
+        <button class="mode" data-subject="words">
+          <span class="ic">🖼️</span><b>練單字</b><i>看圖、聽音、認字</i></button>
       </div>
       <div id="sourceBox" hidden>
         <div class="sub-h">單字從哪裡來？</div>
@@ -2058,20 +2074,32 @@
       var topic = itemOf(c).topic;
       var pic = (S.q && (S.q.kind === 'wpic' || S.q.kind === 'wread' || S.q.kind === 'wlisten'));
       var me = WMAP[c];
-      // 圖片題的選項要能一眼分辨：認不出來的字不當選項，
-      // 圖案長得像的一群（筆類、車類、天空類）也不跟本題混在一起
+      // 圖片題的選項要能一眼分辨：認不出來的字不當選項；
+      // 圖案長得像的一群（鳥類、筆類、車類、上下箭頭…）整組只留一個，
+      // 不只是跟答案比，四個選項彼此之間也要比，不然會出現 🥅 配 🪟
+      var usedGrp = {};
+      if (me.grp) usedGrp[me.grp] = 1;
+      function addWord(k) {
+        if (k === c || set.indexOf(k) >= 0) return;
+        var x = WMAP[k];
+        if (pic && x && x.grp) {
+          if (usedGrp[x.grp]) return;
+          usedGrp[x.grp] = 1;
+        }
+        set.push(k);
+      }
       function okAsOption(k) {
         var x = WMAP[k];
         if (!x) return false;               // 字母不能當單字題的選項
         if (!pic) return true;
         if (x.p === 0) return false;
-        if (me.grp && x.grp === me.grp) return false;
         return true;
       }
       shuffle(S.pool.filter(function (k) {
         return okAsOption(k) && itemOf(k).topic === topic;
-      })).forEach(add);
-      shuffle(S.pool.filter(okAsOption)).forEach(add);
+      })).forEach(addWord);
+      shuffle(S.pool.filter(okAsOption)).forEach(addWord);
+      shuffle(WORDKEYS.filter(okAsOption)).forEach(addWord);
       shuffle(S.pool.filter(isWord)).forEach(add);          // 真的湊不滿才放寬
       shuffle(WORDKEYS.slice()).forEach(add);
     } else {
