@@ -70,7 +70,18 @@ async function get(url) {
   }
 }
 
-const ENTITIES = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", apos: "'" };
+const ENTITIES = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+/**
+ * HTML 實體還原。十進位（&#39;）與**十六進位**（&#x627E;）都要認 ——
+ * 只認十進位的話，中文標題會整串變成 \u0000，而且看起來只是「字有點怪」，
+ * 不會有任何錯誤。Wordwall 的標題正是用十六進位寫中文的。
+ */
+function decodeEntity(e) {
+  if (e[0] !== "#") return ENTITIES[e] ?? null;
+  const code = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+  return Number.isFinite(code) && code > 0 ? String.fromCodePoint(code) : null;
+}
 
 /** HTML → 可讀純文字。標籤換行，這樣單字一個一行的版面才不會黏成一串。 */
 function toText(html) {
@@ -80,7 +91,7 @@ function toText(html) {
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|div|li|tr|td|th|h[1-6])>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
-    .replace(/&(#?\w+);/g, (m, e) => ENTITIES[e] ?? (e[0] === "#" ? String.fromCharCode(+e.slice(1)) : m))
+    .replace(/&(#?\w+);/g, (m, e) => decodeEntity(e) ?? m)
     .split("\n").map(l => l.replace(/[ \t　]+/g, " ").trim()).filter(Boolean).join("\n");
 }
 
@@ -191,6 +202,25 @@ if (argv.includes("--self-test")) {
     console.error(`✗ 練習網址\n   預期 ${JSON.stringify(wantTargets)}\n   實得 ${JSON.stringify(gotTargets)}`);
   } else console.error("✓ 練習網址（保留標籤、還原 &amp;、濾掉 CDN 與站內連結）");
 
+  const WW = '<title>Fun World 1_U1_&#x627E;&#x5230;&#x5925;&#x4F34; - Find the match</title>' +
+    '<meta name="description" content="apple, book, cat, ant, bird, cup">';
+  const gotWW = parseWordwall(WW);
+  const wantWW = { title: "Fun World 1_U1_找到夥伴 - Find the match",
+                   words: ["apple", "book", "cat", "ant", "bird", "cup"], letters: [] };
+  if (JSON.stringify(gotWW) !== JSON.stringify(wantWW)) {
+    bad++;
+    console.error(`✗ Wordwall 單字\n   預期 ${JSON.stringify(wantWW)}\n   實得 ${JSON.stringify(gotWW)}`);
+  } else console.error("✓ Wordwall 單字（meta description、標題還原中文實體）");
+
+  const ABC = '<title>Fun World 1_U1_&#x8A18;&#x61B6;&#x914D;&#x5C0D;</title>' +
+    '<meta name="description" content="a, b, c, apple">';
+  const gotABC = parseWordwall(ABC);
+  if (JSON.stringify(gotABC.letters) !== JSON.stringify(["a", "b", "c"]) ||
+      JSON.stringify(gotABC.words) !== JSON.stringify(["apple"])) {
+    bad++;
+    console.error(`✗ 字母與單字要分開\n   實得 ${JSON.stringify(gotABC)}`);
+  } else console.error("✓ 字母與單字分開（字母表活動不會被當成單字）");
+
   process.exit(bad ? 1 : 0);
 }
 
@@ -222,7 +252,7 @@ function extractUnitLinks(html, base) {
 
 /** 只還原實體，不動標籤 —— 網址裡的 &amp; 不還原會抓成 404。 */
 function unescapeHtml(s) {
-  return s.replace(/&(#?\w+);/g, (m, e) => ENTITIES[e] ?? (e[0] === "#" ? String.fromCharCode(+e.slice(1)) : m));
+  return s.replace(/&(#?\w+);/g, (m, e) => decodeEntity(e) ?? m);
 }
 
 /**
@@ -246,6 +276,29 @@ function extractTargetLinks(html) {
     out.push({ label: toText(m[2]).replace(/\n/g, " ").trim(), url });
   }
   return out;
+}
+
+/**
+ * Wordwall 活動頁 → 單字。第六次探測（同日）確認單字就放在 meta 裡，很乾淨：
+ *
+ *   <title>Fun World 1_U1_找到夥伴 - Find the match</title>
+ *   <meta name="description" content="apple, book, cat, ant, bird, cup">
+ *
+ * 不要改用「可見文字」—— 那裡混著 Share／Print／Embed／Leaderboard 一堆介面字樣，
+ * 照單全收會把按鈕當單字背（粗解析當時撈出 23 個「字」，一半以上是介面）。
+ */
+function parseWordwall(html) {
+  const meta = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i);
+  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const items = (meta ? unescapeHtml(meta[1]) : "")
+    .split(/\s*,\s*/).map(w => w.trim()).filter(Boolean);
+  return {
+    title: title ? unescapeHtml(title[1]).replace(/\s+/g, " ").trim() : "",
+    // 一個字母的是字母表活動（a, b, c…），不是單字。分開放，不要混在一起，
+    // 但也不要丟掉 —— 小一上本來就在教字母。
+    words: items.filter(w => w.length > 1),
+    letters: items.filter(w => w.length === 1),
+  };
 }
 
 /** DigiLink 頁面上「數位練習平台」下一行就是教材名（Fun World 1、Super Fun 1…）。 */
@@ -289,10 +342,18 @@ if (probe) {
   process.exit(0);
 }
 
-// ── 正式抓取：先把「哪一冊、哪一單元、連到哪裡」這張表建起來 ──────────
-// 單字本身還沒有著落（何嘉仁自己的頁面上沒有），但這張表是後面每一步的地基，
-// 而且它本身就有用 —— 點進去就是該單元的練習。
+// ── 正式抓取 ────────────────────────────────────────────────────────
+// 兩份產出：
+//   hess-sources.json  冊 → 單元 → 各平台的練習網址（Quizlet 擋機房 IP，但人點得進去）
+//   hess-vocab.json    冊 → 單元 → 單字（從 Wordwall 的 meta description）
 const sources = { source: "何嘉仁 Fun World 數位練習平台（hessdigi）", fetchedAt: new Date().toISOString(), books: [] };
+const vocab = {
+  source: "何嘉仁 Fun World（國小英語課本）",
+  via: "hessdigi 數位練習平台 → Wordwall 活動頁的 meta description",
+  note: "只有英文。Wordwall 是英文配圖的活動，沒有中文；有中文的是 Quizlet，但它擋機房 IP（403）。",
+  fetchedAt: new Date().toISOString(),
+  books: [],
+};
 
 for (const url of DIGI) {
   const res = await get(url);
@@ -309,16 +370,42 @@ for (const url of DIGI) {
     if (/AI|提示詞/.test(l.platform)) continue;
     const sub = await get(l.href);
     if (sub.ok) l.targets = extractTargetLinks(sub.body);
-    await sleep(500);
+    await sleep(400);
   }
 
   const withTarget = links.filter(l => l.targets?.length).length;
-  console.error(`✓ ${label}（${meta.grade}）${links.length} 個單元連結，其中 ${withTarget} 個問到了練習網址　${url}`);
+  console.error(`✓ ${label}（${meta.grade}）${links.length} 個單元連結，其中 ${withTarget} 個問到練習網址`);
   sources.books.push({ book: n, grade: meta.grade, label, digiUrl: url, links });
-  await sleep(600);
+
+  // 再一層：Wordwall 的活動頁才有單字。一個單元可能有好幾個活動
+  //（「找到夥伴 單字」「記憶配對 字母」…），全部抓下來各自留著，
+  // 再併成該單元的單字清單 —— 併的時候不分大小寫去重，但保留原始拼法。
+  const units = [];
+  for (const l of links) {
+    if (l.platform !== "Wordwall") continue;
+    const activities = [];
+    for (const t of l.targets || []) {
+      if (!/(^|\.)wordwall\.net$/.test(new URL(t.url).hostname)) continue;
+      const w = await get(t.url);
+      if (!w.ok) { console.error(`  ✗ ${label} ${l.unit} ${t.url} → HTTP ${w.status}`); continue; }
+      activities.push({ ...parseWordwall(w.body), url: t.url });
+      await sleep(400);
+    }
+    const seen = new Set(), words = [], letters = new Set();
+    for (const a of activities) {
+      for (const w of a.words) if (!seen.has(w.toLowerCase())) { seen.add(w.toLowerCase()); words.push(w); }
+      for (const c of a.letters) letters.add(c.toLowerCase());
+    }
+    units.push({ unit: l.unit, words, letters: [...letters].sort(), activities });
+    console.error(`    ${l.unit.padEnd(9)} ${words.length} 字　${words.join(", ") || "（沒抓到）"}`);
+  }
+  vocab.books.push({ book: n, grade: meta.grade, label, digiUrl: url, units });
+  await sleep(400);
 }
 
 sources.books.sort((a, b) => a.book - b.book);
+vocab.books.sort((a, b) => a.book - b.book);
+vocab.totalWords = vocab.books.reduce((t, b) => t + b.units.reduce((n, u) => n + u.words.length, 0), 0);
 
 if (!sources.books.length) {
   console.error("\n✗ 一冊都沒找到，不寫檔。先跑 --probe 看 DigiLink 是不是改版了。");
@@ -328,7 +415,23 @@ if (!sources.books.length) {
 fs.mkdirSync(path.dirname(outFile), { recursive: true });
 fs.writeFileSync(outFile, JSON.stringify(sources, null, 2) + "\n");
 
+// 一個字都沒抓到就不要覆蓋既有的單字檔 —— 維持原狀，不要讓頁面從「有單字」
+// 變成「沒單字」而看起來像是課本改版了。
+const vocabFile = path.join(path.dirname(outFile), "hess-vocab.json");
+if (vocab.totalWords === 0) {
+  console.error("\n✗ 一個單字都沒抓到，不寫 hess-vocab.json（保留原檔）。");
+} else {
+  fs.writeFileSync(vocabFile, JSON.stringify(vocab, null, 2) + "\n");
+  const csv = ["book,grade,unit,word"];
+  for (const b of vocab.books)
+    for (const u of b.units)
+      for (const w of u.words)
+        csv.push([b.book, b.grade, u.unit, w].map(v => /[",]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v).join(","));
+  fs.writeFileSync(vocabFile.replace(/\.json$/, ".csv"), csv.join("\n") + "\n");
+}
+
 const missing = BOOKS.filter(b => !sources.books.some(s => s.book === b.book));
 console.error(`\n寫入 hess-sources.json：${sources.books.length} 冊、` +
   `${sources.books.reduce((n, b) => n + b.links.length, 0)} 個連結` +
   (missing.length ? `　⚠️ 還缺 ${missing.map(b => b.id + "(" + b.grade + ")").join("、")}` : ""));
+console.error(`寫入 hess-vocab.json：共 ${vocab.totalWords} 個單字`);

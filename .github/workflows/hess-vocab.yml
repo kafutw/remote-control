@@ -59,11 +59,11 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/hess-sources.json
+          git add data/hess-sources.json data/hess-vocab.json data/hess-vocab.csv
           if git diff --staged --quiet; then
             echo "單字沒有變動，不 commit"
           else
-            git commit -m "更新何嘉仁 Fun World 單元連結表"
+            git commit -m "更新何嘉仁 Fun World 單字與連結表"
             git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
             git push
           fi
@@ -75,15 +75,16 @@ jobs:
             echo "⚠️ 抓取那步沒有成功 —— 看上面「探測頁面結構」的 log，"
             echo "   確認網址通不通、頁面是不是要 JS 才渲染得出單字。"
           fi
-          if [ -f data/hess-sources.json ]; then
+          if [ -f data/hess-vocab.json ]; then
             node -e '
-              const d = require("./data/hess-sources.json");
-              console.log("抓於", d.fetchedAt);
+              const d = require("./data/hess-vocab.json");
+              console.log("抓於", d.fetchedAt, "　共", d.totalWords, "字");
               for (const b of d.books) {
-                console.log("  ✓", b.grade, b.label, "—", b.links.length, "個單元連結", b.digiUrl);
-                const by = {};
-                for (const l of b.links) (by[l.platform] ||= []).push(l.unit + (l.targets?.length ? "" : "（沒問到網址）"));
-                for (const [pf, us] of Object.entries(by)) console.log("      ", pf, ":", us.join(", "));
+                const n = b.units.reduce((s, u) => s + u.words.length, 0);
+                console.log("\n──", b.grade, b.label, "—", n, "字");
+                for (const u of b.units)
+                  console.log("  ", u.unit.padEnd(9), (u.words.join(", ") || "（沒抓到）"),
+                              u.letters.length ? "　字母 " + u.letters.join("") : "");
               }
             '
           fi
