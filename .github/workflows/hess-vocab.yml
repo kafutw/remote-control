@@ -52,18 +52,18 @@ jobs:
         id: fetch
         if: ${{ !inputs.probe_only }}
         continue-on-error: true
-        run: node tools/fetch-hess-vocab.mjs -o data/hess-vocab.json
+        run: node tools/fetch-hess-vocab.mjs -o data/hess-sources.json
 
       - name: 有變動才 commit
         if: ${{ !inputs.probe_only && steps.fetch.outcome == 'success' }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/hess-vocab.json data/hess-vocab.csv
+          git add data/hess-sources.json
           if git diff --staged --quiet; then
             echo "單字沒有變動，不 commit"
           else
-            git commit -m "更新何嘉仁 Fun World 單字資料"
+            git commit -m "更新何嘉仁 Fun World 單元連結表"
             git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
             git push
           fi
@@ -75,15 +75,15 @@ jobs:
             echo "⚠️ 抓取那步沒有成功 —— 看上面「探測頁面結構」的 log，"
             echo "   確認網址通不通、頁面是不是要 JS 才渲染得出單字。"
           fi
-          if [ -f data/hess-vocab.json ]; then
+          if [ -f data/hess-sources.json ]; then
             node -e '
-              const d = require("./data/hess-vocab.json");
-              console.log("抓於", d.fetchedAt, "　共", d.totalWords, "字");
+              const d = require("./data/hess-sources.json");
+              console.log("抓於", d.fetchedAt);
               for (const b of d.books) {
-                if (b.error) { console.log("  ✗", b.grade, "(" + b.id + ") —", b.error); continue; }
-                const n = b.units.reduce((s, u) => s + u.words.length, 0);
-                console.log("  ✓", b.grade, "(" + b.id + ")", b.units.length, "單元 /", n, "字");
-                for (const u of b.units) console.log("      ", u.unit, "—", u.words.map(w => w.en).join(", "));
+                console.log("  ✓", b.grade, b.label, "—", b.links.length, "個練習連結", b.digiUrl);
+                const byHost = {};
+                for (const l of b.links) (byHost[l.host] ||= []).push(l.label);
+                for (const [h, us] of Object.entries(byHost)) console.log("      ", h, ":", us.join(", "));
               }
             '
           fi
