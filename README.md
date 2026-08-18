@@ -69,3 +69,15 @@
   - [ ] Isofix 底座
 - **游泳** 🏊
   - [ ] 泳衣
+
+---
+
+## 🔢 乘法表大考驗
+
+打開 [`multiplication.html`](./multiplication.html)（線上版：<https://kafutw.github.io/remote-control/multiplication.html>）。
+
+## 🔤 ABC 字母大考驗
+
+打開 [`alphabet.html`](./alphabet.html)（線上版：<https://kafutw.github.io/remote-control/alphabet.html>）。
+
+給還在認字母的小朋友：練 26 個字母的**大小寫和發音**，不考拼單字。題型有「聽聲音選字母」「大寫找小寫」「小寫找大寫」，每個字母各自累積 🥇🥈🥉 獎牌。架構跟乘法表一樣：設定 → 作答 → 結果 → 歷史，紀錄只存在裝置上，也可以加到 iPad 主畫面。
