@@ -229,6 +229,7 @@
     padding: 12px 13px; transition: all .14s;
   }
   .mode.sel { border-color: var(--key); background: var(--key-soft); }
+  .mode[disabled] { opacity: .38; cursor: default; }
   .mode b { display: block; font-size: var(--fs-body); font-weight: 800; }
   .mode i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); margin-top: 3px; }
   .mode.sel i { color: var(--key-deep); }
@@ -708,6 +709,14 @@
 
     <div class="card">
       <h2><span class="n">1</span>今天練什麼？</h2>
+      <div class="sub-h">教材來源</div>
+      <div class="modes three" id="sources">
+        <button class="mode sel" data-source="all"><b>📚 全部</b><i>兩邊的字都練</i></button>
+        <button class="mode" data-source="moe"><b>🏫 教育部</b><i>1200 字表內</i></button>
+        <button class="mode" data-source="hess"><b>🅷 何嘉仁</b><i>Fun World</i></button>
+      </div>
+      <p class="hint" id="sourceHint"></p>
+      <div class="sub-h">練習內容</div>
       <div class="modes three" id="subjects">
         <button class="mode sel" data-subject="letters"><b>🔤 字母</b><i>ABC 26 個</i></button>
         <button class="mode" data-subject="w1"><b>1️⃣ 小一單字</b><i>顏色、數字、動物、家人</i></button>
@@ -736,7 +745,7 @@
         <button class="mode sel" data-mode="smart"><b>聰明出題</b><i>常錯的字母會多出現</i></button>
         <button class="mode" data-mode="even"><b>平均出題</b><i>每個字母機會都一樣</i></button>
       </div>
-      <p class="hint">26 個字母都會練到，常錯的會多出現幾次。</p>
+      <p class="hint" id="poolHint"></p>
     </div>
 
     <div class="card">
@@ -1002,34 +1011,38 @@
      代表單字優先對齊何嘉仁 Fun World（小一小二用的教材，官方影片確認的有
      A=apple、B=book、C=cat、J=jam、K=key、L=lamp、M=mom、T=toy、U=umbrella、V=vest）；
      其餘字母取自教育部「國中小基本英語字彙 1200 字」裡最具體、能用圖案表達的名詞。
-     註：jam 和 mom 不在教育部 1200 字表內（該表收的是 mother），但何嘉仁教的是這個。
+     h: 1 = 何嘉仁 Fun World 官方影片確認過的代表字；
+     m: 0 = 不在教育部 1200 字表內（jam、mom 就是這種，該表收的是 mother），
+     moe = 教材來源選「教育部」時改用這個表內的字。
      X 開頭在官方清單裡沒有任何字，所以用字尾有 x 的 box（清單內另有 fox、six、ox）。
      phon = 這個字母常見的發音（自然發音法）
      word / zh / emoji = 代表單字、中文、圖案
      near = 最容易混淆的字母，出選項時優先拿來當干擾項 */
   var LETTERS = [
-    { c: 'A', phon: '/æ/',  word: 'apple',      zh: '蘋果',   emoji: '🍎', near: 'EIO' },
-    { c: 'B', phon: '/b/',  word: 'book',       zh: '書',     emoji: '📖', near: 'DPR' },
-    { c: 'C', phon: '/k/',  word: 'cat',        zh: '貓',     emoji: '🐱', near: 'GKS' },
+    { c: 'A', phon: '/æ/',  word: 'apple',      zh: '蘋果',   emoji: '🍎', near: 'EIO', h: 1 },
+    { c: 'B', phon: '/b/',  word: 'book',       zh: '書',     emoji: '📖', near: 'DPR', h: 1 },
+    { c: 'C', phon: '/k/',  word: 'cat',        zh: '貓',     emoji: '🐱', near: 'GKS', h: 1 },
     { c: 'D', phon: '/d/',  word: 'dog',        zh: '狗',     emoji: '🐶', near: 'BPT' },
     { c: 'E', phon: '/e/',  word: 'egg',        zh: '蛋',     emoji: '🥚', near: 'AIF' },
     { c: 'F', phon: '/f/',  word: 'fish',       zh: '魚',     emoji: '🐟', near: 'EVT' },
     { c: 'G', phon: '/g/',  word: 'grape',      zh: '葡萄',   emoji: '🍇', near: 'CJQ' },
     { c: 'H', phon: '/h/',  word: 'hat',        zh: '帽子',   emoji: '🎩', near: 'NKM' },
     { c: 'I', phon: '/ɪ/',  word: 'ice cream',  zh: '冰淇淋', emoji: '🍦', near: 'LJT' },
-    { c: 'J', phon: '/dʒ/', word: 'jam',        zh: '果醬',   emoji: '🫙', near: 'GIK' },
-    { c: 'K', phon: '/k/',  word: 'key',        zh: '鑰匙',   emoji: '🔑', near: 'CXH' },
-    { c: 'L', phon: '/l/',  word: 'lamp',       zh: '檯燈',   emoji: '💡', near: 'IJT' },
-    { c: 'M', phon: '/m/',  word: 'mom',        zh: '媽媽',   emoji: '👩', near: 'NWH' },
+    { c: 'J', phon: '/dʒ/', word: 'jam',        zh: '果醬',   emoji: '🫙', near: 'GIK', h: 1, m: 0,
+      moe: { word: 'juice', zh: '果汁', emoji: '🧃' } },
+    { c: 'K', phon: '/k/',  word: 'key',        zh: '鑰匙',   emoji: '🔑', near: 'CXH', h: 1 },
+    { c: 'L', phon: '/l/',  word: 'lamp',       zh: '檯燈',   emoji: '💡', near: 'IJT', h: 1 },
+    { c: 'M', phon: '/m/',  word: 'mom',        zh: '媽媽',   emoji: '👩', near: 'NWH', h: 1, m: 0,
+      moe: { word: 'monkey', zh: '猴子', emoji: '🐵' } },
     { c: 'N', phon: '/n/',  word: 'nose',       zh: '鼻子',   emoji: '👃', near: 'MHU' },
     { c: 'O', phon: '/ɒ/',  word: 'orange',     zh: '柳橙',   emoji: '🍊', near: 'QUA' },
     { c: 'P', phon: '/p/',  word: 'pig',        zh: '豬',     emoji: '🐷', near: 'BDR' },
     { c: 'Q', phon: '/kw/', word: 'queen',      zh: '皇后',   emoji: '👑', near: 'OGP' },
     { c: 'R', phon: '/r/',  word: 'rabbit',     zh: '兔子',   emoji: '🐰', near: 'PBA' },
     { c: 'S', phon: '/s/',  word: 'sun',        zh: '太陽',   emoji: '☀️', near: 'ZCX' },
-    { c: 'T', phon: '/t/',  word: 'toy',        zh: '玩具',   emoji: '🧸', near: 'DIF' },
-    { c: 'U', phon: '/ʌ/',  word: 'umbrella',   zh: '雨傘',   emoji: '☂️', near: 'VNO' },
-    { c: 'V', phon: '/v/',  word: 'vest',       zh: '背心',   emoji: '🦺', near: 'UWY' },
+    { c: 'T', phon: '/t/',  word: 'toy',        zh: '玩具',   emoji: '🧸', near: 'DIF', h: 1 },
+    { c: 'U', phon: '/ʌ/',  word: 'umbrella',   zh: '雨傘',   emoji: '☂️', near: 'VNO', h: 1 },
+    { c: 'V', phon: '/v/',  word: 'vest',       zh: '背心',   emoji: '🦺', near: 'UWY', h: 1 },
     { c: 'W', phon: '/w/',  word: 'watermelon', zh: '西瓜',   emoji: '🍉', near: 'VMU' },
     { c: 'X', phon: '/ks/', word: 'box',        zh: '盒子',   emoji: '📦', near: 'KYS',
       note: 'x 通常出現在字尾，像 box、fox、six' },
@@ -1048,6 +1061,7 @@
      再對照教育部 1200 字挑出來的，不是哪一家出版社的官方清單。
      p: 0 = 這個字沒辦法只靠一張圖認出來（👧 和 👦 就是同一顆臉換髮型，
      👶 也可能是女生），所以不出圖片題，改考中文對應。
+     m: 0 = 不在教育部「國中小基本英語字彙 1200 字」表內（沒標的就是在表內）。
      grp  = 圖案長得像的一群（筆類、車類、天空類），出圖片題時不會互相當選項。 */
   var WORDS = [
     // ── 小一：顏色、數字、動物、家人、水果、身邊的東西 ──
@@ -1081,12 +1095,12 @@
     { w: 'monkey', zh: '猴子', e: '🐵', g: 1, t: '動物' },
     { w: 'elephant', zh: '大象', e: '🐘', g: 1, t: '動物' },
     { w: 'lion',   zh: '獅子', e: '🦁', g: 1, t: '動物' },
-    { w: 'mom',    zh: '媽媽', e: '👩', g: 1, t: '家人', p: 0 },
-    { w: 'dad',    zh: '爸爸', e: '👨', g: 1, t: '家人', p: 0 },
+    { w: 'mom',    zh: '媽媽', e: '👩', g: 1, t: '家人', p: 0 , m: 0 },
+    { w: 'dad',    zh: '爸爸', e: '👨', g: 1, t: '家人', p: 0 , m: 0 },
     { w: 'baby',   zh: '寶寶', e: '👶', g: 1, t: '家人', p: 0 },
     { w: 'brother', zh: '哥哥、弟弟', e: '👦', g: 1, t: '家人', p: 0 },
     { w: 'sister', zh: '姐姐、妹妹', e: '👧', g: 1, t: '家人', p: 0 },
-    { w: 'grandma', zh: '奶奶、外婆', e: '👵', g: 1, t: '家人', p: 0 },
+    { w: 'grandma', zh: '奶奶、外婆', e: '👵', g: 1, t: '家人', p: 0 , m: 0 },
     { w: 'apple',  zh: '蘋果', e: '🍎', g: 1, t: '水果' },
     { w: 'banana', zh: '香蕉', e: '🍌', g: 1, t: '水果' },
     { w: 'grape',  zh: '葡萄', e: '🍇', g: 1, t: '水果' },
@@ -1095,11 +1109,11 @@
     { w: 'book',   zh: '書',   e: '📖', g: 1, t: '身邊的東西' },
     { w: 'ball',   zh: '球',   e: '⚽', g: 1, t: '身邊的東西' },
     { w: 'toy',    zh: '玩具', e: '🧸', g: 1, t: '身邊的東西' },
-    { w: 'balloon', zh: '氣球', e: '🎈', g: 1, t: '身邊的東西' },
+    { w: 'balloon', zh: '氣球', e: '🎈', g: 1, t: '身邊的東西' , m: 0 },
 
     // ── 小二：食物、學校用品、身體、交通、天氣、衣物 ──
     { w: 'rice',   zh: '飯',   e: '🍚', g: 2, t: '食物' },
-    { w: 'noodles', zh: '麵',  e: '🍜', g: 2, t: '食物' },
+    { w: 'noodles', zh: '麵',  e: '🍜', g: 2, t: '食物' , m: 0 },
     { w: 'bread',  zh: '麵包', e: '🍞', g: 2, t: '食物' },
     { w: 'egg',    zh: '蛋',   e: '🥚', g: 2, t: '食物' },
     { w: 'milk',   zh: '牛奶', e: '🥛', g: 2, t: '食物' },
@@ -1112,11 +1126,11 @@
     { w: 'pizza',  zh: '披薩', e: '🍕', g: 2, t: '食物' },
     { w: 'pencil', zh: '鉛筆', e: '✏️', g: 2, t: '學校用品', grp: 'write' },
     { w: 'pen',    zh: '原子筆', e: '🖊️', g: 2, t: '學校用品', grp: 'write' },
-    { w: 'crayon', zh: '蠟筆', e: '🖍️', g: 2, t: '學校用品', grp: 'write' },
+    { w: 'crayon', zh: '蠟筆', e: '🖍️', g: 2, t: '學校用品', grp: 'write' , m: 0 },
     { w: 'ruler',  zh: '尺',   e: '📏', g: 2, t: '學校用品' },
-    { w: 'scissors', zh: '剪刀', e: '✂️', g: 2, t: '學校用品' },
+    { w: 'scissors', zh: '剪刀', e: '✂️', g: 2, t: '學校用品' , m: 0 },
     { w: 'notebook', zh: '筆記本', e: '📓', g: 2, t: '學校用品' },
-    { w: 'backpack', zh: '書包', e: '🎒', g: 2, t: '學校用品' },
+    { w: 'backpack', zh: '書包', e: '🎒', g: 2, t: '學校用品' , m: 0 },
     { w: 'chair',  zh: '椅子', e: '🪑', g: 2, t: '學校用品' },
     { w: 'eye',    zh: '眼睛', e: '👁️', g: 2, t: '身體' },
     { w: 'ear',    zh: '耳朵', e: '👂', g: 2, t: '身體' },
@@ -1130,7 +1144,7 @@
     { w: 'bus',    zh: '公車', e: '🚌', g: 2, t: '交通' },
     { w: 'bike',   zh: '腳踏車', e: '🚲', g: 2, t: '交通' },
     { w: 'train',  zh: '火車', e: '🚆', g: 2, t: '交通' },
-    { w: 'plane',  zh: '飛機', e: '✈️', g: 2, t: '交通' },
+    { w: 'plane',  zh: '飛機', e: '✈️', g: 2, t: '交通' , m: 0 },
     { w: 'boat',   zh: '船',   e: '⛵', g: 2, t: '交通' },
     { w: 'taxi',   zh: '計程車', e: '🚕', g: 2, t: '交通', grp: 'car' },
     { w: 'truck',  zh: '卡車', e: '🚚', g: 2, t: '交通', grp: 'car' },
@@ -1138,12 +1152,12 @@
     { w: 'moon',   zh: '月亮', e: '🌙', g: 2, t: '天氣' },
     { w: 'star',   zh: '星星', e: '⭐', g: 2, t: '天氣' },
     { w: 'rain',   zh: '雨',   e: '🌧️', g: 2, t: '天氣', grp: 'sky' },
-    { w: 'cloud',  zh: '雲',   e: '☁️', g: 2, t: '天氣', grp: 'sky' },
+    { w: 'cloud',  zh: '雲',   e: '☁️', g: 2, t: '天氣', grp: 'sky' , m: 0 },
     { w: 'snow',   zh: '雪',   e: '❄️', g: 2, t: '天氣', grp: 'sky' },
     { w: 'rainbow', zh: '彩虹', e: '🌈', g: 2, t: '天氣' },
     { w: 'hat',    zh: '帽子', e: '🎩', g: 2, t: '衣物' },
     { w: 'shirt',  zh: '襯衫', e: '👕', g: 2, t: '衣物' },
-    { w: 'shoes',  zh: '鞋子', e: '👟', g: 2, t: '衣物' },
+    { w: 'shoes',  zh: '鞋子', e: '👟', g: 2, t: '衣物' , m: 0 },
     { w: 'socks',  zh: '襪子', e: '🧦', g: 2, t: '衣物' },
     { w: 'umbrella', zh: '雨傘', e: '☂️', g: 2, t: '衣物' }
   ];
@@ -1220,7 +1234,7 @@
       return { isWord: true, word: x.w, zh: x.zh, emoji: x.e, label: x.w,
                topic: x.t, hue: hashHue(x.w) };
     }
-    var L = LETTERS[IDX[k]];
+    var L = letterOf(k);
     return { isWord: false, word: L.word, zh: L.zh, emoji: L.emoji, label: k,
              topic: '', hue: IDX[k] };
   }
@@ -1228,7 +1242,7 @@
   /* ────────── 資料儲存 ────────── */
   var KEY = 'abc_v1';
   var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', wkind: 'all',
-              subject: 'letters', count: 10, secs: 30,
+              subject: 'letters', source: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
@@ -1280,6 +1294,8 @@
     if (['all', 'listen', 'case', 'case2'].indexOf(db.kind) < 0) db.kind = DEF.kind;
     if (['all', 'wpic', 'wlisten', 'wread', 'wzh', 'wcloze'].indexOf(db.wkind) < 0) db.wkind = DEF.wkind;
     if (['letters', 'w1', 'w2'].indexOf(db.subject) < 0) db.subject = DEF.subject;
+    if (['all', 'moe', 'hess'].indexOf(db.source) < 0) db.source = DEF.source;
+    if (db.source === 'hess') db.subject = 'letters';   // 何嘉仁沒有可查證的單字表
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
     if (['none', 'letter', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
@@ -1318,7 +1334,15 @@
     return arr;
   }
   function stat(c) { return db.perQ[c] || { n: 0, w: 0 }; }
-  function letterOf(c) { return LETTERS[IDX[c]]; }
+  // 代表單字會隨教材來源換：選教育部 1200 字時，jam / mom 改成表內的 juice / monkey
+  function letterOf(c) {
+    var L = LETTERS[IDX[c]];
+    if (!L.moe || !db || db.source !== 'moe') return L;
+    var o = {}, k;
+    for (k in L) if (L.hasOwnProperty(k)) o[k] = L[k];
+    o.word = L.moe.word; o.zh = L.moe.zh; o.emoji = L.moe.emoji;
+    return o;
+  }
   // A,B,C,F → 「A–C、F」，選很多字母時標題才不會爆掉
   function letterLabel(list) {
     var s = list.slice().sort(), out = [], i = 0;
@@ -1699,6 +1723,30 @@
   segment('kinds', function (m) { db.kind = m.dataset.kind; });
   segment('wkinds', function (m) { db.wkind = m.dataset.wkind; });
   segment('subjects', function (m) { db.subject = m.dataset.subject; syncSubject(); });
+  segment('sources', function (m) { db.source = m.dataset.source; syncSource(); });
+
+  var SOURCE_HINT = {
+    all: '字母 26 個都練，單字兩邊的都收。',
+    moe: '只出【國中小基本英語字彙 1200 字】表內的字；' +
+         'J、M 的代表字會換成 juice、monkey（jam、mom 不在表內）。',
+    hess: '何嘉仁 Fun World 官方影片只公開得到 10 個字母的代表字' +
+          '（A B C J K L M T U V），沒有可查證的單字表，所以這個來源只練這 10 個字母。'
+  };
+  // 何嘉仁沒有單字表，選它的時候就只能練字母
+  function syncSource() {
+    var lettersOnly = db.source === 'hess';
+    document.querySelectorAll('#subjects .mode').forEach(function (m) {
+      m.disabled = lettersOnly && m.dataset.subject !== 'letters';
+    });
+    if (lettersOnly && db.subject !== 'letters') {
+      db.subject = 'letters';
+      document.querySelectorAll('#subjects .mode').forEach(function (m) {
+        m.classList.toggle('sel', m.dataset.subject === db.subject);
+      });
+    }
+    $('sourceHint').textContent = SOURCE_HINT[db.source];
+    syncSubject();
+  }
 
   // 換科目：題型按鈕換一組，開始鈕和「先認識」的字也跟著改
   function syncSubject() {
@@ -1708,6 +1756,9 @@
     $('learnBtn').textContent = w ? '先認識單字 🖼️' : '先認識字母 🔤';
     $('subtitle').textContent = SUBJECT_NAME[db.subject] + ' ・ ' + db.count + ' 題 ・ ' +
       (db.secs ? db.secs + ' 秒' : '不限時');
+    var n = subjectPool().length;
+    $('poolHint').textContent = '這次的題庫有 ' + n + (w ? ' 個單字' : ' 個字母') +
+      '，都會練到，常錯的會多出現幾次。';
     syncStart();
   }
   segment('rates', function (m) { db.rate = Number(m.dataset.rate); tryVoice(); });
@@ -1765,7 +1816,7 @@
       var b = document.createElement('button');
       b.className = 'cell';
       b.style.setProperty('--hue', colorOf(i));
-      b.setAttribute('aria-label', L.c + ' ' + L.word);
+      b.setAttribute('aria-label', L.c + ' ' + letterOf(L.c).word);
       b.innerHTML = '<span class="star">⭐</span><span class="mk"></span>' +
                     '<span class="cap">' + L.c + '</span>' +
                     '<span class="low">' + lower(L.c) + '</span>';
@@ -1880,10 +1931,17 @@
   function wordMode() { return db.subject !== 'letters'; }
   // 這次要練的題庫：字母 26 個，或某一個年級的單字
   function subjectPool() {
-    if (!wordMode()) return ALL.slice();
+    if (!wordMode()) {
+      // 何嘉仁：官方影片只確認得了 10 個字母的代表字，就只練這 10 個
+      if (db.source === 'hess') {
+        return LETTERS.filter(function (L) { return L.h; }).map(function (L) { return L.c; });
+      }
+      return ALL.slice();
+    }
     var g = db.subject === 'w1' ? 1 : 2;
-    return WORDS.filter(function (x) { return x.g === g; })
-                .map(function (x) { return 'w:' + x.w; });
+    return WORDS.filter(function (x) {
+      return x.g === g && (db.source !== 'moe' || x.m !== 0);
+    }).map(function (x) { return 'w:' + x.w; });
   }
   var S = null;
 
@@ -2882,6 +2940,9 @@
   document.querySelectorAll('#subjects .mode').forEach(function (m) {
     m.classList.toggle('sel', m.dataset.subject === db.subject);
   });
+  document.querySelectorAll('#sources .mode').forEach(function (m) {
+    m.classList.toggle('sel', m.dataset.source === db.source);
+  });
   document.querySelectorAll('#rates .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.rate) === db.rate);
   });
@@ -2901,7 +2962,7 @@
     window.speechSynthesis.addEventListener('voiceschanged', function () { pickVoice(); syncSpeak(); });
   }
 
-  syncSubject();
+  syncSource();
   refreshSetup();
   renderUseHint();
   if (db.breakUntil > Date.now()) showBreak();   // 關掉重開也繞不過去
