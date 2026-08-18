@@ -1,0 +1,893 @@
+{
+  "source": "何嘉仁 Fun World（國小英語課本）",
+  "via": "hessdigi 數位練習平台 → Wordwall 活動頁的 meta description",
+  "note": "只有英文。Wordwall 是英文配圖的活動，沒有中文；有中文的是 Quizlet，但它擋機房 IP（403）。",
+  "fetchedAt": "2026-08-18T05:55:45.847Z",
+  "books": [
+    {
+      "book": 1,
+      "grade": "小一上",
+      "label": "Fun World 1",
+      "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/16",
+      "units": [
+        {
+          "unit": "Unit 1",
+          "words": [
+            "apple",
+            "book",
+            "cat",
+            "ant",
+            "bird",
+            "cup"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 1_U1_記憶配對(字母配對) - Matching pairs",
+              "words": [],
+              "letters": [],
+              "url": "https://wordwall.net/resource/33782827"
+            },
+            {
+              "title": "Fun World 1_U1_找到夥伴 - Find the match",
+              "words": [
+                "apple",
+                "book",
+                "cat",
+                "ant",
+                "bird",
+                "cup"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/33599817"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 2",
+          "words": [
+            "dog",
+            "elephant",
+            "cat",
+            "apple",
+            "egg",
+            "book",
+            "ant",
+            "fish"
+          ],
+          "letters": [
+            "d",
+            "e",
+            "f"
+          ],
+          "activities": [
+            {
+              "title": "Fun World 1_U2_記憶配對 - Matching pairs",
+              "words": [],
+              "letters": [
+                "D",
+                "d",
+                "E",
+                "e",
+                "F",
+                "f"
+              ],
+              "url": "https://wordwall.net/resource/33600323"
+            },
+            {
+              "title": "Fun World 1_U2_眼力大挑戰(單字配對) - Image quiz",
+              "words": [
+                "dog",
+                "elephant",
+                "cat",
+                "apple",
+                "egg",
+                "book",
+                "dog",
+                "ant",
+                "fish"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/33783002"
+            }
+          ]
+        },
+        {
+          "unit": "Review 1",
+          "words": [
+            "apple",
+            "book",
+            "cat",
+            "dog",
+            "egg",
+            "fish"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 1 Review 1_A-F單字配對 - Match up",
+              "words": [
+                "apple",
+                "book",
+                "cat",
+                "dog",
+                "egg",
+                "fish"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/19534367"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 3",
+          "words": [
+            "True",
+            "goat",
+            "hen",
+            "insect",
+            "False",
+            "apple"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 1_U3_找到夥伴(字母) - Find the match",
+              "words": [],
+              "letters": [],
+              "url": "https://wordwall.net/resource/33783070"
+            },
+            {
+              "title": "Fun World 1_U3_反應大挑戰 - True or false",
+              "words": [
+                "True",
+                "goat",
+                "hen",
+                "insect",
+                "False",
+                "goat",
+                "apple",
+                "hen"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/33600597"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 4",
+          "words": [
+            "jet",
+            "kite",
+            "book",
+            "apple",
+            "monkey",
+            "lion",
+            "dog",
+            "cat",
+            "goat"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 1_U4_找到夥伴(字母) - Find the match",
+              "words": [],
+              "letters": [],
+              "url": "https://wordwall.net/resource/33601021"
+            },
+            {
+              "title": "Fun World 1_U4_小精靈(單字) - Maze chase",
+              "words": [
+                "jet",
+                "kite",
+                "book",
+                "jet",
+                "apple",
+                "kite",
+                "monkey",
+                "lion",
+                "dog",
+                "monkey",
+                "cat",
+                "goat"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/33783227"
+            }
+          ]
+        },
+        {
+          "unit": "Review 2",
+          "words": [
+            "goat",
+            "hen",
+            "insect",
+            "jet",
+            "kite",
+            "lion",
+            "monkey"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 1 Review 2_G-M單字配對 - Maze chase",
+              "words": [
+                "goat",
+                "hen",
+                "insect",
+                "jet",
+                "kite",
+                "lion",
+                "monkey"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/19535262"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "book": 2,
+      "grade": "小一下",
+      "label": "Fun World 2",
+      "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/19",
+      "units": [
+        {
+          "unit": "Unit 1",
+          "words": [
+            "ball",
+            "net",
+            "nose",
+            "ox",
+            "sheep",
+            "dog",
+            "monkey",
+            "cat",
+            "pig"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 2_U1_配對遊戲(字母配對) - 匹配遊戲",
+              "words": [],
+              "letters": [],
+              "url": "https://wordwall.net/tc/resource/39498037"
+            },
+            {
+              "title": "Fun World 2_U1_眼力大挑戰(單字配對) - 圖像測驗",
+              "words": [
+                "ball",
+                "net",
+                "nose",
+                "ox",
+                "sheep",
+                "dog",
+                "monkey",
+                "cat",
+                "pig"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/tc/resource/39498258"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 2",
+          "words": [
+            "quilt",
+            "red",
+            "sun",
+            "yellow"
+          ],
+          "letters": [
+            "假",
+            "真"
+          ],
+          "activities": [
+            {
+              "title": "Fun World 2_U2_找到夥伴(字母) - 查找匹配項",
+              "words": [],
+              "letters": [],
+              "url": "https://wordwall.net/tc/resource/39498336"
+            },
+            {
+              "title": "Fun World 2_U2_反應大挑戰(單字配對) - 真假遊戲",
+              "words": [
+                "quilt",
+                "red",
+                "sun",
+                "quilt",
+                "yellow",
+                "sun"
+              ],
+              "letters": [
+                "真",
+                "假"
+              ],
+              "url": "https://wordwall.net/tc/resource/39498435"
+            }
+          ]
+        },
+        {
+          "unit": "Review 1",
+          "words": [
+            "net",
+            "ox",
+            "pig",
+            "quilt",
+            "red",
+            "sun"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 2 Review 1_N-S單字配對 - Open the box",
+              "words": [
+                "net",
+                "ox",
+                "pig",
+                "quilt",
+                "red",
+                "sun"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23400513"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 3",
+          "words": [
+            "toy",
+            "umbrella",
+            "vest"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 2_U3_配對遊戲(字母配對) - 匹配遊戲",
+              "words": [],
+              "letters": [],
+              "url": "https://wordwall.net/tc/resource/39498520"
+            },
+            {
+              "title": "Fun World 2_U3_記憶配對(單字) - 配對遊戲",
+              "words": [
+                "toy",
+                "umbrella",
+                "vest"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/tc/resource/39498629"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 4",
+          "words": [
+            "watch",
+            "window",
+            "sun",
+            "book",
+            "box",
+            "jet",
+            "yo-yo",
+            "yellow",
+            "ball",
+            "toy",
+            "kite",
+            "zoo"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 2_U4_記憶配對(字母) - 配對遊戲",
+              "words": [],
+              "letters": [],
+              "url": "https://wordwall.net/tc/resource/39499011"
+            },
+            {
+              "title": "Fun World 2_U4_眼力大挑戰(單字配對) - 圖像測驗",
+              "words": [
+                "watch",
+                "window",
+                "sun",
+                "book",
+                "box",
+                "jet",
+                "yo-yo",
+                "yellow",
+                "ball",
+                "toy",
+                "kite",
+                "zoo"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/tc/resource/39498908"
+            }
+          ]
+        },
+        {
+          "unit": "Review 2",
+          "words": [
+            "toy",
+            "umbrella",
+            "vest",
+            "watch",
+            "box",
+            "yoyo",
+            "zoo"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 2 Review 2_T-Z單字配對 - Maze chase",
+              "words": [
+                "toy",
+                "umbrella",
+                "vest",
+                "watch",
+                "box",
+                "yoyo",
+                "zoo"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23400880"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "book": 3,
+      "grade": "小二上",
+      "label": "Fun World 3",
+      "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/20",
+      "units": [
+        {
+          "unit": "Unit 1",
+          "words": [
+            "ant",
+            "bird",
+            "cup",
+            "apple",
+            "book",
+            "cat"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 3_U1 - Labelled diagram",
+              "words": [
+                "ant",
+                "bird",
+                "cup",
+                "apple",
+                "book",
+                "cat"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/20002307"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 2",
+          "words": [
+            "duck",
+            "elephant",
+            "fan",
+            "dog",
+            "egg",
+            "fish"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 3_U2 - Balloon pop",
+              "words": [
+                "duck",
+                "elephant",
+                "fan",
+                "dog",
+                "egg",
+                "fish"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/20002472"
+            }
+          ]
+        },
+        {
+          "unit": "Review 1",
+          "words": [
+            "Correct",
+            "ant",
+            "bird",
+            "cup",
+            "elephant",
+            "duck",
+            "fan",
+            "Incorrect",
+            "cat",
+            "book",
+            "apple",
+            "fish",
+            "dog",
+            "egg"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 3 Review 1_A-F單字配對 - Whack-a-mole",
+              "words": [
+                "Correct",
+                "ant",
+                "bird",
+                "cup",
+                "elephant",
+                "duck",
+                "fan",
+                "Incorrect",
+                "cat",
+                "book",
+                "apple",
+                "fish",
+                "dog",
+                "egg"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23398928"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 3",
+          "words": [
+            "girl",
+            "dog",
+            "boy",
+            "goat",
+            "cup",
+            "hen",
+            "hat",
+            "book",
+            "insect",
+            "apple",
+            "elephant",
+            "igloo",
+            "cat",
+            "duck",
+            "bird",
+            "fish."
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 3_U3 - Maze chase",
+              "words": [
+                "girl",
+                "dog",
+                "boy",
+                "goat",
+                "cup",
+                "hen",
+                "hat",
+                "book",
+                "insect",
+                "apple",
+                "elephant",
+                "igloo",
+                "girl",
+                "hat",
+                "igloo",
+                "hen",
+                "goat",
+                "elephant",
+                "cat",
+                "hen",
+                "dog",
+                "insect",
+                "duck",
+                "dog",
+                "bird",
+                "fish."
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/20003652"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 4",
+          "words": [
+            "jam",
+            "key",
+            "lamp",
+            "mom",
+            "jet",
+            "kite",
+            "monkey",
+            "lion"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 3_U4 - Airplane",
+              "words": [
+                "jam",
+                "key",
+                "lamp",
+                "mom",
+                "jet",
+                "kite",
+                "monkey",
+                "lion"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/20003958"
+            }
+          ]
+        },
+        {
+          "unit": "Review 2",
+          "words": [
+            "girl",
+            "hat",
+            "igloo",
+            "jam",
+            "key",
+            "lamp",
+            "mom"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 3 Review 2_G-M單字配對 - Gameshow quiz",
+              "words": [
+                "girl",
+                "hat",
+                "igloo",
+                "jam",
+                "key",
+                "lamp",
+                "mom"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23400094"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "book": 4,
+      "grade": "小二下",
+      "label": "Fun World 4",
+      "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/21",
+      "units": [
+        {
+          "unit": "Unit 1",
+          "words": [
+            "nose",
+            "net",
+            "octopus",
+            "ox",
+            "pencil",
+            "pig"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 4_U1 - Labelled diagram",
+              "words": [
+                "nose",
+                "net",
+                "octopus",
+                "ox",
+                "pencil",
+                "pig"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23662238"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 2",
+          "words": [
+            "queen",
+            "quilt",
+            "rabbit",
+            "red",
+            "snake",
+            "sun"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 4_U2 - Open the box",
+              "words": [
+                "queen",
+                "quilt",
+                "rabbit",
+                "red",
+                "snake",
+                "sun"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23662656"
+            }
+          ]
+        },
+        {
+          "unit": "Review 1",
+          "words": [
+            "nose",
+            "net",
+            "monkey",
+            "fish",
+            "turtle",
+            "octopus",
+            "pencil",
+            "pig",
+            "book",
+            "hat",
+            "quilt",
+            "queen",
+            "rabbit",
+            "red",
+            "snake",
+            "bird",
+            "ant"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 4 Review 1_A-F單字配對 - Maze chase",
+              "words": [
+                "nose",
+                "net",
+                "monkey",
+                "fish",
+                "turtle",
+                "octopus",
+                "pencil",
+                "pig",
+                "book",
+                "hat",
+                "quilt",
+                "queen",
+                "rabbit",
+                "red",
+                "snake",
+                "bird",
+                "snake",
+                "ant"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23663857"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 3",
+          "words": [
+            "turtle",
+            "snake",
+            "down",
+            "up",
+            "van",
+            "vest",
+            "toy",
+            "book",
+            "kite",
+            "umbrella"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 4_U3 - Image quiz",
+              "words": [
+                "turtle",
+                "snake",
+                "down",
+                "up",
+                "van",
+                "vest",
+                "toy",
+                "book",
+                "kite",
+                "umbrella",
+                "vest",
+                "van"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23663156"
+            }
+          ]
+        },
+        {
+          "unit": "Unit 4",
+          "words": [
+            "window",
+            "watch",
+            "fox",
+            "box",
+            "yellow",
+            "yo-yo",
+            "zebra",
+            "zoo"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 4_U4 - Balloon pop",
+              "words": [
+                "window",
+                "watch",
+                "fox",
+                "box",
+                "yellow",
+                "yo-yo",
+                "zebra",
+                "zoo"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23663457"
+            }
+          ]
+        },
+        {
+          "unit": "Review 2",
+          "words": [
+            "Correct",
+            "turtle",
+            "up",
+            "van",
+            "window",
+            "fox",
+            "yellow",
+            "zebra",
+            "Incorrect",
+            "fish",
+            "goat",
+            "igloo",
+            "hat",
+            "mom",
+            "red",
+            "ant"
+          ],
+          "letters": [],
+          "activities": [
+            {
+              "title": "Fun World 4 Review 2_N-Z單字配對 - Whack-a-mole",
+              "words": [
+                "Correct",
+                "turtle",
+                "up",
+                "van",
+                "window",
+                "fox",
+                "yellow",
+                "zebra",
+                "Incorrect",
+                "fish",
+                "goat",
+                "igloo",
+                "hat",
+                "mom",
+                "red",
+                "ant"
+              ],
+              "letters": [],
+              "url": "https://wordwall.net/resource/23664298"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "totalWords": 203
+}
