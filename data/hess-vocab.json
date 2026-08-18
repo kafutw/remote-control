@@ -2,7 +2,7 @@
   "source": "何嘉仁 Fun World（國小英語課本）",
   "via": "hessdigi 數位練習平台 → Wordwall 活動頁的 meta description",
   "note": "只有英文。Wordwall 是英文配圖的活動，沒有中文；有中文的是 Quizlet，但它擋機房 IP（403）。",
-  "fetchedAt": "2026-08-18T07:00:23.895Z",
+  "fetchedAt": "2026-08-18T07:05:12.252Z",
   "books": [
     {
       "book": 1,
@@ -221,6 +221,134 @@
             }
           ]
         }
+      ],
+      "quizzes": [
+        {
+          "unit": "Review 1",
+          "shareUrl": "https://create.kahoot.it/share/halloween-r1/dfa11a74-8737-4e4c-ae7f-bde78a3cebf1",
+          "title": "Halloween (低年級)",
+          "questions": [
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "D"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "b"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "F f"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": []
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "X"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "O"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "X"
+              ]
+            },
+            {
+              "question": "A: Good job. B: Thank you.",
+              "answers": []
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "bat"
+              ]
+            },
+            {
+              "question": "Pat 要去參加萬聖節活動，但他不知道該穿什麼才好，如果是你，會選哪一套呢?",
+              "answers": []
+            },
+            {
+              "question": "_______ Little Pumpkins Sitting On a Gate.",
+              "answers": [
+                "five"
+              ]
+            }
+          ]
+        },
+        {
+          "unit": "Review 2",
+          "shareUrl": "https://create.kahoot.it/share/christmas-r2/da031155-7e01-4acf-aa61-3e3d01ca145f",
+          "title": "Christmas (低年級)",
+          "questions": [
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "L"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "K, k"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "H, h"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "jet"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "M"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "i"
+              ]
+            },
+            {
+              "question": "Which one is \"not\" about Christmas?",
+              "answers": []
+            },
+            {
+              "question": "Which one is about Christmas?",
+              "answers": []
+            },
+            {
+              "question": "Which picture is correct ?",
+              "answers": []
+            },
+            {
+              "question": "Which picture is correct ?",
+              "answers": []
+            }
+          ]
+        }
       ]
     },
     {
@@ -424,6 +552,88 @@
               ],
               "letters": [],
               "url": "https://wordwall.net/resource/23400880"
+            }
+          ]
+        }
+      ],
+      "quizzes": [
+        {
+          "unit": "Review 1",
+          "shareUrl": "https://create.kahoot.it/share/easter/f3bf34b5-66e7-4fa4-ac2a-214a3a5df489",
+          "title": "Easter",
+          "questions": [
+            {
+              "question": "Easter Bunny",
+              "answers": []
+            },
+            {
+              "question": "Easter eggs",
+              "answers": []
+            },
+            {
+              "question": "jellybeans",
+              "answers": []
+            },
+            {
+              "question": "chicks",
+              "answers": []
+            },
+            {
+              "question": "hen",
+              "answers": []
+            },
+            {
+              "question": "candy",
+              "answers": []
+            },
+            {
+              "question": "Which one is not about Easter?",
+              "answers": []
+            }
+          ]
+        },
+        {
+          "unit": "Review 2",
+          "shareUrl": "https://create.kahoot.it/share/dragon-boat-festival/92f9d7a8-3cac-45d8-8663-b2c73d6325fa",
+          "title": "Dragon Boat Festival",
+          "questions": [
+            {
+              "question": "dragon boat",
+              "answers": []
+            },
+            {
+              "question": "sachet",
+              "answers": []
+            },
+            {
+              "question": "rice dumplings",
+              "answers": []
+            },
+            {
+              "question": "stand an egg",
+              "answers": []
+            },
+            {
+              "question": "watch the race",
+              "answers": []
+            },
+            {
+              "question": "Choose the correct answer",
+              "answers": [
+                "rice dumpling"
+              ]
+            },
+            {
+              "question": "Choose the correct answer",
+              "answers": [
+                "stand an egg"
+              ]
+            },
+            {
+              "question": "Choose the correct answer",
+              "answers": [
+                "dragon boat"
+              ]
             }
           ]
         }
@@ -642,6 +852,110 @@
               ],
               "letters": [],
               "url": "https://wordwall.net/resource/23400094"
+            }
+          ]
+        }
+      ],
+      "quizzes": [
+        {
+          "unit": "Review 1",
+          "shareUrl": "https://create.kahoot.it/share/moon-festival/2297d054-6730-4bb0-9777-e8548b884c4b",
+          "title": "HESS- Moon Festival",
+          "questions": [
+            {
+              "question": "full moon",
+              "answers": []
+            },
+            {
+              "question": "pomelos",
+              "answers": []
+            },
+            {
+              "question": "moon cake",
+              "answers": []
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "pomelo hat"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "have a barbecue"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "eat moon cakes"
+              ]
+            },
+            {
+              "question": "Which one is \"not\" about Moon Festival?",
+              "answers": []
+            },
+            {
+              "question": "Choose the correct answer.哪張圖片最接近影片中的敘述?",
+              "answers": []
+            }
+          ]
+        },
+        {
+          "unit": "Review 2",
+          "shareUrl": "https://create.kahoot.it/share/chinese-new-year/3d1de17e-f895-4a5c-a924-4f3f9f6ea0ee",
+          "title": "Chinese New Year",
+          "questions": [
+            {
+              "question": "農曆新年我們會對周圍的人說? What do we say during Chinese New Year?",
+              "answers": []
+            },
+            {
+              "question": "哪張圖片跟農曆新年有關? Which one is about Chinese New Year?",
+              "answers": []
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "fish 魚肉"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "firecrackers 鞭炮"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "rice cake 年糕"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "lucky money 幸運錢"
+              ]
+            },
+            {
+              "question": "Choose the correct answer.",
+              "answers": [
+                "lion dance 舞獅"
+              ]
+            },
+            {
+              "question": "Which one is \"not\" about Chinese New Year?",
+              "answers": []
+            },
+            {
+              "question": "What is 2024 Chinese Zodiac?",
+              "answers": []
+            },
+            {
+              "question": "為什麼要放鞭炮?",
+              "answers": []
             }
           ]
         }
@@ -865,6 +1179,68 @@
               ],
               "letters": [],
               "url": "https://wordwall.net/resource/23664298"
+            }
+          ]
+        }
+      ],
+      "quizzes": [
+        {
+          "unit": "Review 1",
+          "shareUrl": "https://create.kahoot.it/share/mother-s-day/9b15c41c-825c-4ddf-8bda-44fc0b3aa65e",
+          "title": "Mother's Day",
+          "questions": [
+            {
+              "question": "flower",
+              "answers": []
+            },
+            {
+              "question": "love",
+              "answers": []
+            },
+            {
+              "question": "hug",
+              "answers": []
+            },
+            {
+              "question": "kiss",
+              "answers": []
+            },
+            {
+              "question": "gift",
+              "answers": []
+            },
+            {
+              "question": "cake",
+              "answers": []
+            }
+          ]
+        },
+        {
+          "unit": "Review 2",
+          "shareUrl": "https://create.kahoot.it/share/summer-activity/b472b03b-35d1-4a9c-b280-ba8534f2aa79",
+          "title": "Summer Activity",
+          "questions": [
+            {
+              "question": "summer",
+              "answers": []
+            },
+            {
+              "question": "swim",
+              "answers": []
+            },
+            {
+              "question": "beach",
+              "answers": []
+            },
+            {
+              "question": "sandcastle",
+              "answers": []
+            },
+            {
+              "question": "True or False : It's safe to swim during a thunderstorm.",
+              "answers": [
+                "False"
+              ]
             }
           ]
         }
