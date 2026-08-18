@@ -152,19 +152,52 @@ if (argv.includes("--self-test")) {
     if (!same) { bad++; console.error(`✗ ${c.name}\n   預期 ${JSON.stringify(c.want)}\n   實得 ${JSON.stringify(got)}`); }
     else console.error(`✓ ${c.name}`);
   }
+
+  // 連結解析用 DigiLink 真實版面測（照抄自探測 log），因為前一版就是在這裡漏掉
+  // 全部的連結 —— 而且它「成功」跑完、寫出一個 0 連結的檔案，完全沒有症狀。
+  const REAL = '<div class="unit-section"> <div class="unit-header"> <img src="/image/digi-link/icons.png" /> ' +
+    '<h5 class="unit-name"> Wordwall </h5> </div> <ul class="page-list"> <li class="page-item"> ' +
+    '<a class="page" href="/DigiLink/05/16/533"> <span> Unit 1 </span> <i class="fas fa-chevron-right"></i> </a> </li> ' +
+    '<li class="page-item"> <a class="page" href="/DigiLink/05/16/535"> <span> Review 1 </span> </a> </li> </ul> </div> ' +
+    '<div class="unit-section"> <div class="unit-header"> <h5 class="unit-name"> Quizlet </h5> </div> ' +
+    '<ul class="page-list"> <li class="page-item"> <a class="page" href="/DigiLink/05/16/557"> <span> Unit 1 </span> </a> </li> </ul> </div>';
+  const wantLinks = [
+    ["Wordwall", "Unit 1", "https://hessdigi.hess.com.tw/DigiLink/05/16/533"],
+    ["Wordwall", "Review 1", "https://hessdigi.hess.com.tw/DigiLink/05/16/535"],
+    ["Quizlet", "Unit 1", "https://hessdigi.hess.com.tw/DigiLink/05/16/557"],
+  ];
+  const gotLinks = extractUnitLinks(REAL, "https://hessdigi.hess.com.tw/DigiLink/05/16")
+    .map(l => [l.platform, l.unit, l.href]);
+  if (JSON.stringify(gotLinks) !== JSON.stringify(wantLinks)) {
+    bad++;
+    console.error(`✗ DigiLink 單元連結\n   預期 ${JSON.stringify(wantLinks)}\n   實得 ${JSON.stringify(gotLinks)}`);
+  } else console.error("✓ DigiLink 單元連結（平台歸屬、站內相對路徑）");
+
   process.exit(bad ? 1 : 0);
 }
 
-/** 頁面上的外部連結（單字在這些連結裡，不在何嘉仁自己的頁面上）。 */
-function extractLinks(html, base) {
+/**
+ * DigiLink 的單元連結。第三次探測（同日）才看清楚它長這樣：
+ *
+ *   <div class="unit-section">
+ *     <div class="unit-header"><h5 class="unit-name"> Wordwall </h5></div>
+ *     <ul class="page-list">
+ *       <li class="page-item"><a class="page" href="/DigiLink/05/16/533"><span> Unit 1 </span>…</a></li>
+ *
+ * 也就是說單元**是**超連結，只是連到站內的 /DigiLink/{類}/{冊}/{頁} ——
+ * 前一版把 hess.com.tw 當「站內導覽」整批濾掉，等於親手把答案丟掉。
+ * 平台名（Wordwall／Quizlet／Blooket／Kahoot）在最近的一個 unit-name 裡，
+ * 所以邊走邊記：遇到標題就換平台，遇到連結就掛在當下的平台底下。
+ */
+function extractUnitLinks(html, base) {
   const out = [];
-  for (const m of html.matchAll(/<a\s[^>]*href=["']([^"'#][^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+  let platform = "";
+  const token = /<h5[^>]*class="unit-name"[^>]*>([\s\S]*?)<\/h5>|<a[^>]*class="page"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+  for (const m of html.matchAll(token)) {
+    if (m[1] !== undefined) { platform = toText(m[1]).replace(/\n/g, " ").trim(); continue; }
     let href;
-    try { href = new URL(m[1], base).href; } catch { continue; }
-    const host = new URL(href).hostname.replace(/^www\./, "");
-    if (/hess\.com\.tw$/.test(host)) continue;          // 站內導覽，不是練習連結
-    const label = toText(m[2]).replace(/\n/g, " ").trim();
-    out.push({ label, href, host });
+    try { href = new URL(m[2], base).href; } catch { continue; }
+    out.push({ platform, unit: toText(m[3]).replace(/\n/g, " ").trim(), href });
   }
   return out;
 }
@@ -180,46 +213,39 @@ const isFunWorld = label => /^Fun World\s*[1-4]$/i.test(label);
 
 // ── 探測模式：先看清楚長什麼樣，再談解析 ──────────────────────────────
 if (probe) {
-  // 第二次探測（同日）：DigiLink 每一冊都認得出教材名，但 <a href> 一個都沒有 ——
-  // 單元是 Unit 1／Unit 2 這樣列在畫面上，卻不是超連結。所以這次不再猜，
-  // 直接把原始 HTML 印出來看那些單元掛在什麼標籤、網址藏在哪個屬性。
-  const KNOWN = { 16: "Fun World 1", 19: "Fun World 2", 20: "Fun World 3", 21: "Fun World 4" };
+  // 第三次探測（同日）：連結的形狀弄清楚了，接著往下一層 ——
+  // /DigiLink/05/16/{頁} 這種站內頁點下去是轉去 Wordwall／Quizlet，
+  // 還是把練習嵌在自己頁面上（iframe），決定單字要從哪裡撈。
+  const FW1 = "https://hessdigi.hess.com.tw/DigiLink/05/16";
 
-  console.log("── 掃 DigiLink，記下各冊的 id ──");
-  for (const url of DIGI) {
-    const res = await get(url);
-    if (!res.ok || res.body.length < 2000) continue;    // 404 頁固定 1136 bytes
-    const label = bookLabel(toText(res.body));
-    console.log(`  ${url.slice(url.lastIndexOf("/05/"))}\t${label || "（認不出來）"}`);
-    await sleep(400);
+  const res = await get(FW1);
+  const links = extractUnitLinks(res.body, FW1);
+  console.log(`── Fun World 1 的單元連結（${links.length} 個）──`);
+  for (const l of links) console.log(`  ${l.platform.padEnd(10)} ${l.unit.padEnd(10)} ${l.href}`);
+
+  // 每個平台各挖一個單元。單字有沒有在 HTML 裡、那些站認不認 runner 的 IP，
+  // 是兩件不同的事，只有真的抓一次才知道。
+  const seen = new Set();
+  for (const l of links) {
+    if (seen.has(l.platform) || /AI|提示詞/.test(l.platform)) continue;
+    seen.add(l.platform);
+    const sub = await get(l.href);
+    const text = sub.ok ? toText(sub.body) : "";
+    console.log(`\n${"═".repeat(72)}\n${l.platform} ${l.unit}　${l.href}`);
+    console.log(`  HTTP ${sub.status}${sub.error ? "  " + sub.error : ""}  html ${sub.body.length} bytes  text ${text.length} chars`);
+    if (!sub.ok) continue;
+
+    const frames = [...sub.body.matchAll(/<iframe[^>]*src=["']([^"']+)["']/gi)].map(m => m[1]);
+    console.log(`  iframe：${frames.length ? frames.join("  ") : "無"}`);
+    const ext = [...new Set([...sub.body.matchAll(/https?:\/\/(?!\w*\.?hess\.com\.tw)[^"'\s<>]+/gi)].map(m => m[0]))]
+      .filter(u => !/fontawesome|bootstrap|jquery|googleapis|gstatic|w3\.org/i.test(u));
+    console.log(`  站外網址（${ext.length} 個，最多印 12）：`);
+    ext.slice(0, 12).forEach(u => console.log("    " + u));
+    console.log(`  直接解析：${extractUnits(text).reduce((n, u) => n + u.words.length, 0)} 個字`);
+    console.log("  ── 可見文字（前 800 字）──");
+    console.log(text.slice(0, 800).split("\n").map(x => "  | " + x).join("\n"));
+    await sleep(1000);
   }
-
-  console.log("\n── Fun World 1 的原始 HTML：單元按鈕長什麼樣 ──");
-  const fw1 = await get(`https://hessdigi.hess.com.tw/DigiLink/05/16`);
-
-  const tags = [...fw1.body.matchAll(/<a\b[^>]*>/gi)].map(m => m[0]);
-  console.log(`\n所有 <a> 開頭標籤（${tags.length} 個，最多印 40）：`);
-  tags.slice(0, 40).forEach(t => console.log("  " + t));
-
-  for (const attr of ["onclick", "data-", "href"]) {
-    const hits = [...new Set([...fw1.body.matchAll(new RegExp(`${attr}[\\w-]*\\s*=\\s*["'][^"']*["']`, "gi"))].map(m => m[0]))];
-    console.log(`\n含 ${attr} 的屬性（${hits.length} 種，最多印 25）：`);
-    hits.slice(0, 25).forEach(h => console.log("  " + h));
-  }
-
-  // Unit 1 這四個字在 HTML 裡的前後文，才是真相所在。
-  console.log("\n── \"Unit 1\" 前後的原始 HTML ──");
-  let i = -1, n = 0;
-  while (n < 3 && (i = fw1.body.indexOf("Unit 1", i + 1)) >= 0) {
-    console.log(`\n[第 ${++n} 處 offset ${i}]`);
-    console.log("  " + fw1.body.slice(Math.max(0, i - 700), i + 700).replace(/\s+/g, " "));
-  }
-
-  // 頁面若靠 JS 取資料，端點會出現在 script 裡。
-  console.log("\n── 頁面上的 <script> 內容（前 3000 字）──");
-  const scripts = [...fw1.body.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
-    .map(m => m[1].trim()).filter(x => x && !/^\/\//.test(x)).join("\n---\n");
-  console.log(scripts.slice(0, 3000).split("\n").map(l => "  | " + l).join("\n"));
 
   console.log("\n看完再決定單字要從哪裡撈。");
   process.exit(0);
@@ -237,7 +263,7 @@ for (const url of DIGI) {
   if (!isFunWorld(label)) continue;
   const n = Number(label.match(/(\d)$/)[1]);
   const meta = BOOKS[n - 1];
-  const links = extractLinks(res.body, url);
+  const links = extractUnitLinks(res.body, url);
   console.error(`✓ ${label}（${meta.grade}）${links.length} 個練習連結　${url}`);
   sources.books.push({ book: n, grade: meta.grade, label, digiUrl: url, links });
   await sleep(600);
