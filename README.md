@@ -107,13 +107,17 @@
 
 - **📚 都要**（預設）— 兩邊的字都收，124 個。
 - **🏫 教育部** — 只出**國中小基本英語字彙 1200 字**表內的字，82 個（逐字比對過）。
-- **🅷 何嘉仁** — 照 Fun World 課本各單元的單字表：**小一上 Fun World 1（a–m）17 字 ＋ 小一下 Fun World 2（n–z）18 字 = 35 字**，兩冊一起練，不分冊。
+- **🅷 何嘉仁** — 照 Fun World 1–4 冊各單元的單字表，**共 56 字**：小一上 FW1（a–m）17 ＋ 小一下 FW2（n–z）18 ＋ 小二上 FW3 新教 10 ＋ 小二下 FW4 新教 11。四冊一起練，不分冊（小二兩冊主要是複習小一，只有 ★ 標的才是新字）。
 - 沒有做 **GEPT Kids** 這個選項：它的字表 PDF 在這個環境連不上（網路政策擋掉），無法逐字驗證誰在表內，做成篩選條件會是假的。分級時參考的是它公開的**主題結構**，不是字表本身。
 
 **單字來源**
 
 - **字母的代表單字**：26 個全部照**何嘉仁 Fun World 課本**內頁（「我會唸字母和單字」單元）——apple／book／cat／dog／egg／fish／goat／hen／insect／jet／kite／lion／monkey／net／ox／pig／quilt／red／sun／toy／umbrella／vest／watch／box／yo-yo／zoo。不跟著單字的教材來源換。其中 `jet`、`net`、`quilt`、`yo-yo` 不在教育部 1200 字表內。X 開頭課本用的也是字尾有 x 的 `box`。
-- **何嘉仁的 35 個單字**：照課本各單元的單字表收的，不是字母頁的延伸補充區——小一上 `apple, ant, book, bird, cat, cup, dog, egg, elephant, fish, goat, hen, insect, jet, kite, lion, monkey`；小一下 `net, nose, ox, pig, ball, sheep, quilt, red, sun, yellow, toy, umbrella, vest, watch, window, box, yo-yo, zoo`。
+- **何嘉仁的 56 個單字**：照課本各單元的單字表收的，不是字母頁的延伸補充區。
+  - 小一上 FW1（17）`apple, ant, book, bird, cat, cup, dog, egg, elephant, fish, goat, hen, insect, jet, kite, lion, monkey`
+  - 小一下 FW2（18）`net, nose, ox, pig, ball, sheep, quilt, red, sun, yellow, toy, umbrella, vest, watch, window, box, yo-yo, zoo`
+  - 小二上 FW3 新教（10）`duck, fan, girl, boy, hat, igloo, jam, key, lamp, mom`
+  - 小二下 FW4 新教（11）`octopus, pencil, queen, rabbit, snake, turtle, up, down, van, fox, zebra`
 - **小一／小二單字表**：台灣低年級英語**沒有全國統一字表**——十二年國教課綱的英語文從**小三**才開始，一二年級屬於各縣市的彈性學習課程，教什麼由各校決定。所以這裡的分級是參考 GEPT Kids 主題字表、宜蘭員山國小的一二年級各 50 字，再對照教育部 1200 字挑出來的，**不是任何出版社的官方清單**。何嘉仁的完整單字索引不對外公開，在課本／習作最後的 Word List 和附贈的單字小卡片裡。
 
 小地方：手機請把靜音鍵關掉才聽得到聲音；有鍵盤的話直接按鍵盤上的字母也可以作答；支援深色模式。
