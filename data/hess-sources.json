@@ -1,0 +1,34 @@
+{
+  "source": "何嘉仁 Fun World 數位練習平台（hessdigi）",
+  "fetchedAt": "2026-08-18T05:31:38.785Z",
+  "books": [
+    {
+      "book": 1,
+      "grade": "小一上",
+      "label": "Fun World 1",
+      "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/16",
+      "links": []
+    },
+    {
+      "book": 2,
+      "grade": "小一下",
+      "label": "Fun World 2",
+      "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/19",
+      "links": []
+    },
+    {
+      "book": 3,
+      "grade": "小二上",
+      "label": "Fun World 3",
+      "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/20",
+      "links": []
+    },
+    {
+      "book": 4,
+      "grade": "小二下",
+      "label": "Fun World 4",
+      "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/21",
+      "links": []
+    }
+  ]
+}
