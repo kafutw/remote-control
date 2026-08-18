@@ -173,16 +173,23 @@ if (argv.includes("--self-test")) {
     console.error(`✗ DigiLink 單元連結\n   預期 ${JSON.stringify(wantLinks)}\n   實得 ${JSON.stringify(gotLinks)}`);
   } else console.error("✓ DigiLink 單元連結（平台歸屬、站內相對路徑）");
 
-  // 網址裡的 &amp; 不還原會抓成 404 或抓到別組單字 —— 而且看起來一切正常。
-  const SUB = '<a href="https://quizlet.com/tw/601778996/fun-world-1-unit-1-flash-cards/?i=268wv3&amp;x=1jqt" ' +
-    'class="btn">前往</a> <link href="https://use.fontawesome.com/releases/v5.0.9/css/all.css" /> ' +
-    '<a href="/DigiLink/05/16">回上頁</a>';
-  const wantTargets = ["https://quizlet.com/tw/601778996/fun-world-1-unit-1-flash-cards/?i=268wv3&x=1jqt"];
-  const gotTargets = extractTargets(SUB);
+  // 兩件會靜靜出錯的事：網址裡的 &amp; 不還原會抓成 404 或抓到別組單字；
+  // 標籤掉了就分不出「單字」和「字母」，最後會把字母表當單字表背。
+  const SUB = '<a href="https://wordwall.net/resource/33782827" class="btn">記憶配對 字母</a> ' +
+    '<a href="https://wordwall.net/resource/33599817" class="btn">找到夥伴 單字</a> ' +
+    '<a href="https://quizlet.com/tw/601778996/x-flash-cards/?i=268wv3&amp;x=1jqt">前往</a> ' +
+    '<link href="https://use.fontawesome.com/releases/v5.0.9/css/all.css" /> ' +
+    '<a href="/DigiLink/05/16">回上頁</a> <a href="https://hessdigi.hess.com.tw/DigiLink/Index">首頁</a>';
+  const wantTargets = [
+    ["記憶配對 字母", "https://wordwall.net/resource/33782827"],
+    ["找到夥伴 單字", "https://wordwall.net/resource/33599817"],
+    ["前往", "https://quizlet.com/tw/601778996/x-flash-cards/?i=268wv3&x=1jqt"],
+  ];
+  const gotTargets = extractTargetLinks(SUB).map(t => [t.label, t.url]);
   if (JSON.stringify(gotTargets) !== JSON.stringify(wantTargets)) {
     bad++;
     console.error(`✗ 練習網址\n   預期 ${JSON.stringify(wantTargets)}\n   實得 ${JSON.stringify(gotTargets)}`);
-  } else console.error("✓ 練習網址（還原 &amp;、濾掉 CDN 與站內連結）");
+  } else console.error("✓ 練習網址（保留標籤、還原 &amp;、濾掉 CDN 與站內連結）");
 
   process.exit(bad ? 1 : 0);
 }
@@ -219,19 +226,26 @@ function unescapeHtml(s) {
 }
 
 /**
- * 站內頁 /DigiLink/05/16/557 → 真正的練習網址。第四次探測看到的樣子：
- *   Quizlet  → https://quizlet.com/tw/601778996/fun-world-1-unit-1-…-flash-cards/?i=…&x=…
- *   Wordwall → https://wordwall.net/resource/33782827（一頁可能有好幾個活動）
- *   Blooket  → https://dashboard.blooket.com/set/60f14ac59933c3001b7ad06b
- *   Kahoot   → https://create.kahoot.it/share/halloween-r1/…
- * 頁面本身沒有 iframe，就是一顆按鈕連出去，所以抓站外網址就好。
+ * 站內頁 /DigiLink/05/16/557 → 真正的練習網址，連按鈕上的標籤一起留下。
+ * 標籤很重要：同一個單元的 Wordwall 常常有兩個活動 ——「記憶配對 字母」和
+ *「找到夥伴 單字」—— 要的是後者，有標籤就不用猜。
+ *
+ * 第五次探測（同日）確認過各平台從 GitHub runner 連出去的結果：
+ *   Quizlet  → HTTP 403 Captcha Challenge，一般頁／嵌入頁／webapi 三種全擋，機房 IP 沒得談
+ *   Wordwall → HTTP 200，而且單字就印在頁面上（"apple, book, cat, ant, bird, cup"）
+ *   所以單字從 Wordwall 撈，Quizlet 只留網址給人點。
  */
-function extractTargets(html) {
-  // 樣式表、字型、社群按鈕不是練習網址。這條 regex 直接寫在這裡而不抽成常數，
-  // 因為 const 不會提升，而自我測試在檔案更前面就會呼叫這支函式。
+function extractTargetLinks(html) {
   const noise = /fontawesome|bootstrap|jquery|googleapis|gstatic|w3\.org|schema\.org|facebook|line\.me/i;
-  const urls = [...html.matchAll(/https?:\/\/(?!\w*\.?hess\.com\.tw)[^"'\s<>]+/gi)].map(m => unescapeHtml(m[0]));
-  return [...new Set(urls)].filter(u => !noise.test(u));
+  const out = [];
+  const seen = new Set();
+  for (const m of html.matchAll(/<a\b[^>]*href=["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const url = unescapeHtml(m[1]);
+    if (/\bhess\.com\.tw/.test(url) || noise.test(url) || seen.has(url)) continue;
+    seen.add(url);
+    out.push({ label: toText(m[2]).replace(/\n/g, " ").trim(), url });
+  }
+  return out;
 }
 
 /** DigiLink 頁面上「數位練習平台」下一行就是教材名（Fun World 1、Super Fun 1…）。 */
@@ -245,37 +259,31 @@ const isFunWorld = label => /^Fun World\s*[1-4]$/i.test(label);
 
 // ── 探測模式：先看清楚長什麼樣，再談解析 ──────────────────────────────
 if (probe) {
-  // 第四次探測看到：站內頁 /DigiLink/05/16/557 裡直接寫著
-  //   https://quizlet.com/tw/601778996/fun-world-1-unit-1-單字生活用語-flash-cards/
-  // 那組就是「Fun World 1 Unit 1 單字＋生活用語」，英中對照，正是要的東西。
-  // 剩下唯一的問題：Quizlet 認不認 runner 的機房 IP、單字在不在 HTML 裡。
-  // 三種取法各試一次 —— 一般頁、嵌入頁、以及網站自己在用的 JSON API。
-  const SET = "601778996";
-  const tries = [
-    ["一般頁", `https://quizlet.com/tw/${SET}/fun-world-1-unit-1-flash-cards/`],
-    ["嵌入頁", `https://quizlet.com/${SET}/flashcards/embed`],
-    ["JSON API", `https://quizlet.com/webapi/3.4/studiable-item-documents` +
-      `?filters%5BstudiableContainerId%5D=${SET}&filters%5BstudiableContainerType%5D=1&perPage=200`],
-    ["Wordwall", "https://wordwall.net/resource/33599817"],
-  ];
+  // 第五輪確認了：Quizlet 403、Wordwall 200 且單字就印在頁面上。
+  // 這輪要問的是「那串單字在 HTML 的哪裡」—— 可見文字裡混著一堆 UI 字樣
+  //（Share／Print／Embed…），照單全收會把介面當單字背。
+  const SUBPAGE = "https://hessdigi.hess.com.tw/DigiLink/05/16/533";   // Wordwall Unit 1
+  const sub = await get(SUBPAGE);
+  console.log(`── 站內頁的按鈕（${SUBPAGE}）──`);
+  for (const t of extractTargetLinks(sub.body)) console.log(`  ${t.label.padEnd(14)} ${t.url}`);
 
-  for (const [name, url] of tries) {
-    const r = await get(url);
-    const text = r.ok ? toText(r.body) : "";
-    console.log(`\n${"═".repeat(72)}\n${name}　${url}`);
-    console.log(`  HTTP ${r.status}${r.error ? "  " + r.error : ""}  ${r.body.length} bytes  text ${text.length} chars`);
-    if (!r.ok) { console.log("  " + r.body.slice(0, 300).replace(/\s+/g, " ")); await sleep(1500); continue; }
+  const WW = "https://wordwall.net/resource/33599817";                 // 「找到夥伴 單字」
+  const r = await get(WW);
+  console.log(`\n── Wordwall 單字活動（${WW}）──`);
+  console.log(`  HTTP ${r.status}  ${r.body.length} bytes`);
 
-    // 這類站多半把內容塞在 HTML 裡的 JSON，不在可見文字上。
-    for (const key of ["word", "definition", "cardSides", "studiableItem", "terms", "activityContent"]) {
-      const at = r.body.indexOf(`"${key}"`);
-      if (at >= 0) console.log(`  含 "${key}" @${at}：${r.body.slice(at, at + 260).replace(/\s+/g, " ")}`);
-    }
-    console.log(`  直接解析：${extractUnits(text).reduce((n, u) => n + u.words.length, 0)} 個字`);
-    console.log("  ── 可見文字（前 900 字）──");
-    console.log(text.slice(0, 900).split("\n").map(x => "  | " + x).join("\n"));
-    await sleep(1500);
+  const desc = r.body.match(/<meta[^>]+name=["']description["'][^>]*>/i);
+  console.log(`  <meta description>：${desc ? desc[0] : "無"}`);
+  const title = r.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  console.log(`  <title>：${title ? title[1].trim() : "無"}`);
+
+  // "apple" 出現在哪些地方，各印一段前後文 —— 完整的題目清單多半在某個 JSON 裡。
+  let i = -1, n = 0;
+  while (n < 4 && (i = r.body.indexOf("apple", i + 1)) >= 0) {
+    console.log(`\n[apple 第 ${++n} 處 offset ${i}]`);
+    console.log("  " + r.body.slice(Math.max(0, i - 400), i + 400).replace(/\s+/g, " "));
   }
+  if (!n) console.log("  ⚠️ HTML 裡找不到 apple —— 單字可能是後來才由 JS 塞進去的");
 
   console.log("\n看完再決定單字要從哪裡撈。");
   process.exit(0);
@@ -300,7 +308,7 @@ for (const url of DIGI) {
   for (const l of links) {
     if (/AI|提示詞/.test(l.platform)) continue;
     const sub = await get(l.href);
-    if (sub.ok) l.targets = extractTargets(sub.body);
+    if (sub.ok) l.targets = extractTargetLinks(sub.body);
     await sleep(500);
   }
 
