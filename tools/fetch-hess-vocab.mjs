@@ -328,31 +328,38 @@ const isFunWorld = label => /^Fun World\s*[1-4]$/i.test(label);
 
 // ── 探測模式：先看清楚長什麼樣，再談解析 ──────────────────────────────
 if (probe) {
-  // 第五輪確認了：Quizlet 403、Wordwall 200 且單字就印在頁面上。
-  // 這輪要問的是「那串單字在 HTML 的哪裡」—— 可見文字裡混著一堆 UI 字樣
-  //（Share／Print／Embed…），照單全收會把介面當單字背。
-  const SUBPAGE = "https://hessdigi.hess.com.tw/DigiLink/05/16/533";   // Wordwall Unit 1
-  const sub = await get(SUBPAGE);
-  console.log(`── 站內頁的按鈕（${SUBPAGE}）──`);
-  for (const t of extractTargetLinks(sub.body)) console.log(`  ${t.label.padEnd(14)} ${t.url}`);
+  // 第七輪：單字有了（Wordwall 的 meta），但課本還有「生活用語」——
+  // Good morning 那類句子。Wordwall 的活動只練字母與單字，撈不到句子。
+  // 線索是站內頁的標題：Quizlet 和 Blooket 都寫著「Unit 1（單字＋生活用語）」，
+  // 也就是同一組內容。Quizlet 擋機房 IP，那就換 Blooket 和 Kahoot 試 ——
+  // 這兩家都有公開的題目 API，而且還沒試過。
+  const BLOOKET = "60f14ac59933c3001b7ad06b";                       // FW1 Unit 1
+  const KAHOOT  = "dfa11a74-8737-4e4c-ae7f-bde78a3cebf1";           // FW1 Review 1（萬聖節）
+  const tries = [
+    ["Blooket API",       `https://api.blooket.com/api/games?gameId=${BLOOKET}`],
+    ["Blooket dashboard", `https://dashboard.blooket.com/api/games?gameId=${BLOOKET}`],
+    ["Blooket play",      `https://play.blooket.com/api/games?gameId=${BLOOKET}`],
+    ["Blooket 網頁",      `https://dashboard.blooket.com/set/${BLOOKET}`],
+    ["Kahoot API",        `https://play.kahoot.it/rest/kahoots/${KAHOOT}`],
+    ["Kahoot card",       `https://create.kahoot.it/rest/kahoots/${KAHOOT}/card/?includeKahoot=true`],
+  ];
 
-  const WW = "https://wordwall.net/resource/33599817";                 // 「找到夥伴 單字」
-  const r = await get(WW);
-  console.log(`\n── Wordwall 單字活動（${WW}）──`);
-  console.log(`  HTTP ${r.status}  ${r.body.length} bytes`);
-
-  const desc = r.body.match(/<meta[^>]+name=["']description["'][^>]*>/i);
-  console.log(`  <meta description>：${desc ? desc[0] : "無"}`);
-  const title = r.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  console.log(`  <title>：${title ? title[1].trim() : "無"}`);
-
-  // "apple" 出現在哪些地方，各印一段前後文 —— 完整的題目清單多半在某個 JSON 裡。
-  let i = -1, n = 0;
-  while (n < 4 && (i = r.body.indexOf("apple", i + 1)) >= 0) {
-    console.log(`\n[apple 第 ${++n} 處 offset ${i}]`);
-    console.log("  " + r.body.slice(Math.max(0, i - 400), i + 400).replace(/\s+/g, " "));
+  for (const [name, url] of tries) {
+    const r = await get(url);
+    console.log(`\n${"═".repeat(72)}\n${name}　${url}`);
+    console.log(`  HTTP ${r.status}${r.error ? "  " + r.error : ""}  ${r.body.length} bytes`);
+    // JSON 就直接印開頭 —— 題目文字會在裡面，看得到才寫得出解析規則。
+    const looksJson = /^\s*[[{]/.test(r.body);
+    console.log(`  ${looksJson ? "JSON" : "非 JSON"}`);
+    console.log("  " + r.body.slice(0, looksJson ? 2200 : 500).replace(/\s+/g, " "));
+    if (!looksJson && r.ok) {
+      for (const key of ["question", "questions", "answers", "correctAnswers", "title", "\u0022name\u0022"]) {
+        const at = r.body.indexOf(`"${key}"`);
+        if (at >= 0) console.log(`  含 "${key}" @${at}：${r.body.slice(at, at + 240).replace(/\s+/g, " ")}`);
+      }
+    }
+    await sleep(1200);
   }
-  if (!n) console.log("  ⚠️ HTML 裡找不到 apple —— 單字可能是後來才由 JS 塞進去的");
 
   console.log("\n看完再決定單字要從哪裡撈。");
   process.exit(0);
