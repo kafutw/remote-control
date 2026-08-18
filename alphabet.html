@@ -379,6 +379,10 @@
   .qemoji.big { font-size: calc(var(--fs-q) * 1.5); }
   .qtext.word { font-size: var(--fs-q); letter-spacing: .01em; }
   .qtext.zh { font-family: var(--font); font-size: var(--fs-q); font-weight: 800; }
+  .qtext.cloze { letter-spacing: .12em; }
+  .qtext.cloze .blank { color: var(--coral-ink); border-bottom: 4px solid var(--coral); }
+  .qtext.cloze .sp { padding: 0 .18em; }
+  .opt.letter { font-size: var(--fs-opt); }
   .qzh.bpmf, .wzh.bpmf { line-height: 1.9; }
 
   /* 認識單字：一格一個字，圖＋英文＋中文 */
@@ -643,6 +647,7 @@
         <div class="modes" id="wkinds">
           <button class="mode sel" data-wkind="all"><b>都出</b><i>輪流換，練得比較全</i></button>
           <button class="mode" data-wkind="wlisten"><b>🔊 聽發音選圖</b><i>不用認字，聽到什麼點哪張圖</i></button>
+          <button class="mode" data-wkind="wcloze"><b>🔤 填字母</b><i>看圖聽音，補上缺的那個字母</i></button>
           <button class="mode reader" data-wkind="wpic"><b>🖼️ 看圖選字</b><i>要認字</i></button>
           <button class="mode reader" data-wkind="wread"><b>🔡 看字選圖</b><i>要認字</i></button>
           <button class="mode reader" data-wkind="wzh"><b>🈶 看中文選字</b><i>要認字</i></button>
@@ -1179,7 +1184,7 @@
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if (['smart', 'even'].indexOf(db.mode) < 0) db.mode = DEF.mode;
     if (['all', 'listen', 'case', 'case2'].indexOf(db.kind) < 0) db.kind = DEF.kind;
-    if (['all', 'wpic', 'wlisten', 'wread', 'wzh'].indexOf(db.wkind) < 0) db.wkind = DEF.wkind;
+    if (['all', 'wpic', 'wlisten', 'wread', 'wzh', 'wcloze'].indexOf(db.wkind) < 0) db.wkind = DEF.wkind;
     db.reads = db.reads ? 1 : 0;
     if (['letters', 'w1', 'w2'].indexOf(db.subject) < 0) db.subject = DEF.subject;
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
@@ -1773,7 +1778,8 @@
     wlisten:'🔊 聽聲音，這是哪一張圖？',
     wpic:   '🖼️ 這是哪一個字？',
     wread:  '🔡 這個字是哪一張圖？',
-    wzh:    '🈶 這個意思的英文是哪一個？'
+    wzh:    '🈶 這個意思的英文是哪一個？',
+    wcloze: '🔤 這個字缺了一個字母'
   };
   var SUBJECT_NAME = { letters: 'ABC 字母', w1: '小一單字', w2: '小二單字' };
 
@@ -1798,9 +1804,9 @@
     if (wordMode()) {
       // 還不會認英文字的話，只出「聽發音選圖片」——其他三種都要讀得懂字
       var READER = ['wpic', 'wread', 'wzh'];
-      if (db.wkind === 'all') ks = db.reads ? ['wlisten'].concat(READER) : ['wlisten'];
+      if (db.wkind === 'all') ks = db.reads ? ['wlisten', 'wcloze'].concat(READER) : ['wlisten'];
       else if (!db.reads && READER.indexOf(db.wkind) >= 0) ks = ['wlisten'];
-      else ks = [db.wkind];
+      else ks = [db.wkind];   // 填字母單獨選的話，還不會認字也能玩（有圖有音當提示）
     } else {
       ks = db.kind === 'all' ? ['listen', 'case', 'case2'] : [db.kind];
     }
@@ -1837,6 +1843,13 @@
     }
     var ks = kindsAvailable();
     var kind = ks[Math.floor(Math.random() * ks.length)];
+    if (kind === 'wcloze') {
+      // 隨機挖掉一個字母（空白和連字號不挖）
+      var w = itemOf(c).word, spots = [];
+      for (var i = 0; i < w.length; i++) if (/[a-z]/i.test(w.charAt(i))) spots.push(i);
+      var at = spots[Math.floor(Math.random() * spots.length)];
+      return { c: c, kind: kind, at: at, ans: w.charAt(at).toUpperCase() };
+    }
     // 家人這種「一張圖認不出是誰」的字，改考中文對應，不出圖片題
     if (isWord(c) && WMAP[c].p === 0 && kind !== 'wzh') {
       kind = db.reads ? 'wzh' : 'wlisten';   // 圖片認不出來就改考中文；還不會認字的階段本來就不會抽到
@@ -1844,9 +1857,25 @@
     return { c: c, kind: kind };
   }
 
+  var VOWELS = 'AEIOU';
+  // 填字母的選項：母音配母音，子音就挑長得像／常搞混的
+  function clozeOptions(ans) {
+    var set = [], pool;
+    function add(x) { if (x !== ans && set.indexOf(x) < 0 && IDX[x] !== undefined) set.push(x); }
+    if (VOWELS.indexOf(ans) >= 0) {
+      pool = VOWELS.split('');
+    } else {
+      pool = letterOf(ans).near.split('').filter(function (x) { return VOWELS.indexOf(x) < 0; });
+    }
+    shuffle(pool).forEach(add);
+    shuffle(ALL.slice()).forEach(add);
+    return shuffle([ans, set[0], set[1], set[2]]);
+  }
+
   // 干擾項：字母用最容易混淆的（b/d/p、m/n、u/v/w…），
   // 單字先用同一個主題的（顏色配顏色、動物配動物），不夠再隨機補
   function makeOptions(c) {
+    if (S.q && S.q.kind === 'wcloze') return clozeOptions(S.q.ans);
     var set = [];
     function add(x) { if (x !== c && set.indexOf(x) < 0) set.push(x); }
     if (isWord(c)) {
@@ -1969,6 +1998,20 @@
         '<div class="qzh bpmf">' + zhRuby(it.zh) + '</div>';
       return;
     }
+    if (q.kind === 'wcloze') {
+      var w = it.word, html = '';
+      for (var i = 0; i < w.length; i++) {
+        html += (i === q.at) ? '<span class="blank">＿</span>'
+                             : (w.charAt(i) === ' ' ? '<span class="sp"> </span>' : w.charAt(i));
+      }
+      body.innerHTML = '<div class="qemoji">' + it.emoji + '</div>' +
+        '<div class="qtext word cloze">' + html + '</div>' +
+        '<div class="qzh bpmf">' + zhRuby(it.zh) + '</div>' +
+        '<button class="btn ghost" id="playBtn" style="margin-top:10px">🔊 再聽一次</button>';
+      $('playBtn').addEventListener('click', function () { sayItem(q.c); });
+      sayItem(q.c, 150);
+      return;
+    }
     if (q.kind === 'wzh') {
       body.innerHTML = '<div class="qtext zh bpmf">' + zhRuby(it.zh) + '</div>';
       return;
@@ -2009,6 +2052,7 @@
 
   // 題目給大寫就選小寫，給小寫就選大寫；單字題選項則是英文字或圖片
   function optionFace(c, kind) {
+    if (kind === 'wcloze') return lower(c);                // 填字母：選項就是字母
     // 聽發音、看字 → 選圖片；看圖、看中文 → 選英文字
     if (kind === 'wread' || kind === 'wlisten') return itemOf(c).emoji;
     if (kind === 'wpic' || kind === 'wzh') return itemOf(c).word;
@@ -2019,6 +2063,7 @@
     var kind = S.q.kind;
     var wordFace = (kind === 'wpic' || kind === 'wzh');
     var picFace = (kind === 'wread' || kind === 'wlisten');
+    if (kind === 'wcloze') { wordFace = false; picFace = false; }
     document.querySelectorAll('.opt').forEach(function (btn, i) {
       var c = S.opts[i];
       btn.className = 'opt' + (wordFace ? ' word' : '') + (picFace ? ' pic' : '');
@@ -2051,8 +2096,9 @@
 
   // 答錯或時間到：把正確答案亮出來給他看
   function revealAnswer(c, chosen) {
+    var right = (S.q && S.q.ans) || c;
     document.querySelectorAll('.opt').forEach(function (o) {
-      if (o.dataset.val === c) o.classList.add('good');
+      if (o.dataset.val === right) o.classList.add('good');
       else if (o !== chosen) o.classList.add('dim');
       o.disabled = true;
     });
@@ -2118,7 +2164,7 @@
     var rec = db.perQ[q.c] || (db.perQ[q.c] = { n: 0, w: 0 });
     rec.n++;
 
-    if (val === q.c) {
+    if (val === (q.ans || q.c)) {
       S.correct++; S.streak++;
       if (S.streak > S.bestStreak) S.bestStreak = S.streak;
       delete S.recentWrong[q.c];
