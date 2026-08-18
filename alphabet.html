@@ -423,6 +423,39 @@
   .cell .wzh { font-size: var(--fs-note); color: var(--ink-soft); font-weight: 700; }
   .cell.known .wzh { color: var(--mint-ink); }
 
+  /* ── 作答中：整個畫面塞在一屏，不給捲動的機會 ── */
+  body.on-play {
+    height: 100vh; height: 100dvh; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  body.on-play header { flex: 0 0 auto; }
+  body.on-play .wrap {
+    /* flex 版面裡 margin:0 auto 會讓 stretch 失效，寬度得自己補回來 */
+    width: 100%; flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+  body.on-play #play {
+    flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+    justify-content: center;    /* 螢幕高的時候整組置中，不要硬拉長 */
+  }
+  body.on-play .hud, body.on-play .dots, body.on-play #play .foot { flex: 0 0 auto; }
+  body.on-play #play .foot { margin-top: 12px; }
+  /* 平常維持自然高度，畫面不夠高時才一起壓縮，誰都不會被擠出畫面 */
+  body.on-play .qcard {
+    flex: 0 1 auto; min-height: 0; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  body.on-play .opts {
+    flex: 0 1 auto; min-height: 0; grid-template-rows: 1fr 1fr;
+  }
+  body.on-play .opt { min-height: 0; }
+  body.on-play .opt.word { min-height: 0; }
+  body.on-play .qkind { flex: 0 0 auto; }
+  body.on-play #qbody { display: flex; flex-direction: column; align-items: center;
+                       justify-content: center; min-height: 0; }
+  body.on-play .streak { flex: 0 0 auto; }
+
   .fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
   .spark { position: absolute; font-size: var(--fs-opt); animation: fly .9s ease-out forwards; }
   @keyframes fly {
@@ -1591,7 +1624,11 @@
   /* ────────── 畫面切換 ────────── */
   var SCREENS = ['setup', 'learn', 'play', 'result', 'history'];
   function show(name) {
-    SCREENS.forEach(function (s) { $(s).classList.toggle('on', s === name); });
+    SCREENS.forEach(function (s) {
+      $(s).classList.toggle('on', s === name);
+      // body 也掛一個狀態，作答畫面才有辦法用 CSS 鎖成不能捲動
+      document.body.classList.toggle('on-' + s, s === name);
+    });
     window.scrollTo(0, 0);
   }
 
