@@ -1095,17 +1095,28 @@
     for (var i = 0; i < GOOD.length; i++) if (n.indexOf(GOOD[i]) >= 0) return true;
     return false;
   }
-  // 美式排最前面，其次是北美，其他口音殿後；同組裡推薦的自然語音優先
+  // Apple 的同一個語音有三種品質，名字卻長得一樣（都叫 Ava），
+  // 要從 voiceURI 才分得出來。極致 > 加強 > 預設，音質差很多。
+  function qualityOf(v) {
+    var u = (v.voiceURI || '') + ' ' + (v.name || '');
+    if (/premium/i.test(u)) return { rank: 0, tag: '（極致版）' };
+    if (/enhanced/i.test(u)) return { rank: 1, tag: '（加強版）' };
+    return { rank: 2, tag: '' };
+  }
+
+  // 美式排最前面，其次是北美，其他口音殿後；
+  // 同一組裡先看音質（極致／加強優先），再看是不是推薦的自然語音
   function voiceScore(v) {
     var lang = (v.lang || '').replace('_', '-');
     var s = 100;
     if (/^en-US/i.test(lang)) s = 0;
     else if (/^en-CA/i.test(lang)) s = 10;
     else if (/^en-/i.test(lang)) s = 20;
-    if (isNovelty(v)) s += 500;                       // 特效音永遠排最後
-    else if (isGood(v)) {
+    if (isNovelty(v)) return s + 500;                 // 特效音永遠排最後
+    s -= (2 - qualityOf(v).rank) * 1.5;               // 極致 -3、加強 -1.5、預設 0
+    if (isGood(v)) {
       for (var i = 0; i < GOOD.length; i++) {
-        if ((v.name || '').indexOf(GOOD[i]) >= 0) { s -= 5 - i * 0.1; break; }
+        if ((v.name || '').indexOf(GOOD[i]) >= 0) { s -= 1 - i * 0.02; break; }
       }
     }
     return s;
@@ -1143,14 +1154,14 @@
       var o = document.createElement('option');
       o.value = v.voiceURI;
       o.textContent = (isGood(v) ? '⭐ ' : isNovelty(v) ? '🔔 ' : '') +
-                      accentOf(v.lang) + '　' + v.name;
+                      accentOf(v.lang) + '　' + v.name + qualityOf(v).tag;
       sel.appendChild(o);
     });
     // 目前選的剛好是被藏起來的特效音，還是要讓它出現在選單上
     if (db.voiceURI && !list.some(function (v) { return v.voiceURI === db.voiceURI; }) && voice) {
       var o2 = document.createElement('option');
       o2.value = voice.voiceURI;
-      o2.textContent = '🔔 ' + accentOf(voice.lang) + '　' + voice.name;
+      o2.textContent = '🔔 ' + accentOf(voice.lang) + '　' + voice.name + qualityOf(voice).tag;
       sel.appendChild(o2);
     }
     $('allVoicesBox').checked = !!db.allVoices;
@@ -1168,9 +1179,11 @@
         return /^en-?US/i.test((v.lang || '').replace('_', '-')) && !isNovelty(v);
       });
       var good = enVoices.filter(isGood).length;
+      var hi = enVoices.filter(function (v) { return !isNovelty(v) && qualityOf(v).rank < 2; }).length;
       $('voiceHint').textContent = us.length
         ? '⭐ 是適合念給小孩聽的自然語音（' + good + ' 個），特效音已經濾掉。' +
-          '想要更好聽的，可到「設定 → 輔助使用 → 朗讀內容 → 語音 → 英文」下載加強版。'
+          (hi ? '已經有 ' + hi + ' 個加強／極致版，音質最好。'
+              : '到「設定 → 輔助使用 → 朗讀內容 → 語音 → 英文 → Ava」下載加強版，音質會好很多。')
         : '這台裝置沒有美式英語語音，先用 ' + accentOf(voice.lang) +
           '。iPad 可到「設定 → 輔助使用 → 朗讀內容 → 語音 → 英文」下載美式英語。';
     }
@@ -1183,7 +1196,7 @@
     if (!el) return;
     if (!canSpeak) { el.textContent = '狀態：這個瀏覽器沒有語音合成功能。'; return; }
     if (!db.speak) { el.textContent = '狀態：朗讀被關掉了，點右上角的 🤐 打開。'; return; }
-    var who = voice ? (accentOf(voice.lang) + ' ' + voice.name) : '系統預設';
+    var who = voice ? (accentOf(voice.lang) + ' ' + voice.name + qualityOf(voice).tag) : '系統預設';
     var state = speechBroken ? '✗ 按了沒有發出聲音'
               : speechHeard ? '✓ 有發出聲音'
               : speechTries ? '正在念…'
