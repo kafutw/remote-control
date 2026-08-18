@@ -231,6 +231,28 @@ if (argv.includes("--self-test")) {
     console.error(`✗ 遊戲選項要濾掉\n   實得 ${JSON.stringify(gotNoise.words)}`);
   } else console.error("✓ 遊戲選項與標點（True／False／Correct／中文／fish.）不會混進單字");
 
+  const KH = JSON.stringify({
+    title: "Halloween (低年級)",
+    questions: [
+      { question: "Choose the correct answer.", choices: [{ answer: "D", correct: true }, { answer: "B", correct: false }] },
+      { question: "What do you say on Halloween?", choices: [{ answer: "Trick or <b>treat</b>!", correct: true }, { answer: "Good night.", correct: false }] },
+    ],
+  });
+  const gotKH = parseKahoot(KH);
+  const wantKH = { title: "Halloween (低年級)", questions: [
+    { question: "Choose the correct answer.", answers: ["D"] },
+    { question: "What do you say on Halloween?", answers: ["Trick or treat !"] },
+  ] };
+  if (JSON.stringify(gotKH) !== JSON.stringify(wantKH)) {
+    bad++;
+    console.error(`✗ Kahoot 題庫\n   預期 ${JSON.stringify(wantKH)}\n   實得 ${JSON.stringify(gotKH)}`);
+  } else console.error("✓ Kahoot 題庫（只留正解、題目去 HTML）");
+
+  if (kahootId("https://create.kahoot.it/share/halloween-r1/dfa11a74-8737-4e4c-ae7f-bde78a3cebf1")
+      !== "dfa11a74-8737-4e4c-ae7f-bde78a3cebf1") {
+    bad++; console.error("✗ Kahoot uuid 取不出來");
+  } else console.error("✓ Kahoot uuid（從分享網址的最後一段取）");
+
   process.exit(bad ? 1 : 0);
 }
 
@@ -314,6 +336,32 @@ function parseWordwall(html) {
     // 但也不要丟掉 —— 小一上本來就在教字母。
     words: items.filter(w => w.length > 1),
     letters: items.filter(w => w.length === 1 && /^[a-z]$/i.test(w)),
+  };
+}
+
+/**
+ * Kahoot 題庫。第七次探測（同日）的結果，順便記下另外兩家的下場：
+ *   Blooket → HTTP 403「Just a moment...」，api／dashboard／play 三個端點全被 Cloudflare 擋
+ *   Kahoot  → play.kahoot.it/rest/kahoots/{uuid} 回完整 JSON，題目與選項都在裡面
+ *
+ * 何嘉仁的 Kahoot 是每冊兩份節慶複習（萬聖節、聖誕節、復活節、端午…），
+ * 由 Hess_eteaching 這個帳號發布。題目文字可能含 HTML，要先轉純文字。
+ */
+function kahootId(url) {
+  const m = url.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+  return m ? m[1] : null;
+}
+
+function parseKahoot(body) {
+  let d;
+  try { d = JSON.parse(body); } catch { return null; }
+  return {
+    title: (d.title || "").trim(),
+    questions: (d.questions || []).map(q => ({
+      question: toText(q.question || "").replace(/\n/g, " ").trim(),
+      // 正解才是要記的東西；其他選項是干擾項，背了會出事。
+      answers: (q.choices || []).filter(c => c.correct).map(c => toText(c.answer || "").trim()).filter(Boolean),
+    })).filter(q => q.question || q.answers.length),
   };
 }
 
@@ -422,7 +470,26 @@ for (const url of DIGI) {
     units.push({ unit: l.unit, words, letters: [...letters].sort(), activities });
     console.error(`    ${l.unit.padEnd(9)} ${words.length} 字　${words.join(", ") || "（沒抓到）"}`);
   }
-  vocab.books.push({ book: n, grade: meta.grade, label, digiUrl: url, units });
+  // 節慶複習的 Kahoot 題庫。這是目前唯一撈得到「句子」的來源 ——
+  // Wordwall 只有單字，Quizlet 與 Blooket 都被 Cloudflare 擋在門外。
+  const quizzes = [];
+  for (const l of links) {
+    if (l.platform !== "Kahoot") continue;
+    for (const t of l.targets || []) {
+      const id = kahootId(t.url);
+      if (!id) continue;
+      const k = await get(`https://play.kahoot.it/rest/kahoots/${id}`);
+      if (!k.ok) { console.error(`  ✗ ${label} ${l.unit} Kahoot ${id} → HTTP ${k.status}`); continue; }
+      const parsed = parseKahoot(k.body);
+      if (!parsed) { console.error(`  ✗ ${label} ${l.unit} Kahoot ${id} → 回應不是 JSON`); continue; }
+      quizzes.push({ unit: l.unit, shareUrl: t.url, ...parsed });
+      console.error(`    Kahoot ${l.unit.padEnd(9)}「${parsed.title}」${parsed.questions.length} 題`);
+      for (const q of parsed.questions) console.error(`        ${q.question}　→　${q.answers.join(" / ")}`);
+      await sleep(500);
+    }
+  }
+
+  vocab.books.push({ book: n, grade: meta.grade, label, digiUrl: url, units, quizzes });
   await sleep(400);
 }
 
