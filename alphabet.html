@@ -239,6 +239,11 @@
     padding: 12px 12px; width: 100%; min-height: 48px; cursor: pointer;
   }
   select.voice:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
+  .checkrow {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer;
+    font-size: var(--fs-note); font-weight: 700; color: var(--ink-soft);
+  }
+  .checkrow input { width: 20px; height: 20px; accent-color: var(--key); flex: 0 0 auto; }
 
   /* ── learn ── */
   .abcgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
@@ -801,6 +806,10 @@
 
       <div class="sub-h">口音</div>
       <select class="voice" id="voiceSel"></select>
+      <label class="checkrow">
+        <input type="checkbox" id="allVoicesBox">
+        <span id="allVoicesLabel">顯示全部聲音</span>
+      </label>
       <p class="hint" id="voiceHint"></p>
       <div class="sub-h">語速</div>
       <div class="modes three" id="rates">
@@ -896,7 +905,7 @@
   /* ────────── 資料儲存 ────────── */
   var KEY = 'abc_v1';
   var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', count: 10,
-              rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter',
+              rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 熟練度只看每個字母最近這麼多題，以前的錯誤會慢慢淡出
@@ -1070,16 +1079,34 @@
     var l = (lang || '').replace('_', '-');
     return ACCENT[l] || (/^en-?$|^en$/i.test(l) ? '英語' : l.replace(/^en-/i, ''));
   }
-  // 美式排最前面，其次是北美，其他口音殿後；同組裡挑常見的兒童友善語音
-  var NICE_US = ['Samantha', 'Alex', 'Ava', 'Allison', 'Google US English', 'Zira', 'Aria', 'Jenny'];
+  // Apple 內建的特效聲音：念字母會變成鈴聲、風琴、機器人，教學完全不能用。
+  // 這些預設不列出來，要看得勾「顯示全部」。
+  var NOVELTY = new RegExp('^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|' +
+    'Good News|Hysterical|Jester|Organ|Pipe Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|' +
+    'Fred|Junior|Kathy|Princess|Ralph|Agnes|Bruce|Vicki|Victoria)\\b', 'i');
+  function isNovelty(v) { return NOVELTY.test(v.name || ''); }
+
+  // 真的適合念給小孩聽的自然語音，排在最前面並標上 ⭐
+  var GOOD = ['Samantha', 'Ava', 'Allison', 'Susan', 'Zoe', 'Alex', 'Tom', 'Nicky', 'Aaron',
+              'Evan', 'Nathan', 'Noelle', 'Joelle', 'Siri', 'Google US English',
+              'Aria', 'Jenny', 'Guy', 'Zira', 'David'];
+  function isGood(v) {
+    var n = v.name || '';
+    for (var i = 0; i < GOOD.length; i++) if (n.indexOf(GOOD[i]) >= 0) return true;
+    return false;
+  }
+  // 美式排最前面，其次是北美，其他口音殿後；同組裡推薦的自然語音優先
   function voiceScore(v) {
     var lang = (v.lang || '').replace('_', '-');
     var s = 100;
     if (/^en-US/i.test(lang)) s = 0;
     else if (/^en-CA/i.test(lang)) s = 10;
     else if (/^en-/i.test(lang)) s = 20;
-    for (var i = 0; i < NICE_US.length; i++) {
-      if ((v.name || '').indexOf(NICE_US[i]) >= 0) { s -= (NICE_US.length - i) * 0.1; break; }
+    if (isNovelty(v)) s += 500;                       // 特效音永遠排最後
+    else if (isGood(v)) {
+      for (var i = 0; i < GOOD.length; i++) {
+        if ((v.name || '').indexOf(GOOD[i]) >= 0) { s -= 5 - i * 0.1; break; }
+      }
     }
     return s;
   }
@@ -1094,7 +1121,10 @@
     if (db.voiceURI) {
       voice = enVoices.filter(function (v) { return v.voiceURI === db.voiceURI; })[0] || null;
     }
-    if (!voice) voice = enVoices[0] || null;
+    if (!voice) {
+      var usable = enVoices.filter(function (v) { return !isNovelty(v); });
+      voice = usable[0] || enVoices[0] || null;
+    }
     buildVoiceSelect();
   }
 
@@ -1107,12 +1137,26 @@
     auto.value = '';
     auto.textContent = enVoices.length ? '自動（挑美式優先）' : '系統預設語音';
     sel.appendChild(auto);
-    enVoices.forEach(function (v) {
+    var list = enVoices.filter(function (v) { return db.allVoices || !isNovelty(v); });
+    var hidden = enVoices.length - list.length;
+    list.forEach(function (v) {
       var o = document.createElement('option');
       o.value = v.voiceURI;
-      o.textContent = accentOf(v.lang) + '　' + v.name;
+      o.textContent = (isGood(v) ? '⭐ ' : isNovelty(v) ? '🔔 ' : '') +
+                      accentOf(v.lang) + '　' + v.name;
       sel.appendChild(o);
     });
+    // 目前選的剛好是被藏起來的特效音，還是要讓它出現在選單上
+    if (db.voiceURI && !list.some(function (v) { return v.voiceURI === db.voiceURI; }) && voice) {
+      var o2 = document.createElement('option');
+      o2.value = voice.voiceURI;
+      o2.textContent = '🔔 ' + accentOf(voice.lang) + '　' + voice.name;
+      sel.appendChild(o2);
+    }
+    $('allVoicesBox').checked = !!db.allVoices;
+    $('allVoicesLabel').textContent = hidden
+      ? '顯示全部聲音（另有 ' + hidden + ' 個特效音，念字母會怪怪的）'
+      : '顯示全部聲音';
     sel.value = (voice && db.voiceURI) ? db.voiceURI : '';
     if (!canSpeak) {
       $('voiceHint').textContent = '這個瀏覽器不支援朗讀，聽聲音的題目會自動不出現。';
@@ -1120,9 +1164,13 @@
       $('voiceHint').textContent = '這台裝置沒有回報英語語音，會用系統預設的聲音念（口音不保證）。' +
         'iPad 可到「設定 → 輔助使用 → 朗讀內容 → 語音 → 英文」下載美式英語。';
     } else {
-      var us = enVoices.filter(function (v) { return /^en-?US/i.test((v.lang || '').replace('_', '-')); });
+      var us = enVoices.filter(function (v) {
+        return /^en-?US/i.test((v.lang || '').replace('_', '-')) && !isNovelty(v);
+      });
+      var good = enVoices.filter(isGood).length;
       $('voiceHint').textContent = us.length
-        ? '預設挑美式英語（en-US）。這台裝置有 ' + us.length + ' 個美式語音可以選。'
+        ? '⭐ 是適合念給小孩聽的自然語音（' + good + ' 個），特效音已經濾掉。' +
+          '想要更好聽的，可到「設定 → 輔助使用 → 朗讀內容 → 語音 → 英文」下載加強版。'
         : '這台裝置沒有美式英語語音，先用 ' + accentOf(voice.lang) +
           '。iPad 可到「設定 → 輔助使用 → 朗讀內容 → 語音 → 英文」下載美式英語。';
     }
@@ -1306,6 +1354,10 @@
       ? (enVoices.filter(function (v) { return v.voiceURI === db.voiceURI; })[0] || null)
       : (enVoices[0] || null);
     save(); buildVoiceSelect(); tryVoice();
+  });
+  $('allVoicesBox').addEventListener('change', function () {
+    db.allVoices = $('allVoicesBox').checked;
+    save(); buildVoiceSelect();
   });
   function tryVoice() {
     unlockSpeech();
