@@ -180,48 +180,48 @@ const isFunWorld = label => /^Fun World\s*[1-4]$/i.test(label);
 
 // ── 探測模式：先看清楚長什麼樣，再談解析 ──────────────────────────────
 if (probe) {
-  console.log("── 掃 DigiLink，找出各冊的 id、單元、以及單元連到哪裡 ──");
-  const pages = [];
+  // 第二次探測（同日）：DigiLink 每一冊都認得出教材名，但 <a href> 一個都沒有 ——
+  // 單元是 Unit 1／Unit 2 這樣列在畫面上，卻不是超連結。所以這次不再猜，
+  // 直接把原始 HTML 印出來看那些單元掛在什麼標籤、網址藏在哪個屬性。
+  const KNOWN = { 16: "Fun World 1", 19: "Fun World 2", 20: "Fun World 3", 21: "Fun World 4" };
+
+  console.log("── 掃 DigiLink，記下各冊的 id ──");
   for (const url of DIGI) {
     const res = await get(url);
-    if (!res.ok || res.body.length < 2000) continue;   // 404 頁固定 1136 bytes
-    const text = toText(res.body);
-    const label = bookLabel(text);
-    const links = extractLinks(res.body, url);
-    const hosts = [...new Set(links.map(l => l.host))];
-    console.log(`\n${url}\n  教材 ${label || "（認不出來）"}　連結 ${links.length} 個　平台 ${hosts.join(", ") || "無"}`);
-    if (isFunWorld(label)) {
-      pages.push({ url, label, links });
-      for (const l of links) console.log(`    ${l.label.padEnd(10)} ${l.href}`);
-    }
-    await sleep(600);
+    if (!res.ok || res.body.length < 2000) continue;    // 404 頁固定 1136 bytes
+    const label = bookLabel(toText(res.body));
+    console.log(`  ${url.slice(url.lastIndexOf("/05/"))}\t${label || "（認不出來）"}`);
+    await sleep(400);
   }
 
-  // 連結拿到了還不夠 —— 那些站認不認 runner 的 IP、單字在不在 HTML 裡，
-  // 是兩件不同的事，而且只有真的抓一次才知道。每個平台各試一個。
-  console.log("\n── 每個平台各抓一個樣本，看單字撈不撈得出來 ──");
-  const seen = new Set();
-  for (const p of pages) {
-    for (const l of p.links) {
-      if (seen.has(l.host)) continue;
-      seen.add(l.host);
-      const res = await get(l.href);
-      const text = res.ok ? toText(res.body) : "";
-      console.log(`\n${l.host}　${p.label} ${l.label}\n  ${l.href}\n  HTTP ${res.status}${res.error ? "  " + res.error : ""}  html ${res.body.length} bytes  text ${text.length} chars`);
-      if (!res.ok) continue;
-      const units = extractUnits(text);
-      console.log(`  直接解析：${units.reduce((n, u) => n + u.words.length, 0)} 個字`);
-      // 這類站多半把內容塞在 HTML 裡的 JSON，不在可見文字上。
-      for (const key of ["terms", "word", "definition", "cards", "answers", "questions"]) {
-        const hit = res.body.indexOf(`"${key}"`);
-        if (hit >= 0) console.log(`  含 "${key}" 於 offset ${hit}：${res.body.slice(hit, hit + 220).replace(/\s+/g, " ")}`);
-      }
-      console.log("  ── 可見文字（前 1200 字）──");
-      console.log(text.slice(0, 1200).split("\n").map(x => "  | " + x).join("\n"));
-      await sleep(1200);
-    }
+  console.log("\n── Fun World 1 的原始 HTML：單元按鈕長什麼樣 ──");
+  const fw1 = await get(`https://hessdigi.hess.com.tw/DigiLink/05/16`);
+
+  const tags = [...fw1.body.matchAll(/<a\b[^>]*>/gi)].map(m => m[0]);
+  console.log(`\n所有 <a> 開頭標籤（${tags.length} 個，最多印 40）：`);
+  tags.slice(0, 40).forEach(t => console.log("  " + t));
+
+  for (const attr of ["onclick", "data-", "href"]) {
+    const hits = [...new Set([...fw1.body.matchAll(new RegExp(`${attr}[\\w-]*\\s*=\\s*["'][^"']*["']`, "gi"))].map(m => m[0]))];
+    console.log(`\n含 ${attr} 的屬性（${hits.length} 種，最多印 25）：`);
+    hits.slice(0, 25).forEach(h => console.log("  " + h));
   }
-  console.log("\n看完再決定從哪個平台撈單字，然後把規則寫進 extractUnits()。");
+
+  // Unit 1 這四個字在 HTML 裡的前後文，才是真相所在。
+  console.log("\n── \"Unit 1\" 前後的原始 HTML ──");
+  let i = -1, n = 0;
+  while (n < 3 && (i = fw1.body.indexOf("Unit 1", i + 1)) >= 0) {
+    console.log(`\n[第 ${++n} 處 offset ${i}]`);
+    console.log("  " + fw1.body.slice(Math.max(0, i - 700), i + 700).replace(/\s+/g, " "));
+  }
+
+  // 頁面若靠 JS 取資料，端點會出現在 script 裡。
+  console.log("\n── 頁面上的 <script> 內容（前 3000 字）──");
+  const scripts = [...fw1.body.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
+    .map(m => m[1].trim()).filter(x => x && !/^\/\//.test(x)).join("\n---\n");
+  console.log(scripts.slice(0, 3000).split("\n").map(l => "  | " + l).join("\n"));
+
+  console.log("\n看完再決定單字要從哪裡撈。");
   process.exit(0);
 }
 
