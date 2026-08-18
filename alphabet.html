@@ -375,16 +375,29 @@
 
   /* 單字題：選項是英文字或圖片，字級要比字母小才排得下 */
   .opt.word {
-    font-size: var(--fs-head); letter-spacing: .01em; padding: 14px 8px 14px 14px;
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-size: var(--fs-head); letter-spacing: .01em; padding: 10px 10px 10px 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
   }
   .opt.word .ow { flex: 1; text-align: center; }
+  /* 喇叭要夠大，小孩才點得準；跟文字區明顯分開，才不會想選答案卻按到它 */
   .opt.word .say {
-    flex: 0 0 auto; width: 42px; height: 42px; border-radius: 99px;
-    background: var(--key-soft); display: grid; place-items: center;
-    font-size: var(--fs-body); line-height: 1;
+    flex: 0 0 auto; width: 62px; height: 62px; border-radius: 99px;
+    background: var(--key-soft); border: 2px solid var(--key);
+    display: grid; place-items: center;
+    font-size: var(--fs-head); line-height: 1;
   }
-  .opt.word.good .say, .opt.word.bad .say { background: rgba(255,255,255,.28); }
+  .opt.word.good .say, .opt.word.bad .say {
+    background: rgba(255,255,255,.3); border-color: rgba(255,255,255,.5);
+  }
+  @media (min-width: 700px) {
+    .opt.word .say { width: 78px; height: 78px; }
+  }
+  @media (min-width: 1100px) and (min-height: 900px) {
+    .opt.word .say { width: 92px; height: 92px; }
+  }
+  @media (max-width: 360px) {
+    .opt.word .say { width: 54px; height: 54px; }
+  }
   .opt.pic { font-family: var(--font); font-size: var(--fs-q); }
   .qemoji.big { font-size: calc(var(--fs-q) * 1.5); }
   .qtext.word { font-size: var(--fs-q); letter-spacing: .01em; }
