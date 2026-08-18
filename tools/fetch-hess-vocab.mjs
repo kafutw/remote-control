@@ -376,37 +376,36 @@ const isFunWorld = label => /^Fun World\s*[1-4]$/i.test(label);
 
 // ── 探測模式：先看清楚長什麼樣，再談解析 ──────────────────────────────
 if (probe) {
-  // 第七輪：單字有了（Wordwall 的 meta），但課本還有「生活用語」——
-  // Good morning 那類句子。Wordwall 的活動只練字母與單字，撈不到句子。
-  // 線索是站內頁的標題：Quizlet 和 Blooket 都寫著「Unit 1（單字＋生活用語）」，
-  // 也就是同一組內容。Quizlet 擋機房 IP，那就換 Blooket 和 Kahoot 試 ——
-  // 這兩家都有公開的題目 API，而且還沒試過。
-  const BLOOKET = "60f14ac59933c3001b7ad06b";                       // FW1 Unit 1
-  const KAHOOT  = "dfa11a74-8737-4e4c-ae7f-bde78a3cebf1";           // FW1 Review 1（萬聖節）
-  const tries = [
-    ["Blooket API",       `https://api.blooket.com/api/games?gameId=${BLOOKET}`],
-    ["Blooket dashboard", `https://dashboard.blooket.com/api/games?gameId=${BLOOKET}`],
-    ["Blooket play",      `https://play.blooket.com/api/games?gameId=${BLOOKET}`],
-    ["Blooket 網頁",      `https://dashboard.blooket.com/set/${BLOOKET}`],
-    ["Kahoot API",        `https://play.kahoot.it/rest/kahoots/${KAHOOT}`],
-    ["Kahoot card",       `https://create.kahoot.it/rest/kahoots/${KAHOOT}/card/?includeKahoot=true`],
+  // 第八輪：有句子的兩家（Quizlet、Blooket）都被 Cloudflare 擋死，Kahoot 通了
+  // 但只給節慶題庫，不是課本的生活用語（Good morning 那類）。
+  //
+  // 還沒走過的一條路：DigiLink 的「AI 小幫手」。每冊 5 頁（提示詞產生器＋Unit 1-4），
+  // 之前因為它們「沒有站外連結」就整批跳過 —— 但一個「幫這個單元出練習題的
+  // 提示詞產生器」，提示詞裡幾乎一定寫著該單元的單字與句型，那正是生活用語
+  // 會出現的地方。這輪把那幾頁的原始 HTML 印出來看。
+  const AI = [
+    ["提示詞產生器", "https://hessdigi.hess.com.tw/DigiLink/05/16/1717"],
+    ["FW1 Unit 1",  "https://hessdigi.hess.com.tw/DigiLink/05/16/1718"],
+    ["FW1 Unit 2",  "https://hessdigi.hess.com.tw/DigiLink/05/16/1719"],
   ];
 
-  for (const [name, url] of tries) {
+  for (const [name, url] of AI) {
     const r = await get(url);
+    const text = r.ok ? toText(r.body) : "";
     console.log(`\n${"═".repeat(72)}\n${name}　${url}`);
-    console.log(`  HTTP ${r.status}${r.error ? "  " + r.error : ""}  ${r.body.length} bytes`);
-    // JSON 就直接印開頭 —— 題目文字會在裡面，看得到才寫得出解析規則。
-    const looksJson = /^\s*[[{]/.test(r.body);
-    console.log(`  ${looksJson ? "JSON" : "非 JSON"}`);
-    console.log("  " + r.body.slice(0, looksJson ? 2200 : 500).replace(/\s+/g, " "));
-    if (!looksJson && r.ok) {
-      for (const key of ["question", "questions", "answers", "correctAnswers", "title", "\u0022name\u0022"]) {
-        const at = r.body.indexOf(`"${key}"`);
-        if (at >= 0) console.log(`  含 "${key}" @${at}：${r.body.slice(at, at + 240).replace(/\s+/g, " ")}`);
+    console.log(`  HTTP ${r.status}  html ${r.body.length} bytes  text ${text.length} chars`);
+    if (!r.ok) continue;
+    console.log("  ── 可見文字（前 2500 字）──");
+    console.log(text.slice(0, 2500).split("\n").map(x => "  | " + x).join("\n"));
+    // 提示詞可能塞在 textarea、data 屬性或 script 裡，可見文字未必看得到。
+    for (const re of [/<textarea[^>]*>([\s\S]*?)<\/textarea>/gi, /<script[^>]*>([\s\S]*?)<\/script>/gi]) {
+      for (const m of r.body.matchAll(re)) {
+        const c = m[1].trim();
+        if (c.length > 60 && /[A-Za-z]{4}/.test(c) && !/function|jquery|gtag|dataLayer/i.test(c))
+          console.log(`  ── ${m[0].slice(0, 12)}… ──\n  ${c.slice(0, 1500).replace(/\s+/g, " ")}`);
       }
     }
-    await sleep(1200);
+    await sleep(800);
   }
 
   console.log("\n看完再決定單字要從哪裡撈。");
