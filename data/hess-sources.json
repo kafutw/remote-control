@@ -1,34 +1,458 @@
 {
   "source": "何嘉仁 Fun World 數位練習平台（hessdigi）",
-  "fetchedAt": "2026-08-18T05:36:56.144Z",
+  "fetchedAt": "2026-08-18T05:40:45.882Z",
   "books": [
     {
       "book": 1,
       "grade": "小一上",
       "label": "Fun World 1",
       "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/16",
-      "links": []
+      "links": [
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/533"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/534"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Review 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/535"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/536"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/537"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Review 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/538"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/557"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/558"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/559"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/560"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/561"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/562"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/563"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/564"
+        },
+        {
+          "platform": "Kahoot",
+          "unit": "Review 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/589"
+        },
+        {
+          "platform": "Kahoot",
+          "unit": "Review 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/590"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "提示詞產生器",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/1717"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/1718"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/1719"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/1720"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/16/1721"
+        }
+      ]
     },
     {
       "book": 2,
       "grade": "小一下",
       "label": "Fun World 2",
       "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/19",
-      "links": []
+      "links": [
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/539"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/540"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Review 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/541"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/542"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/543"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Review 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/544"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/565"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/566"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/567"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/568"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/569"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/570"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/571"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/572"
+        },
+        {
+          "platform": "Kahoot",
+          "unit": "Review 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/591"
+        },
+        {
+          "platform": "Kahoot",
+          "unit": "Review 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/592"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "提示詞產生器",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/1722"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/1723"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/1724"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/1725"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/19/1726"
+        }
+      ]
     },
     {
       "book": 3,
       "grade": "小二上",
       "label": "Fun World 3",
       "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/20",
-      "links": []
+      "links": [
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/545"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/546"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Review 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/547"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/548"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/549"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Review 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/550"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/573"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/574"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/575"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/576"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/577"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/578"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/579"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/580"
+        },
+        {
+          "platform": "Kahoot",
+          "unit": "Review 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/593"
+        },
+        {
+          "platform": "Kahoot",
+          "unit": "Review 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/594"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "提示詞產生器",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/1727"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/1728"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/1729"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/1730"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/20/1731"
+        }
+      ]
     },
     {
       "book": 4,
       "grade": "小二下",
       "label": "Fun World 4",
       "digiUrl": "https://hessdigi.hess.com.tw/DigiLink/05/21",
-      "links": []
+      "links": [
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/551"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/552"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Review 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/553"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/554"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/555"
+        },
+        {
+          "platform": "Wordwall",
+          "unit": "Review 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/556"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/581"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/582"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/583"
+        },
+        {
+          "platform": "Quizlet",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/584"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/585"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/586"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/587"
+        },
+        {
+          "platform": "Blooket",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/588"
+        },
+        {
+          "platform": "Kahoot",
+          "unit": "Review 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/595"
+        },
+        {
+          "platform": "Kahoot",
+          "unit": "Review 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/596"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "提示詞產生器",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/1732"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 1",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/1733"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 2",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/1734"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 3",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/1735"
+        },
+        {
+          "platform": "AI小幫手",
+          "unit": "Unit 4",
+          "href": "https://hessdigi.hess.com.tw/DigiLink/05/21/1736"
+        }
+      ]
     }
   ]
 }
