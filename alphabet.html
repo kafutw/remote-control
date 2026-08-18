@@ -232,6 +232,7 @@
   .mode b { display: block; font-size: var(--fs-body); font-weight: 800; }
   .mode i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); margin-top: 3px; }
   .mode.sel i { color: var(--key-deep); }
+  .mode.dimmed { opacity: .45; }
 
   select.voice {
     font-family: inherit; font-size: var(--fs-body); font-weight: 700; color: var(--ink);
@@ -632,12 +633,20 @@
         <button class="mode" data-kind="case"><b>🔠 大寫找小寫</b><i>看 A 選 a</i></button>
         <button class="mode" data-kind="case2"><b>🔡 小寫找大寫</b><i>看 a 選 A</i></button>
       </div>
-      <div class="modes" id="wkinds" hidden>
-        <button class="mode sel" data-wkind="all"><b>三種都出</b><i>輪流換，練得比較全</i></button>
-        <button class="mode" data-wkind="wpic"><b>🖼️ 看圖選字</b><i>看圖片選英文字</i></button>
-        <button class="mode" data-wkind="wlisten"><b>🔊 聽發音選字</b><i>聽到什麼就選它</i></button>
-        <button class="mode" data-wkind="wread"><b>🔡 看字選圖</b><i>看英文字選圖片</i></button>
-        <button class="mode" data-wkind="wzh"><b>🈶 看中文選字</b><i>看中文選英文字</i></button>
+      <div id="wordSetup" hidden>
+        <div class="sub-h">他會認英文字了嗎？</div>
+        <div class="modes" id="reads">
+          <button class="mode sel" data-reads="0"><b>🧒 還不會認字</b><i>只出聽發音選圖片</i></button>
+          <button class="mode" data-reads="1"><b>🔤 會認一些了</b><i>加入要讀字的題型</i></button>
+        </div>
+        <div class="sub-h">題型</div>
+        <div class="modes" id="wkinds">
+          <button class="mode sel" data-wkind="all"><b>都出</b><i>輪流換，練得比較全</i></button>
+          <button class="mode" data-wkind="wlisten"><b>🔊 聽發音選圖</b><i>不用認字，聽到什麼點哪張圖</i></button>
+          <button class="mode reader" data-wkind="wpic"><b>🖼️ 看圖選字</b><i>要認字</i></button>
+          <button class="mode reader" data-wkind="wread"><b>🔡 看字選圖</b><i>要認字</i></button>
+          <button class="mode reader" data-wkind="wzh"><b>🈶 看中文選字</b><i>要認字</i></button>
+        </div>
       </div>
       <div class="sub-h">出題方式</div>
       <div class="modes" id="modes">
@@ -659,7 +668,7 @@
 
     <div class="foot">
       <button class="btn primary big" id="startBtn">開始測驗（10 題）🚀</button>
-      <button class="btn" id="reviewBtn" hidden>只練上次的錯字母 🔁</button>
+      <button class="btn" id="reviewBtn" hidden>只練上次答錯的 🔁</button>
       <button class="btn" id="learnBtn">先認識字母 🔤</button>
     </div>
     <p class="tiny">紀錄只存在這台裝置的瀏覽器裡，不會上傳。</p>
@@ -743,13 +752,13 @@
     </div>
 
     <div class="card">
-      <h2>要複習的字母</h2>
+      <h2 id="wrongTitle">要複習的字母</h2>
       <div class="wrongs" id="rWrongs"></div>
     </div>
 
     <div class="foot">
       <button class="btn primary big" id="againBtn">再來一輪 🚀</button>
-      <button class="btn" id="againWrongBtn" hidden>只練這次的錯字母 🔁</button>
+      <button class="btn" id="againWrongBtn" hidden>只練這次答錯的 🔁</button>
       <button class="btn ghost" id="backBtn">回到首頁</button>
     </div>
   </section>
@@ -772,12 +781,12 @@
     </div>
 
     <div class="card">
-      <h2>哪幾個字母最熟</h2>
+      <h2 id="strongTitle">哪幾個字母最熟</h2>
       <div class="weak" id="strong"></div>
     </div>
 
     <div class="card">
-      <h2>最需要加強的字母</h2>
+      <h2 id="weakTitle">最需要加強的字母</h2>
       <div class="weak" id="weak"></div>
     </div>
 
@@ -1120,6 +1129,7 @@
   /* ────────── 資料儲存 ────────── */
   var KEY = 'abc_v1';
   var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', wkind: 'all',
+              reads: 0,
               subject: 'letters', count: 10,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
@@ -1170,6 +1180,7 @@
     if (['smart', 'even'].indexOf(db.mode) < 0) db.mode = DEF.mode;
     if (['all', 'listen', 'case', 'case2'].indexOf(db.kind) < 0) db.kind = DEF.kind;
     if (['all', 'wpic', 'wlisten', 'wread', 'wzh'].indexOf(db.wkind) < 0) db.wkind = DEF.wkind;
+    db.reads = db.reads ? 1 : 0;
     if (['letters', 'w1', 'w2'].indexOf(db.subject) < 0) db.subject = DEF.subject;
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
@@ -1584,13 +1595,18 @@
   segment('modes', function (m) { db.mode = m.dataset.mode; });
   segment('kinds', function (m) { db.kind = m.dataset.kind; });
   segment('wkinds', function (m) { db.wkind = m.dataset.wkind; });
+  segment('reads', function (m) { db.reads = Number(m.dataset.reads); syncSubject(); });
   segment('subjects', function (m) { db.subject = m.dataset.subject; syncSubject(); });
 
   // 換科目：題型按鈕換一組，開始鈕和「先認識」的字也跟著改
   function syncSubject() {
     var w = wordMode();
     $('kinds').hidden = w;
-    $('wkinds').hidden = !w;
+    $('wordSetup').hidden = !w;
+    // 還不會認字時，要讀字的題型先變灰
+    document.querySelectorAll('#wkinds .mode.reader').forEach(function (m) {
+      m.classList.toggle('dimmed', !db.reads);
+    });
     $('learnBtn').textContent = w ? '先認識單字 🖼️' : '先認識字母 🔤';
     $('subtitle').textContent = SUBJECT_NAME[db.subject] + ' ・ ' + db.count + ' 題';
     syncStart();
@@ -1754,8 +1770,8 @@
     listen: '🔊 聽聲音，這是哪個字母？',
     case:   '🔠 大寫的朋友是哪個小寫？',
     case2:  '🔡 小寫的朋友是哪個大寫？',
+    wlisten:'🔊 聽聲音，這是哪一張圖？',
     wpic:   '🖼️ 這是哪一個字？',
-    wlisten:'🔊 聽聲音，這是哪一個字？',
     wread:  '🔡 這個字是哪一張圖？',
     wzh:    '🈶 這個意思的英文是哪一個？'
   };
@@ -1766,8 +1782,12 @@
   function subjectPool() {
     if (!wordMode()) return ALL.slice();
     var g = db.subject === 'w1' ? 1 : 2;
-    return WORDS.filter(function (x) { return x.g === g; })
-                .map(function (x) { return 'w:' + x.w; });
+    return WORDS.filter(function (x) {
+      if (x.g !== g) return false;
+      // 家人這種只能靠讀字分辨的，等他會認字了再出
+      if (!db.reads && x.p === 0) return false;
+      return true;
+    }).map(function (x) { return 'w:' + x.w; });
   }
   var S = null;
 
@@ -1776,7 +1796,11 @@
   function kindsAvailable() {
     var ks;
     if (wordMode()) {
-      ks = db.wkind === 'all' ? ['wpic', 'wlisten', 'wread', 'wzh'] : [db.wkind];
+      // 還不會認英文字的話，只出「聽發音選圖片」——其他三種都要讀得懂字
+      var READER = ['wpic', 'wread', 'wzh'];
+      if (db.wkind === 'all') ks = db.reads ? ['wlisten'].concat(READER) : ['wlisten'];
+      else if (!db.reads && READER.indexOf(db.wkind) >= 0) ks = ['wlisten'];
+      else ks = [db.wkind];
     } else {
       ks = db.kind === 'all' ? ['listen', 'case', 'case2'] : [db.kind];
     }
@@ -1814,8 +1838,8 @@
     var ks = kindsAvailable();
     var kind = ks[Math.floor(Math.random() * ks.length)];
     // 家人這種「一張圖認不出是誰」的字，改考中文對應，不出圖片題
-    if ((kind === 'wpic' || kind === 'wread') && isWord(c) && WMAP[c].p === 0) {
-      kind = speechUsable() && Math.random() < 0.5 ? 'wlisten' : 'wzh';
+    if (isWord(c) && WMAP[c].p === 0 && kind !== 'wzh') {
+      kind = db.reads ? 'wzh' : 'wlisten';   // 圖片認不出來就改考中文；還不會認字的階段本來就不會抽到
     }
     return { c: c, kind: kind };
   }
@@ -1827,7 +1851,7 @@
     function add(x) { if (x !== c && set.indexOf(x) < 0) set.push(x); }
     if (isWord(c)) {
       var topic = itemOf(c).topic;
-      var pic = (S.q && (S.q.kind === 'wpic' || S.q.kind === 'wread'));
+      var pic = (S.q && (S.q.kind === 'wpic' || S.q.kind === 'wread' || S.q.kind === 'wlisten'));
       var me = WMAP[c];
       // 圖片題的選項要能一眼分辨：認不出來的字不當選項，
       // 圖案長得像的一群（筆類、車類、天空類）也不跟本題混在一起
@@ -1985,17 +2009,19 @@
 
   // 題目給大寫就選小寫，給小寫就選大寫；單字題選項則是英文字或圖片
   function optionFace(c, kind) {
-    if (kind === 'wread') return itemOf(c).emoji;          // 看字選圖
-    if (kind === 'wpic' || kind === 'wlisten' || kind === 'wzh') return itemOf(c).word;
+    // 聽發音、看字 → 選圖片；看圖、看中文 → 選英文字
+    if (kind === 'wread' || kind === 'wlisten') return itemOf(c).emoji;
+    if (kind === 'wpic' || kind === 'wzh') return itemOf(c).word;
     return kind === 'case' ? lower(c) : c.toUpperCase();
   }
 
   function paintOptions() {
     var kind = S.q.kind;
-    var wordFace = (kind === 'wpic' || kind === 'wlisten' || kind === 'wzh');
+    var wordFace = (kind === 'wpic' || kind === 'wzh');
+    var picFace = (kind === 'wread' || kind === 'wlisten');
     document.querySelectorAll('.opt').forEach(function (btn, i) {
       var c = S.opts[i];
-      btn.className = 'opt' + (wordFace ? ' word' : '') + (kind === 'wread' ? ' pic' : '');
+      btn.className = 'opt' + (wordFace ? ' word' : '') + (picFace ? ' pic' : '');
       btn.textContent = optionFace(c, kind);
       btn.dataset.val = c;
       btn.disabled = false;
@@ -2222,6 +2248,7 @@
 
     renderLevelUp();
 
+    $('wrongTitle').textContent = wordMode() ? '要複習的單字' : '要複習的字母';
     var box = $('rWrongs');
     box.innerHTML = '';
     if (!S.wrongList.length) {
@@ -2350,6 +2377,8 @@
       return { c: c, n: s.n, rate: s.rate, w: s.w };
     }).filter(function (x) { return x.n > 0; });
 
+    $('strongTitle').textContent = wordMode() ? '哪幾個單字最熟' : '哪幾個字母最熟';
+    $('weakTitle').textContent = wordMode() ? '最需要加強的單字' : '最需要加強的字母';
     renderWeak('strong', rows.slice().sort(function (a, b) {
       return b.rate - a.rate || b.n - a.n;
     }).slice(0, 6), true);
@@ -2585,6 +2614,9 @@
   });
   document.querySelectorAll('#wkinds .mode').forEach(function (m) {
     m.classList.toggle('sel', m.dataset.wkind === db.wkind);
+  });
+  document.querySelectorAll('#reads .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.reads) === db.reads);
   });
   document.querySelectorAll('#subjects .mode').forEach(function (m) {
     m.classList.toggle('sel', m.dataset.subject === db.subject);
