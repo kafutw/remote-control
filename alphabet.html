@@ -168,11 +168,16 @@
     background: var(--mint-soft); border: 1.5px solid var(--mint);
     display: flex; align-items: center; gap: 12px;
   }
-  .goal .star { font-size: var(--fs-head); line-height: 1; }
-  .goal .txt { font-size: var(--fs-body); font-weight: 800; color: var(--mint-ink); }
+  .goal .star { font-size: var(--icon-medal); line-height: 1; flex: 0 0 auto; }
+  .goal .txt { font-size: var(--fs-body); font-weight: 800; color: var(--mint-ink); flex: 1; min-width: 0; }
   .goal .txt small { display: block; font-weight: 700; color: var(--ink-soft); font-size: var(--fs-note); margin-top: 2px; }
+  .goal .pct {
+    flex: 0 0 auto; text-align: right; font-weight: 800; color: var(--mint-ink);
+    font-size: var(--fs-head); font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .goal .pct small { display: block; font-size: var(--fs-note); font-weight: 700; color: var(--ink-soft); }
   .goal.todo { background: var(--amber-soft); border-color: var(--amber); }
-  .goal.todo .txt { color: var(--amber); }
+  .goal.todo .txt, .goal.todo .pct { color: var(--amber); }
 
   .tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
   .tile {
@@ -249,6 +254,10 @@
   .cell .cap { font-family: var(--abc); font-size: var(--fs-q); font-weight: 700; line-height: 1; color: var(--hue); }
   .cell .low { font-family: var(--abc); font-size: var(--fs-body); font-weight: 700; line-height: 1.2; color: var(--ink-soft); }
   .cell .star { position: absolute; top: 4px; right: 5px; font-size: var(--fs-note); opacity: 0; }
+  .cell .mark { position: absolute; top: 3px; left: 4px; font-size: var(--fs-note); line-height: 1; }
+  .cell .cup { font-size: calc(var(--icon-medal) * .7); top: -8px; left: -6px;
+               filter: drop-shadow(0 2px 3px rgba(180,120,40,.25)); }
+  .cell .warn { color: var(--coral-ink); font-weight: 800; }
   .cell.known { border-color: var(--mint); background: var(--mint-soft); }
   .cell.known .star { opacity: 1; }
   .cell.known .low { color: var(--mint-ink); }
@@ -257,7 +266,7 @@
     position: fixed; inset: 0; background: rgba(50,34,14,.42); z-index: 40;
     opacity: 0; pointer-events: none; transition: opacity .2s;
   }
-  body.card-open .sheet-bg { opacity: 1; pointer-events: auto; }
+  body.card-open .sheet-bg, body.voice-open .sheet-bg { opacity: 1; pointer-events: auto; }
   .sheet {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
     background: var(--surface); border-radius: 26px 26px 0 0;
@@ -266,8 +275,10 @@
     transform: translateY(102%); transition: transform .26s cubic-bezier(.3,1.1,.5,1);
     max-width: 560px; margin: 0 auto; max-height: 94vh; overflow-y: auto;
   }
-  body.card-open .sheet { transform: translateY(0); }
+  body.card-open #sheet, body.voice-open #voiceSheet { transform: translateY(0); }
   .handle { width: 44px; height: 5px; border-radius: 99px; background: var(--line); margin: 4px auto 8px; }
+  .sheet-title { font-size: var(--fs-head); font-weight: 800; margin: 2px 0 4px; }
+  .voice-sheet .sub-h:first-of-type { margin-top: 10px; }
   .card-letter {
     font-family: var(--abc); font-weight: 700; text-align: center; line-height: 1;
     font-size: var(--fs-mega); color: var(--hue); margin: 4px 0 2px; letter-spacing: .04em;
@@ -586,23 +597,19 @@
     <div class="goal" id="goal" hidden></div>
 
     <div class="card">
-      <h2><span class="n">1</span>今天要練哪幾個字母？</h2>
-      <div class="tiles" id="tiles"></div>
-      <div class="row mt wrapme">
-        <button class="btn ghost grow" id="selAll">全選</button>
-        <button class="btn ghost grow" id="selNone">全部清除</button>
-        <button class="btn ghost grow" id="selWeak">我的弱點</button>
+      <h2><span class="n">1</span>要出什麼題？</h2>
+      <div class="modes" id="kinds">
+        <button class="mode sel" data-kind="all"><b>三種都出</b><i>輪流換，練得比較全</i></button>
+        <button class="mode" data-kind="listen"><b>🔊 聽聲音</b><i>聽到什麼字母就選它</i></button>
+        <button class="mode" data-kind="case"><b>🔠 大寫找小寫</b><i>看 A 選 a</i></button>
+        <button class="mode" data-kind="case2"><b>🔡 小寫找大寫</b><i>看 a 選 A</i></button>
       </div>
-      <div class="legend">
-        <div><b>🥇</b><span>金牌<i>最近 10 題對 9 題</i></span></div>
-        <div><b>🥈</b><span>銀牌<i>對 8 題</i></span></div>
-        <div><b>🥉</b><span>銅牌<i>對 7 題</i></span></div>
-        <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
+      <div class="sub-h">出題方式</div>
+      <div class="modes" id="modes">
+        <button class="mode sel" data-mode="smart"><b>聰明出題</b><i>常錯的字母會多出現</i></button>
+        <button class="mode" data-mode="even"><b>平均出題</b><i>每個字母機會都一樣</i></button>
       </div>
-      <p class="hint" id="tileHint">選好字母就可以開始。獎牌看的是每個字母最近 10 題的表現。</p>
-      <div class="row mt">
-        <button class="btn grow" id="learnBtn">先認識字母 🔤</button>
-      </div>
+      <p class="hint">26 個字母都會練到，常錯的會多出現幾次。</p>
     </div>
 
     <div class="card">
@@ -615,54 +622,10 @@
       <p class="hint">每題都有 20 秒可以想，時間到才算答錯。</p>
     </div>
 
-    <div class="card">
-      <h2><span class="n">3</span>怎麼出題？</h2>
-      <div class="sub-h">出題方式</div>
-      <div class="modes" id="modes">
-        <button class="mode sel" data-mode="smart"><b>聰明出題</b><i>常錯的字母會多出現</i></button>
-        <button class="mode" data-mode="even"><b>平均出題</b><i>每個字母機會都一樣</i></button>
-      </div>
-      <div class="sub-h">題型</div>
-      <div class="modes" id="kinds">
-        <button class="mode sel" data-kind="all"><b>三種都出</b><i>聽、看圖、大小寫輪流</i></button>
-        <button class="mode" data-kind="listen"><b>🔊 聽聲音</b><i>聽到什麼字母就選它</i></button>
-        <button class="mode" data-kind="picture"><b>🖼️ 看圖片</b><i>補上單字開頭的字母</i></button>
-        <button class="mode" data-kind="case"><b>🔠 大小寫</b><i>大寫配對小寫</i></button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2><span class="n">4</span>聲音怎麼念？</h2>
-      <div class="sub-h">口音</div>
-      <select class="voice" id="voiceSel"></select>
-      <p class="hint" id="voiceHint"></p>
-      <div class="sub-h">語速</div>
-      <div class="modes three" id="rates">
-        <button class="mode" data-rate="0.4"><b>很慢</b><i>一個一個字</i></button>
-        <button class="mode sel" data-rate="0.55"><b>慢</b><i>剛學建議</i></button>
-        <button class="mode" data-rate="0.75"><b>正常</b><i>熟了再用</i></button>
-      </div>
-      <div class="sub-h">語調</div>
-      <div class="modes three" id="pitches">
-        <button class="mode" data-pitch="0.85"><b>低</b><i>沉穩</i></button>
-        <button class="mode sel" data-pitch="1.1"><b>中</b><i>一般</i></button>
-        <button class="mode" data-pitch="1.4"><b>高</b><i>活潑</i></button>
-      </div>
-      <div class="sub-h">答對之後</div>
-      <div class="modes three" id="rights">
-        <button class="mode" data-right="none"><b>不念</b><i>答對就換下一題</i></button>
-        <button class="mode sel" data-right="letter"><b>只念字母</b><i>再聽一次字母</i></button>
-        <button class="mode" data-right="full"><b>字母＋單字</b><i>連單字一起念</i></button>
-      </div>
-      <div class="row mt">
-        <button class="btn grow" id="tryVoiceBtn">🔊 試聽「b ・ bear」</button>
-      </div>
-      <p class="hint" id="voiceDiag"></p>
-    </div>
-
     <div class="foot">
       <button class="btn primary big" id="startBtn">開始測驗（10 題）🚀</button>
       <button class="btn" id="reviewBtn" hidden>只練上次的錯字母 🔁</button>
+      <button class="btn" id="learnBtn">先認識字母 🔤</button>
     </div>
     <p class="tiny">紀錄只存在這台裝置的瀏覽器裡，不會上傳。</p>
   </section>
@@ -672,7 +635,13 @@
     <div class="card">
       <h2>點一個字母，聽它怎麼念</h2>
       <div class="abcgrid" id="abcgrid"></div>
-      <p class="hint">大寫在上、小寫在下。學會了在字母卡上按 ⭐，會記在這台裝置上。有鍵盤的話直接按鍵盤上的字母也可以。</p>
+      <div class="legend">
+        <div><b>🥇</b><span>金牌<i>最近 10 題對 9 題</i></span></div>
+        <div><b>🥈</b><span>銀牌<i>對 8 題</i></span></div>
+        <div><b>🥉</b><span>銅牌<i>對 7 題</i></span></div>
+        <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
+      </div>
+      <p class="hint">大寫在上、小寫在下，左上角是這個字母的獎牌。學會了在字母卡上按 ⭐，會記在這台裝置上。有鍵盤的話直接按鍵盤上的字母也可以。</p>
     </div>
     <div class="foot">
       <button class="btn primary big" id="learnBackBtn">回到首頁</button>
@@ -821,6 +790,48 @@
   </div>
 </div>
 
+<div class="sheet voice-sheet" id="voiceSheet" role="dialog" aria-modal="true" aria-label="聲音設定">
+  <div class="handle"></div>
+  <h2 class="sheet-title">聲音怎麼念？</h2>
+  <div class="sub-h">朗讀</div>
+  <div class="modes" id="speaks">
+    <button class="mode" data-speak="on"><b>🗣️ 開著</b><i>題目和答案都會念</i></button>
+    <button class="mode" data-speak="off"><b>🤐 關掉</b><i>只看畫面不出聲</i></button>
+  </div>
+
+      <div class="sub-h">口音</div>
+      <select class="voice" id="voiceSel"></select>
+      <p class="hint" id="voiceHint"></p>
+      <div class="sub-h">語速</div>
+      <div class="modes three" id="rates">
+        <button class="mode" data-rate="0.4"><b>很慢</b><i>一個一個字</i></button>
+        <button class="mode sel" data-rate="0.55"><b>慢</b><i>剛學建議</i></button>
+        <button class="mode" data-rate="0.75"><b>正常</b><i>熟了再用</i></button>
+      </div>
+      <div class="sub-h">語調</div>
+      <div class="modes three" id="pitches">
+        <button class="mode" data-pitch="0.85"><b>低</b><i>沉穩</i></button>
+        <button class="mode sel" data-pitch="1.1"><b>中</b><i>一般</i></button>
+        <button class="mode" data-pitch="1.4"><b>高</b><i>活潑</i></button>
+      </div>
+      <div class="sub-h">答對之後</div>
+      <div class="modes three" id="rights">
+        <button class="mode" data-right="none"><b>不念</b><i>答對就換下一題</i></button>
+        <button class="mode sel" data-right="letter"><b>只念字母</b><i>再聽一次字母</i></button>
+        <button class="mode" data-right="full"><b>字母＋單字</b><i>連單字一起念</i></button>
+      </div>
+      <div class="row mt">
+        <button class="btn grow" id="tryVoiceBtn">🔊 試聽「b ・ bear」</button>
+        <button class="btn grow" id="trySfxBtn">🔔 測試音效</button>
+      </div>
+      <p class="hint" id="voiceDiag"></p>
+      <p class="hint">兩個都按按看：<b>音效</b>和<b>語音</b>走的是不同的聲音管道。
+        音效聽得到、語音聽不到 → 是語音引擎或語音檔的問題；兩個都聽不到 → 先檢查裝置音量和靜音鍵。</p>
+  <div class="row">
+    <button class="btn primary grow" id="voiceDoneBtn">好了</button>
+  </div>
+</div>
+
 <div class="breakscreen" id="breakScreen" hidden>
   <div class="breakbox">
     <div class="bemoji">🌿</div>
@@ -903,7 +914,7 @@
     for (var i = 0; i < MEDALS.length; i++) if (MEDALS[i].icon === icon) return MEDALS[i].name;
     return '';
   }
-  var DAILY_MIN_RATE = 0.8;   // 今天任何一輪正確率到這個標準就算達標
+  var DAILY_MIN_RATE = 0.7;   // 今天任何一輪拿到銅牌（70%）就算有獎牌
 
   /* 用眼提醒：練滿一段時間就休息一下 */
   var BREAK_MS = 5 * 60 * 1000;
@@ -932,7 +943,7 @@
     if (!Array.isArray(db.lastWrong)) db.lastWrong = [];
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if (['smart', 'even'].indexOf(db.mode) < 0) db.mode = DEF.mode;
-    if (['all', 'listen', 'picture', 'case'].indexOf(db.kind) < 0) db.kind = DEF.kind;
+    if (['all', 'listen', 'case', 'case2'].indexOf(db.kind) < 0) db.kind = DEF.kind;
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
     if (['none', 'letter', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
@@ -1205,7 +1216,6 @@
   }
   var lower = function (c) { return c.toLowerCase(); };
   function sayLetter(c, delay, onDone) { speak([[lower(c), 1]], delay, onDone); }
-  function sayWord(c, delay, onDone) { speak([[letterOf(c).word, 1.25]], delay, onDone); }
   function sayFull(c, delay, onDone) {
     speak([[lower(c), 1], [letterOf(c).word, 1.25]], delay, onDone);
   }
@@ -1267,51 +1277,10 @@
     return Object.keys(days).length;
   }
 
-  function buildTiles() {
-    var box = $('tiles');
-    box.innerHTML = '';
-    LETTERS.forEach(function (L, i) {
-      var on = picked.indexOf(L.c) >= 0;
-      var el = document.createElement('button');
-      el.className = 'tile' + (on ? ' sel' : '');
-      el.setAttribute('aria-pressed', on ? 'true' : 'false');
-      el.setAttribute('aria-label', L.c + ' ' + L.word);
-      var medal = medalOf(L.c);
-      var mark = medal ? '<span class="mark cup">' + medal + '</span>'
-               : (letterRisk(L.c) >= 0.25 ? '<span class="mark warn">●</span>' : '');
-      el.innerHTML = '<b>' + L.c + '</b><i>' + lower(L.c) + '</i>' + mark;
-      el.addEventListener('click', function () {
-        var k = picked.indexOf(L.c);
-        if (k >= 0) picked.splice(k, 1); else picked.push(L.c);
-        picked.sort(function (a, b) { return IDX[a] - IDX[b]; });
-        buildTiles(); syncStart();
-      });
-      box.appendChild(el);
-    });
-  }
-
+  // 26 個字母一律全練，只更新開始鈕上的題數
   function syncStart() {
-    $('startBtn').disabled = picked.length === 0;
     $('startBtn').textContent = '開始測驗（' + db.count + ' 題）🚀';
-    $('tileHint').textContent = picked.length === 0
-      ? '至少要選一個字母才能開始喔。'
-      : '已選 ' + letterLabel(picked) + '，共 ' + picked.length + ' 個字母。' +
-        '獎牌看每個字母最近 ' + WINDOW + ' 題的答對率，紅點代表比較常錯。';
   }
-
-  $('selAll').addEventListener('click', function () { picked = ALL.slice(); buildTiles(); syncStart(); });
-  $('selNone').addEventListener('click', function () { picked = []; buildTiles(); syncStart(); });
-  $('selWeak').addEventListener('click', function () {
-    var ranked = ALL.map(function (c) { return { c: c, r: letterRisk(c) }; });
-    ranked.sort(function (a, b) { return b.r - a.r; });
-    var weak = ranked.filter(function (x) { return x.r > 0; }).slice(0, 6).map(function (x) { return x.c; });
-    if (!weak.length) {
-      $('tileHint').textContent = '還沒有足夠的練習紀錄，先隨便選幾個字母玩玩看吧！';
-      return;
-    }
-    picked = weak.sort(function (a, b) { return IDX[a] - IDX[b]; });
-    buildTiles(); syncStart();
-  });
 
   function segment(boxId, apply) {
     var box = $(boxId);
@@ -1347,6 +1316,11 @@
     $('voiceDiag').textContent = '狀態：正在念「b ・ bear」…';
   }
   $('tryVoiceBtn').addEventListener('click', tryVoice);
+  $('trySfxBtn').addEventListener('click', function () {
+    if (!db.sound) { db.sound = true; save(); syncSound(); }
+    initAudio(); SFX.right();
+    setTimeout(function () { SFX.combo(); }, 320);
+  });
 
   function renderUseHint() {
     var mins = Math.floor(db.useMs / 60000), secs = Math.floor(db.useMs % 60000 / 1000);
@@ -1368,8 +1342,9 @@
       b.className = 'cell';
       b.style.setProperty('--hue', colorOf(i));
       b.setAttribute('aria-label', L.c + ' ' + L.word);
-      b.innerHTML = '<span class="star">⭐</span><span class="cap">' + L.c +
-                    '</span><span class="low">' + lower(L.c) + '</span>';
+      b.innerHTML = '<span class="star">⭐</span><span class="mk"></span>' +
+                    '<span class="cap">' + L.c + '</span>' +
+                    '<span class="low">' + lower(L.c) + '</span>';
       b.addEventListener('click', function () { openSheet(L.c); });
       box.appendChild(b);
       cells.push(b);
@@ -1378,7 +1353,12 @@
   }
   function paintGrid() {
     cells.forEach(function (b, i) {
-      b.classList.toggle('known', db.known.indexOf(LETTERS[i].c) >= 0);
+      var c = LETTERS[i].c;
+      b.classList.toggle('known', db.known.indexOf(c) >= 0);
+      var medal = medalOf(c);
+      b.querySelector('.mk').innerHTML = medal
+        ? '<span class="mark cup">' + medal + '</span>'
+        : (letterRisk(c) >= 0.25 ? '<span class="mark warn">●</span>' : '');
     });
   }
 
@@ -1409,7 +1389,7 @@
   function stepLetter(d) {
     openSheet(ALL[(IDX[cur] + d + 26) % 26]);
   }
-  $('sheetBg').addEventListener('click', closeSheet);
+  $('sheetBg').addEventListener('click', function () { closeSheet(); closeVoiceSheet(); });
   $('closeBtn').addEventListener('click', closeSheet);
   $('sayBtn').addEventListener('click', function () { sayFull(cur); });
   $('prevBtn').addEventListener('click', function () { stepLetter(-1); });
@@ -1429,18 +1409,20 @@
   /* ────────── 出題 ────────── */
   var PER_Q = 20;    // 每題可以想幾秒
   var KIND_LABEL = {
-    listen:  '🔊 聽聲音，這是哪個字母？',
-    picture: '🖼️ 這個字缺了第一個字母',
-    case:    '🔠 大寫的朋友是哪個小寫？'
+    listen: '🔊 聽聲音，這是哪個字母？',
+    case:   '🔠 大寫的朋友是哪個小寫？',
+    case2:  '🔡 小寫的朋友是哪個大寫？'
   };
   var S = null;
 
+  // 這個 App 只練字母本身：聽發音、大寫找小寫、小寫找大寫。
+  // 不考拼單字 —— 那是認得整個字，不是認字母。
   function kindsAvailable() {
-    var ks = db.kind === 'all' ? ['listen', 'picture', 'case'] : [db.kind];
+    var ks = db.kind === 'all' ? ['listen', 'case', 'case2'] : [db.kind];
     // 這台裝置念不出聲音就別出「聽聲音」，不然小朋友會卡住
     if (!speechUsable()) {
       ks = ks.filter(function (k) { return k !== 'listen'; });
-      if (!ks.length) ks = ['picture', 'case'];
+      if (!ks.length) ks = ['case', 'case2'];
     }
     return ks;
   }
@@ -1576,22 +1558,20 @@
         '<button class="btn ghost" id="noHearBtn" style="margin-top:10px">聽不到？換個問法</button>';
       $('playBtn').addEventListener('click', function () { sayLetter(q.c); });
       $('noHearBtn').addEventListener('click', function () {
-        q.kind = 'case';                 // 換成看得見的題型，不換答案
+        q.kind = 'case';                 // 換成看得見的題型，不換答案（答案不變）
         renderQuestion(q); paintOptions();
       });
       sayLetter(q.c, 150);
-    } else if (q.kind === 'picture') {
-      body.innerHTML = '<div class="qemoji">' + L.emoji + '</div>' +
-        '<div class="qtext"><span class="blank">＿</span>' + L.word.slice(1) + '</div>' +
-        '<div class="qzh">' + L.zh + '</div>';
-      sayWord(q.c, 150);
     } else {
-      body.innerHTML = '<div class="qtext" style="color:var(--hue)">' + q.c + '</div>';
+      // case = 給大寫選小寫；case2 = 給小寫選大寫
+      var face = q.kind === 'case2' ? lower(q.c) : q.c;
+      body.innerHTML = '<div class="qtext" style="color:var(--hue)">' + face + '</div>';
       sayLetter(q.c, 150);
     }
   }
 
-  function optionFace(c, kind) { return kind === 'case' ? lower(c) : c; }
+  // 題目給大寫就選小寫，給小寫就選大寫
+  function optionFace(c, kind) { return kind === 'case' ? lower(c) : c.toUpperCase(); }
 
   function paintOptions() {
     document.querySelectorAll('.opt').forEach(function (btn, i) {
@@ -1996,14 +1976,27 @@
     $('speakBtn').classList.toggle('off', !on);
     $('speakBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
     $('speakBtn').disabled = !canSpeak;
+    document.querySelectorAll('#speaks .mode').forEach(function (m) {
+      m.classList.toggle('sel', (m.dataset.speak === 'on') === !!db.speak);
+    });
     renderVoiceDiag();
   }
   $('soundBtn').addEventListener('click', function () {
     db.sound = !db.sound; save(); syncSound();
     if (db.sound) { initAudio(); SFX.tick(); }
   });
+  // 🗣️ 改成打開聲音設定；開關本身移到面板裡，遊戲中也能隨時調
   $('speakBtn').addEventListener('click', function () {
-    db.speak = !db.speak; save(); syncSpeak();
+    closeSheet();
+    document.body.classList.add('voice-open');
+    unlockSpeech();
+    renderVoiceDiag();
+  });
+  function closeVoiceSheet() { document.body.classList.remove('voice-open'); }
+  $('voiceDoneBtn').addEventListener('click', closeVoiceSheet);
+  segment('speaks', function (m) {
+    db.speak = m.dataset.speak === 'on';
+    syncSpeak();
     if (db.speak) { unlockSpeech(); sayFull('A'); } else hushSpeech();
   });
   function initAudioIfOn() { if (db.sound) initAudio(); }
@@ -2061,7 +2054,7 @@
 
   /* ────────── 鍵盤 ────────── */
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeSheet(); return; }
+    if (e.key === 'Escape') { closeSheet(); closeVoiceSheet(); return; }
     if (document.body.classList.contains('card-open')) {
       if (e.key === 'ArrowLeft') { stepLetter(-1); return; }
       if (e.key === 'ArrowRight') { stepLetter(1); return; }
@@ -2082,36 +2075,55 @@
   /* ────────── 啟動 ────────── */
   document.documentElement.style.setProperty('--reveal', (REVEAL_MS / 1000) + 's');
 
+  // 今天最好的一輪拿到什麼獎牌，右邊標答對率
+  function medalFor(rate) {
+    for (var i = 0; i < MEDALS.length; i++) if (rate >= MEDALS[i].at) return MEDALS[i];
+    return null;
+  }
   function renderGoal() {
     var el = $('goal');
     var today = dayKey(Date.now());
     var todayRuns = db.runs.filter(function (r) { return dayKey(r.t) === today; });
     if (!todayRuns.length) { el.hidden = true; return; }   // 今天還沒開始，先不要擺一個沒達成的目標在那裡
     el.hidden = false;
-    var hit = goalHitToday();
-    el.className = 'goal' + (hit ? '' : ' todo');
+
     var best = Math.max.apply(null, todayRuns.map(function (r) {
-      return Math.round(r.correct / (r.total || 10) * 100);
+      return r.correct / (r.total || 10);
     }));
+    var pct = Math.round(best * 100);
+    var got = medalFor(best);
     var days = goalDays();
-    el.innerHTML = hit
-      ? '<span class="star">⭐</span><span class="txt">今天達成目標了！' +
-        '<small>今天最好的一輪答對 ' + best + '%　・　到目前為止已經達標 ' + days + ' 天</small></span>'
-      : '<span class="star">🎯</span><span class="txt">今天還差一點點' +
-        '<small>今天最好的一輪答對 ' + best + '%，答對 80% 就達標' +
-        (days ? '　・　已經達標 ' + days + ' 天' : '') + '</small></span>';
+    el.className = 'goal' + (got ? '' : ' todo');
+
+    var line, sub;
+    if (got && got.rank === 3) {
+      line = '今天拿到' + got.name + '！';
+      sub = '最高的獎牌就是這個，太厲害了' + (days ? '　・　已經拿過 ' + days + ' 天獎牌' : '');
+    } else {
+      // 還沒拿到最高的，就告訴他下一階要幾 %
+      var next = null;
+      for (var i = MEDALS.length - 1; i >= 0; i--) {
+        if (best < MEDALS[i].at) { next = MEDALS[i]; break; }
+      }
+      line = got ? '今天拿到' + got.name + '！' : '今天還沒拿到獎牌';
+      sub = next ? '再答對到 ' + Math.round(next.at * 100) + '% 就是' + next.name + ' ' + next.icon : '';
+      if (days) sub += (sub ? '　・　' : '') + '已經拿過 ' + days + ' 天獎牌';
+    }
+    el.innerHTML = '<span class="star">' + (got ? got.icon : '🎯') + '</span>' +
+      '<span class="txt">' + line + '<small>' + sub + '</small></span>' +
+      '<span class="pct">' + pct + '%<small>今天最好</small></span>';
   }
 
   function refreshSetup() {
     renderGoal();
-    buildTiles(); syncStart();
+    syncStart();
     $('reviewBtn').hidden = !(db.lastWrong && db.lastWrong.length);
   }
 
   $('startBtn').addEventListener('click', function () {
     initAudioIfOn();   // 趁著這個手勢把音訊解鎖
     unlockSpeech();    // 語音也一樣，只有真的手勢裡才解得開
-    if (!picked.length) return;
+    picked = ALL.slice();
     db.letters = picked.slice();
     save();
     startUseClock();
@@ -2135,7 +2147,7 @@
   }
 
   load();
-  picked = ALL.slice();   // 預設全選 A–Z，不想練哪個再自己點掉
+  picked = ALL.slice();   // 26 個字母一律全部練
   $('subtitle').textContent = '每題 ' + PER_Q + ' 秒 ・ ' + db.count + ' 題';
   document.querySelectorAll('#counts .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.count) === db.count);
