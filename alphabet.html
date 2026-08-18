@@ -374,7 +374,17 @@
   .opt.dim { opacity: .38; }
 
   /* 單字題：選項是英文字或圖片，字級要比字母小才排得下 */
-  .opt.word { font-size: var(--fs-head); letter-spacing: .01em; padding: 14px 6px; }
+  .opt.word {
+    font-size: var(--fs-head); letter-spacing: .01em; padding: 14px 8px 14px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .opt.word .ow { flex: 1; text-align: center; }
+  .opt.word .say {
+    flex: 0 0 auto; width: 42px; height: 42px; border-radius: 99px;
+    background: var(--key-soft); display: grid; place-items: center;
+    font-size: var(--fs-body); line-height: 1;
+  }
+  .opt.word.good .say, .opt.word.bad .say { background: rgba(255,255,255,.28); }
   .opt.pic { font-family: var(--font); font-size: var(--fs-q); }
   .qemoji.big { font-size: calc(var(--fs-q) * 1.5); }
   .qtext.word { font-size: var(--fs-q); letter-spacing: .01em; }
@@ -2067,7 +2077,13 @@
     document.querySelectorAll('.opt').forEach(function (btn, i) {
       var c = S.opts[i];
       btn.className = 'opt' + (wordFace ? ' word' : '') + (picFace ? ' pic' : '');
-      btn.textContent = optionFace(c, kind);
+      // 選項是英文字時，旁邊給一顆喇叭：他不會讀，但聽得懂
+      if (wordFace && speakable()) {
+        btn.innerHTML = '<span class="ow">' + optionFace(c, kind) + '</span>' +
+                        '<span class="say" aria-hidden="true">🔊</span>';
+      } else {
+        btn.textContent = optionFace(c, kind);
+      }
       btn.dataset.val = c;
       btn.disabled = false;
     });
@@ -2204,7 +2220,12 @@
   }
 
   document.querySelectorAll('.opt').forEach(function (btn) {
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', function (e) {
+      // 點到選項上的喇叭 → 只念這個字，不算作答
+      if (e.target && e.target.classList && e.target.classList.contains('say')) {
+        sayItem(btn.dataset.val);
+        return;
+      }
       if (lock) { if (S && S.canSkip) nextQuestion(); return; }
       answer(btn.dataset.val, btn);
     });
