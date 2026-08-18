@@ -377,6 +377,8 @@
   .opt.pic { font-family: var(--font); font-size: var(--fs-q); }
   .qemoji.big { font-size: calc(var(--fs-q) * 1.5); }
   .qtext.word { font-size: var(--fs-q); letter-spacing: .01em; }
+  .qtext.zh { font-family: var(--font); font-size: var(--fs-q); font-weight: 800; }
+  .qzh.bpmf, .wzh.bpmf { line-height: 1.9; }
 
   /* 認識單字：一格一個字，圖＋英文＋中文 */
   .abcgrid.words { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
@@ -635,6 +637,7 @@
         <button class="mode" data-wkind="wpic"><b>🖼️ 看圖選字</b><i>看圖片選英文字</i></button>
         <button class="mode" data-wkind="wlisten"><b>🔊 聽發音選字</b><i>聽到什麼就選它</i></button>
         <button class="mode" data-wkind="wread"><b>🔡 看字選圖</b><i>看英文字選圖片</i></button>
+        <button class="mode" data-wkind="wzh"><b>🈶 看中文選字</b><i>看中文選英文字</i></button>
       </div>
       <div class="sub-h">出題方式</div>
       <div class="modes" id="modes">
@@ -807,7 +810,7 @@
     <span class="word-emoji" id="cardEmoji"></span>
     <span>
       <span class="word-en" id="cardEn"></span>
-      <span class="word-zh" id="cardZh"></span>
+      <span class="word-zh bpmf" id="cardZh"></span>
     </span>
   </div>
   <div class="word-note" id="cardNote"></div>
@@ -934,7 +937,10 @@
      g = 1 小一、2 小二，依主題分組，挑的是具體、能用圖案表達的名詞。
      台灣低年級英語沒有全國統一字表（課綱從小三才有英語，低年級是彈性課程），
      所以分級是參考 GEPT Kids 主題字表、宜蘭員山國小的一二年級各 50 字，
-     再對照教育部 1200 字挑出來的，不是哪一家出版社的官方清單。 */
+     再對照教育部 1200 字挑出來的，不是哪一家出版社的官方清單。
+     p: 0 = 這個字沒辦法只靠一張圖認出來（👧 和 👦 就是同一顆臉換髮型，
+     👶 也可能是女生），所以不出圖片題，改考中文對應。
+     grp  = 圖案長得像的一群（筆類、車類、天空類），出圖片題時不會互相當選項。 */
   var WORDS = [
     // ── 小一：顏色、數字、動物、家人、水果、身邊的東西 ──
     { w: 'red',    zh: '紅色',   e: '🔴', g: 1, t: '顏色' },
@@ -967,12 +973,12 @@
     { w: 'monkey', zh: '猴子', e: '🐵', g: 1, t: '動物' },
     { w: 'elephant', zh: '大象', e: '🐘', g: 1, t: '動物' },
     { w: 'lion',   zh: '獅子', e: '🦁', g: 1, t: '動物' },
-    { w: 'mom',    zh: '媽媽', e: '👩', g: 1, t: '家人' },
-    { w: 'dad',    zh: '爸爸', e: '👨', g: 1, t: '家人' },
-    { w: 'baby',   zh: '寶寶', e: '👶', g: 1, t: '家人' },
-    { w: 'brother', zh: '哥哥、弟弟', e: '👦', g: 1, t: '家人' },
-    { w: 'sister', zh: '姐姐、妹妹', e: '👧', g: 1, t: '家人' },
-    { w: 'grandma', zh: '奶奶、外婆', e: '👵', g: 1, t: '家人' },
+    { w: 'mom',    zh: '媽媽', e: '👩', g: 1, t: '家人', p: 0 },
+    { w: 'dad',    zh: '爸爸', e: '👨', g: 1, t: '家人', p: 0 },
+    { w: 'baby',   zh: '寶寶', e: '👶', g: 1, t: '家人', p: 0 },
+    { w: 'brother', zh: '哥哥、弟弟', e: '👦', g: 1, t: '家人', p: 0 },
+    { w: 'sister', zh: '姐姐、妹妹', e: '👧', g: 1, t: '家人', p: 0 },
+    { w: 'grandma', zh: '奶奶、外婆', e: '👵', g: 1, t: '家人', p: 0 },
     { w: 'apple',  zh: '蘋果', e: '🍎', g: 1, t: '水果' },
     { w: 'banana', zh: '香蕉', e: '🍌', g: 1, t: '水果' },
     { w: 'grape',  zh: '葡萄', e: '🍇', g: 1, t: '水果' },
@@ -996,9 +1002,9 @@
     { w: 'cookie', zh: '餅乾', e: '🍪', g: 2, t: '食物' },
     { w: 'hamburger', zh: '漢堡', e: '🍔', g: 2, t: '食物' },
     { w: 'pizza',  zh: '披薩', e: '🍕', g: 2, t: '食物' },
-    { w: 'pencil', zh: '鉛筆', e: '✏️', g: 2, t: '學校用品' },
-    { w: 'pen',    zh: '原子筆', e: '🖊️', g: 2, t: '學校用品' },
-    { w: 'crayon', zh: '蠟筆', e: '🖍️', g: 2, t: '學校用品' },
+    { w: 'pencil', zh: '鉛筆', e: '✏️', g: 2, t: '學校用品', grp: 'write' },
+    { w: 'pen',    zh: '原子筆', e: '🖊️', g: 2, t: '學校用品', grp: 'write' },
+    { w: 'crayon', zh: '蠟筆', e: '🖍️', g: 2, t: '學校用品', grp: 'write' },
     { w: 'ruler',  zh: '尺',   e: '📏', g: 2, t: '學校用品' },
     { w: 'scissors', zh: '剪刀', e: '✂️', g: 2, t: '學校用品' },
     { w: 'notebook', zh: '筆記本', e: '📓', g: 2, t: '學校用品' },
@@ -1012,20 +1018,20 @@
     { w: 'hand',   zh: '手',   e: '✋', g: 2, t: '身體' },
     { w: 'foot',   zh: '腳',   e: '🦶', g: 2, t: '身體' },
     { w: 'leg',    zh: '腿',   e: '🦵', g: 2, t: '身體' },
-    { w: 'car',    zh: '汽車', e: '🚗', g: 2, t: '交通' },
+    { w: 'car',    zh: '汽車', e: '🚗', g: 2, t: '交通', grp: 'car' },
     { w: 'bus',    zh: '公車', e: '🚌', g: 2, t: '交通' },
     { w: 'bike',   zh: '腳踏車', e: '🚲', g: 2, t: '交通' },
     { w: 'train',  zh: '火車', e: '🚆', g: 2, t: '交通' },
     { w: 'plane',  zh: '飛機', e: '✈️', g: 2, t: '交通' },
     { w: 'boat',   zh: '船',   e: '⛵', g: 2, t: '交通' },
-    { w: 'taxi',   zh: '計程車', e: '🚕', g: 2, t: '交通' },
-    { w: 'truck',  zh: '卡車', e: '🚚', g: 2, t: '交通' },
+    { w: 'taxi',   zh: '計程車', e: '🚕', g: 2, t: '交通', grp: 'car' },
+    { w: 'truck',  zh: '卡車', e: '🚚', g: 2, t: '交通', grp: 'car' },
     { w: 'sun',    zh: '太陽', e: '☀️', g: 2, t: '天氣' },
     { w: 'moon',   zh: '月亮', e: '🌙', g: 2, t: '天氣' },
     { w: 'star',   zh: '星星', e: '⭐', g: 2, t: '天氣' },
-    { w: 'rain',   zh: '雨',   e: '🌧️', g: 2, t: '天氣' },
-    { w: 'cloud',  zh: '雲',   e: '☁️', g: 2, t: '天氣' },
-    { w: 'snow',   zh: '雪',   e: '❄️', g: 2, t: '天氣' },
+    { w: 'rain',   zh: '雨',   e: '🌧️', g: 2, t: '天氣', grp: 'sky' },
+    { w: 'cloud',  zh: '雲',   e: '☁️', g: 2, t: '天氣', grp: 'sky' },
+    { w: 'snow',   zh: '雪',   e: '❄️', g: 2, t: '天氣', grp: 'sky' },
     { w: 'rainbow', zh: '彩虹', e: '🌈', g: 2, t: '天氣' },
     { w: 'hat',    zh: '帽子', e: '🎩', g: 2, t: '衣物' },
     { w: 'shirt',  zh: '襯衫', e: '👕', g: 2, t: '衣物' },
@@ -1033,6 +1039,63 @@
     { w: 'socks',  zh: '襪子', e: '🧦', g: 2, t: '衣物' },
     { w: 'umbrella', zh: '雨傘', e: '☂️', g: 2, t: '衣物' }
   ];
+
+  /* ────────── 注音 ──────────
+     小一還在學漢字，中文一律標注音。單字表只管單字，
+     疊字和輕聲（媽媽、耳朵、鑰匙…）另外用詞表蓋過去。 */
+  var BPMF = {
+    '一':'ㄧ','七':'ㄑㄧ','三':'ㄙㄢ','九':'ㄐㄧㄡˇ','乾':'ㄍㄢ','二':'ㄦˋ','五':'ㄨˇ',
+    '亮':'ㄌㄧㄤˋ','傘':'ㄙㄢˇ','兔':'ㄊㄨˋ','八':'ㄅㄚ','公':'ㄍㄨㄥ','六':'ㄌㄧㄡˋ',
+    '具':'ㄐㄩˋ','冰':'ㄅㄧㄥ','刀':'ㄉㄠ','剪':'ㄐㄧㄢˇ','包':'ㄅㄠ','匙':'ㄔˊ','十':'ㄕˊ',
+    '卡':'ㄎㄚˇ','原':'ㄩㄢˊ','后':'ㄏㄡˋ','哥':'ㄍㄜ','嘴':'ㄗㄨㄟˇ','四':'ㄙˋ','堡':'ㄅㄠˇ',
+    '外':'ㄨㄞˋ','大':'ㄉㄚˋ','太':'ㄊㄞˋ','奶':'ㄋㄞˇ','妹':'ㄇㄟˋ','姐':'ㄐㄧㄝˇ','婆':'ㄆㄛˊ',
+    '媽':'ㄇㄚ','子':'ㄗ˙','寶':'ㄅㄠˇ','尺':'ㄔˇ','巴':'ㄅㄚ','帽':'ㄇㄠˋ','弟':'ㄉㄧˋ',
+    '彩':'ㄘㄞˇ','心':'ㄒㄧㄣ','手':'ㄕㄡˇ','披':'ㄆㄧ','星':'ㄒㄧㄥ','書':'ㄕㄨ','月':'ㄩㄝˋ',
+    '本':'ㄅㄣˇ','朵':'ㄉㄨㄛˇ','果':'ㄍㄨㄛˇ','柳':'ㄌㄧㄡˇ','椅':'ㄧˇ','橘':'ㄐㄩˊ','橙':'ㄔㄥˊ',
+    '機':'ㄐㄧ','檯':'ㄊㄞˊ','氣':'ㄑㄧˋ','水':'ㄕㄨㄟˇ','汁':'ㄓ','汽':'ㄑㄧˋ','淇':'ㄑㄧˊ',
+    '淋':'ㄌㄧㄣˊ','漢':'ㄏㄢˋ','火':'ㄏㄨㄛˇ','熊':'ㄒㄩㄥˊ','燈':'ㄉㄥ','爸':'ㄅㄚˋ','牙':'ㄧㄚˊ',
+    '牛':'ㄋㄧㄡˊ','狗':'ㄍㄡˇ','猴':'ㄏㄡˊ','獅':'ㄕ','玩':'ㄨㄢˊ','球':'ㄑㄧㄡˊ','瓜':'ㄍㄨㄚ',
+    '白':'ㄅㄞˊ','皇':'ㄏㄨㄤˊ','盒':'ㄏㄜˊ','眼':'ㄧㄢˇ','睛':'ㄐㄧㄥ','程':'ㄔㄥˊ','筆':'ㄅㄧˇ',
+    '糕':'ㄍㄠ','紅':'ㄏㄨㄥˊ','紫':'ㄗˇ','綠':'ㄌㄩˋ','耳':'ㄦˇ','背':'ㄅㄟˋ','腳':'ㄐㄧㄠˇ',
+    '腿':'ㄊㄨㄟˇ','船':'ㄔㄨㄢˊ','色':'ㄙㄜˋ','草':'ㄘㄠˇ','莓':'ㄇㄟˊ','萄':'ㄊㄠˊ','葡':'ㄆㄨˊ',
+    '蕉':'ㄐㄧㄠ','薩':'ㄙㄚˋ','藍':'ㄌㄢˊ','蘋':'ㄆㄧㄥˊ','虹':'ㄏㄨㄥˊ','蛋':'ㄉㄢˋ','蠟':'ㄌㄚˋ',
+    '衫':'ㄕㄢ','襪':'ㄨㄚˋ','襯':'ㄔㄣˋ','西':'ㄒㄧ','計':'ㄐㄧˋ','記':'ㄐㄧˋ','象':'ㄒㄧㄤˋ',
+    '豬':'ㄓㄨ','貓':'ㄇㄠ','踏':'ㄊㄚˋ','車':'ㄔㄜ','醬':'ㄐㄧㄤˋ','鉛':'ㄑㄧㄢ','鑰':'ㄧㄠˋ',
+    '陽':'ㄧㄤˊ','雨':'ㄩˇ','雪':'ㄒㄩㄝˇ','雲':'ㄩㄣˊ','鞋':'ㄒㄧㄝˊ','飛':'ㄈㄟ','飯':'ㄈㄢˋ',
+    '餅':'ㄅㄧㄥˇ','香':'ㄒㄧㄤ','馬':'ㄇㄚˇ','魚':'ㄩˊ','鳥':'ㄋㄧㄠˇ','鴨':'ㄧㄚ','麵':'ㄇㄧㄢˋ',
+    '黃':'ㄏㄨㄤˊ','黑':'ㄏㄟ','鼻':'ㄅㄧˊ','齒':'ㄔˇ','斑':'ㄅㄢ'
+  };
+  // 疊字要唸輕聲、或整詞有固定唸法的，用這裡蓋過單字表
+  var BPMF_WORD = {
+    '媽媽': ['ㄇㄚ', 'ㄇㄚ˙'], '爸爸': ['ㄅㄚˋ', 'ㄅㄚ˙'], '寶寶': ['ㄅㄠˇ', 'ㄅㄠ˙'],
+    '哥哥': ['ㄍㄜ', 'ㄍㄜ˙'], '弟弟': ['ㄉㄧˋ', 'ㄉㄧ˙'], '姐姐': ['ㄐㄧㄝˇ', 'ㄐㄧㄝ˙'],
+    '妹妹': ['ㄇㄟˋ', 'ㄇㄟ˙'], '奶奶': ['ㄋㄞˇ', 'ㄋㄞ˙'], '星星': ['ㄒㄧㄥ', 'ㄒㄧㄥ˙'],
+    '耳朵': ['ㄦˇ', 'ㄉㄨㄛ˙'], '鑰匙': ['ㄧㄠˋ', 'ㄕ˙'], '原子筆': ['ㄩㄢˊ', 'ㄗˇ', 'ㄅㄧˇ']
+  };
+
+  // 把中文字串包成注音 ruby；標點和英文原樣輸出
+  function zhRuby(text) {
+    var out = '', i = 0;
+    while (i < text.length) {
+      var hit = null;
+      for (var len = 3; len >= 2; len--) {
+        var seg = text.substr(i, len);
+        if (BPMF_WORD[seg]) { hit = { seg: seg, rt: BPMF_WORD[seg] }; break; }
+      }
+      if (hit) {
+        for (var k = 0; k < hit.seg.length; k++) {
+          out += '<ruby>' + hit.seg.charAt(k) + '<rt>' + hit.rt[k] + '</rt></ruby>';
+        }
+        i += hit.seg.length;
+        continue;
+      }
+      var c = text.charAt(i);
+      out += BPMF[c] ? '<ruby>' + c + '<rt>' + BPMF[c] + '</rt></ruby>' : c;
+      i++;
+    }
+    return out;
+  }
+
   var WMAP = {};
   WORDS.forEach(function (x) { WMAP['w:' + x.w] = x; });
 
@@ -1106,7 +1169,7 @@
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if (['smart', 'even'].indexOf(db.mode) < 0) db.mode = DEF.mode;
     if (['all', 'listen', 'case', 'case2'].indexOf(db.kind) < 0) db.kind = DEF.kind;
-    if (['all', 'wpic', 'wlisten', 'wread'].indexOf(db.wkind) < 0) db.wkind = DEF.wkind;
+    if (['all', 'wpic', 'wlisten', 'wread', 'wzh'].indexOf(db.wkind) < 0) db.wkind = DEF.wkind;
     if (['letters', 'w1', 'w2'].indexOf(db.subject) < 0) db.subject = DEF.subject;
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
@@ -1627,7 +1690,7 @@
       b.innerHTML = '<span class="star">⭐</span><span class="mk"></span>' +
         '<span class="wemoji">' + it.emoji + '</span>' +
         '<span class="wen">' + it.word + '</span>' +
-        '<span class="wzh">' + it.zh + '</span>';
+        '<span class="wzh bpmf">' + zhRuby(it.zh) + '</span>';
       b.addEventListener('click', function () {
         unlockSpeech();
         sayItem(k);
@@ -1650,7 +1713,7 @@
     $('cardPhon').textContent = L.c + ' 唸 ' + L.phon;
     $('cardEmoji').textContent = L.emoji;
     $('cardEn').innerHTML = '<span class="first">' + L.word.charAt(0) + '</span>' + L.word.slice(1);
-    $('cardZh').textContent = L.zh;
+    $('cardZh').innerHTML = zhRuby(L.zh);
     $('cardNote').textContent = L.note || '';
     syncKnownBtn();
     document.body.classList.add('card-open');
@@ -1693,7 +1756,8 @@
     case2:  '🔡 小寫的朋友是哪個大寫？',
     wpic:   '🖼️ 這是哪一個字？',
     wlisten:'🔊 聽聲音，這是哪一個字？',
-    wread:  '🔡 這個字是哪一張圖？'
+    wread:  '🔡 這個字是哪一張圖？',
+    wzh:    '🈶 這個意思的英文是哪一個？'
   };
   var SUBJECT_NAME = { letters: 'ABC 字母', w1: '小一單字', w2: '小二單字' };
 
@@ -1712,14 +1776,14 @@
   function kindsAvailable() {
     var ks;
     if (wordMode()) {
-      ks = db.wkind === 'all' ? ['wpic', 'wlisten', 'wread'] : [db.wkind];
+      ks = db.wkind === 'all' ? ['wpic', 'wlisten', 'wread', 'wzh'] : [db.wkind];
     } else {
       ks = db.kind === 'all' ? ['listen', 'case', 'case2'] : [db.kind];
     }
     // 這台裝置念不出聲音就別出聽力題，不然小朋友會卡住
     if (!speechUsable()) {
       ks = ks.filter(function (k) { return k !== 'listen' && k !== 'wlisten'; });
-      if (!ks.length) ks = wordMode() ? ['wpic', 'wread'] : ['case', 'case2'];
+      if (!ks.length) ks = wordMode() ? ['wpic', 'wread', 'wzh'] : ['case', 'case2'];
     }
     return ks;
   }
@@ -1748,7 +1812,12 @@
       }
     }
     var ks = kindsAvailable();
-    return { c: c, kind: ks[Math.floor(Math.random() * ks.length)] };
+    var kind = ks[Math.floor(Math.random() * ks.length)];
+    // 家人這種「一張圖認不出是誰」的字，改考中文對應，不出圖片題
+    if ((kind === 'wpic' || kind === 'wread') && isWord(c) && WMAP[c].p === 0) {
+      kind = speechUsable() && Math.random() < 0.5 ? 'wlisten' : 'wzh';
+    }
+    return { c: c, kind: kind };
   }
 
   // 干擾項：字母用最容易混淆的（b/d/p、m/n、u/v/w…），
@@ -1758,8 +1827,22 @@
     function add(x) { if (x !== c && set.indexOf(x) < 0) set.push(x); }
     if (isWord(c)) {
       var topic = itemOf(c).topic;
-      shuffle(S.pool.filter(function (k) { return itemOf(k).topic === topic; })).forEach(add);
-      shuffle(S.pool.slice()).forEach(add);
+      var pic = (S.q && (S.q.kind === 'wpic' || S.q.kind === 'wread'));
+      var me = WMAP[c];
+      // 圖片題的選項要能一眼分辨：認不出來的字不當選項，
+      // 圖案長得像的一群（筆類、車類、天空類）也不跟本題混在一起
+      function okAsOption(k) {
+        if (!pic) return true;
+        var x = WMAP[k];
+        if (x.p === 0) return false;
+        if (me.grp && x.grp === me.grp) return false;
+        return true;
+      }
+      shuffle(S.pool.filter(function (k) {
+        return itemOf(k).topic === topic && okAsOption(k);
+      })).forEach(add);
+      shuffle(S.pool.filter(okAsOption)).forEach(add);
+      shuffle(S.pool.slice()).forEach(add);   // 真的湊不滿才放寬
     } else {
       shuffle(letterOf(c).near.split('')).filter(function (x) { return IDX[x] !== undefined; }).forEach(add);
       shuffle(S.pool.slice()).forEach(add);
@@ -1859,7 +1942,11 @@
     var body = $('qbody');
     if (q.kind === 'wpic') {
       body.innerHTML = '<div class="qemoji big">' + it.emoji + '</div>' +
-        '<div class="qzh">' + it.zh + '</div>';
+        '<div class="qzh bpmf">' + zhRuby(it.zh) + '</div>';
+      return;
+    }
+    if (q.kind === 'wzh') {
+      body.innerHTML = '<div class="qtext zh bpmf">' + zhRuby(it.zh) + '</div>';
       return;
     }
     if (q.kind === 'wread') {
@@ -1899,13 +1986,13 @@
   // 題目給大寫就選小寫，給小寫就選大寫；單字題選項則是英文字或圖片
   function optionFace(c, kind) {
     if (kind === 'wread') return itemOf(c).emoji;          // 看字選圖
-    if (kind === 'wpic' || kind === 'wlisten') return itemOf(c).word;
+    if (kind === 'wpic' || kind === 'wlisten' || kind === 'wzh') return itemOf(c).word;
     return kind === 'case' ? lower(c) : c.toUpperCase();
   }
 
   function paintOptions() {
     var kind = S.q.kind;
-    var wordFace = (kind === 'wpic' || kind === 'wlisten');
+    var wordFace = (kind === 'wpic' || kind === 'wlisten' || kind === 'wzh');
     document.querySelectorAll('.opt').forEach(function (btn, i) {
       var c = S.opts[i];
       btn.className = 'opt' + (wordFace ? ' word' : '') + (kind === 'wread' ? ' pic' : '');
@@ -1924,7 +2011,7 @@
     S.canSkip = false;
     var q = pickQuestion();
     S.last = q.c;
-    S.q = q;
+    S.q = q;              // 先設好，makeOptions 會依題型挑選項
     S.qEndAt = Date.now() + PER_Q * 1000;
     $('qcard').className = 'qcard';
     $('streakTxt').textContent = '';   // 上一題的答案絕對不能留到這一題
@@ -1957,10 +2044,11 @@
     var it = itemOf(q.c);
     $('qbody').innerHTML = it.isWord
       ? '<div class="qtext word"><b class="ans">' + it.word + '</b></div>' +
-        '<div class="qemoji">' + it.emoji + '</div><div class="qzh">' + it.zh + '</div>'
+        '<div class="qemoji">' + it.emoji + '</div>' +
+        '<div class="qzh bpmf">' + zhRuby(it.zh) + '</div>'
       : '<div class="qtext"><b class="ans">' + q.c + ' ' + lower(q.c) + '</b></div>' +
         '<div class="qemoji">' + it.emoji + '</div>' +
-        '<div class="qzh">' + it.word + '　' + it.zh + '</div>';
+        '<div class="qzh bpmf">' + it.word + '　' + zhRuby(it.zh) + '</div>';
     $('streakTxt').textContent = note;
     sayItemFull(q.c, 320);   // 讓答錯的音效先響完
     S.canSkip = false;
@@ -2144,9 +2232,9 @@
         var el = document.createElement('span');
         el.className = 'wchip';
         el.innerHTML = it.isWord
-          ? '<u>' + it.word + '</u>' + it.emoji + '<small>' + it.zh + '</small>'
+          ? '<u>' + it.word + '</u>' + it.emoji + '<small class="bpmf">' + zhRuby(it.zh) + '</small>'
           : '<u>' + k + ' ' + lower(k) + '</u>' + it.emoji + ' ' + it.word +
-            '<small>' + it.zh + '</small>';
+            '<small class="bpmf">' + zhRuby(it.zh) + '</small>';
         box.appendChild(el);
       });
     }
