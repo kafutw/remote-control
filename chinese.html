@@ -250,18 +250,6 @@
   .mode.sel i { color: var(--key-deep); }
 
   /* 「生字」「ㄅㄆㄇ」「我的生字」是最上面的岔路，用大圖示和不同顏色分開 */
-  #subjects .mode { text-align: center; padding: 15px 6px 14px; }
-  #subjects .mode b { font-size: var(--fs-head); }
-  #subjects .ic { display: block; font-size: 34px; line-height: 1; margin-bottom: 8px; }
-  #subjects .mode[data-subject="zi"].sel { border-color: var(--coral); background: var(--coral-soft); }
-  #subjects .mode[data-subject="zi"].sel b,
-  #subjects .mode[data-subject="zi"].sel i { color: var(--coral-ink); }
-  #subjects .mode[data-subject="bpmf"].sel { border-color: var(--mint); background: var(--mint-soft); }
-  #subjects .mode[data-subject="bpmf"].sel b,
-  #subjects .mode[data-subject="bpmf"].sel i { color: var(--mint-ink); }
-  #subjects .mode[data-subject="mine"].sel { border-color: var(--amber); background: var(--amber-soft); }
-  #subjects .mode[data-subject="mine"].sel b,
-  #subjects .mode[data-subject="mine"].sel i { color: var(--amber); }
 
   /* 貼生字的框：字要夠大，家長多半是在手機上貼 */
   textarea.paste {
@@ -799,8 +787,6 @@
   }
   .chip.sel { border-style: solid; border-color: var(--mint); background: var(--mint-soft); color: var(--mint-ink); }
   /* 自己建的課接在課次後面，用另一個顏色分開 */
-  .chip.mine.sel { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
-  .chip.mine.sel small { background: var(--amber); color: #fff; }
   .chip.add { color: var(--ink-faint); }
   .chip.sel small { background: var(--mint); color: #fff; }
   .hint.tight { margin-top: 8px; margin-bottom: 2px; }
@@ -824,30 +810,12 @@
   }
   .updatebar .btn { flex: 0 0 auto; padding: 9px 14px; min-height: 0; font-size: var(--fs-note); }
 
-  /* 我的課本：一課一張卡，點一下選起來，可以複選 */
-  .lessons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .lesson {
-    font-family: inherit; cursor: pointer; color: var(--ink); text-align: left;
-    background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
-    padding: 12px 13px; transition: all .14s; position: relative;
-  }
-  .lesson:active { transform: translateY(1px); }
-  .lesson:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
-  .lesson b { display: block; font-size: var(--fs-body); font-weight: 800; line-height: 1.3; }
-  .lesson i { display: inline-block; font-style: normal; font-size: var(--fs-note);
-              font-weight: 800; color: var(--ink-soft); margin-top: 6px;
-              background: var(--track); border-radius: 99px; padding: 3px 9px; }
-  .lesson.sel i { background: var(--amber); color: #fff; }
-  .lesson u { font-family: var(--abc); text-decoration: none; display: block;
-              font-size: var(--fs-note); color: var(--ink-faint); margin-top: 4px;
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lesson.sel { border-color: var(--amber); background: var(--amber-soft); }
-  .lesson.sel i, .lesson.sel u { color: var(--amber); }
-  .lesson .tick { position: absolute; top: 6px; right: 8px; font-size: var(--fs-note); opacity: 0; }
-  .lesson.sel .tick { opacity: 1; }
-  .lessons .empty { grid-column: 1 / -1; }
+  /* 首頁右上：練了多久（大字），規則放小字在下面 */
+  .usebar { text-align: right; margin: 14px 2px -4px; line-height: 1.35; }
+  .usebar b { display: block; font-size: var(--fs-head); font-weight: 800; color: var(--ink-soft); }
+  .usebar b.near { color: var(--amber); }
+  .usebar small { display: block; font-size: var(--fs-note); color: var(--ink-faint); margin-top: 2px; }
 
-  input.paste.one { line-height: 1.6; }
 
   .wchip u { font-family: var(--abc); font-size: var(--fs-head); }
   .wrow .q { font-family: var(--abc); }
@@ -871,6 +839,10 @@
 
   <!-- ══ 設定 ══ -->
   <section class="screen on" id="setup">
+    <div class="usebar" id="useBar" hidden>
+      <b id="useNow"></b>
+      <small id="useRule"></small>
+    </div>
     <div class="goal" id="goal" hidden></div>
 
     <div class="card">
@@ -1088,36 +1060,6 @@
         <button class="btn ghost" id="cClear" hidden>清掉這一課的圈詞</button>
       </div>
       <p class="hint" id="cHint"></p>
-    </div>
-
-    <div class="card">
-      <h2>我的課本</h2>
-      <p class="hint" style="margin-top:0">課本上這一課的<b>生字</b>和老師畫的<b>圈詞</b>分開放：
-        生字是一個一個字，圈詞是老師圈起來要會寫的詞。圈詞每個版本、每個老師都不一樣，
-        所以只能自己加。加好之後回首頁選「✏️ 我的課本」就練得到。</p>
-      <div class="lessons" id="setLessonList"></div>
-      <div class="row mt">
-        <button class="btn primary grow" id="lessonAdd">＋ 新增一課</button>
-        <button class="btn grow" id="lessonEditBtn" hidden>✎ 編輯這一課</button>
-      </div>
-      <div id="lessonForm" hidden>
-        <div class="sub-h">課名</div>
-        <input class="paste one" id="lessonName" placeholder="例如：二上 第一課">
-        <div class="sub-h">生字（一個一個字）</div>
-        <textarea class="paste" id="mineText" rows="3"
-          placeholder="例如：花 朵 草 地 蝴 蝶&#10;貼一整段也可以，程式會自己把中文字挑出來。"></textarea>
-        <div class="sub-h">圈詞（老師圈的詞，一行一個或用逗號分開）</div>
-        <textarea class="paste" id="mineWords" rows="4"
-          placeholder="例如：&#10;花朵、草地、蝴蝶&#10;小心、開心"></textarea>
-        <div class="row mt">
-          <button class="btn primary grow" id="lessonSave">存起來</button>
-          <button class="btn ghost" id="lessonCancel">取消</button>
-        </div>
-        <div class="row mt">
-          <button class="btn ghost grow" id="lessonDel" hidden>刪掉這一課</button>
-        </div>
-      </div>
-      <p class="hint" id="setLessonHint"></p>
     </div>
 
     <div class="card">
@@ -1662,7 +1604,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 v';
+  var VERSION = '2026-08-20 w';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -2007,22 +1949,15 @@
     return out;
   }
 
-  /* 內建課次：老師的圈詞是每個班不一樣的東西，抓不到也查不到，
-     只能一課一課加。寫在這裡的，每台裝置開起來都會自動出現在「我的課本」，
-     使用者還是可以自己改、自己刪（刪掉就不會再冒出來）。 */
-  var PRESET_LESSONS = [
-    // { id: 'P:2a-1', name: '二上 第一課', chars: '花 草 蝴 蝶', words: '花朵、草地、蝴蝶' }
-  ];
-
   /* ────────── 資料儲存 ────────── */
   var KEY = 'zh_v1';
-  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, picked: [],
+  var DEF = { sound: true, speak: true, grade: 1, term: 1, picked: [],
               mode: 'smart', kind: 'all', bkind: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               nudgeAt: 0, noiseAt: 0.08, tone: 'auto', lastPeak: 0, micFail: '',
               circle: {}, day: null, medalDays: {},
-              lessons: [], picks: [], dropped: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
+              known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 單一個字的熟練度只看最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
   // 一整課的獎牌跟九九乘法的「段」用同一套標準：最近 20 題、至少 5 題才給評價
@@ -2078,35 +2013,8 @@
       var raw = localStorage.getItem(KEY);
       db = raw ? Object.assign(blank(), JSON.parse(raw)) : blank();
     } catch (e) { db = blank(); }
-    if (!Array.isArray(db.lessons)) db.lessons = [];
-    // 舊版把自己貼的字存成一整包，沒有分課，收成「我貼的字」這一課
-    if (Array.isArray(db.mine) && db.mine.length && !db.lessons.length) {
-      db.lessons = [{ id: 'L0', name: '我貼的字', chars: db.mine.slice() }];
-    }
-    delete db.mine;
-    db.lessons = db.lessons.filter(function (L) {
-      return L && typeof L.id === 'string' && Array.isArray(L.chars);
-    });
-    db.lessons.forEach(function (L) {
-      L.name = String(L.name || '沒有名字的一課').slice(0, 40);
-      L.chars = L.chars.filter(function (c) { return /^[一-鿿]$/.test(c); });
-      L.words = (Array.isArray(L.words) ? L.words : []).filter(function (w) {
-        return /^[一-鿿]{2,8}$/.test(w);
-      });
-    });
-    if (!Array.isArray(db.dropped)) db.dropped = [];
-    // 內建課次：沒有過就補進來，被使用者刪掉的就不要再冒出來
-    PRESET_LESSONS.forEach(function (P) {
-      if (db.dropped.indexOf(P.id) >= 0) return;
-      if (db.lessons.some(function (L) { return L.id === P.id; })) return;
-      db.lessons.push({ id: P.id, name: P.name, preset: true,
-                        chars: pickChars(P.chars), words: pickWords(P.words) });
-    });
-    if (!Array.isArray(db.picks)) db.picks = [];
-    db.picks = db.picks.filter(function (id) {
-      return db.lessons.some(function (L) { return L.id === id; });
-    });
-    if (!db.picks.length && db.lessons.length) db.picks = [db.lessons[db.lessons.length - 1].id];
+    // 舊版的「我的課本」（自己整課建）拿掉了 —— 老師的圈詞現在直接併進課本那一課
+    delete db.lessons; delete db.picks; delete db.dropped; delete db.mine; delete db.subject;
     if (!Array.isArray(db.known)) db.known = [];
     if (!db.perQ || typeof db.perQ !== 'object') db.perQ = {};
     if (!db.recent || typeof db.recent !== 'object') db.recent = {};
@@ -2125,7 +2033,6 @@
     if (ZI_KINDS.concat(WORD_KINDS, BPMF_KINDS).indexOf(db.kind) < 0 && db.kind !== 'all') {
       db.kind = DEF.kind;
     }
-    if (['zi', 'mine'].indexOf(db.subject) < 0) db.subject = 'zi';
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
     if (['none', 'zi', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
@@ -2469,8 +2376,7 @@
      所以高年級直接把那兩顆按鈕收起來，也不會出。
      低年級和中年級照出——部首老師考試會考。 */
   function hiddenKinds() {
-    var g = db.subject === 'mine' ? 3 : db.grade;      // 自己建的課不知道年級，按中年級算
-    return g >= 5 ? ['rad', 'stroke'] : [];
+    return db.grade >= 5 ? ['rad', 'stroke'] : [];
   }
   function kindsForAll() {
     var off = hiddenKinds();
@@ -2522,10 +2428,6 @@
      題目答對答錯除了記在字上，也記在它所屬的那一課上（'L2a-1' 這種 key）。
      自己建的課記成 'M:課的 id'。 */
   function unitKeyOf(k) {
-    if (db.subject === 'mine') {
-      var m = pickedLessons()[0];
-      return m ? 'M:' + m.id : '';
-    }
     var it = itemOf(k);
     var L = it.isWord ? WLESSON[it.word] : (it.g ? { g: it.g, t: it.t, k: it.k } : null);
     return L ? 'L' + L.g + (L.t === 1 ? 'a' : 'b') + '-' + L.k : '';
@@ -2636,17 +2538,6 @@
 
   /* 這一輪的題庫：某個年級（或累積到某個年級）的生字，或自己貼進來的字 */
   function subjectPool() {
-    if (db.subject === 'mine') {
-      var seen = {}, out = [];
-      pickedLessons().forEach(function (L) {
-        L.chars.forEach(function (c) { if (!seen[c]) { seen[c] = 1; out.push(c); } });
-        (L.words || []).forEach(function (w) {
-          var k = 'w:' + w;
-          if (!seen[k]) { seen[k] = 1; out.push(k); }
-        });
-      });
-      return out;
-    }
     var seen = {}, out = [];
     scopeLessons().forEach(function (L) {
       lessonZi(L).forEach(function (c) {
@@ -2685,11 +2576,6 @@
     return subjectPool().filter(function (c) { return kindsAvailable(c).length > 0; });
   }
   function subjectName() {
-    if (db.subject === 'mine') {
-      var got = pickedLessons();
-      if (!got.length) return '我的課本';
-      return got.length === 1 ? got[0].name : '我的課本（' + got.length + ' 課）';
-    }
     return shortVol(db.grade, db.term) +
            (db.picked.length ? ' 第' + lessonLabel(db.picked) + '課' : ' 整冊');
   }
@@ -2704,7 +2590,7 @@
     box.innerHTML = '';
     function chip(n, label, cnt, circled) {
       var b = document.createElement('button');
-      var on = db.subject === 'zi' && (n ? db.picked.indexOf(n) >= 0 : !db.picked.length);
+      var on = n ? db.picked.indexOf(n) >= 0 : !db.picked.length;
       b.className = 'chip' + (on ? ' sel' : '');
       var key = n ? lessonKey(db.grade, db.term, n) : '';
       var medal = key ? unitMedal(key) : '';
@@ -2713,8 +2599,7 @@
         (medal ? '<span class="mark cup">' + medal + '</span>'
                : (key && unitRisk(key) ? '<span class="mark warn">●</span>' : ''));
       b.addEventListener('click', function () {
-        if (db.subject !== 'zi') { db.subject = 'zi'; db.picked = n ? [n] : []; }
-        else if (!n) db.picked = [];                       // 整冊 = 不挑課
+        if (!n) db.picked = [];                            // 整冊 = 不挑課
         else {
           var i = db.picked.indexOf(n);
           if (i >= 0) db.picked.splice(i, 1); else db.picked.push(n);
@@ -2733,21 +2618,6 @@
       chip(L.k, '第' + L.k + '課', lessonZi(L).length, (L.circle || []).length > 0);
     });
 
-    // 自己建的課接在後面，這樣不用切換模式也選得到
-    db.lessons.forEach(function (M) {
-      var on = db.subject === 'mine' && db.picks.indexOf(M.id) >= 0;
-      var b = document.createElement('button');
-      b.className = 'chip mine' + (on ? ' sel' : '');
-      var mm = unitMedal('M:' + M.id);
-      b.innerHTML = '<b>✏️ ' + esc(M.name) + '</b><small>' +
-        (M.chars.length + (M.words || []).length) + ' 字詞</small>' +
-        (mm ? '<span class="mark cup">' + mm + '</span>' : '');
-      b.addEventListener('click', function () {
-        db.subject = 'mine'; db.picks = [M.id];
-        save(); syncSubject();
-      });
-      box.appendChild(b);
-    });
     var addBtn = document.createElement('button');
     addBtn.className = 'chip add';
     addBtn.innerHTML = '<b>✏️ 加老師的圈詞</b>';
@@ -2756,16 +2626,6 @@
       openCircle(db.grade, db.term, db.picked.length ? Math.min.apply(null, db.picked) : 1);
     });
     box.appendChild(addBtn);
-
-    if (db.subject === 'mine') {
-      var M2 = pickedLessons()[0];
-      $('lessonNote').innerHTML = M2
-        ? '<b>' + esc(M2.name) + '</b>（自己建的）　' + M2.chars.length + ' 個字' +
-          ((M2.words || []).length ? '、' + M2.words.length + ' 個圈詞' : '') +
-          '　—　要改內容按上面的「＋ 我的課本」進設定。'
-        : '自己建的課。到 ⚙️ 設定裡加生字和圈詞。';
-      return;
-    }
 
     var note = $('lessonNote');
     if (db.picked.length > 1) {
@@ -2810,22 +2670,11 @@
     }
   }
 
-  // 老師圈的詞優先當語詞用：填空、答案卡、朗讀都會用到（只有「我的課本」有）
+  // 老師圈的詞優先當語詞用：填空、答案卡、朗讀都拿老師圈的那個詞
   function rebuildCustomWords() {
     customWords = {};
-    if (db.subject !== 'mine') {
-      scopeLessons().forEach(function (L) {
-        (L.circle || []).forEach(function (w) {
-          for (var i = 0; i < w.length; i++) {
-            var c = w.charAt(i);
-            (customWords[c] || (customWords[c] = [])).push(w);
-          }
-        });
-      });
-      return;
-    }
-    pickedLessons().forEach(function (L) {
-      (L.words || []).forEach(function (w) {
+    scopeLessons().forEach(function (L) {
+      (L.circle || []).forEach(function (w) {
         for (var i = 0; i < w.length; i++) {
           var c = w.charAt(i);
           (customWords[c] || (customWords[c] = [])).push(w);
@@ -2854,20 +2703,15 @@
   }
 
   function syncSubject() {
-    var mine = db.subject === 'mine';
     rebuildCustomWords();
     syncKindNote();
-    $('gradeBox').hidden = mine;      // 練自己的課時，年級學期先收起來
     $('learnBtn').textContent = '先認識生字 📖';
     $('subtitle').textContent = subjectName() + ' ・ ' + db.count + ' 題 ・ ' +
       (db.secs ? db.secs + ' 秒' : '不限時');
-    var n = usablePool().length;
-    $('poolHint').textContent = mine && !n
-      ? '這一課還沒有字。到 ⚙️ 設定裡把生字和圈詞加進去。'
-      : '這次的題庫有 ' + n + ' 個字詞，都會練到，常錯的會多出現幾次。';
+    $('poolHint').textContent = '這次的題庫有 ' + usablePool().length +
+      ' 個字詞，都會練到，常錯的會多出現幾次。';
     syncStart();
     renderLessonChips();
-    renderLessons();
     refreshSetup();
   }
   segment('rates', function (m) { db.rate = Number(m.dataset.rate); tryVoice(); });
@@ -2947,13 +2791,32 @@
     })();
   });
 
-  function renderUseHint() {
+  function useText() {
     var mins = Math.floor(db.useMs / 60000), secs = Math.floor(db.useMs % 60000 / 1000);
+    return (mins ? mins + ' 分 ' : '') + secs + ' 秒';
+  }
+  function renderUseHint() {
     $('useHint').textContent = db.limitMin
-      ? '目前累計練習 ' + (mins ? mins + ' 分 ' : '') + secs + ' 秒。滿 ' + db.limitMin +
+      ? '目前累計練習 ' + useText() + '。滿 ' + db.limitMin +
         ' 分鐘會在一輪結束後請他休息 ' + Math.round(BREAK_MS / 60000) +
         ' 分鐘；閒置超過 3 分鐘不計時，自然休息夠久也會歸零。'
       : '已關閉用眼提醒，不會要求休息。';
+  }
+  /* 首頁右上角那條：練了多久放大字，規則縮成小字掛在下面。
+     關掉用眼提醒、或這一輪還沒開始練就整條收起來，首頁不要擺一個 0 秒在那裡。 */
+  function renderUseBar() {
+    var bar = $('useBar');
+    if (!bar) return;
+    if (!db.limitMin || !db.useMs) { bar.hidden = true; return; }
+    bar.hidden = false;
+    var left = db.limitMin * 60000 - db.useMs;
+    $('useNow').textContent = '⏱ 練了 ' + useText();
+    $('useNow').classList.toggle('near', left <= 3 * 60000);   // 剩三分鐘變色
+    $('useRule').textContent = left > 0
+      ? '滿 ' + db.limitMin + ' 分鐘會在一輪結束後休息 ' +
+        Math.round(BREAK_MS / 60000) + ' 分鐘（閒置 3 分鐘不計時）'
+      : '已經滿 ' + db.limitMin + ' 分鐘了，這一輪結束就休息 ' +
+        Math.round(BREAK_MS / 60000) + ' 分鐘';
   }
 
   /* ────────── 老師的圈詞 ──────────
@@ -3002,7 +2865,7 @@
   }
   function openCircle(g, t, k) {
     cAt = { g: g, t: t, k: k || 1 };
-    renderLessons(); renderUseHint(); renderMicHint(); show('settings');
+    renderUseHint(); renderMicHint(); show('settings');
     renderCircle();
     $('circleCard').scrollIntoView({ block: 'start' });
   }
@@ -3015,99 +2878,10 @@
     return words;
   }
 
-  /* ────────── 我的課本 ──────────
-     康軒各冊的生字表這裡抓不到，所以留一個自己建課的入口：
-     一課存一筆，課本、聯絡簿、生字簿上的字通通貼進來，
-     程式自己把中文字挑出來。要練哪幾課點一下就好，可以複選。 */
-  var editId = null;
-
   function esc(t) {
     return String(t).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
-  }
-  function pickedLessons() {
-    return db.lessons.filter(function (L) { return db.picks.indexOf(L.id) >= 0; });
-  }
-  function lessonOf(id) {
-    return db.lessons.filter(function (L) { return L.id === id; })[0] || null;
-  }
-
-  function renderLessons() {
-    [['lessonList', true], ['setLessonList', false]].forEach(function (x) {
-      var box = $(x[0]), pickable = x[1];
-      if (!box) return;
-      box.innerHTML = '';
-      if (!db.lessons.length) {
-        box.innerHTML = '<div class="empty">' + (pickable
-          ? '還沒有課。按下面的「⚙️ 新增或修改課本」加一課。'
-          : '還沒有課。按下面的「＋ 新增一課」，把課本上這一課的生字和老師圈的詞加進來。') +
-          '</div>';
-        return;
-      }
-      db.lessons.forEach(function (L) {
-        var on = db.subject === 'mine' && db.picks.indexOf(L.id) >= 0;
-        var btn = document.createElement('button');
-        btn.className = 'lesson' + (on ? ' sel' : '');
-        var bits = [L.chars.length + ' 字'];
-        if ((L.words || []).length) bits.push(L.words.length + ' 個圈詞');
-        btn.innerHTML = '<span class="tick">✔</span><b>' + esc(L.name) + '</b>' +
-          '<i>' + bits.join(' ・ ') + '</i>' +
-          '<u>' + esc((L.words || []).slice(0, 3).join('・') ||
-                      L.chars.slice(0, 8).join('')) + '</u>';
-        btn.addEventListener('click', function () {
-          if (db.subject === 'mine' && db.picks.indexOf(L.id) >= 0) {
-            db.subject = 'zi';                 // 再點一次就回到課本
-          } else {
-            db.subject = 'mine'; db.picks = [L.id];
-          }
-          save(); syncSubject();
-        });
-        box.appendChild(btn);
-      });
-    });
-    $('lessonEditBtn').hidden = !(db.subject === 'mine' && db.picks.length === 1);
-    renderMineHint();
-  }
-
-  function renderMineHint() {
-    var got = pickedLessons();
-    var set = $('setLessonHint');
-    if (set) {
-      set.textContent = db.lessons.length
-        ? '一共 ' + db.lessons.length + ' 課。點一下選起來（首頁也點得到），' +
-          '選一課的時候可以按「✎ 編輯這一課」改內容或刪掉。'
-        : '生字是一個一個字；圈詞是老師圈起來、要整個詞會寫的，' +
-          '每個版本、每個老師都不一樣，只能自己加。';
-    }
-    var el = $('mineHint');
-    if (!el) return;
-    if (!db.lessons.length) {
-      el.textContent = '還沒有課。按下面那顆進設定，把課本上的生字和老師圈的詞加進來。';
-      return;
-    }
-    var pool = subjectPool();
-    var chars = pool.filter(function (k) { return !isWord(k); });
-    var words = pool.filter(isWord);
-    var known = chars.filter(function (c) { return ZMAP[c]; }).length;
-    el.textContent = '選了 ' + got.length + ' 課：' + chars.length + ' 個生字（其中 ' + known +
-      ' 個查得到注音、部首和語詞）、' + words.length + ' 個圈詞。' +
-      '點一下課可以取消選取，也可以一次選好幾課一起練。';
-  }
-
-  function openLessonForm(id) {
-    editId = id || null;
-    var L = id ? lessonOf(id) : null;
-    $('lessonName').value = L ? L.name : '第 ' + (db.lessons.length + 1) + ' 課';
-    $('mineText').value = L ? L.chars.join(' ') : '';
-    $('mineWords').value = L ? (L.words || []).join('、') : '';
-    $('lessonDel').hidden = !L;
-    $('lessonForm').hidden = false;
-    $('lessonName').focus();
-  }
-  function closeLessonForm() {
-    editId = null;
-    $('lessonForm').hidden = true;
   }
   $('cGrade').addEventListener('change', function () {
     cAt.g = Number(this.value); cAt.k = 1; renderCircle();
@@ -3128,60 +2902,14 @@
     saveCircleEdits();
   });
 
-  $('lessonAdd').addEventListener('click', function () { openLessonForm(null); });
-  $('lessonEditBtn').addEventListener('click', function () {
-    if (db.picks.length === 1) openLessonForm(db.picks[0]);
-  });
-  $('lessonCancel').addEventListener('click', closeLessonForm);
-  // 直接整段貼的時候，「第三課」「生字」「語詞」這種標題不是要練的字，先拿掉
-  var LABELS = /第\s*[一二三四五六七八九十百千0-9]+\s*[課冊單元]|生字|語詞|新詞/g;
-  $('lessonSave').addEventListener('click', function () {
-    var chars = pickChars($('mineText').value);
-    var words = pickWords($('mineWords').value);
-    // 圈詞裡出現、但生字欄沒寫到的字，也一起收進來，才練得到
-    words.forEach(function (w) {
-      for (var i = 0; i < w.length; i++) {
-        var c = w.charAt(i);
-        if (chars.indexOf(c) < 0) chars.push(c);
-      }
-    });
-    var name = ($('lessonName').value || '').trim().slice(0, 40) ||
-               ('第 ' + (db.lessons.length + 1) + ' 課');
-    if (!chars.length && !words.length) {
-      $('setLessonHint').textContent = '這一課還沒有任何中文字，生字或圈詞至少要填一個再存。';
-      return;
-    }
-    var L = editId ? lessonOf(editId) : null;
-    if (L) { L.name = name; L.chars = chars; L.words = words; }
-    else {
-      L = { id: 'L' + Date.now().toString(36), name: name, chars: chars, words: words };
-      db.lessons.push(L);
-      db.picks = [L.id];          // 剛存好的這一課直接選起來，按開始就是練它
-    }
-    closeLessonForm();
-    db.subject = 'mine';
-    save(); syncSubject();
-    sparks('✏️');
-  });
-  armConfirm($('lessonDel'), '確定刪掉？再按一次', function () {
-    if (!editId) return;
-    var L = lessonOf(editId);
-    // 內建的課刪掉之後要記住，不然下次開起來又冒出來
-    if (L && L.preset && db.dropped.indexOf(L.id) < 0) db.dropped.push(L.id);
-    db.lessons = db.lessons.filter(function (x) { return x.id !== editId; });
-    db.picks = db.picks.filter(function (id) { return id !== editId; });
-    closeLessonForm();
-    save(); syncSubject();
-  });
-
   /* ────────── 設定畫面 ────────── */
   $('setBtn').addEventListener('click', function () {
-    closeSheet(); renderLessons(); renderUseHint(); renderMicHint();
+    closeSheet(); renderUseHint(); renderMicHint();
     cAt = { g: db.grade, t: db.term, k: db.picked.length ? Math.min.apply(null, db.picked) : 1 };
     renderCircle(); show('settings');
   });
   $('sBackBtn').addEventListener('click', function () {
-    micStop(); closeLessonForm(); refreshSetup(); show('setup');
+    micStop(); refreshSetup(); show('setup');
   });
   $('openVoiceBtn').addEventListener('click', function () {
     document.body.classList.add('voice-open');
@@ -3444,9 +3172,10 @@
       }).forEach(function (k) { pushUniq(set, k, ans); });
     }
     push(S.pool.filter(isWord));
+    // 這一課的詞不夠湊四個選項，就從同一冊的其他課借（老師的圈詞也算）
     var all = [];
-    db.lessons.forEach(function (L) {
-      (L.words || []).forEach(function (x) { all.push('w:' + x); });
+    lessonsOf(db.grade, db.term).forEach(function (L) {
+      lessonWords(L).forEach(function (x) { all.push('w:' + x); });
     });
     push(all);
     if (set.length < 3) {
@@ -3569,11 +3298,9 @@
     S.medalsBefore = {};
     S.base.forEach(function (c) { S.medalsBefore[c] = medalOf(c); });
     S.unitBefore = {};
-    (db.subject === 'mine' ? pickedLessons().map(function (M) {
-      return { key: 'M:' + M.id, name: M.name };
-    }) : scopeLessons().map(function (L) {
+    scopeLessons().map(function (L) {
       return { key: lessonKey(L.g, L.t, L.k), name: '第' + L.k + '課 ' + L.name };
-    })).forEach(function (u) { S.unitBefore[u.key] = { icon: unitMedal(u.key), name: u.name }; });
+    }).forEach(function (u) { S.unitBefore[u.key] = { icon: unitMedal(u.key), name: u.name }; });
     $('subtitle').textContent = (review ? '複習錯的' : subjectName()) +
       ' ・ ' + total + ' 題 ・ ' + (db.secs ? db.secs + ' 秒' : '不限時');
     renderDots();
@@ -3676,7 +3403,7 @@
         '<button class="btn ghost" id="playBtn" style="margin-top:12px">🔊 念這個意思</button>';
       $('playBtn').addEventListener('click', function () { sayWord(it.gloss); });
       // 低年級看不懂解釋裡的字，直接念給他聽；中高年級自己讀，要聽再按
-      if (db.subject !== 'mine' && db.grade <= 2) sayWord(it.gloss, 200);
+      if (db.grade <= 2) sayWord(it.gloss, 200);
       return;
     }
     if (q.kind === 'wbpmf') {
@@ -4047,7 +3774,7 @@
         isRecord = !!b;
       }
       db.runs.push({ t: Date.now(), correct: S.correct, total: S.total, ms: S.ms,
-                     subject: db.subject, grade: db.grade, review: S.reviewMode, done: done,
+                     grade: db.grade, review: S.reviewMode, done: done,
                      completed: !!completed, mood: '' });
       if (db.runs.length > 200) db.runs = db.runs.slice(-200);
     }
@@ -4478,6 +4205,7 @@
   }
   function refreshSetup() {
     renderGoal();
+    renderUseBar();
     syncStart();
     var n = reviewPool().length;
     $('reviewBtn').hidden = !n;
@@ -4518,7 +4246,7 @@
   load();
   [['counts', 'count', 1], ['secs', 'secs', 1], ['modes', 'mode', 0], ['kinds', 'kind', 0],
    ['bkinds', 'bkind', 0], ['grades', 'grade', 1], ['terms', 'term', 1],
-   ['subjects', 'subject', 0], ['rates', 'rate', 1], ['pitches', 'pitch', 1],
+   ['rates', 'rate', 1], ['pitches', 'pitch', 1],
    ['rights', 'right', 0], ['limits', 'limit', 1], ['nudges', 'nudge', 1],
    ['noises', 'noise', 1],
    ['tones', 'tone', 0]].forEach(function (x) {
