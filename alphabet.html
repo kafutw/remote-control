@@ -951,11 +951,11 @@
     </div>
 
     <div class="card">
-      <h2>卡關提醒</h2>
+      <h2>崩潰提醒</h2>
       <div class="modes three" id="nudges">
+        <button class="mode sel" data-nudge="0"><b>關閉</b><i>答錯不打斷</i></button>
         <button class="mode" data-nudge="3"><b>連錯 3 題</b><i>早一點關心</i></button>
-        <button class="mode sel" data-nudge="5"><b>連錯 5 題</b><i>再撐一下</i></button>
-        <button class="mode" data-nudge="0"><b>關閉</b><i>不打斷</i></button>
+        <button class="mode" data-nudge="5"><b>連錯 5 題</b><i>再撐一下</i></button>
       </div>
       <div class="sub-h">要說什麼</div>
       <div class="modes three" id="tones">
@@ -963,15 +963,15 @@
         <button class="mode" data-tone="soft"><b>一直溫柔</b><i>沒關係，慢慢來</i></button>
         <button class="mode" data-tone="fun"><b>一直促咪</b><i>再拖就少看一集囉</i></button>
       </div>
-      <p class="hint">連續答錯太多題的時候跳出來，讓他喘一口氣，順便問要不要今天先到這裡。
-        小孩卡住的時候通常不是不會，是急了。</p>
+      <p class="hint"><b>預設是關閉的</b>：答錯本來就是練習的一部分，一直被打斷反而更煩。
+        要的話可以打開，連續答錯太多題就跳出來讓他喘一口氣。</p>
 
       <div class="sub-h">太吵也提醒</div>
       <div class="modes" id="noises">
         <button class="mode" data-noise="0.10"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
-        <button class="mode" data-noise="0.16"><b>一般</b><i>吵鬧、哭就跳</i></button>
+        <button class="mode sel" data-noise="0.16"><b>一般</b><i>吵鬧、哭就跳</i></button>
         <button class="mode" data-noise="0.24"><b>很吵才跳</b><i>要崩潰大哭</i></button>
-        <button class="mode sel" data-noise="0"><b>關閉</b><i>不開麥克風</i></button>
+        <button class="mode" data-noise="0"><b>關閉</b><i>不開麥克風</i></button>
       </div>
       <div class="row mt">
         <button class="btn grow" id="micTestBtn">🎤 測一下現在多大聲</button>
@@ -1396,7 +1396,8 @@
   var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', wkind: 'all',
               subject: 'letters', source: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter', allVoices: false,
-              vol: 1, limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0, nudgeAt: 5, tone: 'auto', noiseAt: 0, lastPeak: 0, micFail: '',
+              vol: 1, limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
+              nudgeAt: 0, tone: 'auto', noiseAt: 0.16, lastPeak: 0, micFail: '',
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 熟練度只看每個字母最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
@@ -1425,6 +1426,7 @@
   // DEF 裡有物件跟陣列，一定要複製一份，不然會被改到預設值本身
   function blank() { return JSON.parse(JSON.stringify(DEF)); }
 
+  var needSave = false;
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
@@ -1454,6 +1456,8 @@
     if ([0.5, 0.8, 1].indexOf(db.vol) < 0) db.vol = DEF.vol;
     if ([0, 20, 30].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
     if ([0, 3, 5].indexOf(db.nudgeAt) < 0) db.nudgeAt = DEF.nudgeAt;
+    // 舊版預設是「連錯 5 題就跳」，改成只有崩潰大叫才跳，一次性套到舊紀錄上
+    if (db.v !== 2) { db.nudgeAt = 0; db.noiseAt = 0.16; db.v = 2; needSave = true; }
     if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
     if ([0, 0.1, 0.16, 0.24].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
     if (typeof db.lastPeak !== 'number') db.lastPeak = 0;
@@ -1463,6 +1467,7 @@
     if (!db.best || typeof db.best !== 'object') db.best = {};
   }
 
+  function loadAndFix() { load(); if (needSave) { needSave = false; save(); } }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
   }
@@ -2437,7 +2442,9 @@
      小孩卡住的時候通常不是不會，是急了、慌了，一直錯下去只會更急。 */
   var NUDGE = {
     soft: [
-      ['🫂', '沒關係，慢慢來']
+      ['🫂', '沒關係，慢慢來'],
+      ['🎥', '我要錄給老師看'],
+      ['🧱', '生氣要扣樂高錢']
     ],
     fun: [
       ['📺', '哭哭浪費看電視時間喔'],
@@ -3316,7 +3323,7 @@
     } catch (e) {}
   }
 
-  load();
+  loadAndFix();
   picked = ALL.slice();   // 26 個字母一律全部練
   document.querySelectorAll('#counts .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.count) === db.count);
