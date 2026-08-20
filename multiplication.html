@@ -1,0 +1,2501 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>乘法表大考驗遊戲</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F7FF">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<!-- 加到 iPad 主畫面後用全螢幕開啟，不顯示 Safari 的網址列 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+  :root {
+    --bg: #F2F7FF;
+    --bg-2: #E2EDFF;
+    --surface: #FFFFFF;
+    --track: #DDE8FA;
+    --ink: #26354C;
+    --ink-soft: #6C819F;
+    --ink-faint: #A2B3C9;
+    --line: #DFE9F7;
+    --blue: #4A8CF7;
+    --blue-deep: #2F6FDC;
+    --blue-soft: #E7F0FF;
+    --mint: #35BE96;
+    --mint-ink: #1E9C79;
+    --mint-soft: #E1F7F0;
+    --coral: #F2705C;
+    --coral-ink: #D64B36;
+    --coral-soft: #FFE9E5;
+    --amber: #F5A623;
+    --amber-soft: #FFF2DA;
+    --shadow: 0 1px 2px rgba(47,111,220,.06), 0 8px 22px rgba(47,111,220,.10);
+    --radius: 20px;
+    --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
+            "Microsoft JhengHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+    /* 字級一共七種，要調整只改這裡。
+       規則：設定與歷史畫面的字一律不超過主標，只有作答用的那三級可以更大 */
+    --fs-title: 1.5rem;    /* 24px  主標，全 App 只有一個 */
+    --fs-head:  1.25rem;   /* 20px  段落標題、主要按鈕、設定畫面的數字 */
+    --fs-body:  .9375rem;  /* 15px  內文 */
+    --fs-note:  .75rem;    /* 12px  說明、標籤 */
+    --fs-mega:  4rem;      /* 64px  倒數、結算分數 */
+    --fs-q:     2.75rem;   /* 44px  題目 */
+    --fs-opt:   1.75rem;   /* 28px  四個選項、剩餘秒數 */
+
+    --icon-medal: 26px;    /* 獎牌是圖示不是文字，不走上面的字級 */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161E2B; --bg-2: #1D2837; --surface: #212D3F; --track: #161E2B;
+      --ink: #E9F1FB; --ink-soft: #A6BAD4; --ink-faint: #71879F; --line: #33445C;
+      --blue: #6EA6FF; --blue-deep: #9CC3FF; --blue-soft: rgba(110,166,255,.16);
+      --mint: #57D6B0; --mint-ink: #86E7C9; --mint-soft: rgba(87,214,176,.16);
+      --coral: #FF8C79; --coral-ink: #FFA695; --coral-soft: rgba(255,140,121,.16);
+      --amber: #FFC15E; --amber-soft: rgba(255,193,94,.16);
+      --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F2F7FF; --bg-2: #E2EDFF; --surface: #FFFFFF; --track: #DDE8FA;
+    --ink: #26354C; --ink-soft: #6C819F; --ink-faint: #A2B3C9; --line: #DFE9F7;
+    --blue: #4A8CF7; --blue-deep: #2F6FDC; --blue-soft: #E7F0FF;
+    --mint: #35BE96; --mint-ink: #1E9C79; --mint-soft: #E1F7F0;
+    --coral: #F2705C; --coral-ink: #D64B36; --coral-soft: #FFE9E5;
+    --amber: #F5A623; --amber-soft: #FFF2DA;
+    --shadow: 0 1px 2px rgba(47,111,220,.06), 0 8px 22px rgba(47,111,220,.10);
+  }
+  :root[data-theme="dark"] {
+    --bg: #161E2B; --bg-2: #1D2837; --surface: #212D3F; --track: #161E2B;
+    --ink: #E9F1FB; --ink-soft: #A6BAD4; --ink-faint: #71879F; --line: #33445C;
+    --blue: #6EA6FF; --blue-deep: #9CC3FF; --blue-soft: rgba(110,166,255,.16);
+    --mint: #57D6B0; --mint-ink: #86E7C9; --mint-soft: rgba(87,214,176,.16);
+    --coral: #FF8C79; --coral-ink: #FFA695; --coral-soft: rgba(255,140,121,.16);
+    --amber: #FFC15E; --amber-soft: rgba(255,193,94,.16);
+    --shadow: 0 1px 2px rgba(0,0,0,.22), 0 10px 26px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  /* 按鈕的 display:inline-flex 會蓋掉 hidden 屬性，這裡把它扳回來 */
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; font-family: var(--font); color: var(--ink);
+    background: radial-gradient(120% 60% at 50% -10%, var(--bg-2), transparent 60%), var(--bg);
+    -webkit-text-size-adjust: 100%; line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 40px; }
+
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(1.5) blur(12px);
+    -webkit-backdrop-filter: saturate(1.5) blur(12px);
+    border-bottom: 1px solid var(--line); padding: env(safe-area-inset-top) 0 0;
+  }
+  .head-inner {
+    max-width: 560px; margin: 0 auto; padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  h1 {
+    font-size: var(--fs-title); font-weight: 800; margin: 0; flex: 1; min-width: 0;
+    letter-spacing: -.02em; line-height: 1.15;
+  }
+  h1 span {
+    font-size: var(--fs-note); font-weight: 600; color: var(--blue-deep); display: block; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .icobtn {
+    font-family: inherit; font-size: var(--fs-body); line-height: 1;
+    width: 40px; height: 40px; flex: 0 0 auto;
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 99px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .15s, border-color .15s;
+  }
+  .icobtn:active { transform: translateY(1px); }
+  .icobtn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .icobtn.off { color: var(--ink-faint); }
+
+  .btn {
+    font-family: inherit; font-size: var(--fs-body); font-weight: 700;
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 10px 18px; border-radius: 99px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px; transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.big { width: 100%; font-size: var(--fs-head); padding: 16px; min-height: 58px; border-radius: 18px; }
+  .btn.ghost { color: var(--ink-soft); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* screens */
+  .screen { display: none; }
+  .screen.on { display: block; animation: fade .22s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: var(--surface); border: 1.5px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; margin-top: 14px;
+  }
+  .card h2 {
+    font-size: var(--fs-head); font-weight: 800; margin: 0 0 14px; color: var(--ink);
+    letter-spacing: -.01em; display: flex; align-items: center; gap: 10px;
+  }
+  .card h2 .n {
+    flex: 0 0 auto; width: 30px; height: 30px; border-radius: 99px;
+    background: var(--blue); color: #fff; font-size: var(--fs-body);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── setup ── */
+  .goal {
+    margin-top: 14px; padding: 14px 16px; border-radius: var(--radius);
+    background: var(--mint-soft); border: 1.5px solid var(--mint);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .goal .star { font-size: var(--fs-head); line-height: 1; }
+  .goal .txt { font-size: var(--fs-body); font-weight: 800; color: var(--mint-ink); }
+  .goal .txt small { display: block; font-weight: 700; color: var(--ink-soft); font-size: var(--fs-note); margin-top: 2px; }
+  .goal.todo { background: var(--amber-soft); border-color: var(--amber); }
+  .goal.todo .txt { color: var(--amber); }
+
+  .card h2 .tally {
+    margin-left: auto; font-size: var(--fs-note); font-weight: 800;
+    color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .tile {
+    font-family: inherit; cursor: pointer; color: var(--ink);
+    background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
+    padding: 12px 6px; text-align: center; transition: all .14s; position: relative;
+  }
+  .tile:active { transform: translateY(1px); }
+  .tile:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .tile b { display: block; font-size: var(--fs-head); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .tile i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-faint); font-weight: 700; margin-top: 2px; white-space: nowrap; }
+  .tile.sel { border-color: var(--blue); background: var(--blue-soft); color: var(--blue-deep); }
+  .tile.sel i { color: var(--blue-deep); }
+  .tile .mark { position: absolute; top: 4px; right: 6px; font-size: var(--fs-note); line-height: 1; }
+  .tile .warn { color: var(--coral-ink); font-weight: 800; }
+  .tile .cup { font-size: var(--icon-medal); top: -10px; right: -8px; filter: drop-shadow(0 2px 3px rgba(47,111,220,.22)); }
+
+  /* 獎牌說明：讓孩子自己看得懂現在是什麼水準 */
+  .legend {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 12px;
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
+  }
+  .legend > div { display: flex; align-items: center; gap: 6px; }
+  /* 說明區的圖示比段數按鈕上的小一點，四項才排得進同一行 */
+  .legend b { font-size: calc(var(--icon-medal) * .8); line-height: 1; flex: 0 0 auto; }
+  .legend b.reddot { color: var(--coral-ink); font-size: var(--fs-body); }
+  .legend span { font-size: var(--fs-note); font-weight: 800; white-space: nowrap; }
+  .legend i { font-style: normal; font-weight: 700; color: var(--ink-soft); margin-left: 5px; }
+
+  .meter {
+    display: block; height: 14px; margin-top: 10px; border-radius: 999px;
+    background: var(--track); overflow: hidden;
+  }
+  .meter span {
+    display: block; height: 100%; width: 0; border-radius: 999px;
+    background: var(--mint, #35BE96); transition: width .1s linear;
+  }
+  .meter.loud span { background: var(--coral, #F2705C); }
+  #micNow { font-variant-numeric: tabular-nums; }
+
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row.mt { margin-top: 12px; }
+  .grow { flex: 1; }
+  .hint { font-size: var(--fs-note); color: var(--ink-soft); margin: 10px 2px 0; line-height: 1.6; }
+
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modes.three { grid-template-columns: repeat(3, 1fr); }
+  .modes.three .mode { text-align: center; padding: 13px 6px; }
+  .modes.three .mode b { font-size: var(--fs-head); font-variant-numeric: tabular-nums; }
+  .mode {
+    font-family: inherit; cursor: pointer; color: var(--ink); text-align: left;
+    background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
+    padding: 12px 13px; transition: all .14s;
+  }
+  .mode.sel { border-color: var(--blue); background: var(--blue-soft); }
+  .mode b { display: block; font-size: var(--fs-body); font-weight: 800; }
+  .mode i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); margin-top: 3px; }
+  .mode.sel i { color: var(--blue-deep); }
+
+  /* ── play ── */
+  .hud { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .clock {
+    font-size: var(--fs-opt); font-weight: 800; font-variant-numeric: tabular-nums;
+    color: var(--blue-deep); min-width: 62px; letter-spacing: -.02em;
+  }
+  .clock.low { color: var(--coral-ink); animation: pulse .9s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+  .clock small { font-size: var(--fs-note); font-weight: 700; color: var(--ink-faint); margin-left: 2px; }
+  .bar { flex: 1; height: 12px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 100%; background: var(--blue); border-radius: 99px; }
+  .bar > i.low { background: var(--coral); }
+  .qnum { font-size: var(--fs-body); font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink-soft); min-width: 52px; text-align: right; }
+
+  .dots { display: flex; gap: 5px; margin-top: 10px; }
+  .dots i { flex: 1; height: 8px; border-radius: 99px; background: var(--track); transition: background .2s; }
+  .dots i.ok { background: var(--mint); }
+  .dots i.no { background: var(--coral); }
+  .dots i.now { background: var(--blue); }
+
+  .qcard {
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-top: 12px; padding: 30px 16px 26px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .qcard.good { border-color: var(--mint); background: var(--mint-soft); }
+  .qcard.bad  { border-color: var(--coral); background: var(--coral-soft); animation: shake .32s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); } 25% { transform: translateX(-7px); }
+    50% { transform: translateX(6px); } 75% { transform: translateX(-4px); }
+  }
+  .qtext {
+    font-size: var(--fs-q); font-weight: 800; letter-spacing: .02em;
+    font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .qtext em { font-style: normal; color: var(--ink-faint); margin: 0 .1em; }
+  .qtext .ans { color: var(--mint-ink); }
+  .streak {
+    font-size: var(--fs-body); font-weight: 800; color: var(--amber);
+    min-height: 24px; margin-top: 10px;
+  }
+  .streak small { font-weight: 700; color: var(--ink-faint); margin-left: 8px; }
+
+  /* 公布答案時的停留倒數，讓他知道畫面等一下會自己換 */
+  .revealbar { position: absolute; left: 0; bottom: 0; height: 4px; width: 0; background: var(--coral); }
+  .qcard.bad .revealbar { animation: drain var(--reveal, 4s) linear forwards; }
+  @keyframes drain { from { width: 100%; } to { width: 0; } }
+
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .opt {
+    font-family: inherit; cursor: pointer; color: var(--ink);
+    background: var(--surface); border: 2px solid var(--line); border-radius: 18px;
+    box-shadow: var(--shadow); padding: 18px 8px; min-height: 76px;
+    font-size: var(--fs-opt); font-weight: 800; font-variant-numeric: tabular-nums;
+    transition: transform .1s, background .15s, border-color .15s, color .15s;
+  }
+  .opt:active { transform: translateY(2px); }
+  .opt:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .opt.good { background: var(--mint); border-color: var(--mint); color: #fff; }
+  .opt.bad { background: var(--coral); border-color: var(--coral); color: #fff; }
+  .opt.dim { opacity: .38; }
+
+  .fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+  .spark { position: absolute; font-size: var(--fs-opt); animation: fly .9s ease-out forwards; }
+  @keyframes fly {
+    from { opacity: 1; transform: translate(0,0) scale(.6) rotate(0deg); }
+    to { opacity: 0; transform: translate(var(--dx), -120px) scale(1.4) rotate(var(--rot)); }
+  }
+
+  /* 用眼休息：整片蓋住，倒數完才放行 */
+  .breakscreen {
+    position: fixed; inset: 0; z-index: 80; overflow: auto;
+    background: radial-gradient(120% 70% at 50% 0%, var(--mint-soft), transparent 60%), var(--bg);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .breakbox { max-width: 460px; width: 100%; text-align: center; }
+  .bemoji { font-size: var(--fs-mega); line-height: 1; }
+  .breakbox h2 { font-size: var(--fs-title); font-weight: 800; margin: 14px 0 0; }
+  .bclock {
+    font-size: var(--fs-mega); font-weight: 800; color: var(--mint-ink);
+    font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 6px;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+  }
+  .btips {
+    list-style: none; margin: 18px auto 0; padding: 16px; max-width: 320px;
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
+    display: flex; flex-direction: column; gap: 10px; text-align: left;
+    font-size: var(--fs-body); font-weight: 700; box-shadow: var(--shadow);
+  }
+  .breakbox .btn.big { margin-top: 18px; }
+  .bhint { font-size: var(--fs-note); color: var(--ink-soft); margin: 14px 0 0; line-height: 1.8; }
+  .bhint .bparent { color: var(--ink-faint); }
+
+  .countdown {
+    position: fixed; inset: 0; z-index: 70; display: flex;
+    align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    font-size: var(--fs-mega); font-weight: 800; color: var(--blue-deep);
+  }
+  .countdown b { animation: pop .7s ease; display: block; }
+  .countdown b.go { font-size: var(--fs-q); }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } 45% { transform: scale(1.12); opacity: 1; } to { transform: scale(1); opacity: 1; } }
+
+  /* ── result ── */
+  .bigscore { text-align: center; padding: 8px 0 4px; }
+  .bigscore .n { font-size: var(--fs-mega); font-weight: 800; line-height: 1; color: var(--mint-ink); font-variant-numeric: tabular-nums; }
+  .bigscore .n small { font-size: var(--fs-body); color: var(--ink-soft); font-weight: 700; margin-left: 4px; }
+  .bigscore .msg { font-size: var(--fs-head); font-weight: 800; margin-top: 10px; }
+  .bigscore .rec {
+    display: inline-block; margin-top: 10px; font-size: var(--fs-note); font-weight: 800;
+    background: var(--amber-soft); color: var(--amber); padding: 5px 12px; border-radius: 99px;
+  }
+  .levelup {
+    margin-top: 14px; padding: 14px 16px; border-radius: 16px;
+    background: var(--amber-soft); border: 1.5px solid var(--amber);
+    font-size: var(--fs-body); font-weight: 800; color: var(--amber);
+    text-align: center; line-height: 1.5;
+  }
+  .levelup em { font-style: normal; font-size: var(--icon-medal); vertical-align: -6px; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .stat { background: var(--bg); border-radius: 14px; padding: 11px 6px; text-align: center; }
+  .stat b { display: block; font-size: var(--fs-head); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat b small { font-size: var(--fs-note); color: var(--ink-soft); }
+  .stat i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
+
+  .moods { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 520px) { .moods { grid-template-columns: 1fr 1fr; } }
+  .mood {
+    font-family: inherit; cursor: pointer; color: var(--ink);
+    background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
+    padding: 12px 4px; text-align: center; transition: all .14s;
+  }
+  .mood:active { transform: translateY(1px); }
+  .mood:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .mood b { display: block; font-size: var(--fs-head); line-height: 1.2; }
+  .mood i { display: block; font-style: normal; font-size: var(--fs-opt);
+            color: var(--ink); font-weight: 700; margin-top: 6px; white-space: nowrap; }
+  /* 注音直排在字的右邊，跟課本一樣。用 flex 自己排，不倚賴瀏覽器的 ruby 排版 */
+  .bpmf ruby { display: inline-flex; align-items: flex-start; }
+  .bpmf rt {
+    writing-mode: vertical-rl; text-orientation: upright;
+    font-size: .4em; font-weight: 700; color: var(--ink-faint);
+    line-height: 1.05; letter-spacing: 0; margin-left: 1px;
+  }
+  .mood.sel { border-color: var(--blue); background: var(--blue-soft); }
+  .mood.sel i { color: var(--blue-deep); }
+  .mood.sel rt { color: var(--blue-deep); }
+
+  .wrongs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wchip {
+    background: var(--coral-soft); color: var(--coral-ink); border-radius: 12px;
+    padding: 9px 13px; font-size: var(--fs-body); font-weight: 800; font-variant-numeric: tabular-nums;
+  }
+  .wchip small { font-weight: 700; opacity: .7; margin-left: 4px; font-size: var(--fs-note); }
+  .empty { color: var(--ink-soft); font-size: var(--fs-body); text-align: center; padding: 8px 0; }
+
+  /* ── history ── */
+  .chart { display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: 110px; padding-top: 6px; }
+  .chart .col { flex: 1; max-width: 42px; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .chart .col u { font-style: normal; text-decoration: none; font-size: var(--fs-note); font-weight: 800; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .chart .col b { display: block; width: 100%; background: var(--blue); border-radius: 6px; min-height: 4px; }
+  .chart .col:last-child b { background: var(--mint); }
+  .chart .col em { font-style: normal; font-size: var(--fs-note); color: var(--ink-faint); }
+
+  /* 最近 7 天：一格一天，一眼看出哪天沒練 */
+  .days7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .d7 {
+    background: var(--bg); border: 2px solid var(--line); border-radius: 14px;
+    padding: 9px 2px 10px; text-align: center;
+  }
+  .d7 u { display: block; text-decoration: none; font-size: var(--fs-note);
+          font-weight: 800; color: var(--ink-soft); }
+  .d7 b { display: block; font-size: var(--fs-note); font-weight: 700;
+          color: var(--ink-faint); font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .d7 span { display: block; margin-top: 7px; font-size: var(--fs-body); font-weight: 800;
+             font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+  .d7.lv1 { background: var(--mint-soft); border-color: var(--mint-soft); }
+  .d7.lv2 { background: var(--mint-soft); border-color: var(--mint); }
+  .d7.lv3 { background: var(--mint); border-color: var(--mint); }
+  .d7.lv1 span, .d7.lv2 span { color: var(--mint-ink); }
+  .d7.lv3 span, .d7.lv3 u, .d7.lv3 b { color: #fff; }
+  .d7.today { border-color: var(--blue); }
+  .d7.today u { color: var(--blue-deep); }
+
+  .days { display: flex; flex-direction: column; }
+  .dayrow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .dayrow:first-child { border-top: 0; padding-top: 2px; }
+  .dayrow .d { font-size: var(--fs-body); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .dayrow .d em { font-style: normal; color: var(--blue-deep); margin-left: 5px; }
+  .dayrow .c {
+    font-size: var(--fs-note); font-weight: 800; color: #fff; background: var(--blue);
+    border-radius: 99px; padding: 3px 10px; margin-left: auto;
+  }
+  /* 一場一列，錯的題目列在該場下面 */
+  .dayrow .ts { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
+  .sess {
+    font-size: var(--fs-note); font-weight: 700; color: var(--ink-soft);
+    background: var(--bg); border-radius: 10px; padding: 7px 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .sess em { font-style: normal; display: block; }
+  .sess q {
+    display: block; quotes: none; margin-top: 4px; padding-top: 4px;
+    border-top: 1px solid var(--line); color: var(--coral-ink);
+  }
+  .sess u { text-decoration: none; color: var(--blue-deep); margin-left: 6px; }
+  .sess b { color: var(--mint-ink); margin-left: 6px; }
+  .sess.miss b { color: var(--coral-ink); }
+  .sess s { text-decoration: none; margin-left: 6px; }
+  .dayrow .flags {
+    flex: 1 1 100%; margin-top: 2px;
+    font-size: var(--fs-note); font-weight: 700; color: var(--coral-ink);
+  }
+
+  .weak { display: flex; flex-direction: column; gap: 8px; }
+  .wrow { display: flex; align-items: center; gap: 10px; }
+  .wrow .q { font-size: var(--fs-body); font-weight: 800; font-variant-numeric: tabular-nums; min-width: 92px; }
+  .wrow .t { flex: 1; height: 9px; background: var(--track); border-radius: 99px; overflow: hidden; }
+  .wrow .t i { display: block; height: 100%; background: var(--coral); border-radius: 99px; }
+  .wrow .t i.hi { background: var(--mint); }
+  .wrow .t i.mid { background: var(--amber); }
+  .wrow .t i.thin { background: var(--ink-faint); }
+  .wrow .p { font-size: var(--fs-note); font-weight: 800; color: var(--coral-ink); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+  .wrow .p.hi { color: var(--mint-ink); }
+  .wrow .p.mid { color: var(--amber); }
+  .wrow .p.thin { color: var(--ink-faint); }
+  .wrow .p small { display: block; font-weight: 700; color: var(--ink-faint); white-space: nowrap; }
+
+  .foot { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+  /* 首頁上面壓了幾張資訊卡，開始按鈕黏在底部，捲到哪都按得到 */
+  #setup .foot {
+    position: sticky; bottom: 0; z-index: 12;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, transparent, var(--bg) 34%);
+  }
+  .tiny { font-size: var(--fs-note); color: var(--ink-faint); text-align: center; margin-top: 16px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+  /* 平板：欄寬和字級一起放大，不然在 iPad 上會是小小一坨浮在畫面中間 */
+  @media (min-width: 700px) {
+    :root {
+      --fs-title: 1.85rem;   /* 30px */
+      --fs-head:  1.5rem;    /* 24px */
+      --fs-body:  1.0625rem; /* 17px */
+      --fs-note:  .85rem;    /* 13.6px */
+      --fs-mega:  5.5rem;    /* 88px */
+      --fs-q:     4rem;      /* 64px */
+      --fs-opt:   2.6rem;    /* 42px */
+    }
+    .wrap { max-width: 720px; padding-bottom: 56px; }
+    .head-inner { max-width: 720px; padding: 16px; }
+    .icobtn { width: 48px; height: 48px; }
+    .card { padding: 22px; border-radius: 24px; margin-top: 18px; }
+    .card h2 { margin-bottom: 18px; gap: 12px; }
+    .card h2 .n { width: 36px; height: 36px; }
+    .tiles { gap: 12px; }
+    .tile { padding: 16px 6px; border-radius: 18px; }
+    .mode { padding: 16px; border-radius: 18px; }
+    .btn { min-height: 50px; padding: 12px 22px; }
+    .btn.big { min-height: 72px; border-radius: 22px; }
+    .hud { gap: 14px; margin-top: 18px; }
+    .bar { height: 14px; }
+    .dots { gap: 7px; }
+    .dots i { height: 10px; }
+    .qcard { padding: 40px 20px 34px; border-radius: 24px; }
+    .opts { gap: 14px; margin-top: 16px; }
+    .opt { min-height: 116px; border-radius: 22px; }
+    .stat { padding: 16px 8px; border-radius: 16px; }
+    .chart { height: 140px; }
+    :root { --icon-medal: 34px; }
+    .tile .cup { top: -13px; right: -10px; }
+  }
+
+  /* 桌機／大平板：主要使用場景，再放大一級。
+     也要求夠高，否則放大後作答畫面會被擠出一屏之外 */
+  @media (min-width: 1100px) and (min-height: 900px) {
+    :root {
+      --fs-title: 2.1rem;   /* 34px */
+      --fs-head:  1.7rem;   /* 27px */
+      --fs-body:  1.15rem;  /* 18px */
+      --fs-note:  .92rem;   /* 15px */
+      --fs-mega:  6.5rem;   /* 104px */
+      --fs-q:     4.75rem;  /* 76px */
+      --fs-opt:   3rem;     /* 48px */
+    }
+    .wrap { max-width: 840px; }
+    .head-inner { max-width: 840px; padding: 18px 16px; }
+    .icobtn { width: 54px; height: 54px; }
+    .card h2 .n { width: 40px; height: 40px; }
+    .qcard { padding: 52px 20px 44px; }
+    .opt { min-height: 140px; }
+    .btn.big { min-height: 78px; }
+  }
+
+  /* 又寬又矮的筆電螢幕：收斂一點，讓作答畫面不用捲動就看得完 */
+  @media (min-width: 700px) and (max-height: 750px) {
+    :root { --fs-q: 3.2rem; --fs-opt: 2.2rem; --fs-mega: 4.5rem; --fs-title: 1.6rem; }
+    .card { margin-top: 12px; }
+    .qcard { padding: 26px 20px 22px; }
+    .opt { min-height: 94px; }
+    .wrap { padding-bottom: 24px; }
+  }
+
+  /* 小螢幕只調字級變數，不動個別元件，才不會又長出中間尺寸 */
+  @media (max-width: 360px) {
+    :root { --fs-title: 1.32rem; --fs-head: 1.15rem; --fs-q: 2.3rem; --fs-opt: 1.5rem; --fs-mega: 3.4rem; }
+    .opt { min-height: 68px; }
+    .tiles { gap: 7px; }
+    .tile { padding: 12px 3px; }
+    .moods { grid-template-columns: 1fr 1fr; }
+    .btn { padding: 10px 8px; }
+    .icobtn { width: 38px; height: 38px; }   /* 三個圖示按鈕才擠得下標題 */
+    .head-inner { gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <h1>乘法表大考驗遊戲<span id="subtitle">每題 30 秒 ・ 10 題</span></h1>
+    <button class="icobtn" id="speakBtn" title="朗讀開關" aria-label="朗讀開關" hidden>🗣️</button>
+    <button class="icobtn" id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
+    <button class="icobtn" id="histBtn" title="歷史紀錄" aria-label="歷史紀錄">📊</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ══ 設定 ══ -->
+  <section class="screen on" id="setup">
+    <div class="card">
+      <h2>最近 7 天<span class="tally" id="calTally"></span></h2>
+      <div class="days7" id="days7"></div>
+      <p class="hint" id="calHint"></p>
+    </div>
+
+    <div class="goal" id="goal" hidden></div>
+
+    <div class="card">
+      <h2><span class="n">1</span>今天要練哪幾段？</h2>
+      <div class="tiles" id="tiles"></div>
+      <div class="row mt">
+        <button class="btn ghost grow" id="selAll">全選</button>
+        <button class="btn ghost grow" id="selNone">全部清除</button>
+        <button class="btn ghost grow" id="selWeak">我的弱點</button>
+      </div>
+      <div class="legend">
+        <div><b>🥇</b><span>金牌<i>10 題對 9 題</i></span></div>
+        <div><b>🥈</b><span>銀牌<i>10 題對 8 題</i></span></div>
+        <div><b>🥉</b><span>銅牌<i>10 題對 7 題</i></span></div>
+        <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
+      </div>
+      <p class="hint" id="tileHint">選好段數後就可以開始。獎牌看的是最近 20 題的表現。</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">2</span>一輪幾題？</h2>
+      <div class="modes three" id="counts">
+        <button class="mode sel" data-count="10"><b>10 題</b><i>約 1 分鐘</i></button>
+        <button class="mode" data-count="15"><b>15 題</b><i>約 2 分鐘</i></button>
+        <button class="mode" data-count="20"><b>20 題</b><i>約 3 分鐘</i></button>
+      </div>
+      <p class="hint">每題都有 30 秒可以想，時間到才算答錯。</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">3</span>出題方式</h2>
+      <div class="modes" id="modes">
+        <button class="mode sel" data-mode="smart">
+          <b>聰明出題</b><i>常錯的題目會多出現</i>
+        </button>
+        <button class="mode" data-mode="even">
+          <b>平均出題</b><i>每題機會都一樣</i>
+        </button>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button class="btn primary big" id="startBtn">開始測驗（10 題）🚀</button>
+      <button class="btn" id="reviewBtn" hidden>只練上次的錯題 🔁</button>
+    </div>
+    <p class="tiny">紀錄只存在這台裝置的瀏覽器裡，不會上傳。</p>
+  </section>
+
+  <!-- ══ 作答 ══ -->
+  <section class="screen" id="play">
+    <div class="hud">
+      <div class="clock" id="clock">30<small>秒</small></div>
+      <div class="bar"><i id="timeBar"></i></div>
+      <div class="qnum" id="qnum">1 / 10</div>
+    </div>
+    <div class="dots" id="dots"></div>
+
+    <div class="qcard" id="qcard">
+      <div class="qtext" id="qtext">7 <em>×</em> 8</div>
+      <div class="streak" id="streakTxt"></div>
+      <i class="revealbar"></i>
+    </div>
+
+    <div class="opts" id="opts">
+      <button class="opt" data-i="0"></button>
+      <button class="opt" data-i="1"></button>
+      <button class="opt" data-i="2"></button>
+      <button class="opt" data-i="3"></button>
+    </div>
+
+    <div class="foot">
+      <button class="btn ghost" id="quitBtn">結束這一輪</button>
+    </div>
+  </section>
+
+  <!-- ══ 結果 ══ -->
+  <section class="screen" id="result">
+    <div class="card">
+      <div class="bigscore">
+        <div class="n" id="rScore">0<small>/ 10</small></div>
+        <div class="msg" id="rMsg"></div>
+        <div id="rRec"></div>
+      </div>
+      <div class="levelup" id="rLevel" hidden></div>
+      <div class="stats">
+        <div class="stat"><b id="rAcc">0%</b><i>正確率</i></div>
+        <div class="stat"><b id="rWrong">0</b><i>答錯</i></div>
+        <div class="stat"><b id="rTime">0秒</b><i>總花費時間</i></div>
+      </div>
+    </div>
+
+    <div class="card" id="moodCard" hidden>
+      <h2>剛剛練得順利嗎？</h2>
+      <div class="moods" id="moods">
+        <button class="mood bpmf" data-mood="ok"><b>😀</b><i
+          ><ruby>順<rt>ㄕㄨㄣˋ</rt></ruby><ruby>利<rt>ㄌㄧˋ</rt></ruby></i></button>
+        <button class="mood bpmf" data-mood="meh"><b>😐</b><i
+          ><ruby>普<rt>ㄆㄨˇ</rt></ruby><ruby>通<rt>ㄊㄨㄥ</rt></ruby></i></button>
+        <button class="mood bpmf" data-mood="hard"><b>😣</b><i
+          ><ruby>好<rt>ㄏㄠˇ</rt></ruby><ruby>難<rt>ㄋㄢˊ</rt></ruby></i></button>
+        <button class="mood bpmf" data-mood="cry"><b>😭</b><i
+          ><ruby>哭<rt>ㄎㄨ</rt></ruby><ruby>了<rt>ㄌㄜ˙</rt></ruby></i></button>
+      </div>
+      <p class="hint">點一下就記錄起來，在歷史紀錄裡看得到。不點也沒關係。</p>
+    </div>
+
+    <div class="card">
+      <h2>要複習的題目</h2>
+      <div class="wrongs" id="rWrongs"></div>
+    </div>
+
+    <div class="foot">
+      <button class="btn primary big" id="againBtn">再來一輪 🚀</button>
+      <button class="btn" id="againWrongBtn" hidden>只練這次的錯題 🔁</button>
+      <button class="btn ghost" id="backBtn">回到首頁</button>
+    </div>
+  </section>
+
+  <!-- ══ 歷史 ══ -->
+  <section class="screen" id="history">
+    <div class="card">
+      <h2>最近 12 次成績</h2>
+      <div class="chart" id="chart"></div>
+      <div class="stats" style="margin-top:14px">
+        <div class="stat"><b id="hBest">0</b><i>最佳紀錄</i></div>
+        <div class="stat"><b id="hAvg">—</b><i>整體正確率</i></div>
+        <div class="stat"><b id="hRuns">0</b><i>總共練習</i></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>每天練習幾次</h2>
+      <div class="days" id="days"></div>
+    </div>
+
+    <div class="card">
+      <h2>哪幾段最熟</h2>
+      <div class="weak" id="tables"></div>
+    </div>
+
+    <div class="card">
+      <h2>最需要加強的題目</h2>
+      <div class="weak" id="weak"></div>
+    </div>
+
+    <div class="card">
+      <h2>用眼提醒</h2>
+      <div class="modes three" id="limits">
+        <button class="mode" data-limit="20"><b>20 分</b><i>練 20 分休息</i></button>
+        <button class="mode" data-limit="30"><b>30 分</b><i>練 30 分休息</i></button>
+        <button class="mode" data-limit="0"><b>關閉</b><i>不提醒</i></button>
+      </div>
+      <p class="hint" id="useHint"></p>
+    </div>
+
+    <div class="card">
+      <h2>崩潰提醒</h2>
+      <div class="sub-h">太吵就提醒</div>
+      <div class="modes" id="noises">
+        <button class="mode" data-noise="0.10"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
+        <button class="mode sel" data-noise="0.16"><b>一般</b><i>吵鬧、哭就跳</i></button>
+        <button class="mode" data-noise="0.24"><b>很吵才跳</b><i>要崩潰大哭</i></button>
+        <button class="mode" data-noise="0"><b>關閉</b><i>不開麥克風</i></button>
+      </div>
+      <div class="row mt">
+        <button class="btn grow" id="micTestBtn">🎤 測一下現在多大聲</button>
+      </div>
+      <div class="meter" id="micMeter" hidden><span id="micBar"></span></div>
+      <p class="hint" id="micNow" hidden></p>
+      <p class="hint" id="micLast"></p>
+      <div class="sub-h">連續答錯也提醒</div>
+      <div class="modes three" id="nudges">
+        <button class="mode sel" data-nudge="0"><b>關閉</b><i>答錯不打斷</i></button>
+        <button class="mode" data-nudge="3"><b>連錯 3 題</b><i>早一點關心</i></button>
+        <button class="mode" data-nudge="5"><b>連錯 5 題</b><i>再撐一下</i></button>
+      </div>
+      <div class="sub-h">要說什麼</div>
+      <div class="modes three" id="tones">
+        <button class="mode sel" data-tone="auto"><b>自動</b><i>先溫柔，鬧不停才促咪</i></button>
+        <button class="mode" data-tone="soft"><b>一直溫柔</b><i>沒關係，慢慢來</i></button>
+        <button class="mode" data-tone="fun"><b>一直促咪</b><i>再拖就少看一集囉</i></button>
+      </div>
+      <p class="hint">吵夠久就跳出來讓他喘一口氣，念一句話給他聽，念完停一秒自己繼續。
+        只在作答時開麥克風、<b>只量音量</b>，不錄音、不上傳、不判斷內容——所以弟弟大叫、
+        電視很大聲一樣會跳。<b>要用 https 的網址開</b>，瀏覽器才給麥克風權限。</p>
+    </div>
+
+    <div class="foot">
+      <button class="btn primary big" id="hBackBtn">回到首頁</button>
+      <button class="btn ghost" id="clearBtn">清除所有紀錄</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="fx" id="fx"></div>
+
+<div class="breakscreen" id="breakScreen" hidden>
+  <div class="breakbox">
+    <div class="bemoji">🌿</div>
+    <h2 id="breakTitle">眼睛休息一下</h2>
+    <div class="bclock" id="breakClock">5:00</div>
+    <ul class="btips">
+      <li>👀 看看窗外或遠一點的地方</li>
+      <li>💧 喝一口水</li>
+      <li>🙆 站起來動一動</li>
+    </ul>
+    <button class="btn primary big" id="breakDone" hidden>休息好了，繼續 🚀</button>
+    <p class="bhint" id="breakHint">練了 20 分鐘囉，休息 5 分鐘再回來</p>
+  </div>
+</div>
+
+<script>
+/*!
+ * meltdown-nudge — 小孩卡關／崩潰的時候跳出來喘口氣的小元件
+ *
+ * 從「ABC 字母大考驗」抽出來的。做兩件事：
+ *   1. 連續失敗幾次就跳出一句話（可以自動從溫柔換成促咪）
+ *   2. 太吵（哭鬧）也跳——只量麥克風的音量，不錄音、不上傳、不判斷內容
+ * 跳出來的那句話會用語音念，念完停一秒自己關掉繼續，不用等小孩按。
+ *
+ * 沒有相依套件、沒有建置步驟，ES5 寫的，直接 <script> 引入就能用。
+ *
+ * 用法：
+ *   var nudge = MeltdownNudge.create({ missStreak: 5, onResume: next });
+ *   nudge.miss();     // 答錯
+ *   nudge.hit();      // 答對（連錯歸零）
+ *   nudge.listen();   // 開始聽音量（一定要在使用者手勢裡呼叫）
+ *   nudge.mute();     // 停止聽
+ *
+ * 授權：MIT
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.MeltdownNudge = factory();
+}(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  var CSS_ID = 'meltdown-nudge-css';
+  var CSS = [
+    '.mn-veil{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;',
+    'justify-content:center;padding:24px;background:#FFF9F0;color:#40352B;',
+    'font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",',
+    '"Microsoft JhengHei","Segoe UI",Roboto,sans-serif;animation:mn-in .18s ease-out}',
+    '@keyframes mn-in{from{opacity:0}to{opacity:1}}',
+    '.mn-box{width:100%;max-width:420px;text-align:center}',
+    '.mn-emoji{font-size:72px;line-height:1;margin-bottom:14px}',
+    '.mn-line{font-size:26px;font-weight:800;line-height:1.4;margin:0 0 26px}',
+    '.mn-btn{display:block;width:100%;font-family:inherit;font-size:19px;font-weight:800;',
+    'cursor:pointer;border-radius:999px;padding:16px 20px;border:2px solid transparent;',
+    'background:#F09A2E;color:#fff;margin-bottom:10px}',
+    '.mn-btn.mn-ghost{background:transparent;color:#8A7660;border-color:#F0E2CD;',
+    'font-size:16px;width:auto;margin:0 auto;padding:12px 22px}',
+    '.mn-btn:active{transform:translateY(1px)}',
+    '@media (prefers-color-scheme:dark){',
+    '.mn-veil{background:#241E19;color:#F7EDE0}',
+    '.mn-btn{background:#FFC062;color:#2A211A}',
+    '.mn-btn.mn-ghost{color:#C6B199;border-color:#47392C}}'
+  ].join('');
+
+  var DEFAULT_LINES = {
+    soft: [['🫂', '沒關係，慢慢來'], ['🎥', '我要錄給老師看'], ['🧱', '生氣要扣樂高錢']],
+    fun: [['📺', '哭哭浪費看電視時間喔'], ['📺', '認真！答完才能看電視喔']]
+  };
+
+  function ext(a, b) {
+    var k;
+    for (k in b) if (Object.prototype.hasOwnProperty.call(b, k)) a[k] = b[k];
+    return a;
+  }
+
+  function injectCss() {
+    if (document.getElementById(CSS_ID)) return;
+    var st = document.createElement('style');
+    st.id = CSS_ID;
+    st.textContent = CSS;
+    document.head.appendChild(st);
+  }
+
+  function create(opts) {
+    opts = opts || {};
+
+    var cfg = ext({
+      // ── 什麼時候跳 ──
+      missStreak: 5,        // 連續失敗幾次跳一次；0 = 不用連錯這條規則
+      noise: null,          // { level, sustainMs, decay, cooldownMs }；null = 不開麥克風
+      // ── 說什麼 ──
+      lines: null,          // { soft: [[emoji, 句子], …], fun: […] }
+      tone: 'auto',         // 'auto'（先溫柔再促咪）| 'soft' | 'fun'
+      softTimes: 2,         // auto 模式下，前幾次用溫柔的
+      // ── 聲音 ──
+      speak: true,
+      lang: 'zh-TW',
+      rate: 1, pitch: 1, volume: 1,
+      // ── 節奏 ──
+      autoResumeMs: 1000,   // 念完停多久自己繼續；null / 0 = 一定要按按鈕
+      failSafeMs: 9000,     // 語音卡住的保險，時間到就自己走
+      // ── 文字 ──
+      goText: '再試一次 💪',
+      stopText: '今天先到這裡',   // 空字串 = 不顯示這顆
+      // ── 事件 ──
+      onShow: null,         // fn({ reason: 'miss' | 'noise' | 'manual', tone, line })
+      onResume: null,       // 使用者（或自動）選擇繼續
+      onStop: null,         // 使用者選擇今天先到這裡
+      onError: null         // fn(code, message)；code: 'mic'
+    }, opts);
+
+    var lines = cfg.lines || DEFAULT_LINES;
+    var noise = cfg.noise ? ext({ level: 0.16, sustainMs: 2500, decay: 0.35,
+                                  cooldownMs: 90000, tickMs: 150 }, cfg.noise) : null;
+
+    var shown = 0;                 // 總共跳過幾次（決定語氣）
+    var missRun = 0;               // 目前連續失敗幾次
+    var pos = {};                  // 每一組講到第幾句
+    var veil = null, timers = [], closing = false, reason = 'manual';
+    var mic = { stream: null, ctx: null, an: null, buf: null, timer: null,
+                loud: 0, peak: 0, level: 0, muteUntil: 0, owned: false };
+    var dead = false;
+
+    /* ────────── 說話 ────────── */
+    function canSpeak() {
+      return cfg.speak && typeof window !== 'undefined' &&
+             !!window.speechSynthesis && !!window.SpeechSynthesisUtterance;
+    }
+    function pickVoice() {
+      var vs = [];
+      try { vs = window.speechSynthesis.getVoices() || []; } catch (e) {}
+      var want = String(cfg.lang || '').toLowerCase();
+      var base = want.split('-')[0];
+      var exact = null, loose = null, i, l;
+      for (i = 0; i < vs.length; i++) {
+        l = String(vs[i].lang || '').toLowerCase().replace('_', '-');
+        if (!exact && l === want) exact = vs[i];
+        if (!loose && l.split('-')[0] === base) loose = vs[i];
+      }
+      return exact || loose || null;
+    }
+    function say(text, onEnd) {
+      if (!canSpeak()) { if (onEnd) setTimeout(onEnd, 0); return; }
+      var fired = false;
+      function done() { if (!fired) { fired = true; if (onEnd) onEnd(); } }
+      try {
+        var ss = window.speechSynthesis;
+        if (ss.speaking || ss.pending) ss.cancel();
+        var u = new window.SpeechSynthesisUtterance(text);
+        var v = pickVoice();
+        if (v) u.voice = v;
+        u.lang = (v && v.lang) || cfg.lang;
+        u.rate = cfg.rate; u.pitch = cfg.pitch; u.volume = cfg.volume;
+        u.onend = done; u.onerror = done;
+        ss.speak(u);
+        try { ss.resume(); } catch (e2) {}
+      } catch (e) { done(); }
+    }
+    function hush() {
+      if (!canSpeak()) return;
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+
+    /* ────────── 挑句子 ────────── */
+    function toneNow() {
+      if (cfg.tone !== 'auto') return cfg.tone;
+      return shown <= cfg.softTimes ? 'soft' : 'fun';
+    }
+    function nextLine() {
+      var tone = toneNow();
+      var list = lines[tone] || lines.soft || DEFAULT_LINES.soft;
+      if (!list.length) list = DEFAULT_LINES.soft;
+      var i = pos[tone] || 0;
+      pos[tone] = (i + 1) % list.length;
+      return { tone: tone, item: list[i] };
+    }
+
+    /* ────────── 畫面 ────────── */
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+    function clearTimers() {
+      for (var i = 0; i < timers.length; i++) clearTimeout(timers[i]);
+      timers = [];
+    }
+
+    function close(go) {
+      if (closing || !veil) return;
+      closing = true;
+      clearTimers();
+      hush();
+      if (veil.parentNode) veil.parentNode.removeChild(veil);
+      veil = null;
+      if (go) { if (cfg.onResume) cfg.onResume(); }
+      else if (cfg.onStop) cfg.onStop();
+    }
+
+    function show(why) {
+      if (dead || veil) return;
+      injectCss();
+      reason = why || 'manual';
+      shown++;
+      closing = false;
+      var pickd = nextLine();
+      var emoji = pickd.item[0], text = pickd.item[1];
+
+      veil = document.createElement('div');
+      veil.className = 'mn-veil';
+      veil.setAttribute('role', 'dialog');
+      veil.setAttribute('aria-modal', 'true');
+      veil.setAttribute('aria-label', text);
+
+      var box = document.createElement('div');
+      box.className = 'mn-box';
+
+      var e = document.createElement('div');
+      e.className = 'mn-emoji';
+      e.textContent = emoji;
+
+      var p = document.createElement('p');
+      p.className = 'mn-line';
+      p.textContent = text;                       // 一律用 textContent，不吃 HTML
+
+      var go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'mn-btn';
+      go.textContent = cfg.goText;
+      go.addEventListener('click', function () { close(true); });
+
+      box.appendChild(e); box.appendChild(p); box.appendChild(go);
+
+      if (cfg.stopText) {
+        var stop = document.createElement('button');
+        stop.type = 'button';
+        stop.className = 'mn-btn mn-ghost';
+        stop.textContent = cfg.stopText;
+        stop.addEventListener('click', function () { close(false); });
+        box.appendChild(stop);
+      }
+
+      veil.appendChild(box);
+      document.body.appendChild(veil);
+      go.focus();
+
+      if (cfg.onShow) cfg.onShow({ reason: reason, tone: pickd.tone, line: text });
+
+      // 念給他聽，念完停一下自己繼續；沒設 autoResumeMs 就一定要按
+      if (cfg.autoResumeMs) {
+        say(text, function () { later(function () { close(true); }, cfg.autoResumeMs); });
+        later(function () { close(true); }, cfg.failSafeMs);
+      } else {
+        say(text, null);
+      }
+    }
+
+    /* ────────── 麥克風：只量音量 ────────── */
+    function micLevel() {
+      if (!mic.an) return 0;
+      mic.an.getByteTimeDomainData(mic.buf);
+      var sum = 0, i, v;
+      for (i = 0; i < mic.buf.length; i++) {
+        v = (mic.buf[i] - 128) / 128;
+        sum += v * v;
+      }
+      return Math.sqrt(sum / mic.buf.length);
+    }
+
+    function micTick() {
+      var lv = micLevel();
+      mic.level = lv;
+      if (lv > mic.peak) mic.peak = lv;
+      if (!noise || veil) return;
+      // 哭是一陣一陣的，中間換氣不該歸零：吵的時候加、安靜的時候慢慢退
+      mic.loud = Math.max(0, mic.loud +
+        (lv >= noise.level ? noise.tickMs : -noise.tickMs * noise.decay));
+      var now = Date.now();
+      if (mic.loud < noise.sustainMs || now < mic.muteUntil) return;
+      mic.loud = 0;
+      mic.muteUntil = now + noise.cooldownMs;
+      show('noise');
+    }
+
+    function listen(onFail) {
+      if (dead || mic.stream) return;
+      var md = navigator.mediaDevices;
+      if (!md || !md.getUserMedia) {
+        fail('mic', '這個環境沒有 mediaDevices：網址必須是 https（或 localhost）', onFail);
+        return;
+      }
+      md.getUserMedia({ audio: true }).then(function (st) {
+        if (dead) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
+        mic.stream = st;
+        try {
+          var AC = window.AudioContext || window.webkitAudioContext;
+          if (!mic.ctx) { mic.ctx = cfg.audioContext || new AC(); mic.owned = !cfg.audioContext; }
+          if (mic.ctx.state === 'suspended') mic.ctx.resume();
+          var src = mic.ctx.createMediaStreamSource(st);
+          var an = mic.ctx.createAnalyser();
+          an.fftSize = 1024;
+          src.connect(an);                       // 只接到 analyser，不接喇叭，不會有回音
+          mic.an = an;
+          mic.buf = new Uint8Array(an.fftSize);
+          mic.timer = setInterval(micTick, (noise && noise.tickMs) || 150);
+        } catch (e) {
+          mute();
+          fail('mic', '讀不到音量：' + e.message, onFail);
+        }
+      })['catch'](function (e) {
+        fail('mic', '沒拿到麥克風權限（' + (e && e.name) + '）', onFail);
+      });
+    }
+
+    function fail(code, msg, onFail) {
+      if (onFail) onFail(msg);
+      if (cfg.onError) cfg.onError(code, msg);
+    }
+
+    function mute() {
+      if (mic.timer) { clearInterval(mic.timer); mic.timer = null; }
+      if (mic.stream) {
+        mic.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+        mic.stream = null;
+      }
+      if (mic.ctx && mic.owned) { try { mic.ctx.close(); } catch (e) {} mic.ctx = null; }
+      mic.an = null; mic.loud = 0; mic.level = 0;
+    }
+
+    /* ────────── 對外 ────────── */
+    var api = {
+      // 答錯 / 失敗一次。連續次數到了就跳
+      miss: function () {
+        if (dead) return false;
+        missRun++;
+        if (cfg.missStreak && missRun >= cfg.missStreak && !veil) {
+          missRun = 0;
+          show('miss');
+          return true;
+        }
+        return false;
+      },
+      // 答對 / 成功一次，連續次數歸零
+      hit: function () { missRun = 0; },
+      // 手動跳一次（測試或自己判斷的時候用）
+      show: function () { show('manual'); },
+      // 手動關掉：go = true 代表「繼續」
+      close: function (go) { close(go !== false); },
+      listen: listen,
+      mute: mute,
+      // 現在的音量 0～1，拿來畫音量條
+      level: function () { return mic.level; },
+      // 開始聽之後量到的最大音量，設定門檻的時候很好用
+      peak: function () { return mic.peak; },
+      resetPeak: function () { mic.peak = 0; },
+      isOpen: function () { return !!veil; },
+      isListening: function () { return !!mic.stream; },
+      // 改設定（例如使用者在設定畫面調門檻）
+      set: function (patch) {
+        patch = patch || {};
+        ext(cfg, patch);
+        if (patch.lines) lines = patch.lines;
+        // noise: null 要真的關掉，所以用 hasOwnProperty 判斷而不是看真假值
+        if (Object.prototype.hasOwnProperty.call(patch, 'noise')) {
+          noise = patch.noise
+            ? ext(noise || { level: 0.16, sustainMs: 2500, decay: 0.35,
+                             cooldownMs: 90000, tickMs: 150 }, patch.noise)
+            : null;
+          if (!noise) mute();
+        }
+      },
+      config: function () { return cfg; },
+      destroy: function () {
+        dead = true;
+        clearTimers();
+        mute();
+        if (veil && veil.parentNode) veil.parentNode.removeChild(veil);
+        veil = null;
+      }
+    };
+    return api;
+  }
+
+  return { create: create, version: '1.0.0' };
+}));
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ────────── 資料儲存 ────────── */
+  var TABLES = [2, 3, 4, 5, 6, 7, 8, 9];   // 1 的乘法太簡單，不列入練習
+  var KEY = 'mtq_v2', OLD_KEY = 'mtq_v1';
+  var DEF = { sound: true, speak: true, tables: TABLES.slice(), mode: 'smart', count: 10,
+              limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
+              nudgeAt: 0, tone: 'auto', noiseAt: 0.16, lastPeak: 0, micFail: '',
+              perQ: {}, recent: {}, runs: [], quits: [], best: {}, lastWrong: [] };
+  var WINDOW = 20;      // 熟練度只看每一段最近這麼多題，以前的錯誤會慢慢淡出
+  var MIN_WINDOW = 5;   // 視窗裡至少要有這麼多題才給評價
+  var MEDALS = [
+    { at: 0.9, icon: '🥇', name: '金牌', rank: 3 },
+    { at: 0.8, icon: '🥈', name: '銀牌', rank: 2 },
+    { at: 0.7, icon: '🥉', name: '銅牌', rank: 1 }
+  ];
+  function rankOf(icon) {
+    for (var i = 0; i < MEDALS.length; i++) if (MEDALS[i].icon === icon) return MEDALS[i].rank;
+    return 0;
+  }
+  function medalName(icon) {
+    for (var i = 0; i < MEDALS.length; i++) if (MEDALS[i].icon === icon) return MEDALS[i].name;
+    return '';
+  }
+  var DAILY_MIN_RATE = 0.8;   // 今天任何一輪正確率到這個標準就算達標
+
+  /* 用眼提醒：練滿一段時間就休息一下 */
+  var BREAK_MS = 5 * 60 * 1000;    // 休息多久
+  var IDLE_MS = 3 * 60 * 1000;     // 超過這麼久沒動作就不算在練習
+  var TICK_MS = 5000;
+  var MOOD = { ok: '😀', meh: '😐', hard: '😣', cry: '😭' };
+  var db;
+
+  // DEF 裡有物件跟陣列，一定要複製一份，不然會被改到預設值本身
+  function blank() { return JSON.parse(JSON.stringify(DEF)); }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        db = Object.assign(blank(), JSON.parse(raw));
+      } else {
+        db = blank();
+        // 舊版是 60 秒不限題數，成績無法跟現在互相比較，只帶過設定與弱點統計
+        var old = localStorage.getItem(OLD_KEY);
+        if (old) {
+          var o = JSON.parse(old);
+          if (o.perQ && typeof o.perQ === 'object') db.perQ = o.perQ;
+          if (typeof o.sound === 'boolean') db.sound = o.sound;
+          if (Array.isArray(o.tables) && o.tables.length) db.tables = o.tables;
+          if (o.mode) db.mode = o.mode;
+        }
+      }
+    } catch (e) { db = blank(); }
+    // 舊版可以選 1 段，把它濾掉
+    db.tables = (Array.isArray(db.tables) ? db.tables : []).filter(function (t) {
+      return TABLES.indexOf(t) >= 0;
+    });
+    if (!db.tables.length) db.tables = TABLES.slice();
+    if (!db.perQ || typeof db.perQ !== 'object') db.perQ = {};
+    if (!Array.isArray(db.runs)) db.runs = [];
+    if (!Array.isArray(db.quits)) db.quits = [];
+    if (!db.recent || typeof db.recent !== 'object') db.recent = {};
+    if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
+    if ([0, 20, 30, 40].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
+    if (typeof db.useMs !== 'number' || db.useMs < 0) db.useMs = 0;
+    if (typeof db.useAt !== 'number') db.useAt = 0;
+    if (typeof db.breakUntil !== 'number') db.breakUntil = 0;
+    // 最佳紀錄要照題數分開存，10 題和 20 題的成績沒得比
+    if (db.best && db.best.correct !== undefined) {
+      var b = db.best; db.best = {}; db.best[b.total || 10] = b;
+    }
+    if (!db.best || typeof db.best !== 'object') db.best = {};
+  }
+
+  function fmtTime(ms) {
+    var s = Math.round(ms / 1000);
+    return s < 60 ? s + '秒' : Math.floor(s / 60) + '分' + (s % 60) + '秒';
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function clockOf(ts) {
+    var d = new Date(ts);
+    return d.getHours() + ':' + pad(d.getMinutes());
+  }
+  // 一律以「開始練習」的時間為準；舊紀錄沒有 start 就退回原本的時間
+  function runAt(r) { return r.start || r.t; }
+  function dayKey(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
+  }
+
+  /* ────────── 小工具 ────────── */
+  var $ = function (id) { return document.getElementById(id); };
+  function key(a, b) { return a + 'x' + b; }
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  // 2,3,4,7 → 「2–4、7」，段數選很多時標題才不會爆掉
+  function tableLabel(list) {
+    var out = [], i = 0;
+    while (i < list.length) {
+      var j = i;
+      while (j + 1 < list.length && list[j + 1] === list[j] + 1) j++;
+      out.push(j - i >= 2 ? list[i] + '–' + list[j] : list.slice(i, j + 1).join('、'));
+      i = j + 1;
+    }
+    return out.join('、');
+  }
+
+  function stat(a, b) {
+    var s = db.perQ[key(a, b)];
+    return s || { n: 0, w: 0 };
+  }
+
+  /* ────────── 音效 ────────── */
+  var ac = null, master = null;
+
+  // iOS 只允許在使用者手勢裡建立／喚醒 AudioContext，
+  // 所以按下按鈕的當下就先開起來，不然第一次的音效會整個沒聲音
+  function initAudio() {
+    try {
+      if (!ac) {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        var comp = ac.createDynamicsCompressor();   // 音量拉高後壓一下，避免破音
+        comp.threshold.setValueAtTime(-14, ac.currentTime);
+        comp.ratio.setValueAtTime(6, ac.currentTime);
+        master = ac.createGain();
+        master.gain.setValueAtTime(1, ac.currentTime);
+        master.connect(comp); comp.connect(ac.destination);
+      }
+      if (ac.state === 'suspended') ac.resume();
+    } catch (e) {}
+  }
+
+  function beep(freq, dur, type, vol, delay) {
+    if (!db.sound) return;
+    try {
+      initAudio();
+      if (!ac) return;
+      var t0 = ac.currentTime + (delay || 0);
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol || 0.4, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + dur + 0.02);
+    } catch (e) {}
+  }
+  /* ────────── 朗讀 ────────── */
+  var CN = ['零','一','二','三','四','五','六','七','八','九'];
+  function cn(n) {                       // 1–99 轉成國字：10→十、25→二十五
+    if (n < 10) return CN[n];
+    if (n < 20) return '十' + (n % 10 ? CN[n % 10] : '');
+    return CN[Math.floor(n / 10)] + '十' + (n % 10 ? CN[n % 10] : '');
+  }
+
+  // 公布答案念傳統口訣：九八七十二、二五十、二三得六
+  function chant(a, b) {
+    var ans = a * b;
+    if (ans < 10) return cn(a) + cn(b) + '得' + cn(ans);
+    return cn(a) + cn(b) + cn(ans);
+  }
+
+  var canSpeak = typeof window.speechSynthesis !== 'undefined' &&
+                 typeof window.SpeechSynthesisUtterance !== 'undefined';
+  var zhVoice = null;
+
+  // 沒有中文語音就整個關掉，總比用英文腔去念中文好
+  function pickVoice() {
+    if (!canSpeak) return;
+    var vs = [];
+    try { vs = window.speechSynthesis.getVoices() || []; } catch (e) {}
+    var zh = vs.filter(function (v) { return /^zh\b|^zh[-_]/i.test(v.lang || ''); });
+    zh.sort(function (a, b) {
+      var rank = function (v) {
+        if (/TW|Hant/i.test(v.lang)) return 0;
+        if (/HK/i.test(v.lang)) return 1;
+        return 2;
+      };
+      return rank(a) - rank(b);
+    });
+    zhVoice = zh[0] || null;
+    syncSpeak();
+  }
+
+  function say(text, delay) {
+    if (!db.speak || !canSpeak || !zhVoice) return;
+    if (nudge && nudge.isOpen()) return;          // 提醒正在講話，不要蓋掉它
+    setTimeout(function () {
+      if (!db.speak || (nudge && nudge.isOpen())) return;
+      try {
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text);
+        u.voice = zhVoice;
+        u.lang = zhVoice.lang || 'zh-TW';
+        u.rate = 0.95;
+        u.pitch = 1.05;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }, delay || 0);
+  }
+
+  function hushSpeech() {
+    if (!canSpeak) return;
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+
+  var SFX = {
+    right: function () { beep(880, 0.11, 'sine', 0.46, 0); beep(1320, 0.15, 'sine', 0.40, 0.07); },
+    wrong: function () { beep(240, 0.22, 'triangle', 0.42, 0); beep(180, 0.26, 'triangle', 0.36, 0.11); },
+    tick:  function () { beep(620, 0.09, 'sine', 0.34, 0); },
+    go:    function () { beep(990, 0.22, 'sine', 0.48, 0); },
+    combo: function () { beep(1050, 0.10, 'sine', 0.42, 0); beep(1400, 0.13, 'sine', 0.36, 0.08); },
+    end:   function () {
+      [660, 830, 990, 1320].forEach(function (f, i) { beep(f, 0.20, 'sine', 0.40, i * 0.11); });
+    }
+  };
+
+  /* ────────── 畫面切換 ────────── */
+  var SCREENS = ['setup', 'play', 'result', 'history'];
+  function show(name) {
+    SCREENS.forEach(function (s) { $(s).classList.toggle('on', s === name); });
+    window.scrollTo(0, 0);
+  }
+
+  /* ────────── 設定畫面 ────────── */
+  var picked = [];
+
+  function logRecent(t, ok) {
+    var r = db.recent[t] || (db.recent[t] = []);
+    r.push(ok ? 1 : 0);
+    if (r.length > WINDOW) db.recent[t] = r.slice(-WINDOW);
+  }
+
+  // 熟練度看最近 WINDOW 題；還沒累積夠就先用全部紀錄頂著
+  function tableStat(t) {
+    var r = db.recent[t];
+    if (r && r.length >= MIN_WINDOW) {
+      var ok = r.reduce(function (s, v) { return s + v; }, 0);
+      return { n: r.length, w: r.length - ok, rate: ok / r.length, fresh: true };
+    }
+    var n = 0, w = 0;
+    for (var b = 1; b <= 9; b++) { var s = stat(t, b); n += s.n; w += s.w; }
+    return { n: n, w: w, rate: n ? (n - w) / n : 0, fresh: false };
+  }
+  function tableRisk(t) {
+    var s = tableStat(t);
+    return s.n >= 4 ? s.w / s.n : 0;
+  }
+  function medalOf(t) {
+    var s = tableStat(t);
+    if (s.n < MIN_WINDOW) return '';
+    for (var i = 0; i < MEDALS.length; i++) {
+      if (s.rate >= MEDALS[i].at) return MEDALS[i].icon;
+    }
+    return '';
+  }
+
+  // 今天只要有一輪正確率達標就算今天達成目標
+  function goalHitToday() {
+    var today = dayKey(Date.now());
+    return db.runs.some(function (r) {
+      var tot = r.total || 10;
+      return dayKey(runAt(r)) === today && tot && r.correct / tot >= DAILY_MIN_RATE;
+    });
+  }
+
+  // 一共有幾天達成過目標，讓每天的努力累積下來
+  function goalDays() {
+    var days = {};
+    db.runs.forEach(function (r) {
+      var tot = r.total || 10;
+      if (tot && r.correct / tot >= DAILY_MIN_RATE) days[dayKey(runAt(r))] = 1;
+    });
+    return Object.keys(days).length;
+  }
+
+  function buildTiles() {
+    var box = $('tiles');
+    box.innerHTML = '';
+    for (var t = TABLES[0]; t <= 9; t++) {
+      (function (t) {
+        var risk = tableRisk(t);
+        var el = document.createElement('button');
+        el.className = 'tile' + (picked.indexOf(t) >= 0 ? ' sel' : '');
+        el.setAttribute('aria-pressed', picked.indexOf(t) >= 0 ? 'true' : 'false');
+        var medal = medalOf(t);
+        var mark = medal ? '<span class="mark cup">' + medal + '</span>'
+                 : (risk >= 0.2 ? '<span class="mark warn">●</span>' : '');
+        el.innerHTML = '<b>' + t + '</b><i>' + t + ' 的乘法</i>' + mark;
+        el.addEventListener('click', function () {
+          var i = picked.indexOf(t);
+          if (i >= 0) picked.splice(i, 1); else picked.push(t);
+          picked.sort(function (a, b) { return a - b; });
+          syncPick();
+        });
+        box.appendChild(el);
+      })(t);
+    }
+  }
+
+  function syncStart() {
+    $('startBtn').disabled = picked.length === 0;
+    $('startBtn').textContent = '開始測驗（' + db.count + ' 題）🚀';
+    $('tileHint').textContent = picked.length === 0
+      ? '至少要選一段才能開始喔。'
+      : '已選 ' + picked.join('、') + ' 段，共 ' + (picked.length * 8) + ' 種題目。' +
+        '獎牌看最近 20 題的答對率，紅點代表比較常錯。';
+  }
+
+  $('selAll').addEventListener('click', function () {
+    picked = TABLES.slice(); syncPick();
+  });
+  $('selNone').addEventListener('click', function () {
+    picked = []; syncPick();
+  });
+  $('selWeak').addEventListener('click', function () {
+    var ranked = [];
+    TABLES.forEach(function (t) { ranked.push({ t: t, r: tableRisk(t) }); });
+    ranked.sort(function (a, b) { return b.r - a.r; });
+    var weak = ranked.filter(function (x) { return x.r > 0; }).slice(0, 3).map(function (x) { return x.t; });
+    if (!weak.length) {
+      $('tileHint').textContent = '還沒有足夠的練習紀錄，先隨便選幾段玩玩看吧！';
+      return;
+    }
+    picked = weak.sort(function (a, b) { return a - b; });
+    syncPick();
+  });
+
+  function segment(boxId, apply) {
+    var box = $(boxId);
+    box.querySelectorAll('.mode').forEach(function (m) {
+      m.addEventListener('click', function () {
+        box.querySelectorAll('.mode').forEach(function (x) { x.classList.remove('sel'); });
+        m.classList.add('sel');
+        apply(m); save();
+      });
+    });
+  }
+  segment('counts', function (m) { db.count = Number(m.dataset.count); syncStart(); });
+  segment('modes', function (m) { db.mode = m.dataset.mode; });
+  segment('limits', function (m) { db.limitMin = Number(m.dataset.limit); renderUseHint(); });
+  segment('nudges', function (m) { db.nudgeAt = Number(m.dataset.nudge); syncNudge(); });
+  segment('tones', function (m) { db.tone = m.dataset.tone; syncNudge(); });
+  segment('noises', function (m) {
+    db.noiseAt = Number(m.dataset.noise);
+    syncNudge(); renderMicHint();
+  });
+
+  /* ────────── 崩潰提醒（meltdown-nudge） ──────────
+     連續答錯、或是吵夠久，就跳出來讓他喘一口氣。
+     麥克風只量音量，不錄音、不上傳、不判斷內容。 */
+  var nudge = null, micTimer = null, micTesting = false;
+
+  function syncNudge() {
+    if (!nudge) return;
+    nudge.set({
+      missStreak: db.nudgeAt,
+      tone: db.tone,
+      noise: db.noiseAt ? { level: db.noiseAt } : null
+    });
+  }
+
+  function renderMicHint() {
+    var t;
+    if (!db.noiseAt) t = '目前關閉，作答時不會開麥克風。';
+    else if (db.micFail) t = '⚠️ ' + db.micFail + '：作答時量不到音量，提醒不會跳。' +
+      '要用 https 的網址開，第一次會跳權限視窗要按「允許」。';
+    else if (db.lastPeak) t = '上一輪最大音量 ' + db.lastPeak.toFixed(2) +
+      '，門檻是 ' + db.noiseAt.toFixed(2) +
+      (db.lastPeak >= db.noiseAt ? '（有超過）' : '（沒超過，想更容易跳就把門檻調低）') + '。';
+    else t = '還沒有量到音量。作答時才會開麥克風，練一輪之後這裡會顯示當時最大音量。';
+    $('micLast').textContent = t;
+  }
+
+  function initNudge() {
+    nudge = MeltdownNudge.create({
+      missStreak: db.nudgeAt,
+      tone: db.tone,
+      noise: db.noiseAt ? { level: db.noiseAt } : null,
+      onShow: function () {
+        if (!S || !S.running) return;
+        S.pausedAt = Date.now();
+        freezeReveal();
+      },
+      onResume: function () { thawRound(); },
+      onStop: function () { thawRound(); endGame(false); },
+      onError: function (code, msg) { db.micFail = msg; save(); renderMicHint(); }
+    });
+    renderMicHint();
+  }
+
+  function thawRound() {
+    if (!S || !S.pausedAt) { thawReveal(); return; }
+    var paused = Date.now() - S.pausedAt;
+    S.pausedAt = 0;
+    if (S.qEndAt) S.qEndAt += paused;          // 停在提醒上的時間不能算他的
+    thawReveal();
+  }
+
+  $('micTestBtn').addEventListener('click', function () {
+    if (micTesting) {
+      micTesting = false;
+      if (micTimer) { clearInterval(micTimer); micTimer = null; }
+      if (nudge) nudge.mute();
+      $('micMeter').hidden = true;
+      $('micNow').hidden = true;
+      this.textContent = '🎤 測一下現在多大聲';
+      return;
+    }
+    micTesting = true;
+    nudge.resetPeak();
+    nudge.listen();
+    $('micMeter').hidden = false;
+    $('micNow').hidden = false;
+    this.textContent = '停止測量';
+    micTimer = setInterval(function () {
+      var lv = nudge.level();
+      $('micBar').style.width = Math.min(100, Math.round(lv * 400)) + '%';
+      $('micMeter').classList.toggle('loud', lv >= (db.noiseAt || 0.16));
+      $('micNow').textContent = '現在 ' + lv.toFixed(2) + '　剛剛最大 ' + nudge.peak().toFixed(2);
+    }, 120);
+  });
+
+  function renderUseHint() {
+    var mins = Math.floor(db.useMs / 60000), secs = Math.floor(db.useMs % 60000 / 1000);
+    $('useHint').textContent = db.limitMin
+      ? '目前累計練習 ' + (mins ? mins + ' 分 ' : '') + secs + ' 秒。滿 ' + db.limitMin +
+        ' 分鐘會在一輪結束後請他休息 ' + Math.round(BREAK_MS / 60000) +
+        ' 分鐘；閒置超過 3 分鐘不計時，自然休息夠久也會歸零。'
+      : '已關閉用眼提醒，不會要求休息。';
+  }
+
+  /* ────────── 出題 ────────── */
+  var PER_Q = 30;    // 每題可以想幾秒
+  var S = null;
+
+  function buildPool(tables) {
+    var pool = [];
+    tables.forEach(function (t) {
+      // 從 ×2 開始：乘以 1 是送分題，會稀釋掉練習量也會把答對率篩高
+      for (var b = 2; b <= 9; b++) pool.push({ a: t, b: b });
+    });
+    return pool;
+  }
+
+  function pickQuestion() {
+    var pool = S.pool;
+    if (pool.length === 1) return pool[0];
+    var cands = pool.filter(function (q) {
+      return !S.last || q.a !== S.last.a || q.b !== S.last.b;
+    });
+    if (!cands.length) cands = pool;
+    if (S.mode === 'even') return cands[Math.floor(Math.random() * cands.length)];
+
+    var weights = cands.map(function (q) {
+      var s = stat(q.a, q.b);
+      var w = 1 + s.w * 2;                       // 以前錯過 → 更常出現
+      if (s.n === 0) w += 1.2;                   // 沒練過的也多給機會
+      if (S.recentWrong[key(q.a, q.b)]) w += 4;  // 這一輪剛剛才錯 → 馬上再考
+      return Math.min(w, 9);
+    });
+    var sum = weights.reduce(function (x, y) { return x + y; }, 0);
+    var r = Math.random() * sum;
+    for (var i = 0; i < cands.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return cands[i];
+    }
+    return cands[cands.length - 1];
+  }
+
+  function makeOptions(a, b) {
+    var ans = a * b;
+    var set = [];
+    function add(v) {
+      if (v > 0 && v !== ans && set.indexOf(v) < 0) set.push(v);
+    }
+    // 最像的錯法：少加一次 / 多加一次、鄰近的乘法答案
+    shuffle([ans + a, ans - a, ans + b, ans - b, a * (b + 1), a * (b - 1), (a + 1) * b, (a - 1) * b])
+      .forEach(add);
+    shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10]).forEach(add);
+    for (var k = 1; set.length < 3; k++) { add(ans + k); add(ans - k); }
+    return shuffle([ans, set[0], set[1], set[2]]);
+  }
+
+  /* ────────── 遊戲流程 ────────── */
+  var timer = null, lock = false;
+
+  function startGame(tables, opts) {
+    opts = opts || {};
+    var review = !!opts.pool;
+    // 錯題只有一兩題時不用硬湊滿一輪，免得一直重複同一題
+    var total = review ? Math.min(db.count, Math.max(4, opts.pool.length * 3)) : db.count;
+    S = {
+      pool: review ? opts.pool : buildPool(tables),
+      tables: tables.slice(),
+      mode: review ? 'even' : db.mode,
+      total: total, idx: 0, results: [],
+      correct: 0, wrong: 0, streak: 0, bestStreak: 0,
+      timeouts: 0, wrongRun: 0, worstRun: 0, pausedAt: 0,
+      wrongList: [], recentWrong: {}, last: null,
+      reviewMode: review,
+      qEndAt: 0, startedAt: 0, finishedAt: 0, running: false
+    };
+    // 先記下開始前的獎牌，結算時才知道這一輪升了哪幾段
+    S.medalsBefore = {};
+    TABLES.forEach(function (t) { S.medalsBefore[t] = medalOf(t); });
+    $('subtitle').textContent = review
+      ? '錯題複習 ・ ' + total + ' 題'
+      : tableLabel(tables) + ' 段 ・ ' + total + ' 題';
+    renderDots();
+    $('qcard').className = 'qcard';
+    $('streakTxt').textContent = '';
+    $('qnum').textContent = '1 / ' + total;
+    $('clock').innerHTML = PER_Q + '<small>秒</small>';
+    $('timeBar').style.width = '100%';
+    show('play');
+    if (db.noiseAt && nudge) { nudge.resetPeak(); nudge.listen(); }   // 只有作答時才開
+    countdown(3);
+  }
+
+  function renderDots() {
+    var box = $('dots');
+    box.innerHTML = '';
+    for (var i = 0; i < S.total; i++) box.appendChild(document.createElement('i'));
+  }
+
+  function updateDots() {
+    var els = $('dots').children;
+    for (var i = 0; i < els.length; i++) {
+      els[i].className = S.results[i] || (i === S.idx - 1 ? 'now' : '');
+    }
+  }
+
+  function countdown(n) {
+    var el = document.createElement('div');
+    el.className = 'countdown';
+    document.body.appendChild(el);
+    var i = n;
+    function step() {
+      if (i > 0) {
+        el.innerHTML = '<b>' + i + '</b>';
+        SFX.tick();
+        i--;
+        setTimeout(step, 700);
+      } else {
+        el.innerHTML = '<b class="go">開始！</b>';
+        SFX.go();
+        setTimeout(function () {
+          el.remove();
+          S.running = true;
+          S.startedAt = Date.now();
+          timer = setInterval(tickClock, 100);
+          nextQuestion();
+        }, 550);
+      }
+    }
+    step();
+  }
+
+  function tickClock() {
+    if (!S || !S.running || lock || S.pausedAt) return;   // 對答案的空檔先把計時凍住
+    var left = Math.max(0, S.qEndAt - Date.now()) / 1000;
+    var secs = Math.ceil(left);
+    $('clock').innerHTML = secs + '<small>秒</small>';
+    $('clock').classList.toggle('low', secs <= 10);
+    var bar = $('timeBar');
+    bar.style.width = (left / PER_Q * 100) + '%';
+    bar.classList.toggle('low', secs <= 10);
+    if (left <= 0) timeUp();
+  }
+
+  function nextQuestion() {
+    clearReveal();
+    if (!S.running) return;
+    if (S.idx >= S.total) { endGame(true); return; }
+    S.idx++;
+    lock = false;
+    S.canSkip = false;
+    var q = pickQuestion();
+    S.last = q;
+    S.q = q;
+    S.qEndAt = Date.now() + PER_Q * 1000;
+    $('qcard').className = 'qcard';
+    $('streakTxt').textContent = '';   // 上一題的正確答案絕對不能留到這一題
+    $('qtext').innerHTML = q.a + ' <em>×</em> ' + q.b;
+    $('qnum').textContent = S.idx + ' / ' + S.total;
+    updateDots();
+    var opts = makeOptions(q.a, q.b);
+    document.querySelectorAll('.opt').forEach(function (btn, i) {
+      btn.className = 'opt';
+      btn.textContent = opts[i];
+      btn.dataset.val = opts[i];
+      btn.disabled = false;
+    });
+    say(cn(q.a) + '乘' + cn(q.b) + '等於幾', 120);
+    tickClock();
+  }
+
+  // 答錯或時間到：把正確答案亮出來給他看
+  function revealAnswer(ans, chosen) {
+    document.querySelectorAll('.opt').forEach(function (o) {
+      if (Number(o.dataset.val) === ans) o.classList.add('good');
+      else if (o !== chosen) o.classList.add('dim');
+      o.disabled = true;
+    });
+  }
+
+  // 公布答案後停留多久才換下一題；前面這段時間不接受點擊，免得他連點把答案跳掉
+  var REVEAL_MS = 4000, SKIP_AFTER = 1200;
+  var revealTimer = null, skipTimer = null, revealAt = 0, revealLeft = 0;
+  // 提醒跳出來的時候，換下一題的倒數要停住，不然題目會在提醒後面自己換掉
+  function armReveal(ms) {
+    clearTimeout(revealTimer);
+    revealAt = Date.now() + ms;
+    revealTimer = setTimeout(nextQuestion, ms);
+  }
+  function freezeReveal() {
+    if (!revealTimer) return;
+    revealLeft = Math.max(0, revealAt - Date.now());
+    clearTimeout(revealTimer); revealTimer = null;
+  }
+  function thawReveal() {
+    if (!revealLeft) return;
+    armReveal(revealLeft);
+    revealLeft = 0;
+  }
+
+  function clearReveal() {
+    clearTimeout(revealTimer); clearTimeout(skipTimer);
+    revealTimer = skipTimer = null; revealLeft = 0;
+  }
+
+  function showAnswer(q, note) {
+    var ans = q.a * q.b;
+    $('qtext').innerHTML = q.a + ' <em>×</em> ' + q.b + ' <em>=</em> <b class="ans">' + ans + '</b>';
+    $('streakTxt').textContent = note;
+    say(chant(q.a, q.b), 300);   // 讓答錯的音效先響完
+    S.canSkip = false;
+    clearReveal();
+    skipTimer = setTimeout(function () {
+      S.canSkip = true;
+      $('streakTxt').innerHTML = note + '<small>點一下繼續</small>';
+    }, SKIP_AFTER);
+    armReveal(REVEAL_MS);
+  }
+
+  function markWrong(q, note) {
+    var k = key(q.a, q.b);
+    S.wrong++; S.streak = 0;
+    S.wrongRun++;                                        // 連續答錯幾題，卡住的訊號
+    if (S.wrongRun > S.worstRun) S.worstRun = S.wrongRun;
+    if (nudge) nudge.miss();
+    logRecent(q.a, 0);
+    S.recentWrong[k] = true;
+    S.results[S.idx - 1] = 'no';
+    if (!S.wrongList.some(function (x) { return x.a === q.a && x.b === q.b; })) {
+      S.wrongList.push({ a: q.a, b: q.b });
+    }
+    S.finishedAt = Date.now();
+    $('qcard').classList.add('bad');
+    SFX.wrong();
+    updateDots();
+    showAnswer(q, note);
+  }
+
+  function timeUp() {
+    if (lock) return;
+    lock = true;
+    var q = S.q, k = key(q.a, q.b);
+    var rec = db.perQ[k] || (db.perQ[k] = { n: 0, w: 0 });
+    rec.n++; rec.w++;
+    S.timeouts++;
+    markWrong(q, '時間到！');
+    revealAnswer(q.a * q.b, null);
+    save();
+  }
+
+  function answer(val, btn) {
+    if (lock || !S.running) return;
+    lock = true;
+    var q = S.q, ans = q.a * q.b, k = key(q.a, q.b);
+    var rec = db.perQ[k] || (db.perQ[k] = { n: 0, w: 0 });
+    rec.n++;
+
+    if (val === ans) {
+      S.correct++; S.streak++;
+      if (S.streak > S.bestStreak) S.bestStreak = S.streak;
+      delete S.recentWrong[k];
+      S.results[S.idx - 1] = 'ok';
+      S.wrongRun = 0;
+      if (nudge) nudge.hit();
+      logRecent(q.a, 1);
+      S.finishedAt = Date.now();
+      btn.classList.add('good');
+      $('qcard').classList.add('good');
+      SFX.right();
+      sparkle(btn);
+      if (S.streak > 0 && S.streak % 5 === 0) {
+        $('streakTxt').textContent = '🔥 連續答對 ' + S.streak + ' 題！';
+        SFX.combo();
+      } else {
+        $('streakTxt').textContent = S.streak >= 2 ? '連對 ' + S.streak : '';
+      }
+      updateDots();
+      setTimeout(nextQuestion, 420);
+    } else {
+      rec.w++;
+      markWrong(q, '答錯了');
+      btn.classList.add('bad');
+      revealAnswer(ans, btn);
+    }
+    save();
+  }
+
+  document.querySelectorAll('.opt').forEach(function (btn) {
+    btn.addEventListener('click', function () { answer(Number(btn.dataset.val), btn); });
+  });
+
+  // 看完答案想提早繼續：點畫面任一處（結束按鈕除外）
+  function skipReveal() {
+    if (!lock || !S || !S.running || !S.canSkip) return false;
+    nextQuestion();
+    return true;
+  }
+  $('play').addEventListener('click', function (e) {
+    if (e.target.closest('#quitBtn')) return;
+    skipReveal();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!$('play').classList.contains('on') || !S || !S.running) return;
+    if (e.key === ' ' || e.key === 'Enter') { if (skipReveal()) e.preventDefault(); return; }
+    var i = ['1', '2', '3', '4'].indexOf(e.key);
+    if (i >= 0) {
+      var btn = document.querySelectorAll('.opt')[i];
+      if (btn) answer(Number(btn.dataset.val), btn);
+    }
+  });
+
+  function sparkle(btn) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var r = btn.getBoundingClientRect();
+    var icons = ['✨', '⭐️', '🌟', '💫'];
+    for (var i = 0; i < 5; i++) {
+      var s = document.createElement('span');
+      s.className = 'spark';
+      s.textContent = icons[Math.floor(Math.random() * icons.length)];
+      s.style.left = (r.left + r.width * (0.2 + Math.random() * 0.6)) + 'px';
+      s.style.top = (r.top + r.height * 0.4) + 'px';
+      s.style.setProperty('--dx', (Math.random() * 100 - 50) + 'px');
+      s.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+      $('fx').appendChild(s);
+      (function (el) { setTimeout(function () { el.remove(); }, 950); })(s);
+    }
+  }
+
+  function endGame(completed) {
+    if (!S || !S.running) return;
+    if (nudge) {
+      if (db.noiseAt && nudge.isListening()) { db.lastPeak = nudge.peak(); }
+      if (!micTesting) nudge.mute();
+      nudge.close(true);
+    }
+    S.running = false;
+    lock = true;
+    clearReveal();
+    hushSpeech();
+    clearInterval(timer); timer = null;
+    SFX.end();
+    S.ms = S.startedAt ? Math.max(0, (S.finishedAt || Date.now()) - S.startedAt) : 0;
+
+    // 中途按結束的不記錄，免得半途而廢的分數污染歷史成績
+    var isRecord = false;
+    // 中途離開也記一筆，這是「練不下去」最直接的訊號
+    if (!completed && !S.reviewMode && S.idx > 0) {
+      db.quits.push({ t: Date.now(), done: S.idx - 1, total: S.total });
+      if (db.quits.length > 60) db.quits = db.quits.slice(-60);
+      save();
+    }
+    if (completed && !S.reviewMode) {
+      db.runs.push({
+        t: Date.now(), start: S.startedAt, tables: S.tables, correct: S.correct,
+        wrong: S.wrong, total: S.total, ms: S.ms,
+        timeouts: S.timeouts, worstRun: S.worstRun,
+        wrongs: S.wrongList.map(function (q) { return q.a + 'x' + q.b; })
+      });
+      if (db.runs.length > 60) db.runs = db.runs.slice(-60);
+      var b = db.best[S.total];
+      // 同樣答對題數時，比誰花的時間短
+      if (!b || S.correct > b.correct || (S.correct === b.correct && S.ms < b.ms)) {
+        isRecord = !!b;
+        db.best[S.total] = { correct: S.correct, ms: S.ms, total: S.total };
+      }
+      save();
+    }
+    // 只有真的存進歷史的那一輪才問心情，不然沒有地方可以記
+    var moodable = completed && !S.reviewMode && db.runs.length > 0;
+    moodRunIndex = moodable ? db.runs.length - 1 : -1;
+    $('moodCard').hidden = !moodable;
+    document.querySelectorAll('.mood').forEach(function (m) { m.classList.remove('sel'); });
+
+    renderResult(isRecord, completed);
+    show('result');
+    maybeBreak();
+  }
+
+  $('quitBtn').addEventListener('click', function () { endGame(false); });
+
+  var moodRunIndex = -1;
+  document.querySelectorAll('.mood').forEach(function (m) {
+    m.addEventListener('click', function () {
+      if (moodRunIndex < 0 || !db.runs[moodRunIndex]) return;
+      document.querySelectorAll('.mood').forEach(function (x) { x.classList.remove('sel'); });
+      m.classList.add('sel');
+      db.runs[moodRunIndex].mood = m.dataset.mood;
+      save();
+    });
+  });
+
+  // 這一輪有哪幾段拿到更高一級的獎牌
+  function renderLevelUp() {
+    var el = $('rLevel');
+    var ups = [];
+    TABLES.forEach(function (t) {
+      var before = (S.medalsBefore || {})[t] || '';
+      var now = medalOf(t);
+      if (rankOf(now) > rankOf(before)) ups.push({ t: t, icon: now });
+    });
+    if (!ups.length) { el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = ups.map(function (u) {
+      return '<em>' + u.icon + '</em> ' + u.t + ' 段拿到' + medalName(u.icon) + '了！';
+    }).join('<br>');
+    if (S.correct > 0) {
+      SFX.end();
+      setTimeout(function () { sparkle(el); }, 120);
+    }
+  }
+
+  /* ────────── 結果畫面 ────────── */
+  function renderResult(isRecord, completed) {
+    var done = S.correct + S.wrong;
+    var acc = done ? Math.round(S.correct / done * 100) : 0;
+    $('rScore').innerHTML = S.correct + '<small>/ ' + S.total + '</small>';
+    $('rAcc').textContent = acc + '%';
+    $('rWrong').textContent = S.wrong;
+    $('rTime').textContent = fmtTime(S.ms);
+
+    var msg;
+    if (done === 0) msg = '這次沒有作答，再來一次！';
+    else if (!completed) msg = '這輪提早結束了，只做了 ' + done + ' 題';
+    else if (acc === 100) msg = '太厲害了，全部答對！🏆';
+    else if (acc >= 80) msg = '好棒！只差一點點 🎉';
+    else if (acc >= 60) msg = '不錯喔，再加油 💪';
+    else msg = '有進步空間，我們一起複習 📚';
+    $('rMsg').textContent = msg;
+    var best = db.best[S.total];
+    $('rRec').innerHTML = isRecord && best
+      ? '<span class="rec">🏅 破紀錄！' + best.correct + ' / ' + best.total +
+        ' 題・' + fmtTime(best.ms) + '</span>'
+      : '';
+
+    renderLevelUp();
+
+    var box = $('rWrongs');
+    box.innerHTML = '';
+    if (!S.wrongList.length) {
+      box.innerHTML = '<div class="empty">' + (done ? '這一輪沒有答錯，太棒了！🎊' : '還沒有作答紀錄') + '</div>';
+    } else {
+      S.wrongList.forEach(function (q) {
+        var el = document.createElement('span');
+        el.className = 'wchip';
+        el.innerHTML = q.a + ' × ' + q.b + ' = ' + (q.a * q.b);
+        box.appendChild(el);
+      });
+    }
+    $('againWrongBtn').hidden = S.wrongList.length === 0;
+    db.lastWrong = S.wrongList.slice();
+    save();
+  }
+
+  $('againBtn').addEventListener('click', function () { startGame(S.tables); });
+  $('againWrongBtn').addEventListener('click', function () {
+    startGame(S.tables, { pool: S.wrongList.slice() });
+  });
+  $('backBtn').addEventListener('click', function () {
+    if (picked.length) db.tables = picked.slice();
+    save();
+    $('subtitle').textContent = '每題 30 秒 ・ ' + db.count + ' 題';
+    refreshSetup(); show('setup');
+  });
+
+  /* ────────── 歷史畫面 ────────── */
+  function renderHistory() {
+    var runs = db.runs.slice(-12);
+    var chart = $('chart');
+    chart.innerHTML = '';
+    if (!runs.length) {
+      chart.innerHTML = '<div class="empty" style="margin:auto">還沒有練習紀錄，先玩一輪吧！</div>';
+    } else {
+      runs.forEach(function (r) {
+        var d = new Date(runAt(r));
+        var tot = r.total || 10;
+        var col = document.createElement('div');
+        col.className = 'col';
+        col.title = r.correct + ' / ' + tot + ' 題・' + fmtTime(r.ms || 0);
+        // 長度不同的回合用「答對比例」比高矮，才不會 20 題那輪看起來永遠比較好
+        col.innerHTML = '<u>' + r.correct + '</u>' +
+          '<b style="height:' + Math.max(4, r.correct / tot * 74) + 'px"></b>' +
+          '<em>' + (d.getMonth() + 1) + '/' + d.getDate() + '</em>';
+        chart.appendChild(col);
+      });
+    }
+    var all = db.runs;
+    var best = db.best[db.count];
+    $('hBest').innerHTML = best
+      ? best.correct + '<small> / ' + best.total + '</small>'
+      : '—';
+    $('hBest').nextElementSibling.textContent = best
+      ? db.count + ' 題最佳 ・ ' + fmtTime(best.ms)
+      : db.count + ' 題最佳';
+    var got = all.reduce(function (s, r) { return s + r.correct; }, 0);
+    var asked = all.reduce(function (s, r) { return s + (r.total || 10); }, 0);
+    $('hAvg').textContent = asked ? Math.round(got / asked * 100) + '%' : '—';
+    $('hRuns').textContent = all.length;
+
+    renderDays();
+    renderTables();
+    renderUseHint();
+
+    var list = [];
+    Object.keys(db.perQ).forEach(function (k) {
+      var s = db.perQ[k];
+      if (s.w > 0) list.push({ k: k, n: s.n, w: s.w, r: s.w / s.n });
+    });
+    // 純粹看錯幾次，錯最多次的排最前面
+    list.sort(function (x, y) { return (y.w - x.w) || (y.r - x.r); });
+    var weak = $('weak');
+    weak.innerHTML = '';
+    if (!list.length) {
+      weak.innerHTML = '<div class="empty">目前沒有常錯的題目，很棒！👍</div>';
+    } else {
+      var most = list[0].w;
+      list.slice(0, 6).forEach(function (x) {
+        var p = x.k.split('x');
+        var row = document.createElement('div');
+        row.className = 'wrow';
+        row.innerHTML =
+          '<span class="q">' + p[0] + ' × ' + p[1] + ' = ' + (p[0] * p[1]) + '</span>' +
+          '<span class="t"><i style="width:' + Math.round(x.w / most * 100) + '%"></i></span>' +
+          '<span class="p">錯 ' + x.w + ' 次</span>';
+        weak.appendChild(row);
+      });
+    }
+  }
+
+  // 每一段的答對率，從最熟排到最不熟
+  function renderTables() {
+    var box = $('tables');
+    box.innerHTML = '';
+    // 跟段數按鈕上的獎章用同一套資料：每一段最近 WINDOW 題
+    var list = [];
+    TABLES.forEach(function (t) {
+      var s = tableStat(t);
+      if (s.n > 0) list.push({ t: t, n: s.n, ok: s.n - s.w, rate: s.rate });
+    });
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">還沒有練習紀錄</div>';
+      return;
+    }
+    // 題數太少的排到後面，免得「練 1 題全對」看起來比「練 20 題錯 2 題」還熟
+    list.sort(function (x, y) {
+      if ((x.n < MIN_WINDOW) !== (y.n < MIN_WINDOW)) return x.n < MIN_WINDOW ? 1 : -1;
+      return y.rate - x.rate;
+    });
+    list.forEach(function (x) {
+      var pct = Math.round(x.rate * 100);
+      var thin = x.n < MIN_WINDOW;
+      var level = thin ? 'thin' : (pct >= 90 ? 'hi' : (pct >= 70 ? 'mid' : ''));
+      var row = document.createElement('div');
+      row.className = 'wrow';
+      row.innerHTML =
+        '<span class="q">' + x.t + ' 段' + (thin ? '' : ' ' + medalOf(x.t)) + '</span>' +
+        '<span class="t"><i class="' + level + '" style="width:' + pct + '%"></i></span>' +
+        '<span class="p ' + level + '">' + pct + '%<small style="font-weight:700;opacity:.7"> ' +
+        x.ok + '/' + x.n + '</small></span>';
+      box.appendChild(row);
+    });
+    var note = document.createElement('p');
+    note.className = 'hint';
+    note.textContent = '只看每一段最近 ' + WINDOW + ' 題，以前的錯誤會慢慢淡出。' +
+      '🥉 銅牌 70%、🥈 銀牌 80%、🥇 金牌 90%。';
+    box.appendChild(note);
+
+    var solid = list.filter(function (x) { return x.n >= MIN_WINDOW; });
+    if (solid.length >= 2) {
+      var best = solid[0], worst = solid[solid.length - 1];
+      var p = document.createElement('p');
+      p.className = 'hint';
+      p.textContent = best.t + ' 段最熟（' + Math.round(best.rate * 100) + '%），' +
+        worst.t + ' 段最需要練（' + Math.round(worst.rate * 100) + '%）。';
+      box.appendChild(p);
+    }
+    if (list.some(function (x) { return x.n < MIN_WINDOW; })) {
+      var q = document.createElement('p');
+      q.className = 'hint';
+      q.textContent = '灰色的那幾段練不到 ' + MIN_WINDOW + ' 題，資料還不夠準。';
+      box.appendChild(q);
+    }
+  }
+
+  // 最近 7 天有沒有練、各練幾次
+  var WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
+  function renderWeek() {
+    var box = $('days7');
+    box.innerHTML = '';
+    var counts = {};
+    db.runs.forEach(function (r) {
+      var k = dayKey(runAt(r));
+      counts[k] = (counts[k] || 0) + 1;
+    });
+
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var practised = 0, streak = 0, streakLive = true;
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(today);
+      d.setDate(d.getDate() - i);
+      var n = counts[dayKey(d.getTime())] || 0;
+      if (n) practised++;
+      var el = document.createElement('div');
+      el.className = 'd7' + (n >= 3 ? ' lv3' : n === 2 ? ' lv2' : n ? ' lv1' : '') +
+        (i === 0 ? ' today' : '');
+      el.innerHTML = '<u>' + (i === 0 ? '今天' : WEEKDAY[d.getDay()]) + '</u>' +
+        '<b>' + (d.getMonth() + 1) + '/' + d.getDate() + '</b>' +
+        '<span>' + (n ? n + ' 次' : '—') + '</span>';
+      box.appendChild(el);
+    }
+    // 目前連續幾天（今天還沒練不算中斷）
+    for (var j = 0; j < 60; j++) {
+      var dd = new Date(today); dd.setDate(dd.getDate() - j);
+      var c = counts[dayKey(dd.getTime())] || 0;
+      if (c) streak++;
+      else if (j > 0) break;
+      else streakLive = false;
+    }
+
+    $('calTally').textContent = practised ? '7 天裡練了 ' + practised + ' 天' : '';
+    $('calHint').textContent = !practised
+      ? '這 7 天還沒有練習紀錄。'
+      : (streak > 1 ? '目前連續 ' + streak + ' 天有練習' +
+          (streakLive ? '' : '（今天還沒練）') + '。' : '') +
+        '顏色越深代表那天練越多次。';
+  }
+
+  // 每天練了幾次、分別是幾點練的
+  function renderDays() {
+    var box = $('days');
+    box.innerHTML = '';
+    if (!db.runs.length) {
+      box.innerHTML = '<div class="empty">還沒有練習紀錄</div>';
+      return;
+    }
+    var order = [], byDay = {};
+    db.runs.forEach(function (r) {
+      var k = dayKey(runAt(r));
+      if (!byDay[k]) { byDay[k] = []; order.push(k); }
+      byDay[k].push(r);
+    });
+    var today = dayKey(Date.now());
+    var yesterday = dayKey(Date.now() - 86400000);
+    order.slice(-7).reverse().forEach(function (k) {
+      var runs = byDay[k];
+      var d = new Date(runAt(runs[0]));
+      var label = (d.getMonth() + 1) + '/' + d.getDate();
+      var tag = k === today ? '今天' : (k === yesterday ? '昨天' : '');
+      var row = document.createElement('div');
+      row.className = 'dayrow';
+      var sess = runs.map(function (r) {
+        var tot = r.total || 10;
+        var tb = Array.isArray(r.tables) && r.tables.length ? tableLabel(r.tables) + ' 段' : '';
+        // 那一場錯了哪幾題，直接列出來
+        var wrongs = (r.wrongs || []).map(function (k) {
+          var f = k.split('x');
+          return f[0] + '×' + f[1] + '=' + (f[0] * f[1]);
+        });
+        return '<span class="sess' + (r.correct < tot ? ' miss' : '') + '">' +
+          '<em>' + clockOf(runAt(r)) + (tb ? '<u>' + tb + '</u>' : '') +
+          '<b>' + r.correct + '/' + tot + '</b>' +
+          (r.mood && MOOD[r.mood] ? '<s>' + MOOD[r.mood] + '</s>' : '') + '</em>' +
+          (wrongs.length ? '<q>錯：' + wrongs.join('、') + '</q>' : '') + '</span>';
+      }).join('');
+
+      // 卡住的訊號：時間到沒作答、連續答錯、中途離開
+      var to = runs.reduce(function (s, r) { return s + (r.timeouts || 0); }, 0);
+      var worst = runs.reduce(function (s, r) { return Math.max(s, r.worstRun || 0); }, 0);
+      var quits = db.quits.filter(function (x) { return dayKey(x.t) === k; }).length;
+      var flags = [];
+      if (to) flags.push('⏱ 逾時 ' + to + ' 題');
+      if (worst >= 3) flags.push('😖 連錯 ' + worst + ' 題');
+      if (quits) flags.push('🚪 中途離開 ' + quits + ' 次');
+
+      row.innerHTML =
+        '<span class="d">' + label + (tag ? '<em>' + tag + '</em>' : '') + '</span>' +
+        '<span class="c">' + runs.length + ' 次</span>' +
+        '<span class="ts">' + sess + '</span>' +
+        (flags.length ? '<span class="flags">' + flags.join('　') + '</span>' : '');
+      box.appendChild(row);
+    });
+  }
+
+  $('histBtn').addEventListener('click', function () {
+    if ($('play').classList.contains('on')) return;
+    renderHistory(); show('history');
+  });
+  $('hBackBtn').addEventListener('click', function () { refreshSetup(); show('setup'); });
+  $('clearBtn').addEventListener('click', function () {
+    if (!confirm('確定要清除所有練習紀錄嗎？這個動作無法復原。')) return;
+    var keep = { sound: db.sound, speak: db.speak, tables: db.tables.slice(),
+                 mode: db.mode, count: db.count };
+    db = Object.assign(blank(), keep);
+    save(); renderHistory(); syncPick();
+  });
+
+  /* ────────── 音效開關 ────────── */
+  function syncSound() {
+    var b = $('soundBtn');
+    b.textContent = db.sound ? '🔊' : '🔇';
+    b.classList.toggle('off', !db.sound);
+    b.setAttribute('aria-pressed', db.sound ? 'true' : 'false');
+  }
+  $('soundBtn').addEventListener('click', function () {
+    db.sound = !db.sound; save(); syncSound();
+    if (db.sound) { initAudio(); SFX.right(); }   // 開啟時放一聲，順便當音量試聽
+  });
+
+  function syncSpeak() {
+    var b = $('speakBtn');
+    b.hidden = !(canSpeak && zhVoice);
+    b.textContent = db.speak ? '🗣️' : '🤫';
+    b.classList.toggle('off', !db.speak);
+    b.setAttribute('aria-pressed', db.speak ? 'true' : 'false');
+  }
+  $('speakBtn').addEventListener('click', function () {
+    db.speak = !db.speak; save(); syncSpeak();
+    if (db.speak) say('九八七十二');
+    else hushSpeech();
+  });
+
+  /* ────────── 用眼時間與休息 ────────── */
+  var lastAct = Date.now(), saveTick = 0, breakTimer = null;
+  ['pointerdown', 'keydown'].forEach(function (ev) {
+    document.addEventListener(ev, function () { lastAct = Date.now(); }, true);
+  });
+
+  // 只累積「畫面在前景而且最近有動作」的時間
+  setInterval(function () {
+    var now = Date.now();
+    if (document.hidden || now - lastAct > IDLE_MS) return;   // 保留 useAt，回來時用間隔判斷
+    if (db.useAt) {
+      var gap = now - db.useAt;
+      if (gap > BREAK_MS) db.useMs = 0;                       // 已經自然休息夠久了，重新計算
+      else db.useMs += Math.min(gap, TICK_MS + 1000);         // 只採信一個 tick 的量
+    }
+    db.useAt = now;
+    if (++saveTick % 6 === 0) save();                         // 每 30 秒才寫一次
+  }, TICK_MS);
+
+  function fmtClock(ms) {
+    var s = Math.max(0, Math.ceil(ms / 1000));
+    return Math.floor(s / 60) + ':' + pad(s % 60);
+  }
+
+  function startBreak() {
+    db.breakUntil = Date.now() + BREAK_MS;
+    save();
+    showBreak();
+  }
+
+  function showBreak() {
+    var el = $('breakScreen');
+    el.hidden = false;
+    $('breakDone').hidden = true;
+    $('breakTitle').textContent = '眼睛休息一下';
+    $('breakHint').innerHTML = '練了 ' + db.limitMin + ' 分鐘囉，休息 ' +
+      Math.round(BREAK_MS / 60000) + ' 分鐘再回來' +
+      '<br><span class="bparent">家長：長按上面的倒數 3 秒可以跳過</span>';
+    hushSpeech();
+    clearInterval(breakTimer);
+    breakTimer = setInterval(tickBreak, 250);
+    tickBreak();
+  }
+
+  function tickBreak() {
+    var left = db.breakUntil - Date.now();
+    if (left <= 0) {
+      clearInterval(breakTimer); breakTimer = null;
+      $('breakClock').textContent = '0:00';
+      $('breakTitle').textContent = '休息好了！';
+      $('breakDone').hidden = false;
+      return;
+    }
+    $('breakClock').textContent = fmtClock(left);
+  }
+
+  function endBreak() {
+    clearInterval(breakTimer); breakTimer = null;
+    db.breakUntil = 0; db.useMs = 0; db.useAt = Date.now();
+    save();
+    $('breakScreen').hidden = true;
+  }
+
+  $('breakDone').addEventListener('click', endBreak);
+
+  // 家長長按倒數 3 秒可以強制跳過
+  (function () {
+    var hold = null;
+    var clock = $('breakClock');
+    var start = function () {
+      clearTimeout(hold);
+      hold = setTimeout(function () { endBreak(); }, 3000);
+    };
+    var cancel = function () { clearTimeout(hold); };
+    ['pointerdown'].forEach(function (e) { clock.addEventListener(e, start); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (e) {
+      clock.addEventListener(e, cancel);
+    });
+  })();
+
+  // 一輪結束才提醒，不會打斷作答
+  function maybeBreak() {
+    if (!db.limitMin) return;
+    if (db.breakUntil > Date.now()) { showBreak(); return; }
+    if (db.useMs < db.limitMin * 60000) return;
+    setTimeout(startBreak, 2600);   // 先讓他看到自己的成績
+  }
+
+  /* ────────── 啟動 ────────── */
+  document.documentElement.lang = 'zh-Hant';
+  document.documentElement.style.setProperty('--reveal', (REVEAL_MS / 1000) + 's');
+
+  function renderGoal() {
+    var el = $('goal');
+    var today = dayKey(Date.now());
+    var todayRuns = db.runs.filter(function (r) { return dayKey(runAt(r)) === today; });
+    if (!todayRuns.length) {          // 今天還沒開始，先不要擺一個沒達成的目標在那裡
+      el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+    var hit = goalHitToday();
+    el.className = 'goal' + (hit ? '' : ' todo');
+    var best = Math.max.apply(null, todayRuns.map(function (r) {
+      return Math.round(r.correct / (r.total || 10) * 100);
+    }));
+    var days = goalDays();
+    el.innerHTML = hit
+      ? '<span class="star">⭐</span><span class="txt">今天達成目標了！' +
+        '<small>今天最好的一輪答對 ' + best + '%　・　到目前為止已經達標 ' + days + ' 天</small></span>'
+      : '<span class="star">🎯</span><span class="txt">今天還差一點點' +
+        '<small>今天最好的一輪答對 ' + best + '%，答對 80% 就達標' +
+        (days ? '　・　已經達標 ' + days + ' 天' : '') + '</small></span>';
+  }
+
+  function syncPick() {
+    buildTiles(); syncStart();
+  }
+
+  function refreshSetup() {
+    renderWeek();
+    renderGoal();
+    syncPick();
+    $('reviewBtn').hidden = !(db.lastWrong && db.lastWrong.length);
+  }
+
+  $('startBtn').addEventListener('click', function () {
+    if (db.sound) initAudio();   // 趁著這個手勢把音訊解鎖
+    unlockSpeech();              // 語音也一樣，只有真的手勢裡才解得開
+    if (!picked.length) return;
+    if (picked.length) db.tables = picked.slice();
+    save();
+    startGame(picked);
+  });
+  $('reviewBtn').addEventListener('click', function () {
+    startGame(picked.length ? picked : db.tables, { pool: db.lastWrong.slice() });
+  });
+
+  load();
+  if ([0, 3, 5].indexOf(db.nudgeAt) < 0) db.nudgeAt = DEF.nudgeAt;
+  if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
+  if ([0, 0.1, 0.16, 0.24].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
+  if (typeof db.lastPeak !== 'number') db.lastPeak = 0;
+  if (typeof db.micFail !== 'string') db.micFail = '';
+  initNudge();
+  picked = [];   // 每次打開都從空白開始，讓他自己決定今天要練哪幾段
+  $('subtitle').textContent = '每題 30 秒 ・ ' + db.count + ' 題';
+  document.querySelectorAll('#modes .mode').forEach(function (m) {
+    m.classList.toggle('sel', m.dataset.mode === db.mode);
+  });
+  document.querySelectorAll('#counts .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.count) === db.count);
+  });
+  document.querySelectorAll('#limits .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.limit) === db.limitMin);
+  });
+  document.querySelectorAll('#nudges .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.nudge) === db.nudgeAt);
+  });
+  document.querySelectorAll('#tones .mode').forEach(function (m) {
+    m.classList.toggle('sel', m.dataset.tone === db.tone);
+  });
+  document.querySelectorAll('#noises .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.noise) === db.noiseAt);
+  });
+  syncSound();
+
+  var speechUnlocked = false;
+  function unlockSpeech() {
+    if (speechUnlocked || !canSpeak || !db.speak) return;
+    speechUnlocked = true;
+    try {
+      var u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  pickVoice();
+  if (canSpeak && typeof window.speechSynthesis.addEventListener === 'function') {
+    window.speechSynthesis.addEventListener('voiceschanged', pickVoice);
+  }
+
+  refreshSetup();
+  if (db.breakUntil > Date.now()) showBreak();   // 關掉重開也繞不過去
+})();
+</script>
+</body>
+</html>

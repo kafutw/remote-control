@@ -1762,6 +1762,8 @@
     var fired = false;
     function done() { if (!fired) { fired = true; if (onDone) onDone(); } }
     if (!speakable()) { if (onDone) setTimeout(done, 0); return; }
+    // 提醒正在講話的時候，題目和答案的語音先讓路，不要蓋掉它
+    if (!inNudgeSpeak && !$('nudge').hidden) { setTimeout(done, 0); return; }
     function run() {
       if (!speakable()) { done(); return; }
       try {
@@ -2560,7 +2562,7 @@
     tonePos[key] = (i + 1) % list.length;
     return list[i];
   }
-  var nudgeTimers = [], nudgeDone = false;
+  var nudgeTimers = [], nudgeDone = false, inNudgeSpeak = false;
   function clearNudgeTimers() {
     nudgeTimers.forEach(function (t) { clearTimeout(t); });
     nudgeTimers = [];
@@ -2597,7 +2599,9 @@
     $('nudge').hidden = false;
     hushSpeech();
     // 念給他聽，念完停一秒就自己繼續，不用等他按
+    inNudgeSpeak = true;                 // 只有這一句放行，題目和答案的語音先讓路
     speak([[m[1], 1, 'zh']], 0, function () { later(function () { closeNudge(true); }, 1000); });
+    inNudgeSpeak = false;
     later(function () { closeNudge(true); }, 9000);   // 語音卡住也不會停在這一頁
   }
   $('nudgeGo').addEventListener('click', function () { closeNudge(true); });
