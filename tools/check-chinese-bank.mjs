@@ -40,37 +40,44 @@ for (const entry of dict) {
 }
 
 const html = fs.readFileSync(htmlPath, 'utf8');
-const pick = (re) => (html.match(re) || [''])[0];
-const bank = pick(/var BANK = \{[\s\S]*?\n  \};/);
-const extra = pick(/var EXTRA = \{[\s\S]*?\n  \};/);
+const dictBlock = (html.match(/var DICT = '([^']*)'/) || [])[1] || '';
+const bookBlock = (html.match(/var BOOK = \{[\s\S]*?\n  \};/) || [''])[0];
 
 const problems = [];
+const notes = [];
 let chars = 0;
 
-for (const [, line] of bank.matchAll(/'([^'|]+\|[^']*)'/g)) {
-  const [c, b, r, stroke, words] = line.split('|');
+// 內建字典：注音、部首、筆畫要跟教育部一致（注音對得上任何一個讀音就算過，破音字本來就不只一個）
+for (const row of dictBlock.split(';')) {
+  if (!row) continue;
+  const c = row.charAt(0);
+  const [b, r, stroke] = row.slice(1).split('|');
   chars++;
   const m = moe[c];
   if (!m) { problems.push(`${c}　字典裡查不到`); continue; }
-  if (!m.all.includes(b)) problems.push(`${c}　注音 我:${b} 教育部:${m.all.join('/')}`);
-  if (m.r !== r) problems.push(`${c}　部首 我:${r} 教育部:${m.r}`);
-  if (Number(stroke) && m.s !== Number(stroke)) {
-    problems.push(`${c}　筆畫 我:${stroke} 教育部:${m.s}`);
-  }
-  // 語詞一定要含這個字，不然「語詞填空」挖不出空格
-  for (const w of (words || '').split(',')) {
-    if (w && !w.includes(c)) problems.push(`${c}　語詞「${w}」裡沒有這個字`);
-  }
+  if (!m.all.includes(b)) problems.push(`${c}　注音 ${b} 不在教育部的 ${m.all.join('/')} 裡`);
+  if (m.r !== r) problems.push(`${c}　部首 ${r} 教育部:${m.r}`);
+  if (Number(stroke) && m.s !== Number(stroke)) problems.push(`${c}　筆畫 ${stroke} 教育部:${m.s}`);
 }
 
-let extras = 0;
-for (const [, c, b] of extra.matchAll(/'(.)':'([^']+)'/g)) {
-  extras++;
-  const m = moe[c];
-  if (!m) { problems.push(`${c}（EXTRA）字典裡查不到`); continue; }
-  if (!m.all.includes(b)) problems.push(`${c}（EXTRA）注音 我:${b} 教育部:${m.all.join('/')}`);
+// 課本：語詞裡通常會有這一課的生字，沒有的話只是提醒一下（課名裡的詞會這樣，不算錯）
+let lessons = 0, words = 0;
+for (const [, name, zi, recog, ws] of bookBlock.matchAll(/\['([^']*)','([^']*)','([^']*)','([^']*)'\]/g)) {
+  lessons++;
+  const inLesson = new Set([...zi, ...recog]);
+  for (const w of (ws ? ws.split(',') : [])) {
+    words++;
+    if (![...w].some((c) => inLesson.has(c))) {
+      notes.push(`「${w}」（${name}）裡沒有這一課的生字`);
+    }
+  }
 }
+console.log(`課 ${lessons}、語詞 ${words}`);
 
-console.log(`生字 ${chars} 個、語詞用字 ${extras} 個，對不上 ${problems.length} 處`);
+console.log(`字典 ${chars} 個字，對不上 ${problems.length} 處`);
+if (notes.length) {
+  console.log(`另外有 ${notes.length} 個語詞沒有用到該課的生字（多半是課名裡的詞，不算錯）：`);
+  for (const n of notes) console.log('  ·', n);
+}
 for (const p of problems) console.log('  ✗', p);
 process.exit(problems.length ? 1 : 0);
