@@ -763,6 +763,7 @@
   .chip.add { color: var(--ink-faint); }
   .chip.sel small { background: var(--mint); color: #fff; }
   .hint.tight { margin-top: 8px; margin-bottom: 2px; }
+  .hint .dim { color: var(--ink-faint); }
 
   /* 測麥克風的音量條 */
   .meter { height: 14px; border-radius: 99px; background: var(--track); overflow: hidden; margin-top: 10px; }
@@ -1598,7 +1599,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 j';
+  var VERSION = '2026-08-20 k';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1940,7 +1941,7 @@
 
   /* ────────── 資料儲存 ────────── */
   var KEY = 'zh_v1';
-  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, lesson: 0, scope: 'only',
+  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, picked: [], scope: 'only',
               mode: 'smart', kind: 'all', bkind: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
@@ -2030,7 +2031,10 @@
     if (!Array.isArray(db.lastWrong)) db.lastWrong = [];
     if ([1, 2, 3, 4, 5, 6].indexOf(db.grade) < 0) db.grade = DEF.grade;
     if ([1, 2].indexOf(db.term) < 0) db.term = DEF.term;
-    if (typeof db.lesson !== 'number' || db.lesson < 0) db.lesson = 0;
+    // 舊版只能選一課，存的是數字，收成陣列
+    if (!Array.isArray(db.picked)) db.picked = typeof db.lesson === 'number' && db.lesson ? [db.lesson] : [];
+    delete db.lesson;
+    db.picked = db.picked.filter(function (n) { return typeof n === 'number' && n > 0; });
     if (['only', 'upto'].indexOf(db.scope) < 0) db.scope = DEF.scope;
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if ([0, 20, 30].indexOf(db.secs) < 0) db.secs = DEF.secs;
@@ -2461,7 +2465,8 @@
      累積複習則是從一上第 1 課一路到選到的這一課 */
   function scopeLessons(scope) {
     scope = scope || db.scope;
-    var end = lessonOrd(db.grade, db.term, db.lesson || 99);
+    var last = db.picked.length ? Math.max.apply(null, db.picked) : 99;
+    var end = lessonOrd(db.grade, db.term, last);
     if (scope === 'upto') {
       var out = [];
       Object.keys(VOLS).forEach(function (ord) {
@@ -2472,11 +2477,24 @@
       return out;
     }
     var list = lessonsOf(db.grade, db.term);
-    return db.lesson ? list.filter(function (L) { return L.k === db.lesson; }) : list;
+    if (!db.picked.length) return list;                       // 沒選就是整冊
+    return list.filter(function (L) { return db.picked.indexOf(L.k) >= 0; });
   }
-  // 換了年級或學期，原本選的第 N 課可能不存在了，收回「整冊」
+  // 6,7,8,9 → 「6～9」；連號縮起來，標題才不會爆掉
+  function lessonLabel(list) {
+    var a = list.slice().sort(function (x, y) { return x - y; }), out = [], i = 0;
+    while (i < a.length) {
+      var j = i;
+      while (j + 1 < a.length && a[j + 1] === a[j] + 1) j++;
+      out.push(j - i >= 2 ? a[i] + '～' + a[j] : a.slice(i, j + 1).join('、'));
+      i = j + 1;
+    }
+    return out.join('、');
+  }
+  // 換了年級或學期，原本選的課可能不存在了，超過的就拿掉
   function clampLesson() {
-    if (db.lesson > lessonCount(db.grade, db.term)) db.lesson = 0;
+    var n = lessonCount(db.grade, db.term);
+    db.picked = db.picked.filter(function (k) { return k <= n; });
   }
   // 資料不齊的字（自己貼進來的多半查不到部首筆畫）出不了題就先不放進來
   function usablePool() {
@@ -2489,7 +2507,7 @@
       return got.length === 1 ? got[0].name : '我的課本（' + got.length + ' 課）';
     }
     var here = shortVol(db.grade, db.term) +
-               (db.lesson ? ' 第' + db.lesson + '課' : ' 整冊');
+               (db.picked.length ? ' 第' + lessonLabel(db.picked) + '課' : ' 整冊');
     return (db.subject === 'bpmf' ? 'ㄅㄆㄇ ' : '') +
            (db.scope === 'upto' ? '一上～' + here : here);
   }
@@ -2504,10 +2522,17 @@
     box.innerHTML = '';
     function chip(n, label, cnt) {
       var b = document.createElement('button');
-      b.className = 'chip' + (db.subject === 'zi' && db.lesson === n ? ' sel' : '');
+      var on = db.subject === 'zi' && (n ? db.picked.indexOf(n) >= 0 : !db.picked.length);
+      b.className = 'chip' + (on ? ' sel' : '');
       b.innerHTML = '<b>' + label + '</b><small>' + cnt + ' 字</small>';
       b.addEventListener('click', function () {
-        db.subject = 'zi'; db.lesson = n; save(); syncSubject();
+        if (db.subject !== 'zi') { db.subject = 'zi'; db.picked = n ? [n] : []; }
+        else if (!n) db.picked = [];                       // 整冊 = 不挑課
+        else {
+          var i = db.picked.indexOf(n);
+          if (i >= 0) db.picked.splice(i, 1); else db.picked.push(n);
+        }
+        save(); syncSubject();
       });
       box.appendChild(b);
     }
@@ -2551,18 +2576,33 @@
       return;
     }
 
-    var L = db.lesson ? lessonAt(db.grade, db.term, db.lesson) : null;
     var note = $('lessonNote');
+    if (db.picked.length > 1) {
+      var got = scopeLessons('only');
+      var zi = 0, rc = 0, wd = 0, names = [];
+      got.forEach(function (x) {
+        zi += x.zi.length; rc += x.recog.length; wd += x.words.length;
+        names.push('第' + x.k + '課 ' + x.name);
+      });
+      note.innerHTML = '選了 ' + got.length + ' 課：' + zi + ' 個生字' +
+        (rc ? '、' + rc + ' 個認讀字' : '') + (wd ? '、' + wd + ' 個語詞' : '') +
+        '<br><span class="dim">' + esc(names.join('　')) + '</span>' +
+        '<br>再點一次可以取消，點「整冊」就是全部。';
+      return;
+    }
+    var L = db.picked.length ? lessonAt(db.grade, db.term, db.picked[0]) : null;
     if (L) {
       var bits = [L.zi.length + ' 個生字'];
       if (L.recog.length) bits.push(L.recog.length + ' 個認讀字');
       if (L.words.length) bits.push(L.words.length + ' 個語詞');
       note.innerHTML = '<b>' + esc(L.name) + '</b>　' + bits.join('、') +
+        '　—　可以再點別課一起練' +
         (L.recog.length ? '<br>認讀字是課本只要求「認得」、不要求會寫的字，' +
                           '所以不會考它們的部首和筆畫。' : '');
     } else {
       note.innerHTML = '康軒版 ' + shortVol(db.grade, db.term) + ' 一共 ' + list.length +
-        ' 課、' + all + ' 個字。課次和生字表來自教育部教育百科（114 學年度）。';
+        ' 課、' + all + ' 個字。<b>課次可以複選</b>（例如第6～9課一起練）。' +
+        '課次和生字表來自教育部教育百科（114 學年度）。';
     }
   }
 
@@ -2590,15 +2630,18 @@
   }
   function syncScopeHint() {
     var vol = shortVol(db.grade, db.term);
-    var here = db.lesson ? vol + ' 第' + db.lesson + '課' : vol + ' 整冊';
+    var here = db.picked.length ? vol + ' 第' + lessonLabel(db.picked) + '課' : vol + ' 整冊';
     var onlyBtn = document.querySelector('#scopes [data-scope="only"]');
     var uptoBtn = document.querySelector('#scopes [data-scope="upto"]');
     if (onlyBtn) {
-      onlyBtn.querySelector('b').textContent = db.lesson ? '只練這一課' : '只練這一冊';
+      onlyBtn.querySelector('b').textContent = !db.picked.length ? '只練這一冊'
+        : db.picked.length > 1 ? '只練選到的課' : '只練這一課';
       onlyBtn.querySelector('i').textContent = here + '　' + countOf('only') + ' 個字詞';
     }
     if (uptoBtn) {
-      uptoBtn.querySelector('i').textContent = '一上第1課 ～ ' + here + '　' + countOf('upto') + ' 個字詞';
+      var last = db.picked.length ? Math.max.apply(null, db.picked) : 0;
+      uptoBtn.querySelector('i').textContent = '一上第1課 ～ ' + vol +
+        (last ? ' 第' + last + '課' : ' 整冊') + '　' + countOf('upto') + ' 個字詞';
     }
   }
 
