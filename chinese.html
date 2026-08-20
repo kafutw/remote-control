@@ -1615,7 +1615,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 g';
+  var VERSION = '2026-08-20 h';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -2476,9 +2476,10 @@
 
   /* 這次要練哪幾課：選了第 N 課就只有那一課，沒選就是整冊；
      累積複習則是從一上第 1 課一路到選到的這一課 */
-  function scopeLessons() {
+  function scopeLessons(scope) {
+    scope = scope || db.scope;
     var end = lessonOrd(db.grade, db.term, db.lesson || 99);
-    if (db.scope === 'upto') {
+    if (scope === 'upto') {
       var out = [];
       Object.keys(VOLS).forEach(function (ord) {
         VOLS[ord].forEach(function (L) {
@@ -2561,6 +2562,28 @@
     });
   }
 
+  // 「只練這一課」和「累積複習」差在題庫多大，所以把字數直接寫在按鈕上
+  function countOf(scope) {
+    var n = 0;
+    scopeLessons(scope).forEach(function (L) {
+      n += L.zi.length + L.recog.length + L.words.length;
+    });
+    return n;
+  }
+  function syncScopeHint() {
+    var vol = shortVol(db.grade, db.term);
+    var here = db.lesson ? vol + ' 第' + db.lesson + '課' : vol + ' 整冊';
+    var onlyBtn = document.querySelector('#scopes [data-scope="only"]');
+    var uptoBtn = document.querySelector('#scopes [data-scope="upto"]');
+    if (onlyBtn) {
+      onlyBtn.querySelector('b').textContent = db.lesson ? '只練這一課' : '只練這一冊';
+      onlyBtn.querySelector('i').textContent = here + '　' + countOf('only') + ' 個字詞';
+    }
+    if (uptoBtn) {
+      uptoBtn.querySelector('i').textContent = '一上第1課 ～ ' + here + '　' + countOf('upto') + ' 個字詞';
+    }
+  }
+
   function syncSubject() {
     var mine = db.subject === 'mine';
     rebuildCustomWords();
@@ -2578,6 +2601,7 @@
       : '這次的題庫有 ' + n + ' 題材（生字＋語詞），都會練到，常錯的會多出現幾次。';
     syncStart();
     renderLessonChips();
+    if (!mine) syncScopeHint();
     renderLessons();
     refreshSetup();
   }
