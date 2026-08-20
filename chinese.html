@@ -1662,7 +1662,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 u';
+  var VERSION = '2026-08-20 v';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -2021,7 +2021,8 @@
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               nudgeAt: 0, noiseAt: 0.08, tone: 'auto', lastPeak: 0, micFail: '',
-              circle: {}, lessons: [], picks: [], dropped: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
+              circle: {}, day: null, medalDays: {},
+              lessons: [], picks: [], dropped: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 單一個字的熟練度只看最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
   // 一整課的獎牌跟九九乘法的「段」用同一套標準：最近 20 題、至少 5 題才給評價
@@ -2040,7 +2041,11 @@
     for (var i = 0; i < MEDALS.length; i++) if (MEDALS[i].icon === icon) return MEDALS[i].name;
     return '';
   }
-  var DAILY_MIN_RATE = 0.7;   // 今天任何一輪拿到銅牌（70%）就算有獎牌
+  /* 今天的獎牌跟每一課的獎牌、跟九九乘法的段用同一套想法：只看「最近一段」，
+     不是今天的總帳。累計平均會讓練越多的人越難維持，等於在罰認真練的小孩。 */
+  var DAY_WINDOW = 20;        // 今天最近這麼多題決定獎牌，更早的會淡出
+  var DAY_MIN = 10;           // 今天至少答這麼多題才評，免得一輪僥倖全對就金牌
+  var DAILY_MIN_RATE = 0.7;   // 舊紀錄換算「那天有沒有拿到獎牌」用的門檻
 
   var BREAK_MS = 5 * 60 * 1000;
   var IDLE_MS = 3 * 60 * 1000;
@@ -2137,6 +2142,19 @@
     if (!db.best || typeof db.best !== 'object') db.best = {};
     if (!db.circle || typeof db.circle !== 'object') db.circle = {};
     applyCircle();
+    if (!db.day || typeof db.day !== 'object' || !Array.isArray(db.day.hits)) db.day = blankDay();
+    if (typeof db.day.n !== 'number') db.day.n = db.day.hits.length;
+    if (typeof db.day.rank !== 'number') db.day.rank = 0;
+    if (!db.medalDays || typeof db.medalDays !== 'object') db.medalDays = {};
+    // 舊版是用「今天最好的一輪」算的，把以前的紀錄換算成「那天有拿到獎牌」，
+    // 不然改版之後累積的天數會歸零
+    if (!Object.keys(db.medalDays).length) {
+      db.runs.forEach(function (r) {
+        var tot = r.total || 10;
+        if (tot && r.correct / tot >= DAILY_MIN_RATE) db.medalDays[dayKey(r.t)] = 1;
+      });
+      if (Object.keys(db.medalDays).length) save();
+    }
   }
 
   function save() {
@@ -2465,7 +2483,30 @@
   var BPMF_KINDS = ['head', 'tail'];
   var picked = [];
 
+  function blankDay() { return { key: '', hits: [], n: 0, rank: 0 }; }
+  /* 今天答對率：只看最近 DAY_WINDOW 題。跨到隔天就整個重來。 */
+  function logDay(ok) {
+    var today = dayKey(Date.now());
+    if (db.day.key !== today) db.day = { key: today, hits: [], n: 0, rank: 0 };
+    db.day.hits.push(ok ? 1 : 0);
+    if (db.day.hits.length > DAY_WINDOW) db.day.hits = db.day.hits.slice(-DAY_WINDOW);
+    db.day.n++;
+    var st = dayStat();
+    if (st.n >= DAY_MIN) {
+      var m = medalFor(st.rate);
+      // 拿到就是拿到了，後面手感掉了也不收回去
+      if (m && m.rank > db.day.rank) { db.day.rank = m.rank; db.medalDays[today] = m.rank; }
+    }
+  }
+  function dayStat() {
+    if (db.day.key !== dayKey(Date.now())) return { n: 0, win: 0, rate: 0 };
+    var h = db.day.hits;
+    var ok = h.reduce(function (a, b) { return a + b; }, 0);
+    return { n: db.day.n, win: h.length, rate: h.length ? ok / h.length : 0 };
+  }
+
   function logRecent(c, ok) {
+    logDay(ok);
     var r = db.recent[c] || (db.recent[c] = []);
     r.push(ok ? 1 : 0);
     if (r.length > WINDOW) db.recent[c] = r.slice(-WINDOW);
@@ -2570,21 +2611,7 @@
     return '';
   }
 
-  function goalHitToday() {
-    var today = dayKey(Date.now());
-    return db.runs.some(function (r) {
-      var tot = r.total || 10;
-      return dayKey(r.t) === today && tot && r.correct / tot >= DAILY_MIN_RATE;
-    });
-  }
-  function goalDays() {
-    var days = {};
-    db.runs.forEach(function (r) {
-      var tot = r.total || 10;
-      if (tot && r.correct / tot >= DAILY_MIN_RATE) days[dayKey(r.t)] = 1;
-    });
-    return Object.keys(days).length;
-  }
+  function goalDays() { return Object.keys(db.medalDays).length; }
 
   function syncStart() {
     $('startBtn').textContent = '開始測驗（' + db.count + ' 題）🚀';
@@ -4181,7 +4208,7 @@
       var row = document.createElement('div');
       row.className = 'dayrow';
       var d = k.split('-');
-      var hit = list.some(function (r) { return r.correct / (r.total || 10) >= DAILY_MIN_RATE; });
+      var hit = !!db.medalDays[k];
       var sess = list.map(function (r) {
         var tot = r.total || 10;
         var ok = r.correct / tot >= DAILY_MIN_RATE;
@@ -4391,42 +4418,57 @@
   /* ────────── 啟動 ────────── */
   document.documentElement.style.setProperty('--reveal', (REVEAL_MS / 1000) + 's');
 
-  // 今天最好的一輪拿到什麼獎牌，右邊標答對率
   function medalFor(rate) {
     for (var i = 0; i < MEDALS.length; i++) if (rate >= MEDALS[i].at) return MEDALS[i];
     return null;
   }
+  function medalByRank(rank) {
+    for (var i = 0; i < MEDALS.length; i++) if (MEDALS[i].rank === rank) return MEDALS[i];
+    return null;
+  }
+  /* 今天的獎牌：看今天最近 DAY_WINDOW 題的答對率（至少 DAY_MIN 題才評）。
+     用滾動視窗而不是今天的總帳，練越多以前的錯就越淡出，不會因為多練反而被拉低；
+     而且今天拿到過的獎牌不收回去。 */
   function renderGoal() {
     var el = $('goal');
-    var today = dayKey(Date.now());
-    var todayRuns = db.runs.filter(function (r) { return dayKey(r.t) === today; });
-    if (!todayRuns.length) { el.hidden = true; return; }
+    var st = dayStat();
+    if (!st.n) { el.hidden = true; return; }
     el.hidden = false;
 
-    var best = Math.max.apply(null, todayRuns.map(function (r) {
-      return r.correct / (r.total || 10);
-    }));
-    var pct = Math.round(best * 100);
-    var got = medalFor(best);
+    var pct = Math.round(st.rate * 100);
+    var enough = st.n >= DAY_MIN;
+    var now = enough ? medalFor(st.rate) : null;
+    var got = medalByRank(Math.max(db.day.rank, now ? now.rank : 0));
     var days = goalDays();
     el.className = 'goal' + (got ? '' : ' todo');
 
     var line, sub;
-    if (got && got.rank === 3) {
+    // 拿到的獎牌比現在的手感好，表示是稍早拿到的 —— 講清楚不會被收回去，
+    // 不然畫面上掛著金牌、右邊寫 60% 會看不懂
+    var slipped = got && (!now || now.rank < got.rank);
+    if (!enough) {
+      line = '今天還在累積';
+      sub = '今天已經答 ' + st.n + ' 題，再 ' + (DAY_MIN - st.n) + ' 題就評獎牌';
+    } else if (slipped) {
+      line = '今天拿到過' + got.name + '！';
+      sub = '拿到就算數，不會收回去。右邊是最近 ' + DAY_WINDOW + ' 題的狀況';
+    } else if (got && got.rank === 3) {
       line = '今天拿到' + got.name + '！';
-      sub = '最高的獎牌就是這個，太厲害了' + (days ? '　・　已經拿過 ' + days + ' 天獎牌' : '');
+      sub = '最高的獎牌就是這個，太厲害了';
     } else {
       var next = null;
       for (var i = MEDALS.length - 1; i >= 0; i--) {
-        if (best < MEDALS[i].at) { next = MEDALS[i]; break; }
+        if (!got || MEDALS[i].rank > got.rank) { next = MEDALS[i]; break; }
       }
       line = got ? '今天拿到' + got.name + '！' : '今天還沒拿到獎牌';
       sub = next ? '再答對到 ' + Math.round(next.at * 100) + '% 就是' + next.name + ' ' + next.icon : '';
-      if (days) sub += (sub ? '　・　' : '') + '已經拿過 ' + days + ' 天獎牌';
     }
+    if (days) sub += (sub ? '　・　' : '') + '已經拿過 ' + days + ' 天獎牌';
     el.innerHTML = '<span class="star">' + (got ? got.icon : '🎯') + '</span>' +
       '<span class="txt">' + line + '<small>' + sub + '</small></span>' +
-      '<span class="pct">' + pct + '%<small>今天最好</small></span>';
+      '<span class="pct">' + pct + '%<small>' +
+      (st.win < DAY_WINDOW ? '今天 ' + st.win + ' 題' : '最近 ' + DAY_WINDOW + ' 題') +
+      '</small></span>';
   }
 
   // 上次答錯的字裡，屬於現在這個題庫的才拿來複習
