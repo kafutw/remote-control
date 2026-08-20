@@ -716,6 +716,34 @@
     .tiles.grades .tile { padding: 12px 0 10px; }
   }
 
+  /* 上下學期：做成一根左右切換的開關，跟上面的年級方塊、
+     下面的課次標籤三層各長一個樣子，一眼看得出是不同層 */
+  .switch {
+    display: flex; margin-top: 14px; padding: 4px; gap: 4px;
+    background: var(--bg); border: 2px solid var(--line); border-radius: 99px;
+  }
+  .sw {
+    flex: 1; font-family: inherit; cursor: pointer; color: var(--ink-soft);
+    background: none; border: none; border-radius: 99px; padding: 11px 6px;
+    font-size: var(--fs-body); font-weight: 800; transition: all .16s;
+  }
+  .sw:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
+  .sw.sel { background: var(--key); color: #FFF6F0; box-shadow: var(--shadow); }
+
+  /* 課次：小標籤，排不下就換行 */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: inherit; cursor: pointer; color: var(--ink-soft);
+    background: var(--bg); border: 1.5px dashed var(--line); border-radius: 12px;
+    padding: 8px 13px; font-size: var(--fs-note); font-weight: 800;
+    transition: all .14s; white-space: nowrap;
+  }
+  .chip:active { transform: translateY(1px); }
+  .chip:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
+  .chip.sel { border-style: solid; border-color: var(--mint); background: var(--mint-soft); color: var(--mint-ink); }
+  .chip small { font-weight: 700; opacity: .7; margin-left: 5px; }
+  .hint.tight { margin-top: 8px; margin-bottom: 2px; }
+
   /* 我的課本：一課一張卡，點一下選起來，可以複選 */
   .lessons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .lesson {
@@ -783,14 +811,16 @@
           <button class="tile" data-grade="5"><b>五</b><i>年級</i></button>
           <button class="tile" data-grade="6"><b>六</b><i>年級</i></button>
         </div>
-        <div class="modes three" id="terms">
-          <button class="mode sel" data-term="1"><b>上學期</b><i>前半年</i></button>
-          <button class="mode" data-term="2"><b>下學期</b><i>後半年</i></button>
-          <button class="mode" data-term="0"><b>整個學年</b><i>兩學期一起</i></button>
+        <div class="switch" id="terms">
+          <button class="sw sel" data-term="1">上學期</button>
+          <button class="sw" data-term="2">下學期</button>
         </div>
+        <div class="sub-h">第幾課？</div>
+        <div class="chips" id="lessonChips"></div>
+        <p class="hint tight" id="lessonNote"></p>
         <div class="modes" id="scopes">
-          <button class="mode sel" data-scope="only"><b>只練這一冊</b><i>這學期教的字</i></button>
-          <button class="mode" data-scope="upto"><b>累積複習</b><i>一年級上學期到這裡</i></button>
+          <button class="mode sel" data-scope="only"><b>只練這裡</b><i>選到的那一課</i></button>
+          <button class="mode" data-scope="upto"><b>累積複習</b><i>從一上第 1 課到這裡</i></button>
         </div>
       </div>
 
@@ -1312,7 +1342,7 @@
   var COMMON_RADS = '人口木水火土心手日月言金田目艸竹糸貝力刀女宀辵足走衣示玉頁見'.split('');
 
   /* ────────── 把生字表展開 ────────── */
-  var ZI = [], ZMAP = {}, BPMF = {}, ALL = [];
+  var ZI = [], ZMAP = {}, BPMF = {}, ALL = [], VOLS = {};
   Object.keys(BANK).forEach(function (g) {
     var term = 1;                                   // 碰到分隔線之後就是下學期
     BANK[g].forEach(function (line) {
@@ -1325,6 +1355,24 @@
   });
   // 一上排第 1、一下第 2、二上第 3……累積複習時用這個比大小
   function volOrd(g, t) { return (g - 1) * 2 + t; }
+
+  /* 一冊再切成幾課：康軒一課大約 8 個生字，就照這個大小平均切。
+     ⚠️ 切出來的「第幾課」是照字表順序分的，不等於康軒課本的第幾課
+     （課本的課次抓不到，見 README）。要對到課本請用「我的課本」。 */
+  var PER_LESSON = 8;
+  ZI.forEach(function (x) {
+    var key = volOrd(x.g, x.t);
+    (VOLS[key] || (VOLS[key] = [])).push(x);
+  });
+  Object.keys(VOLS).forEach(function (key) {
+    var list = VOLS[key], n = list.length;
+    var k = Math.max(3, Math.round(n / PER_LESSON));
+    list.forEach(function (x, i) { x.k = Math.floor(i * k / n) + 1; });
+    VOLS[key].lessons = k;
+  });
+  function lessonCount(g, t) { return (VOLS[volOrd(g, t)] || {}).lessons || 0; }
+  // 一冊裡的第幾課，排成一條可以比大小的號碼
+  function lessonOrd(g, t, k) { return volOrd(g, t) * 100 + (k || 99); }
   Object.keys(EXTRA).forEach(function (c) { if (!BPMF[c]) BPMF[c] = EXTRA[c]; });
 
   // 自己貼進來的字可能查不到資料，給一個空殼，題型會自動避開查不到的那幾種
@@ -1377,7 +1425,7 @@
 
   /* ────────── 資料儲存 ────────── */
   var KEY = 'zh_v1';
-  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, scope: 'only',
+  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, lesson: 0, scope: 'only',
               mode: 'smart', kind: 'all', bkind: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0, nudgeAt: 5, tone: 'soft',
@@ -1437,7 +1485,8 @@
     if (!Array.isArray(db.lastWrong)) db.lastWrong = [];
     if (['zi', 'bpmf', 'mine'].indexOf(db.subject) < 0) db.subject = DEF.subject;
     if ([1, 2, 3, 4, 5, 6].indexOf(db.grade) < 0) db.grade = DEF.grade;
-    if ([0, 1, 2].indexOf(db.term) < 0) db.term = DEF.term;
+    if ([1, 2].indexOf(db.term) < 0) db.term = DEF.term;
+    if (typeof db.lesson !== 'number' || db.lesson < 0) db.lesson = 0;
     if (['only', 'upto'].indexOf(db.scope) < 0) db.scope = DEF.scope;
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if ([0, 20, 30].indexOf(db.secs) < 0) db.secs = DEF.secs;
@@ -1813,9 +1862,9 @@
 
   function segment(boxId, apply) {
     var box = $(boxId);
-    box.querySelectorAll('.mode, .tile').forEach(function (m) {
+    box.querySelectorAll('.mode, .tile, .sw').forEach(function (m) {
       m.addEventListener('click', function () {
-        box.querySelectorAll('.mode, .tile').forEach(function (x) { x.classList.remove('sel'); });
+        box.querySelectorAll('.mode, .tile, .sw').forEach(function (x) { x.classList.remove('sel'); });
         m.classList.add('sel');
         apply(m); save();
       });
@@ -1826,8 +1875,8 @@
   segment('modes', function (m) { db.mode = m.dataset.mode; });
   segment('kinds', function (m) { db.kind = m.dataset.kind; syncSubject(); });
   segment('bkinds', function (m) { db.bkind = m.dataset.bkind; syncSubject(); });
-  segment('grades', function (m) { db.grade = Number(m.dataset.grade); syncSubject(); });
-  segment('terms', function (m) { db.term = Number(m.dataset.term); syncSubject(); });
+  segment('grades', function (m) { db.grade = Number(m.dataset.grade); clampLesson(); syncSubject(); });
+  segment('terms', function (m) { db.term = Number(m.dataset.term); clampLesson(); syncSubject(); });
   segment('scopes', function (m) { db.scope = m.dataset.scope; syncSubject(); });
   segment('subjects', function (m) { db.subject = m.dataset.subject; syncSubject(); });
 
@@ -1841,12 +1890,17 @@
       });
       return out;
     }
-    var end = volOrd(db.grade, db.term || 2);       // 選「整個學年」時，累積算到下學期為止
+    var vol = volOrd(db.grade, db.term);
+    var end = lessonOrd(db.grade, db.term, db.lesson || 99);
     return ZI.filter(function (x) {
-      var o = volOrd(x.g, x.t);
-      if (db.scope === 'upto') return o <= end;
-      return db.term ? o === end : x.g === db.grade;
+      if (db.scope === 'upto') return lessonOrd(x.g, x.t, x.k) <= end;
+      if (volOrd(x.g, x.t) !== vol) return false;
+      return db.lesson ? x.k === db.lesson : true;   // 沒選課就是整冊
     }).map(function (x) { return x.c; });
+  }
+  // 換了年級或學期，原本選的第 N 課可能不存在了，收回「整冊」
+  function clampLesson() {
+    if (db.lesson > lessonCount(db.grade, db.term)) db.lesson = 0;
   }
   // 資料不齊的字（自己貼進來的多半查不到部首筆畫）出不了題就先不放進來
   function usablePool() {
@@ -1858,9 +1912,34 @@
       if (!got.length) return '我的課本';
       return got.length === 1 ? got[0].name : '我的課本（' + got.length + ' 課）';
     }
-    var here = volName(db.grade, db.term);
+    var here = shortVol(db.grade, db.term) + (db.lesson ? ' 第 ' + db.lesson + ' 課' : ' 整冊');
     return (db.subject === 'bpmf' ? 'ㄅㄆㄇ ' : '') +
-           (db.scope === 'upto' ? '一年級上學期～' + here : here);
+           (db.scope === 'upto' ? '一上～' + here : here);
+  }
+  function shortVol(g, t) { return '一二三四五六'.charAt(g - 1) + (t === 1 ? '上' : '下'); }
+
+  /* 課次標籤：這一冊有幾課就排幾個，另外給一個「整冊」 */
+  function renderLessonChips() {
+    var box = $('lessonChips');
+    if (!box) return;
+    var k = lessonCount(db.grade, db.term);
+    box.innerHTML = '';
+    function chip(n, label) {
+      var b = document.createElement('button');
+      b.className = 'chip' + (db.lesson === n ? ' sel' : '');
+      var cnt = ZI.filter(function (x) {
+        return x.g === db.grade && x.t === db.term && (!n || x.k === n);
+      }).length;
+      b.innerHTML = label + '<small>' + cnt + ' 字</small>';
+      b.addEventListener('click', function () {
+        db.lesson = n; save(); syncSubject();
+      });
+      box.appendChild(b);
+    }
+    chip(0, '整冊');
+    for (var i = 1; i <= k; i++) chip(i, '第 ' + i + ' 課');
+    $('lessonNote').textContent = '這裡的第幾課是照字表順序平均切的，' +
+      '不是康軒課本的課次。要跟課本的課對起來，用上面的「✏️ 我的課本」自己建課。';
   }
 
   function syncSubject() {
@@ -1877,6 +1956,7 @@
       ? '還沒有選到任何字。新增一課、或點一下上面的課，選起來才能開始。'
       : '這次的題庫有 ' + n + ' 個字，都會練到，常錯的會多出現幾次。';
     syncStart();
+    renderLessonChips();
     renderLessons();
     refreshSetup();
   }
@@ -3199,7 +3279,7 @@
    ['rights', 'right', 0], ['limits', 'limit', 1], ['nudges', 'nudge', 1],
    ['tones', 'tone', 0]].forEach(function (x) {
     var key = { right: 'sayOnRight', limit: 'limitMin', nudge: 'nudgeAt' }[x[1]] || x[1];
-    document.querySelectorAll('#' + x[0] + ' .mode, #' + x[0] + ' .tile').forEach(function (m) {
+    document.querySelectorAll('#' + x[0] + ' .mode, #' + x[0] + ' .tile, #' + x[0] + ' .sw').forEach(function (m) {
       var v = m.dataset[x[1]];
       m.classList.toggle('sel', (x[2] ? Number(v) : v) === db[key]);
     });
