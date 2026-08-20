@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>看注音寫字 — 試做</title>
+<meta name="theme-color" content="#FDF6EC">
+<style>
+  :root {
+    --bg:#FDF6EC; --surface:#fff; --track:#F3E3CC; --ink:#40352B; --ink-soft:#8A7660;
+    --ink-faint:#BCA893; --line:#F0E2CD; --key:#D9603C; --key-deep:#B24322; --key-soft:#FDEAE2;
+    --mint:#35BE96; --mint-ink:#1E9C79; --mint-soft:#E1F7F0;
+    --coral:#F2705C; --coral-ink:#D64B36; --coral-soft:#FFE9E5;
+    --amber:#E9A317; --amber-soft:#FFF2DA;
+    --shadow:0 1px 2px rgba(180,120,40,.06), 0 8px 22px rgba(180,120,40,.10);
+    --font:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    --abc:"BiauKai","DFKai-SB","標楷體","Kaiti TC","楷體-繁","KaiTi","PingFang TC",sans-serif;
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); }
+  body { padding:16px 16px 40px; max-width:520px; margin:0 auto; }
+  h1 { font-size:1.5rem; margin:6px 0 2px; }
+  .sub { color:var(--ink-soft); font-size:.8125rem; margin:0 0 16px; line-height:1.6; }
+  .card { background:var(--surface); border-radius:20px; padding:18px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .q { text-align:center; }
+  .q .bpmf { font-family:var(--abc); font-size:2.5rem; font-weight:700; letter-spacing:.1em; color:var(--key); }
+  .q .word { font-family:var(--abc); font-size:2rem; font-weight:700; margin-top:6px; }
+  .q .word u { text-decoration:none; color:var(--ink-faint); border-bottom:4px solid var(--key); padding:0 .18em; }
+  .q .hint { color:var(--ink-soft); font-size:.8125rem; margin-top:8px; }
+  .padwrap { display:flex; justify-content:center; margin:16px 0 10px; }
+  .pad { position:relative; width:280px; height:280px; border-radius:18px;
+         background:var(--surface); border:2px solid var(--line); touch-action:none; }
+  .pad canvas { position:absolute; inset:0; width:100%; height:100%; border-radius:16px; }
+  .pad .ghost { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                font-family:var(--abc); font-size:230px; line-height:1; color:rgba(64,53,43,.12);
+                pointer-events:none; user-select:none; }
+  .pad .ghost.off { display:none; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .tools { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .tools .btn { padding:12px 6px; }
+  .btn { font-family:inherit; font-size:.9375rem; font-weight:800; cursor:pointer;
+         border-radius:999px; padding:12px 18px; border:2px solid var(--line);
+         background:var(--surface); color:var(--ink); }
+  .btn:active { transform:translateY(1px); }
+  .btn.primary { background:var(--key); color:#fff; border-color:var(--key); }
+  .btn.grow { flex:1; min-width:120px; }
+  .btn[disabled] { opacity:.4; cursor:default; }
+  .modes { display:flex; gap:8px; margin-bottom:14px; }
+  .mode { flex:1; font-family:inherit; cursor:pointer; text-align:center;
+          background:var(--surface); border:2px solid var(--line); border-radius:16px; padding:12px 8px; }
+  .mode b { display:block; font-size:.9375rem; font-weight:800; }
+  .mode i { display:block; font-style:normal; font-size:.75rem; color:var(--ink-soft); margin-top:3px; }
+  .mode.sel { border-color:var(--key); background:var(--key-soft); }
+  .mode.sel b, .mode.sel i { color:var(--key-deep); }
+  .verdict { text-align:center; margin-top:14px; }
+  .compare { display:flex; gap:14px; justify-content:center; align-items:flex-end; margin:10px 0 4px; }
+  .compare figure { margin:0; text-align:center; }
+  .compare figcaption { font-size:.75rem; color:var(--ink-soft); margin-top:6px; font-weight:800; }
+  .compare .box { width:130px; height:130px; border:2px solid var(--line); border-radius:14px;
+                  background:var(--surface); display:flex; align-items:center; justify-content:center;
+                  font-family:var(--abc); font-size:104px; line-height:1; }
+  .compare .box canvas { width:100%; height:100%; }
+  .note { font-size:.8125rem; color:var(--ink-soft); line-height:1.7; margin-top:10px; }
+  .ok { color:var(--mint-ink); font-weight:800; }
+  .no { color:var(--coral-ink); font-weight:800; }
+  .stroke-n { text-align:center; font-size:.8125rem; color:var(--ink-soft); margin-top:8px; font-weight:800; }
+</style>
+</head>
+<body>
+
+<h1>看注音寫字</h1>
+<p class="sub">試做版。用手指在格子裡寫，兩種判斷方式都做了，可以比比看哪個好用。<br>
+  這一頁不會存任何東西，只是給你試手感。</p>
+
+<div class="modes" id="modes">
+  <button class="mode sel" data-mode="self"><b>自己對答案</b><i>寫完跟課本的字比一比</i></button>
+  <button class="mode" data-mode="stroke"><b>逐筆看筆順</b><i>一筆一筆對，錯了會說</i></button>
+</div>
+
+<div class="card q">
+  <div class="bpmf" id="bpmf"></div>
+  <div class="word" id="word"></div>
+  <div class="hint" id="qhint"></div>
+</div>
+
+<div class="card">
+  <div class="padwrap">
+    <div class="pad" id="pad">
+      <canvas id="grid"></canvas>
+      <div class="ghost off" id="ghost"></div>
+      <canvas id="ink"></canvas>
+    </div>
+  </div>
+  <div class="stroke-n" id="strokeN"></div>
+  <div class="tools">
+    <button class="btn" id="undoBtn">↩︎ 上一筆</button>
+    <button class="btn" id="clearBtn">🧽 清掉重寫</button>
+    <button class="btn" id="ghostBtn">✍️ 描紅</button>
+    <button class="btn" id="showBtn">👀 看筆順</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="btn primary grow" id="doneBtn">我寫好了</button>
+  </div>
+  <div class="verdict" id="verdict"></div>
+</div>
+
+<div class="row">
+  <button class="btn grow" id="nextBtn">換一題 →</button>
+</div>
+
+<p class="note">
+  <b>自己對答案</b>：寫完按「我寫好了」，你寫的和課本的字擺在一起，自己判對錯。不需要任何額外資料。<br>
+  <b>逐筆看筆順</b>：每寫一筆就跟正確的筆順比對（起筆位置、收筆位置、方向），順序錯或位置差太多會退回去重寫那一筆。這個需要每個字的筆順資料。
+</p>
+
+<script>
+var STROKES = {"上":[[[0.44,0.12],[0.45,0.12],[0.49,0.16],[0.48,0.72],[0.46,0.75]],[[0.52,0.44],[0.54,0.43],[0.61,0.42],[0.68,0.4],[0.75,0.39]],[[0.13,0.79],[0.17,0.8],[0.21,0.81],[0.45,0.78],[0.82,0.75],[0.91,0.78]]],"下":[[[0.11,0.21],[0.14,0.23],[0.18,0.23],[0.43,0.19],[0.79,0.15],[0.85,0.16],[0.88,0.17],[0.9,0.19]],[[0.48,0.21],[0.5,0.24],[0.51,0.41],[0.5,0.88]],[[0.54,0.37],[0.55,0.39],[0.63,0.42],[0.69,0.46],[0.71,0.48],[0.73,0.51]]],"也":[[[0.08,0.58],[0.13,0.58],[0.16,0.57],[0.41,0.46],[0.65,0.34],[0.67,0.34],[0.7,0.35],[0.66,0.51],[0.64,0.58],[0.62,0.6],[0.61,0.62],[0.6,0.61],[0.57,0.61],[0.52,0.57]],[[0.43,0.09],[0.45,0.1],[0.47,0.13],[0.48,0.17],[0.47,0.39],[0.44,0.66]],[[0.25,0.35],[0.27,0.36],[0.3,0.4],[0.29,0.58],[0.3,0.71],[0.31,0.74],[0.33,0.76],[0.38,0.79],[0.47,0.81],[0.57,0.82],[0.74,0.82],[0.83,0.8],[0.88,0.77],[0.88,0.59]]],"他":[[[0.29,0.1],[0.31,0.12],[0.33,0.15],[0.3,0.22],[0.2,0.39],[0.13,0.48],[0.08,0.53]],[[0.24,0.37],[0.26,0.45],[0.26,0.59],[0.25,0.78],[0.25,0.83]],[[0.32,0.5],[0.37,0.5],[0.42,0.48],[0.74,0.32],[0.76,0.32],[0.79,0.33],[0.75,0.48],[0.72,0.56],[0.7,0.58],[0.66,0.56],[0.63,0.53]],[[0.55,0.12],[0.57,0.13],[0.59,0.16],[0.59,0.34],[0.56,0.63]],[[0.41,0.33],[0.43,0.35],[0.45,0.38],[0.43,0.52],[0.43,0.62],[0.44,0.67],[0.46,0.71],[0.5,0.74],[0.59,0.76],[0.69,0.76],[0.8,0.76],[0.87,0.73],[0.89,0.72],[0.91,0.56]]],"你":[[[0.31,0.09],[0.33,0.11],[0.34,0.14],[0.3,0.23],[0.24,0.32],[0.18,0.41],[0.09,0.5],[0.07,0.52]],[[0.27,0.33],[0.27,0.37],[0.28,0.4],[0.28,0.45],[0.27,0.64],[0.25,0.76],[0.25,0.84]],[[0.54,0.07],[0.56,0.08],[0.58,0.11],[0.57,0.15],[0.53,0.25],[0.47,0.36],[0.42,0.44],[0.4,0.46]],[[0.5,0.36],[0.69,0.31],[0.78,0.3],[0.79,0.31],[0.81,0.33],[0.78,0.37],[0.73,0.43]],[[0.57,0.43],[0.6,0.45],[0.62,0.48],[0.61,0.81],[0.6,0.84],[0.59,0.85],[0.54,0.83],[0.48,0.8]],[[0.44,0.57],[0.43,0.64],[0.39,0.73]],[[0.72,0.56],[0.79,0.62],[0.84,0.67],[0.85,0.69],[0.86,0.73]]],"右":[[[0.14,0.38],[0.2,0.39],[0.38,0.36],[0.79,0.31],[0.85,0.31],[0.9,0.32]],[[0.46,0.11],[0.5,0.15],[0.49,0.25],[0.46,0.34],[0.39,0.49],[0.31,0.6],[0.26,0.67],[0.15,0.76],[0.06,0.82]],[[0.37,0.58],[0.41,0.87]],[[0.41,0.61],[0.42,0.6],[0.52,0.58],[0.64,0.55],[0.66,0.55],[0.69,0.55],[0.72,0.59],[0.68,0.73],[0.66,0.75]],[[0.44,0.83],[0.45,0.81],[0.65,0.78],[0.7,0.78],[0.73,0.78]]],"地":[[[0.12,0.48],[0.17,0.47],[0.31,0.42],[0.37,0.42]],[[0.21,0.18],[0.26,0.22],[0.27,0.24],[0.26,0.64],[0.24,0.67]],[[0.09,0.74],[0.14,0.75],[0.38,0.62]],[[0.33,0.54],[0.39,0.54],[0.59,0.43],[0.71,0.36],[0.76,0.35],[0.78,0.36],[0.77,0.45],[0.74,0.6],[0.72,0.62],[0.71,0.62],[0.64,0.58]],[[0.56,0.09],[0.58,0.1],[0.6,0.13],[0.6,0.17],[0.6,0.39],[0.57,0.65]],[[0.42,0.32],[0.44,0.34],[0.45,0.36],[0.44,0.57],[0.45,0.67],[0.48,0.73],[0.54,0.77],[0.62,0.8],[0.68,0.81],[0.78,0.8],[0.86,0.77],[0.91,0.73],[0.91,0.55]]],"山":[[[0.46,0.15],[0.51,0.2],[0.5,0.65],[0.48,0.68]],[[0.19,0.49],[0.21,0.51],[0.23,0.55],[0.24,0.62],[0.23,0.76],[0.28,0.75],[0.37,0.73],[0.56,0.69],[0.69,0.67],[0.75,0.66],[0.77,0.65]],[[0.79,0.4],[0.81,0.41],[0.83,0.46],[0.78,0.82]]],"左":[[[0.26,0.35],[0.28,0.36],[0.35,0.36],[0.51,0.34],[0.68,0.3],[0.74,0.3]],[[0.46,0.07],[0.51,0.12],[0.5,0.19],[0.48,0.3],[0.41,0.47],[0.35,0.57],[0.27,0.67],[0.18,0.76],[0.07,0.84]],[[0.4,0.57],[0.42,0.57],[0.49,0.57],[0.68,0.54],[0.72,0.54]],[[0.52,0.59],[0.55,0.62],[0.54,0.77],[0.52,0.78]],[[0.28,0.83],[0.33,0.84],[0.5,0.81],[0.77,0.79],[0.81,0.8],[0.86,0.81]]],"手":[[[0.68,0.12],[0.61,0.1],[0.49,0.15],[0.38,0.19],[0.31,0.21]],[[0.31,0.33],[0.38,0.33],[0.5,0.31],[0.64,0.28],[0.68,0.28]],[[0.11,0.53],[0.16,0.54],[0.39,0.5],[0.81,0.45],[0.85,0.46],[0.9,0.48]],[[0.46,0.19],[0.5,0.21],[0.53,0.36],[0.54,0.6],[0.54,0.7],[0.54,0.77],[0.51,0.83],[0.48,0.86],[0.36,0.8]]],"拍":[[[0.14,0.35],[0.17,0.35],[0.2,0.35],[0.36,0.3],[0.42,0.29]],[[0.29,0.08],[0.3,0.09],[0.33,0.12],[0.32,0.26],[0.32,0.76],[0.32,0.79],[0.3,0.82],[0.19,0.78],[0.19,0.77],[0.18,0.77]],[[0.06,0.64],[0.11,0.65],[0.4,0.44]],[[0.62,0.14],[0.64,0.14],[0.66,0.17],[0.62,0.27],[0.56,0.38],[0.55,0.39]],[[0.46,0.39],[0.49,0.42],[0.5,0.45],[0.51,0.7],[0.53,0.78]],[[0.51,0.4],[0.54,0.41],[0.77,0.37],[0.8,0.38],[0.82,0.4],[0.8,0.67],[0.79,0.71],[0.77,0.75],[0.78,0.81]],[[0.54,0.58],[0.57,0.57],[0.67,0.55],[0.72,0.55]],[[0.55,0.75],[0.56,0.74],[0.58,0.73],[0.74,0.71],[0.75,0.71]]],"日":[[[0.28,0.21],[0.31,0.25],[0.32,0.28],[0.32,0.38],[0.32,0.62],[0.29,0.75],[0.29,0.81]],[[0.35,0.23],[0.37,0.25],[0.38,0.24],[0.62,0.19],[0.65,0.21],[0.67,0.23],[0.68,0.44],[0.68,0.72],[0.67,0.78],[0.67,0.84]],[[0.35,0.48],[0.36,0.48],[0.39,0.48],[0.52,0.46],[0.57,0.46]],[[0.33,0.78],[0.35,0.76],[0.42,0.75],[0.57,0.74],[0.62,0.74]]],"月":[[[0.33,0.12],[0.37,0.15],[0.38,0.21],[0.38,0.39],[0.36,0.54],[0.33,0.63],[0.29,0.71],[0.23,0.79],[0.18,0.84],[0.14,0.86]],[[0.41,0.13],[0.42,0.14],[0.49,0.13],[0.62,0.1],[0.65,0.12],[0.67,0.14],[0.67,0.59],[0.67,0.79],[0.65,0.82],[0.62,0.82],[0.53,0.78]],[[0.41,0.35],[0.42,0.34],[0.52,0.33],[0.57,0.33]],[[0.39,0.52],[0.4,0.51],[0.52,0.49],[0.57,0.5]]],"朵":[[[0.35,0.12],[0.38,0.15],[0.39,0.17],[0.38,0.23],[0.37,0.3],[0.33,0.37],[0.3,0.41],[0.26,0.43]],[[0.41,0.13],[0.43,0.14],[0.57,0.1],[0.59,0.11],[0.6,0.13],[0.58,0.2],[0.57,0.3],[0.58,0.34],[0.61,0.37],[0.64,0.38],[0.69,0.38],[0.76,0.37],[0.79,0.36],[0.83,0.37]],[[0.15,0.55],[0.2,0.56],[0.38,0.53],[0.75,0.5],[0.8,0.5],[0.86,0.51]],[[0.46,0.41],[0.47,0.41],[0.49,0.44],[0.49,0.71],[0.48,0.85],[0.5,0.93]],[[0.46,0.55],[0.45,0.56],[0.44,0.59],[0.34,0.7],[0.23,0.78],[0.13,0.83]],[[0.52,0.55],[0.53,0.57],[0.58,0.63],[0.68,0.72],[0.76,0.78],[0.94,0.8]]],"水":[[[0.46,0.08],[0.49,0.1],[0.51,0.13],[0.5,0.43],[0.5,0.79],[0.47,0.84],[0.43,0.82],[0.36,0.79],[0.36,0.78],[0.35,0.78]],[[0.14,0.4],[0.2,0.41],[0.35,0.38],[0.37,0.39],[0.38,0.4],[0.38,0.43],[0.34,0.5],[0.27,0.62],[0.18,0.72],[0.11,0.77]],[[0.72,0.21],[0.73,0.22],[0.75,0.26],[0.7,0.31],[0.58,0.43],[0.58,0.44]],[[0.53,0.39],[0.54,0.42],[0.6,0.5],[0.71,0.61],[0.76,0.66],[0.8,0.68],[0.97,0.7]]],"火":[[[0.21,0.36],[0.29,0.45],[0.31,0.5]],[[0.7,0.28],[0.72,0.3],[0.73,0.32],[0.68,0.37],[0.57,0.46]],[[0.43,0.12],[0.46,0.14],[0.49,0.16],[0.49,0.18],[0.48,0.45],[0.46,0.57],[0.45,0.61],[0.41,0.69],[0.36,0.74],[0.27,0.8],[0.17,0.84]],[[0.5,0.51],[0.51,0.55],[0.59,0.66],[0.67,0.75],[0.73,0.8],[0.75,0.82],[0.91,0.85]]],"花":[[[0.16,0.25],[0.21,0.26],[0.47,0.22],[0.73,0.2],[0.79,0.21],[0.83,0.22]],[[0.32,0.12],[0.36,0.15],[0.4,0.33]],[[0.59,0.06],[0.6,0.07],[0.63,0.11],[0.59,0.24],[0.55,0.35]],[[0.35,0.38],[0.36,0.4],[0.37,0.43],[0.33,0.49],[0.22,0.62],[0.15,0.68],[0.09,0.72]],[[0.31,0.56],[0.32,0.58],[0.33,0.6],[0.32,0.72],[0.31,0.82],[0.32,0.88]],[[0.75,0.42],[0.76,0.46],[0.75,0.48],[0.4,0.73]],[[0.52,0.39],[0.54,0.41],[0.55,0.44],[0.54,0.64],[0.54,0.74],[0.56,0.8],[0.59,0.83],[0.63,0.84],[0.7,0.86],[0.78,0.85],[0.83,0.83],[0.87,0.8],[0.88,0.66]]],"草":[[[0.21,0.21],[0.3,0.22],[0.45,0.2],[0.55,0.19],[0.68,0.17],[0.74,0.17],[0.79,0.19]],[[0.35,0.11],[0.37,0.12],[0.39,0.14],[0.42,0.28]],[[0.59,0.06],[0.6,0.07],[0.62,0.1],[0.59,0.2],[0.56,0.28]],[[0.29,0.34],[0.32,0.36],[0.33,0.38],[0.37,0.56]],[[0.35,0.34],[0.37,0.35],[0.6,0.32],[0.66,0.33],[0.69,0.36],[0.66,0.42],[0.63,0.54]],[[0.38,0.45],[0.39,0.44],[0.52,0.42],[0.54,0.42],[0.56,0.42]],[[0.4,0.53],[0.4,0.54],[0.44,0.53],[0.58,0.51],[0.6,0.52]],[[0.14,0.68],[0.2,0.69],[0.4,0.66],[0.78,0.63],[0.84,0.64],[0.88,0.66]],[[0.46,0.55],[0.5,0.58],[0.5,0.93]]]};
+
+/* 出題：注音 + 挖空的語詞（只給注音會有同音字，看不出要寫哪個） */
+var QS = [
+  { c: '花', b: 'ㄏㄨㄚ', w: '＿朵' },
+  { c: '手', b: 'ㄕㄡˇ', w: '拍＿' },
+  { c: '朵', b: 'ㄉㄨㄛˇ', w: '花＿' },
+  { c: '左', b: 'ㄗㄨㄛˇ', w: '＿右' },
+  { c: '草', b: 'ㄘㄠˇ', w: '＿地' },
+  { c: '水', b: 'ㄕㄨㄟˇ', w: '＿果' },
+  { c: '月', b: 'ㄩㄝˋ', w: '＿亮' },
+  { c: '山', b: 'ㄕㄢ', w: '高＿' }
+];
+var qi = 0, mode = 'self';
+var cur = null;                 // { c, b, w }
+var strokesDone = [];           // 已經寫完的筆畫（畫布座標）
+var drawing = null;             // 正在畫的那一筆
+var step = 0;                   // 逐筆模式：下一筆是第幾筆
+
+var $ = function (id) { return document.getElementById(id); };
+var pad = $('pad'), ink = $('ink'), grid = $('grid');
+var ictx = ink.getContext('2d'), gctx = grid.getContext('2d');
+var SIZE = 280, dpr = Math.min(window.devicePixelRatio || 1, 3);
+
+function fitCanvas(cv, ctx) {
+  cv.width = SIZE * dpr; cv.height = SIZE * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+fitCanvas(ink, ictx); fitCanvas(grid, gctx);
+
+/* 田字格：外框已經是 CSS 的框，這裡只畫中間的十字和對角線 */
+function drawGrid() {
+  gctx.clearRect(0, 0, SIZE, SIZE);
+  gctx.strokeStyle = '#EBD9BF';
+  gctx.lineWidth = 1;
+  gctx.setLineDash([6, 6]);
+  gctx.beginPath();
+  gctx.moveTo(SIZE / 2, 0); gctx.lineTo(SIZE / 2, SIZE);
+  gctx.moveTo(0, SIZE / 2); gctx.lineTo(SIZE, SIZE / 2);
+  gctx.stroke();
+  gctx.setLineDash([3, 7]);
+  gctx.strokeStyle = '#F2E4CE';
+  gctx.beginPath();
+  gctx.moveTo(0, 0); gctx.lineTo(SIZE, SIZE);
+  gctx.moveTo(SIZE, 0); gctx.lineTo(0, SIZE);
+  gctx.stroke();
+  gctx.setLineDash([]);
+}
+
+function paintInk(extra) {
+  ictx.clearRect(0, 0, SIZE, SIZE);
+  ictx.lineCap = 'round'; ictx.lineJoin = 'round';
+  function line(pts, color, w) {
+    if (pts.length < 2) {                       // 點一下也要看得到
+      ictx.fillStyle = color;
+      ictx.beginPath(); ictx.arc(pts[0][0], pts[0][1], w / 2, 0, 7); ictx.fill();
+      return;
+    }
+    ictx.strokeStyle = color; ictx.lineWidth = w;
+    ictx.beginPath();
+    ictx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) ictx.lineTo(pts[i][0], pts[i][1]);
+    ictx.stroke();
+  }
+  strokesDone.forEach(function (s) { line(s, '#40352B', 11); });
+  if (drawing && drawing.length) line(drawing, '#40352B', 11);
+  if (extra) extra(line);
+}
+
+/* ── 筆順資料：0～1 的座標，換算成畫布上的點 ── */
+function medianPts(c, i) {
+  var m = STROKES[c];
+  if (!m || !m[i]) return null;
+  return m[i].map(function (p) { return [p[0] * SIZE, p[1] * SIZE]; });
+}
+function strokeCount(c) { return (STROKES[c] || []).length; }
+
+/* ── 判斷一筆寫得對不對 ──
+   看三件事：起筆離不離正確的起點太遠、收筆離不離收點太遠、整筆的方向對不對。
+   小孩寫得歪一點沒關係，所以容錯放得很寬（格子的三成）。 */
+function checkStroke(user, want) {
+  if (!user || user.length < 2) return { ok: false, why: '這一筆太短了' };
+  var tol = SIZE * 0.30;
+  function d(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+  var us = user[0], ue = user[user.length - 1];
+  var ws = want[0], we = want[want.length - 1];
+  if (d(us, ws) > tol) return { ok: false, why: '起筆的位置不對' };
+  if (d(ue, we) > tol) return { ok: false, why: '收筆的位置不對' };
+  // 方向：兩個向量的夾角
+  var uv = [ue[0] - us[0], ue[1] - us[1]], wv = [we[0] - ws[0], we[1] - ws[1]];
+  var ul = Math.hypot(uv[0], uv[1]), wl = Math.hypot(wv[0], wv[1]);
+  if (ul > 12 && wl > 12) {
+    var cos = (uv[0] * wv[0] + uv[1] * wv[1]) / (ul * wl);
+    if (cos < 0.35) return { ok: false, why: '方向反了' };   // 超過約 70 度就算反了
+  }
+  return { ok: true };
+}
+
+/* ── 筆順動畫 ── */
+var anim = null;
+function playOrder() {
+  if (anim) { clearInterval(anim); anim = null; }
+  var m = STROKES[cur.c];
+  if (!m) { say('這個字還沒有筆順資料'); return; }
+  var si = 0, pi = 0, shown = [];
+  anim = setInterval(function () {
+    if (si >= m.length) { clearInterval(anim); anim = null; return; }
+    var pts = medianPts(cur.c, si);
+    pi++;
+    if (pi > pts.length) { shown.push(pts); si++; pi = 0; return; }
+    paintInk(function (line) {
+      shown.forEach(function (s) { line(s, '#BCA893', 11); });
+      if (pi >= 2) line(pts.slice(0, pi), '#D9603C', 11);
+    });
+  }, 90);
+}
+
+function say(t, cls) {
+  $('verdict').innerHTML = t ? '<span class="' + (cls || '') + '">' + t + '</span>' : '';
+}
+
+function syncStrokeN() {
+  var n = strokeCount(cur.c);
+  if (mode === 'stroke') {
+    $('strokeN').textContent = !n ? '這個字還沒有筆順資料'
+      : step >= n ? '寫完了，一共 ' + n + ' 筆'
+      : '第 ' + (step + 1) + ' 筆 / 一共 ' + n + ' 筆';
+  } else {
+    $('strokeN').textContent = strokesDone.length ? '寫了 ' + strokesDone.length + ' 筆' : '';
+  }
+}
+
+function loadQ() {
+  cur = QS[qi % QS.length];
+  strokesDone = []; drawing = null; step = 0;
+  if (anim) { clearInterval(anim); anim = null; }
+  $('bpmf').textContent = cur.b;
+  $('word').innerHTML = cur.w.replace('＿', '<u>＿</u>');
+  $('qhint').textContent = mode === 'stroke'
+    ? '照筆順一筆一筆寫，寫錯那一筆會退回去'
+    : '在格子裡寫這個字，寫好按下面那顆';
+  $('ghost').textContent = cur.c;
+  $('ghost').classList.add('off');
+  say('');
+  drawGrid(); paintInk(); syncStrokeN();
+  $('doneBtn').hidden = mode === 'stroke';
+}
+
+/* ── 手指／滑鼠 ── */
+function xy(e) {
+  var r = pad.getBoundingClientRect();
+  return [(e.clientX - r.left) * (SIZE / r.width), (e.clientY - r.top) * (SIZE / r.height)];
+}
+pad.addEventListener('pointerdown', function (e) {
+  if (anim) { clearInterval(anim); anim = null; paintInk(); }
+  pad.setPointerCapture(e.pointerId);
+  drawing = [xy(e)];
+  paintInk();
+});
+pad.addEventListener('pointermove', function (e) {
+  if (!drawing) return;
+  var p = xy(e), last = drawing[drawing.length - 1];
+  if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 2) return;   // 太密的點不收
+  drawing.push(p);
+  paintInk();
+});
+function endStroke() {
+  if (!drawing) return;
+  var s = drawing; drawing = null;
+  if (mode === 'stroke') {
+    var want = medianPts(cur.c, step);
+    if (!want) { strokesDone.push(s); paintInk(); syncStrokeN(); return; }
+    var r = checkStroke(s, want);
+    if (!r.ok) {
+      paintInk(function (line) { line(want, 'rgba(242,112,92,.45)', 11); });  // 正確的那一筆亮出來
+      say('第 ' + (step + 1) + ' 筆' + r.why + '，再寫一次', 'no');
+      setTimeout(function () { paintInk(); }, 1400);
+      return;
+    }
+    strokesDone.push(want);        // 收進來的是標準的那一筆，寫完會是漂亮的字
+    step++;
+    paintInk(); syncStrokeN();
+    if (step >= strokeCount(cur.c)) say('全部 ' + step + ' 筆都對了！🎉', 'ok');
+    else say('第 ' + step + ' 筆對了 ✓', 'ok');
+    return;
+  }
+  strokesDone.push(s);
+  paintInk(); syncStrokeN(); say('');
+}
+pad.addEventListener('pointerup', endStroke);
+pad.addEventListener('pointercancel', endStroke);
+pad.addEventListener('pointerleave', function () { if (drawing) endStroke(); });
+
+/* ── 按鈕 ── */
+$('clearBtn').addEventListener('click', function () {
+  strokesDone = []; drawing = null; step = 0;
+  if (anim) { clearInterval(anim); anim = null; }
+  paintInk(); syncStrokeN(); say('');
+});
+$('undoBtn').addEventListener('click', function () {
+  strokesDone.pop();
+  if (mode === 'stroke' && step > 0) step--;
+  paintInk(); syncStrokeN(); say('');
+});
+$('ghostBtn').addEventListener('click', function () {
+  $('ghost').classList.toggle('off');
+});
+$('showBtn').addEventListener('click', playOrder);
+$('doneBtn').addEventListener('click', function () {
+  if (!strokesDone.length) { say('還沒寫喔', 'no'); return; }
+  var box = document.createElement('canvas');
+  box.width = 130 * dpr; box.height = 130 * dpr;
+  var bc = box.getContext('2d');
+  bc.setTransform(dpr, 0, 0, dpr, 0, 0);
+  bc.strokeStyle = '#40352B'; bc.lineWidth = 11 * (130 / SIZE);
+  bc.lineCap = 'round'; bc.lineJoin = 'round';
+  strokesDone.forEach(function (s) {
+    bc.beginPath();
+    s.forEach(function (p, i) {
+      var x = p[0] * 130 / SIZE, y = p[1] * 130 / SIZE;
+      if (i) bc.lineTo(x, y); else bc.moveTo(x, y);
+    });
+    bc.stroke();
+  });
+  $('verdict').innerHTML =
+    '<div class="compare">' +
+      '<figure><div class="box" id="mine"></div><figcaption>你寫的</figcaption></figure>' +
+      '<figure><div class="box">' + cur.c + '</div><figcaption>課本的字</figcaption></figure>' +
+    '</div>' +
+    '<div class="row" style="margin-top:8px">' +
+      '<button class="btn" id="yes">⭕ 寫對了</button>' +
+      '<button class="btn" id="no">✗ 再練一次</button>' +
+    '</div>';
+  $('mine').appendChild(box);
+  box.style.width = '100%'; box.style.height = '100%';
+  $('yes').addEventListener('click', function () { say('太棒了！換下一個字 👍', 'ok'); });
+  $('no').addEventListener('click', function () {
+    strokesDone = []; paintInk(); syncStrokeN();
+    say('再寫一次，可以先按「描紅」或「看筆順」', 'no');
+  });
+});
+$('nextBtn').addEventListener('click', function () { qi++; loadQ(); });
+document.getElementById('modes').addEventListener('click', function (e) {
+  var m = e.target.closest && e.target.closest('.mode');
+  if (!m) return;
+  document.querySelectorAll('#modes .mode').forEach(function (x) { x.classList.remove('sel'); });
+  m.classList.add('sel');
+  mode = m.dataset.mode;
+  loadQ();
+});
+
+loadQ();
+</script>
+</body>
+</html>
