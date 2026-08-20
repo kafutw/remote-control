@@ -501,6 +501,8 @@
     to { transform: scale(1) rotate(0); opacity: 1; }
   }
 
+  #nudge .breakbox .btn + .btn { margin-top: 10px; }
+  #nudge .bhint { margin-bottom: 18px; }
   .breakscreen {
     position: fixed; inset: 0; z-index: 80; overflow: auto;
     background: radial-gradient(120% 70% at 50% 0%, var(--mint-soft), transparent 60%), var(--bg);
@@ -917,6 +919,22 @@
       <p class="hint" id="useHint"></p>
     </div>
 
+    <div class="card">
+      <h2>卡關提醒</h2>
+      <div class="modes three" id="nudges">
+        <button class="mode" data-nudge="3"><b>連錯 3 題</b><i>早一點關心</i></button>
+        <button class="mode sel" data-nudge="5"><b>連錯 5 題</b><i>再撐一下</i></button>
+        <button class="mode" data-nudge="0"><b>關閉</b><i>不打斷</i></button>
+      </div>
+      <div class="sub-h">要說什麼</div>
+      <div class="modes" id="tones">
+        <button class="mode sel" data-tone="soft"><b>溫柔</b><i>沒關係，我們慢慢來</i></button>
+        <button class="mode" data-tone="fun"><b>促咪</b><i>再拖下去就少看一集囉</i></button>
+      </div>
+      <p class="hint">連續答錯太多題的時候跳出來，讓他喘一口氣，順便問要不要今天先到這裡。
+        小孩卡住的時候通常不是不會，是急了。</p>
+    </div>
+
     <div class="foot">
       <button class="btn primary big" id="hBackBtn">回到首頁</button>
       <button class="btn ghost" id="clearBtn">清除所有紀錄</button>
@@ -1004,6 +1022,16 @@
     <div class="fwt">全部答對！</div>
     <div class="fws" id="fwSub"></div>
     <button class="btn primary big" id="fwDone">太棒了 🎉</button>
+  </div>
+</div>
+
+<div class="breakscreen" id="nudge" hidden>
+  <div class="breakbox">
+    <div class="bemoji" id="nudgeEmoji">🫂</div>
+    <h2 id="nudgeTitle">卡住了嗎？</h2>
+    <p class="bhint" id="nudgeMsg"></p>
+    <button class="btn primary big" id="nudgeGo">再試一次 💪</button>
+    <button class="btn" id="nudgeStop">今天先到這裡</button>
   </div>
 </div>
 
@@ -1310,7 +1338,7 @@
   var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', wkind: 'all',
               subject: 'letters', source: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter', allVoices: false,
-              limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
+              limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0, nudgeAt: 5, tone: 'soft',
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 熟練度只看每個字母最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
@@ -1366,6 +1394,8 @@
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
     if (['none', 'letter', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
     if ([0, 20, 30].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
+    if ([0, 3, 5].indexOf(db.nudgeAt) < 0) db.nudgeAt = DEF.nudgeAt;
+    if (['soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
     if (typeof db.useMs !== 'number' || db.useMs < 0) db.useMs = 0;
     if (typeof db.useAt !== 'number') db.useAt = 0;
     if (typeof db.breakUntil !== 'number') db.breakUntil = 0;
@@ -1814,6 +1844,8 @@
   segment('pitches', function (m) { db.pitch = Number(m.dataset.pitch); tryVoice(); });
   segment('rights', function (m) { db.sayOnRight = m.dataset.right; });
   segment('limits', function (m) { db.limitMin = Number(m.dataset.limit); renderUseHint(); });
+  segment('nudges', function (m) { db.nudgeAt = Number(m.dataset.nudge); });
+  segment('tones', function (m) { db.tone = m.dataset.tone; });
 
   $('voiceSel').addEventListener('change', function () {
     db.voiceURI = $('voiceSel').value;
@@ -2125,7 +2157,7 @@
       mode: review ? 'even' : db.mode,
       total: total, idx: 0, results: [],
       correct: 0, wrong: 0, streak: 0, bestStreak: 0,
-      timeouts: 0, wrongList: [], recentWrong: {}, last: null,
+      timeouts: 0, wrongList: [], recentWrong: {}, last: null, badStreak: 0,
       reviewMode: review, q: null,
       qEndAt: 0, startedAt: 0, finishedAt: 0, ms: 0, running: false
     };
@@ -2294,10 +2326,43 @@
     });
   }
 
+  /* 連續答錯太多題就跳出來喘口氣。
+     小孩卡住的時候通常不是不會，是急了、慌了，一直錯下去只會更急。 */
+  var NUDGE = {
+    soft: [
+      ['🫂', '沒關係，慢慢來', '連錯幾題很正常，深呼吸一下，我們再試一次。'],
+      ['👂', '要不要先聽一次？', '不確定的時候，先按喇叭聽一次再選，不用急著點。'],
+      ['🌱', '休息一下也可以', '今天已經很努力了，想停就停，明天再練也一樣。']
+    ],
+    fun: [
+      ['📺', '這樣會少看一集喔', '再拖下去就在浪費自己看電視的時間囉，快點答一答！'],
+      ['🐢', '你比烏龜還慢欸', '再想下去，卡通都演完了。深呼吸，選一個！'],
+      ['🍪', '答完才有點心', '哭歸哭，題目還是在那裡。再三題就好，衝一下！']
+    ]
+  };
+  function showNudge() {
+    var list = NUDGE[db.tone] || NUDGE.soft;
+    var m = list[Math.floor(Math.random() * list.length)];
+    $('nudgeEmoji').textContent = m[0];
+    $('nudgeTitle').textContent = m[1];
+    $('nudgeMsg').textContent = m[2];
+    $('nudge').hidden = false;
+    hushSpeech();
+  }
+  $('nudgeGo').addEventListener('click', function () {
+    $('nudge').hidden = true;
+    nextQuestion();
+  });
+  $('nudgeStop').addEventListener('click', function () {
+    $('nudge').hidden = true;
+    endGame(false);
+  });
+
   function nextQuestion() {
     clearReveal();
     if (!S.running) return;
     if (S.idx >= S.total) { endGame(true); return; }
+    if (db.nudgeAt && S.badStreak >= db.nudgeAt) { S.badStreak = 0; showNudge(); return; }
     S.idx++;
     lock = false;
     S.canSkip = false;
@@ -2354,7 +2419,7 @@
   }
 
   function markWrong(q, note) {
-    S.wrong++; S.streak = 0;
+    S.wrong++; S.streak = 0; S.badStreak++;
     logRecent(q.c, 0);
     S.recentWrong[q.c] = true;
     S.results[S.idx - 1] = 'no';
@@ -2386,7 +2451,7 @@
     rec.n++;
 
     if (val === (q.ans || q.c)) {
-      S.correct++; S.streak++;
+      S.correct++; S.streak++; S.badStreak = 0;
       if (S.streak > S.bestStreak) S.bestStreak = S.streak;
       delete S.recentWrong[q.c];
       logRecent(q.c, 1);
@@ -2558,6 +2623,7 @@
   }
 
   function endGame(completed) {
+    $('nudge').hidden = true;
     if (!S) return;
     S.running = false;
     clearInterval(timer); timer = null;
@@ -3026,6 +3092,12 @@
   });
   document.querySelectorAll('#limits .mode').forEach(function (m) {
     m.classList.toggle('sel', Number(m.dataset.limit) === db.limitMin);
+  });
+  document.querySelectorAll('#nudges .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.nudge) === db.nudgeAt);
+  });
+  document.querySelectorAll('#tones .mode').forEach(function (m) {
+    m.classList.toggle('sel', m.dataset.tone === db.tone);
   });
   syncSound();
   pickVoice();
