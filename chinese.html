@@ -269,14 +269,6 @@
     font-size: var(--fs-note); font-weight: 700; color: var(--ink-soft);
   }
   .checkrow input { width: 20px; height: 20px; accent-color: var(--key); flex: 0 0 auto; }
-  /* 「連前面學過的一起考」是勾選框不是按鈕：它是加在課次選擇上面的修飾，不是另一種模式 */
-  .checkrow.upto { margin-top: 12px; padding: 11px 13px; border-radius: 14px;
-                   background: var(--bg); border: 1.5px solid var(--line);
-                   font-size: var(--fs-body); color: var(--ink); align-items: flex-start; }
-  .checkrow.upto span { line-height: 1.5; }
-  .checkrow.upto b { font-weight: 800; }
-  .checkrow.upto small { display: block; font-size: var(--fs-note); color: var(--ink-soft);
-                         font-weight: 700; margin-top: 2px; }
 
   /* ── learn ── */
   .abcgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
@@ -728,7 +720,6 @@
   .tiles.grades .tile b { font-family: var(--font); font-size: var(--fs-head); }
   .tiles.grades .tile i { font-family: var(--font); margin-top: 3px; }
   #terms { margin-top: 12px; }
-  #scopes { margin-top: 10px; }
   @media (max-width: 380px) {
     .tiles.grades { gap: 8px; }
     .tiles.grades .tile { padding: 12px 0 10px; }
@@ -866,11 +857,6 @@
       <div class="sub-h">第幾課？</div>
       <div class="chips" id="lessonChips"></div>
       <p class="hint tight" id="lessonNote"></p>
-      <label class="checkrow upto">
-        <input type="checkbox" id="uptoBox">
-        <span id="uptoLabel">連前面學過的一起考</span>
-      </label>
-      <p class="hint tight" id="scopeNote" hidden></p>
 
       <div class="sub-h">題型</div>
       <div class="modes" id="kinds">
@@ -1614,7 +1600,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 n';
+  var VERSION = '2026-08-20 o';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1957,7 +1943,7 @@
 
   /* ────────── 資料儲存 ────────── */
   var KEY = 'zh_v1';
-  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, picked: [], scope: 'only',
+  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, picked: [],
               mode: 'smart', kind: 'all', bkind: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
@@ -2054,7 +2040,7 @@
     if (!Array.isArray(db.picked)) db.picked = typeof db.lesson === 'number' && db.lesson ? [db.lesson] : [];
     delete db.lesson;
     db.picked = db.picked.filter(function (n) { return typeof n === 'number' && n > 0; });
-    if (['only', 'upto'].indexOf(db.scope) < 0) db.scope = DEF.scope;
+    delete db.scope;              // 舊版的「累積複習」拿掉了，不會跨學期
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if ([0, 20, 30].indexOf(db.secs) < 0) db.secs = DEF.secs;
     if (['smart', 'even'].indexOf(db.mode) < 0) db.mode = DEF.mode;
@@ -2488,10 +2474,6 @@
   segment('modes', function (m) { db.mode = m.dataset.mode; });
   segment('kinds', function (m) { db.kind = m.dataset.kind; syncSubject(); });
   segment('grades', function (m) { db.grade = Number(m.dataset.grade); clampLesson(); syncSubject(); });
-  $('uptoBox').addEventListener('change', function () {
-    db.scope = $('uptoBox').checked ? 'upto' : 'only';
-    save(); syncSubject();
-  });
   segment('terms', function (m) { db.term = Number(m.dataset.term); clampLesson(); syncSubject(); });
 
   /* 這一輪的題庫：某個年級（或累積到某個年級）的生字，或自己貼進來的字 */
@@ -2519,23 +2501,11 @@
     return out;
   }
 
-  /* 這次要練哪幾課：選了第 N 課就只有那一課，沒選就是整冊；
-     累積複習則是從一上第 1 課一路到選到的這一課 */
-  function scopeLessons(scope) {
-    scope = scope || db.scope;
-    var last = db.picked.length ? Math.max.apply(null, db.picked) : 99;
-    var end = lessonOrd(db.grade, db.term, last);
-    if (scope === 'upto') {
-      var out = [];
-      Object.keys(VOLS).forEach(function (ord) {
-        VOLS[ord].forEach(function (L) {
-          if (lessonOrd(L.g, L.t, L.k) <= end) out.push(L);
-        });
-      });
-      return out;
-    }
+  /* 這次要練哪幾課：勾了哪幾課就是那幾課，沒勾就是整冊。
+     一冊之內就練完，不跨學期——複習也是一個學期一個學期來。 */
+  function scopeLessons() {
     var list = lessonsOf(db.grade, db.term);
-    if (!db.picked.length) return list;                       // 沒選就是整冊
+    if (!db.picked.length) return list;
     return list.filter(function (L) { return db.picked.indexOf(L.k) >= 0; });
   }
   // 6,7,8,9 → 「6～9」；連號縮起來，標題才不會爆掉
@@ -2549,11 +2519,9 @@
     }
     return out.join('、');
   }
-  // 換了年級或學期，原本選的課可能不存在了，超過的就拿掉
-  function clampLesson() {
-    var n = lessonCount(db.grade, db.term);
-    db.picked = db.picked.filter(function (k) { return k <= n; });
-  }
+  // 換了年級或學期就是換一本書，原本勾的課次不留（不然會出現「一下第1、2、6～8課」
+  // 這種其實是上一冊選的東西）
+  function clampLesson() { db.picked = []; }
   // 資料不齊的字（自己貼進來的多半查不到部首筆畫）出不了題就先不放進來
   function usablePool() {
     return subjectPool().filter(function (c) { return kindsAvailable(c).length > 0; });
@@ -2564,10 +2532,8 @@
       if (!got.length) return '我的課本';
       return got.length === 1 ? got[0].name : '我的課本（' + got.length + ' 課）';
     }
-    var here = shortVol(db.grade, db.term) +
-               (db.picked.length ? ' 第' + lessonLabel(db.picked) + '課' : ' 整冊');
-    return (db.subject === 'bpmf' ? 'ㄅㄆㄇ ' : '') +
-           (db.scope === 'upto' ? '一上～' + here : here);
+    return shortVol(db.grade, db.term) +
+           (db.picked.length ? ' 第' + lessonLabel(db.picked) + '課' : ' 整冊');
   }
   function shortVol(g, t) { return '一二三四五六'.charAt(g - 1) + (t === 1 ? '上' : '下'); }
 
@@ -2642,7 +2608,7 @@
 
     var note = $('lessonNote');
     if (db.picked.length > 1) {
-      var got = scopeLessons('only');
+      var got = scopeLessons();
       var zi = 0, rc = 0, wd = 0, names = [];
       got.forEach(function (x) {
         zi += x.zi.length; rc += x.recog.length; wd += x.words.length;
@@ -2690,47 +2656,10 @@
     });
   }
 
-  /* 「連前面學過的一起考」＝從一上第 1 課一路撈到選到的最後一課。
-     課次標籤只能勾同一冊裡的課，跨冊往回撈只有這個做得到；
-     但它不看你勾了哪幾課，所以要把實際範圍和多出來的量寫清楚。 */
-  function countOf(scope) {
-    var n = 0;
-    scopeLessons(scope).forEach(function (L) {
-      n += L.zi.length + L.recog.length + L.words.length;
-    });
-    return n;
-  }
-  function syncScopeHint() {
-    var box = $('uptoBox');
-    if (!box) return;
-    box.checked = db.scope === 'upto';
-    var vol = shortVol(db.grade, db.term);
-    var last = db.picked.length ? Math.max.apply(null, db.picked) : 0;
-    var here = vol + (last ? ' 第' + last + '課' : ' 整冊');
-    var only = countOf('only'), all = countOf('upto');
-    $('uptoLabel').innerHTML = '<b>連前面學過的一起考</b>' +
-      '<small>一上第1課 ～ ' + here + '　' + all + ' 個字詞' +
-      '（不勾的話只練選到的 ' + only + ' 個）</small>';
-
-    // 勾了好幾課的時候要特別講：這個選項只看最後一課
-    var note = $('scopeNote');
-    var many = db.scope === 'upto' && db.picked.length > 1;
-    note.hidden = !many;
-    if (many) {
-      var top = Math.max.apply(null, db.picked), skipped = [];
-      for (var k = Math.min.apply(null, db.picked); k <= top; k++) {
-        if (db.picked.indexOf(k) < 0) skipped.push(k);
-      }
-      note.innerHTML = '⚠️ 勾了這個就<b>不看你選了哪幾課</b>，一律從一上第1課練到第' + top + '課' +
-        (skipped.length ? '，中間跳過的第' + lessonLabel(skipped) + '課也會考到' : '') + '。';
-    }
-  }
-
   function syncSubject() {
     var mine = db.subject === 'mine';
     rebuildCustomWords();
     $('gradeBox').hidden = mine;      // 練自己的課時，年級學期先收起來
-    document.querySelector('.checkrow.upto').hidden = mine;   // 自己的課沒有前面可以累積
     document.querySelectorAll('#kinds .mine-only').forEach(function (m) { m.hidden = false; });
     $('learnBtn').textContent = '先認識生字 📖';
     $('subtitle').textContent = subjectName() + ' ・ ' + db.count + ' 題 ・ ' +
@@ -2742,7 +2671,6 @@
     syncStart();
     renderLessonChips();
     renderLessons();
-    if (!mine) syncScopeHint();
     refreshSetup();
   }
   segment('rates', function (m) { db.rate = Number(m.dataset.rate); tryVoice(); });
@@ -4247,7 +4175,6 @@
   load();
   [['counts', 'count', 1], ['secs', 'secs', 1], ['modes', 'mode', 0], ['kinds', 'kind', 0],
    ['bkinds', 'bkind', 0], ['grades', 'grade', 1], ['terms', 'term', 1],
-   ['scopes', 'scope', 0],
    ['subjects', 'subject', 0], ['rates', 'rate', 1], ['pitches', 'pitch', 1],
    ['rights', 'right', 0], ['limits', 'limit', 1], ['nudges', 'nudge', 1],
    ['noises', 'noise', 1],
