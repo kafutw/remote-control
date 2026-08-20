@@ -458,6 +458,23 @@
   }
   .breakbox { max-width: 460px; width: 100%; text-align: center; }
   .bemoji { font-size: var(--fs-mega); line-height: 1; }
+  /* 家長的小機關：長按葉子三秒可以跳過休息。畫面上不寫，按住才看得到外圈在跑。
+     用 conic-gradient 畫一圈進度，小孩不小心碰一下不會有反應。 */
+  #breakLeaf {
+    display: inline-grid; place-items: center; width: 1.7em; height: 1.7em;
+    border-radius: 99px; cursor: pointer; position: relative;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  #breakLeaf::before {
+    content: ''; position: absolute; inset: 0; border-radius: 99px;
+    background: conic-gradient(var(--mint) var(--hold, 0deg), transparent 0);
+    opacity: 0; transition: opacity .15s;
+  }
+  #breakLeaf.holding::before { opacity: .32; }
+  #breakLeaf::after {
+    content: ''; position: absolute; inset: 6px; border-radius: 99px; background: var(--bg);
+  }
+  #breakLeaf span { position: relative; z-index: 1; }
   .breakbox h2 { font-size: var(--fs-title); font-weight: 800; margin: 14px 0 0; }
   .bclock {
     font-size: var(--fs-mega); font-weight: 800; color: var(--mint-ink);
@@ -1213,7 +1230,7 @@
 
 <div class="breakscreen" id="breakScreen" hidden>
   <div class="breakbox">
-    <div class="bemoji">🌿</div>
+    <div class="bemoji" id="breakLeaf"><span>🌿</span></div>
     <h2>眼睛休息一下</h2>
     <div class="bclock" id="breakClock">5:00</div>
     <ul class="btips">
@@ -1600,7 +1617,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 o';
+  var VERSION = '2026-08-20 p';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -4059,15 +4076,53 @@
     var bt = setInterval(tick, 500);
     tick();
   }
+
+  /* ── 家長的小機關 ──
+     休息畫面按住葉子 3 秒就跳過。畫面上不寫這件事（寫了小孩就會用），
+     按住的時候葉子外圈會慢慢畫滿，放開就歸零。 */
+  var HOLD_MS = 3000;
+  (function () {
+    var leaf = $('breakLeaf');
+    if (!leaf) return;
+    var timer = null, raf = 0, at = 0;
+    function stop() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      leaf.classList.remove('holding');
+      leaf.style.setProperty('--hold', '0deg');
+    }
+    function start(e) {
+      if ($('breakScreen').hidden || timer) return;
+      e.preventDefault();
+      at = Date.now();
+      leaf.classList.add('holding');
+      (function spin() {
+        var p = Math.min(1, (Date.now() - at) / HOLD_MS);
+        leaf.style.setProperty('--hold', (p * 360) + 'deg');
+        if (p < 1) raf = requestAnimationFrame(spin);
+      })();
+      timer = setTimeout(function () {
+        stop();
+        SFX.combo();
+        endBreak();
+      }, HOLD_MS);
+    }
+    ['pointerdown', 'touchstart'].forEach(function (ev) {
+      leaf.addEventListener(ev, start, { passive: false });
+    });
+    ['pointerup', 'pointercancel', 'pointerleave', 'touchend', 'touchcancel']
+      .forEach(function (ev) { leaf.addEventListener(ev, stop); });
+  })();
   $('fwDone').addEventListener('click', hideFireworks);
   $('fireworks').addEventListener('click', function (e) {
     if (e.target && e.target.id === 'fwCanvas') hideFireworks();   // 點畫面也能關
   });
-  $('breakDone').addEventListener('click', function () {
+  function endBreak() {
     db.breakUntil = 0; db.useMs = 0; db.useAt = Date.now(); save();
     $('breakScreen').hidden = true;
-    refreshSetup(); show('setup');
-  });
+    refreshSetup(); renderUseHint(); show('setup');
+  }
+  $('breakDone').addEventListener('click', endBreak);
 
   /* ────────── 鍵盤 ────────── */
   document.addEventListener('keydown', function (e) {
