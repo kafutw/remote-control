@@ -230,6 +230,20 @@
     padding: 12px 13px; transition: all .14s;
   }
   .mode.sel { border-color: var(--key); background: var(--key-soft); }
+  /* 下拉選單：預設樣式在 iOS 上很醜，這裡照 .mode 的長相重畫，右邊自己補一個箭頭。
+     背景位置拆成 longhand —— 'right 12px center' 是三個值，寫在 background 簡寫裡整條會被丟掉。 */
+  select.sel { appearance: none; -webkit-appearance: none; font: inherit;
+    font-size: var(--fs-body); font-weight: 700; color: var(--ink);
+    background-color: var(--card);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px top 50%;
+    background-size: 12px;
+    border: 2px solid var(--line); border-radius: 14px; padding: 12px 34px 12px 14px; }
+  select.sel.grow { flex: 1; min-width: 0; }
+  /* 說明文字後面接小標的時候，貼太緊看起來像同一段 */
+  .hint + .sub-h { margin-top: 22px; }
+  .chip .pen { font-size: .8em; }
   .mode[disabled] { opacity: .38; cursor: default; }
   .mode b { display: block; font-size: var(--fs-body); font-weight: 800; }
   .mode i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); margin-top: 3px; }
@@ -1053,6 +1067,29 @@
 
   <!-- ══ 設定 ══ -->
   <section class="screen" id="settings">
+    <div class="card" id="circleCard">
+      <h2>老師的圈詞</h2>
+      <p class="hint" style="margin-top:0">老師這一課圈起來、要整個詞會寫的<b>圈詞</b>，
+        課本資料裡沒有（每個班、每個老師都不一樣），打進來就<b>直接併進課本這一課</b>，
+        不用另外開一本。圈詞裡冒出來、但這一課生字表沒有的字也會一起收進來練 ——
+        老師教「雲」卻考「黑雲」的時候，「黑」也得會寫。</p>
+      <div class="sub-h">哪一課</div>
+      <div class="row">
+        <select class="sel" id="cGrade"></select>
+        <select class="sel" id="cTerm"></select>
+        <select class="sel grow" id="cLesson"></select>
+      </div>
+      <p class="hint" id="cBook"></p>
+      <div class="sub-h">圈詞（一行一個，或用頓號、逗號分開）</div>
+      <textarea class="paste" id="cWords" rows="4"
+        placeholder="例如：&#10;黑雲、天空&#10;拍手&#10;整段貼進來也可以，程式會自己把詞挑出來。"></textarea>
+      <div class="row mt">
+        <button class="btn primary grow" id="cSave">併進這一課</button>
+        <button class="btn ghost" id="cClear" hidden>清掉這一課的圈詞</button>
+      </div>
+      <p class="hint" id="cHint"></p>
+    </div>
+
     <div class="card">
       <h2>我的課本</h2>
       <p class="hint" style="margin-top:0">課本上這一課的<b>生字</b>和老師畫的<b>圈詞</b>分開放：
@@ -1625,7 +1662,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 t';
+  var VERSION = '2026-08-20 u';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1984,7 +2021,7 @@
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               nudgeAt: 0, noiseAt: 0.08, tone: 'auto', lastPeak: 0, micFail: '',
-              lessons: [], picks: [], dropped: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
+              circle: {}, lessons: [], picks: [], dropped: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 單一個字的熟練度只看最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
   // 一整課的獎牌跟九九乘法的「段」用同一套標準：最近 20 題、至少 5 題才給評價
@@ -2098,6 +2135,8 @@
     if (typeof db.useAt !== 'number') db.useAt = 0;
     if (typeof db.breakUntil !== 'number') db.breakUntil = 0;
     if (!db.best || typeof db.best !== 'object') db.best = {};
+    if (!db.circle || typeof db.circle !== 'object') db.circle = {};
+    applyCircle();
   }
 
   function save() {
@@ -2467,6 +2506,48 @@
     return s.enough && s.rate < MEDALS[MEDALS.length - 1].at;
   }
   function lessonKey(g, t, k) { return 'L' + g + (t === 1 ? 'a' : 'b') + '-' + k; }
+  function parseLessonKey(key) {
+    var m = /^L(\d)([ab])-(\d+)$/.exec(key || '');
+    return m ? { g: Number(m[1]), t: m[2] === 'a' ? 1 : 2, k: Number(m[3]) } : null;
+  }
+
+  /* ── 老師的圈詞 ──
+     老師畫的圈詞每個班、每個老師都不一樣，課本資料裡沒有，所以讓家長自己補：
+     選一課、把圈詞打進去，就直接併進課本那一課，不另外開一本。
+     圈詞裡冒出來、但那一課生字表沒有的字也一起收進來練 ——
+     老師教「雲」卻考「黑雲」的時候，「黑」也得會寫。
+     每次改完都整個重跑一遍，所以要先把上一次併進去的清掉。 */
+  function applyCircle() {
+    Object.keys(VOLS).forEach(function (o) {
+      VOLS[o].forEach(function (L) {
+        (L.circle || []).forEach(function (w) {
+          if (WLESSON[w] === L) delete WLESSON[w];        // 刪掉的圈詞不留在索引裡
+        });
+        L.circle = [];
+        L.extraZi = [];
+      });
+    });
+    Object.keys(db.circle).forEach(function (key) {
+      var at = parseLessonKey(key);
+      var L = at && lessonAt(at.g, at.t, at.k);
+      if (!L) return;
+      (db.circle[key] || []).forEach(function (w) {
+        if (L.words.indexOf(w) >= 0 || L.circle.indexOf(w) >= 0) return;   // 課本本來就有就不重複
+        L.circle.push(w);
+        if (!WLESSON[w]) WLESSON[w] = L;
+        for (var i = 0; i < w.length; i++) {
+          var c = w.charAt(i);
+          if (L.zi.indexOf(c) < 0 && L.recog.indexOf(c) < 0 && L.extraZi.indexOf(c) < 0) {
+            L.extraZi.push(c);
+          }
+        }
+      });
+    });
+  }
+  function circleOf(g, t, k) { return db.circle[lessonKey(g, t, k)] || []; }
+  // 這一課一共要練幾個字（含圈詞帶進來的）
+  function lessonZi(L) { return L.zi.concat(L.recog, L.extraZi || []); }
+  function lessonWords(L) { return L.words.concat(L.circle || []); }
 
   // 熟練度看最近 WINDOW 題；還沒累積夠就先用全部紀錄頂著
   function ziStat(c) {
@@ -2541,10 +2622,10 @@
     }
     var seen = {}, out = [];
     scopeLessons().forEach(function (L) {
-      L.zi.concat(L.recog).forEach(function (c) {
+      lessonZi(L).forEach(function (c) {
         if (!seen[c]) { seen[c] = 1; out.push(c); }
       });
-      L.words.forEach(function (w) {
+      lessonWords(L).forEach(function (w) {
         if (!seen['w:' + w]) { seen['w:' + w] = 1; out.push('w:' + w); }
       });
     });
@@ -2594,13 +2675,14 @@
     if (!box) return;
     var list = lessonsOf(db.grade, db.term);
     box.innerHTML = '';
-    function chip(n, label, cnt) {
+    function chip(n, label, cnt, circled) {
       var b = document.createElement('button');
       var on = db.subject === 'zi' && (n ? db.picked.indexOf(n) >= 0 : !db.picked.length);
       b.className = 'chip' + (on ? ' sel' : '');
       var key = n ? lessonKey(db.grade, db.term, n) : '';
       var medal = key ? unitMedal(key) : '';
-      b.innerHTML = '<b>' + label + '</b><small>' + cnt + ' 字</small>' +
+      b.innerHTML = '<b>' + label + (circled ? ' <span class="pen">✏️</span>' : '') +
+        '</b><small>' + cnt + ' 字</small>' +
         (medal ? '<span class="mark cup">' + medal + '</span>'
                : (key && unitRisk(key) ? '<span class="mark warn">●</span>' : ''));
       b.addEventListener('click', function () {
@@ -2614,11 +2696,14 @@
       });
       box.appendChild(b);
     }
-    var all = 0;
-    list.forEach(function (L) { all += L.zi.length + L.recog.length; });
-    chip(0, '整冊', all);
+    var all = 0, anyCircle = false;
     list.forEach(function (L) {
-      chip(L.k, '第' + L.k + '課', L.zi.length + L.recog.length);
+      all += lessonZi(L).length;
+      if ((L.circle || []).length) anyCircle = true;
+    });
+    chip(0, '整冊', all, anyCircle);
+    list.forEach(function (L) {
+      chip(L.k, '第' + L.k + '課', lessonZi(L).length, (L.circle || []).length > 0);
     });
 
     // 自己建的課接在後面，這樣不用切換模式也選得到
@@ -2638,11 +2723,10 @@
     });
     var addBtn = document.createElement('button');
     addBtn.className = 'chip add';
-    addBtn.innerHTML = '<b>＋ 我的課本</b>';
-    addBtn.title = '加課本沒有的東西，例如老師畫的圈詞';
+    addBtn.innerHTML = '<b>✏️ 加老師的圈詞</b>';
+    addBtn.title = '把老師這一課圈的詞打進去，直接併進課本這一課';
     addBtn.addEventListener('click', function () {
-      renderLessons(); renderUseHint(); renderMicHint(); show('settings');
-      if (!db.lessons.length) openLessonForm(null);
+      openCircle(db.grade, db.term, db.picked.length ? Math.min.apply(null, db.picked) : 1);
     });
     box.appendChild(addBtn);
 
@@ -2659,13 +2743,15 @@
     var note = $('lessonNote');
     if (db.picked.length > 1) {
       var got = scopeLessons();
-      var zi = 0, rc = 0, wd = 0, names = [];
+      var zi = 0, rc = 0, wd = 0, cw = 0, names = [];
       got.forEach(function (x) {
         zi += x.zi.length; rc += x.recog.length; wd += x.words.length;
+        cw += (x.circle || []).length;
         names.push('第' + x.k + '課 ' + x.name);
       });
       note.innerHTML = '選了 ' + got.length + ' 課：' + zi + ' 個生字' +
         (rc ? '、' + rc + ' 個認讀字' : '') + (wd ? '、' + wd + ' 個語詞' : '') +
+        (cw ? '、' + cw + ' 個圈詞 ✏️' : '') +
         '<br><span class="dim">' + esc(names.join('　')) + '</span>' +
         '<br>再點一次可以取消，點「整冊」就是全部。';
       return;
@@ -2675,6 +2761,7 @@
       var bits = [L.zi.length + ' 個生字'];
       if (L.recog.length) bits.push(L.recog.length + ' 個認讀字');
       if (L.words.length) bits.push(L.words.length + ' 個語詞');
+      if ((L.circle || []).length) bits.push(L.circle.length + ' 個圈詞 ✏️');
       var us = unitStat(lessonKey(L.g, L.t, L.k));
       note.innerHTML = '<b>' + esc(L.name) + '</b>　' + bits.join('、') +
         (us.n ? '　—　這一課最近 ' + us.n + ' 題答對 ' + Math.round(us.rate * 100) + '%' +
@@ -2682,7 +2769,11 @@
                            : '，再練 ' + (UNIT_MIN - us.n) + ' 題就給獎牌')
               : '　—　可以再點別課一起練') +
         (L.recog.length ? '<br>認讀字是課本只要求「認得」、不要求會寫的字，' +
-                          '所以不會考它們的部首和筆畫。' : '');
+                          '所以不會考它們的部首和筆畫。' : '') +
+        ((L.extraZi || []).length
+          ? '<br><b>' + esc(L.extraZi.join('')) + '</b> 是老師的圈詞帶進來的字，' +
+            '課本這一課沒教，但圈詞裡有，所以一起練。'
+          : '');
     } else {
       note.innerHTML = '康軒版 ' + shortVol(db.grade, db.term) + ' 一共 ' + list.length +
         ' 課、' + all + ' 個字。<b>課次可以複選</b>（例如第6～9課一起練）。' +
@@ -2695,7 +2786,17 @@
   // 老師圈的詞優先當語詞用：填空、答案卡、朗讀都會用到（只有「我的課本」有）
   function rebuildCustomWords() {
     customWords = {};
-    if (db.subject !== 'mine') return;
+    if (db.subject !== 'mine') {
+      scopeLessons().forEach(function (L) {
+        (L.circle || []).forEach(function (w) {
+          for (var i = 0; i < w.length; i++) {
+            var c = w.charAt(i);
+            (customWords[c] || (customWords[c] = [])).push(w);
+          }
+        });
+      });
+      return;
+    }
     pickedLessons().forEach(function (L) {
       (L.words || []).forEach(function (w) {
         for (var i = 0; i < w.length; i++) {
@@ -2828,6 +2929,65 @@
       : '已關閉用眼提醒，不會要求休息。';
   }
 
+  /* ────────── 老師的圈詞 ──────────
+     選一課、把老師圈的詞打進去，直接併進課本那一課。首頁課次標籤上的 ✏️
+     就是「這一課有加過圈詞」。 */
+  var cAt = { g: 1, t: 1, k: 1 };
+
+  function fillSel(id, opts, val) {
+    var el = $(id);
+    el.innerHTML = '';
+    opts.forEach(function (o) {
+      var op = document.createElement('option');
+      op.value = o[0]; op.textContent = o[1];
+      if (String(o[0]) === String(val)) op.selected = true;
+      el.appendChild(op);
+    });
+  }
+  function renderCircle() {
+    var n = lessonCount(cAt.g, cAt.t);
+    if (cAt.k > n) cAt.k = 1;
+    fillSel('cGrade', [1, 2, 3, 4, 5, 6].map(function (g) {
+      return [g, '一二三四五六'.charAt(g - 1) + '年級'];
+    }), cAt.g);
+    fillSel('cTerm', [[1, '上學期'], [2, '下學期']], cAt.t);
+    fillSel('cLesson', lessonsOf(cAt.g, cAt.t).map(function (L) {
+      var mark = (L.circle || []).length ? '　✏️' : '';
+      return [L.k, '第 ' + L.k + ' 課　' + L.name + mark];
+    }), cAt.k);
+
+    var L = lessonAt(cAt.g, cAt.t, cAt.k);
+    var got = circleOf(cAt.g, cAt.t, cAt.k);
+    $('cWords').value = got.join('、');
+    $('cClear').hidden = !got.length;
+    if (!L) { $('cBook').textContent = ''; $('cHint').textContent = ''; return; }
+    $('cBook').innerHTML = '課本這一課的生字：<b>' + esc(L.zi.join('')) + '</b>' +
+      (L.recog.length ? '　認讀字：' + esc(L.recog.join('')) : '') +
+      (L.words.length ? '<br>課本的語詞：' + esc(L.words.join('、')) : '');
+    var extra = (L.extraZi || []);
+    var dup = got.filter(function (w) { return (L.circle || []).indexOf(w) < 0; });
+    $('cHint').innerHTML = got.length
+      ? '併進去 <b>' + (L.circle || []).length + '</b> 個圈詞' +
+        (dup.length ? '（<b>' + esc(dup.join('、')) + '</b> 課本本來就有，不重複算）' : '') +
+        (extra.length ? '；<b>' + esc(extra.join('')) + '</b> 是課本這一課沒教、' +
+                        '圈詞帶進來要一起練的字' : '') + '。'
+      : '打好按「併進這一課」。之後回首頁選這一課，圈詞就跟課本的生字一起出題了。';
+  }
+  function openCircle(g, t, k) {
+    cAt = { g: g, t: t, k: k || 1 };
+    renderLessons(); renderUseHint(); renderMicHint(); show('settings');
+    renderCircle();
+    $('circleCard').scrollIntoView({ block: 'start' });
+  }
+  function saveCircleEdits() {
+    var key = lessonKey(cAt.g, cAt.t, cAt.k);
+    var words = pickWords($('cWords').value);
+    if (words.length) db.circle[key] = words; else delete db.circle[key];
+    applyCircle();
+    save(); syncSubject(); renderCircle();
+    return words;
+  }
+
   /* ────────── 我的課本 ──────────
      康軒各冊的生字表這裡抓不到，所以留一個自己建課的入口：
      一課存一筆，課本、聯絡簿、生字簿上的字通通貼進來，
@@ -2922,6 +3082,25 @@
     editId = null;
     $('lessonForm').hidden = true;
   }
+  $('cGrade').addEventListener('change', function () {
+    cAt.g = Number(this.value); cAt.k = 1; renderCircle();
+  });
+  $('cTerm').addEventListener('change', function () {
+    cAt.t = Number(this.value); cAt.k = 1; renderCircle();
+  });
+  $('cLesson').addEventListener('change', function () {
+    cAt.k = Number(this.value); renderCircle();
+  });
+  $('cSave').addEventListener('click', function () {
+    var words = saveCircleEdits();
+    if (words.length) sparks('✏️');
+    else $('cHint').textContent = '沒有讀到任何詞（至少要兩個字），這一課的圈詞先清空了。';
+  });
+  armConfirm($('cClear'), '確定清掉？再按一次', function () {
+    $('cWords').value = '';
+    saveCircleEdits();
+  });
+
   $('lessonAdd').addEventListener('click', function () { openLessonForm(null); });
   $('lessonEditBtn').addEventListener('click', function () {
     if (db.picks.length === 1) openLessonForm(db.picks[0]);
@@ -2970,7 +3149,9 @@
 
   /* ────────── 設定畫面 ────────── */
   $('setBtn').addEventListener('click', function () {
-    closeSheet(); renderLessons(); renderUseHint(); renderMicHint(); show('settings');
+    closeSheet(); renderLessons(); renderUseHint(); renderMicHint();
+    cAt = { g: db.grade, t: db.term, k: db.picked.length ? Math.min.apply(null, db.picked) : 1 };
+    renderCircle(); show('settings');
   });
   $('sBackBtn').addEventListener('click', function () {
     micStop(); closeLessonForm(); refreshSetup(); show('setup');
