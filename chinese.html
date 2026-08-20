@@ -703,10 +703,41 @@
     font-size: calc(var(--fs-mega) * 1.2); color: var(--hue); margin: 6px 0 4px;
   }
 
-  /* 年級是六格一排，跟字母表共用 .tiles 的排法 */
-  .tiles.grades { grid-template-columns: repeat(6, 1fr); }
-  .tiles.grades .tile b { font-family: var(--font); }
-  .tiles.grades .tile i { font-family: var(--font); }
+  /* 年級是六格一排。六格擠在 430px 寬的手機上很容易黏在一起，
+     所以縫隙和內距都要比字母表大一點，手指才點得準 */
+  .tiles.grades { grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .tiles.grades .tile { padding: 14px 2px 12px; border-radius: 16px; }
+  .tiles.grades .tile b { font-family: var(--font); font-size: var(--fs-head); }
+  .tiles.grades .tile i { font-family: var(--font); margin-top: 3px; }
+  #terms { margin-top: 12px; }
+  #scopes { margin-top: 10px; }
+  @media (max-width: 380px) {
+    .tiles.grades { gap: 8px; }
+    .tiles.grades .tile { padding: 12px 0 10px; }
+  }
+
+  /* 我的課本：一課一張卡，點一下選起來，可以複選 */
+  .lessons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lesson {
+    font-family: inherit; cursor: pointer; color: var(--ink); text-align: left;
+    background: var(--bg); border: 2px solid var(--line); border-radius: 16px;
+    padding: 12px 13px; transition: all .14s; position: relative;
+  }
+  .lesson:active { transform: translateY(1px); }
+  .lesson:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
+  .lesson b { display: block; font-size: var(--fs-body); font-weight: 800; line-height: 1.3; }
+  .lesson i { display: block; font-style: normal; font-size: var(--fs-note);
+              color: var(--ink-soft); margin-top: 3px; }
+  .lesson u { font-family: var(--abc); text-decoration: none; display: block;
+              font-size: var(--fs-note); color: var(--ink-faint); margin-top: 4px;
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lesson.sel { border-color: var(--amber); background: var(--amber-soft); }
+  .lesson.sel i, .lesson.sel u { color: var(--amber); }
+  .lesson .tick { position: absolute; top: 6px; right: 8px; font-size: var(--fs-note); opacity: 0; }
+  .lesson.sel .tick { opacity: 1; }
+  .lessons .empty { grid-column: 1 / -1; }
+
+  input.paste.one { line-height: 1.6; }
 
   .wchip u { font-family: var(--abc); font-size: var(--fs-head); }
   .wrow .q { font-family: var(--abc); }
@@ -739,7 +770,7 @@
         <button class="mode" data-subject="bpmf">
           <span class="ic">ㄅ</span><b>ㄅㄆㄇ</b><i>拼音、聽聲音</i></button>
         <button class="mode" data-subject="mine">
-          <span class="ic">✏️</span><b>我的生字</b><i>貼課本上的字</i></button>
+          <span class="ic">✏️</span><b>我的課本</b><i>自己建課、選課</i></button>
       </div>
 
       <div id="gradeBox">
@@ -752,19 +783,37 @@
           <button class="tile" data-grade="5"><b>五</b><i>年級</i></button>
           <button class="tile" data-grade="6"><b>六</b><i>年級</i></button>
         </div>
+        <div class="modes three" id="terms">
+          <button class="mode sel" data-term="1"><b>上學期</b><i>前半年</i></button>
+          <button class="mode" data-term="2"><b>下學期</b><i>後半年</i></button>
+          <button class="mode" data-term="0"><b>整個學年</b><i>兩學期一起</i></button>
+        </div>
         <div class="modes" id="scopes">
-          <button class="mode sel" data-scope="only"><b>只練這個年級</b><i>這學年教的字</i></button>
-          <button class="mode" data-scope="upto"><b>累積複習</b><i>一年級到這裡全部</i></button>
+          <button class="mode sel" data-scope="only"><b>只練這一冊</b><i>這學期教的字</i></button>
+          <button class="mode" data-scope="upto"><b>累積複習</b><i>一年級上學期到這裡</i></button>
         </div>
       </div>
 
       <div id="mineBox" hidden>
-        <div class="sub-h">把課本上的生字貼進來</div>
-        <textarea class="paste" id="mineText" rows="4"
-          placeholder="直接貼一整課的生字或語詞都可以，例如：&#10;花 朵 草 地 蝴 蝶&#10;程式會自己把中文字挑出來，標點和注音會忽略。"></textarea>
+        <div class="sub-h">要練哪幾課？</div>
+        <div class="lessons" id="lessonList"></div>
         <div class="row mt">
-          <button class="btn primary grow" id="mineSave">存起來</button>
-          <button class="btn ghost" id="mineClear">清空</button>
+          <button class="btn grow" id="lessonAdd">＋ 新增一課</button>
+          <button class="btn grow" id="lessonEditBtn" hidden>✎ 編輯這一課</button>
+        </div>
+        <div id="lessonForm" hidden>
+          <div class="sub-h">課名</div>
+          <input class="paste one" id="lessonName" placeholder="例如：二上 第一課">
+          <div class="sub-h">這一課的生字</div>
+          <textarea class="paste" id="mineText" rows="4"
+            placeholder="直接貼一整課的生字或語詞都可以，例如：&#10;花 朵 草 地 蝴 蝶&#10;程式會自己把中文字挑出來；標點、注音和「第三課」「生字」這種標題會忽略。"></textarea>
+          <div class="row mt">
+            <button class="btn primary grow" id="lessonSave">存起來</button>
+            <button class="btn ghost" id="lessonCancel">取消</button>
+          </div>
+          <div class="row mt">
+            <button class="btn ghost grow" id="lessonDel" hidden>刪掉這一課</button>
+          </div>
         </div>
         <p class="hint" id="mineHint"></p>
       </div>
@@ -1083,6 +1132,8 @@
      寧可少考一題，也不要教錯畫數。部首和筆畫依教育部標準字體
      （艹 算 4 畫、辶 算 4 畫），跟課本、字典上的數法一致。
 
+     '↓下學期' 是分隔線：上面那些排在上學期，下面的排在下學期。
+
      ⚠️ 分級是照「常用度和筆畫難易」排的，不是康軒的課次。
      康軒各冊的生字表在教育百科（生字詞彙表）上，這個環境連不上去，
      沒辦法逐課核對，所以不敢掛康軒的名字。要照課本練，
@@ -1100,7 +1151,9 @@
       '木|ㄇㄨˋ|木|4|木頭,樹木', '天|ㄊㄧㄢ|大|4|天空,今天', '中|ㄓㄨㄥ|丨|4|中心,中間',
       '文|ㄨㄣˊ|文|4|文字,課文', '子|ㄗˇ|子|3|種子,日子', '女|ㄋㄩˇ|女|3|女生,女孩',
       '牛|ㄋㄧㄡˊ|牛|4|牛奶,小牛', '羊|ㄧㄤˊ|羊|6|山羊,綿羊', '心|ㄒㄧㄣ|心|4|小心,開心',
-      '目|ㄇㄨˋ|目|5|目光,題目', '耳|ㄦˇ|耳|6|耳朵,木耳', '王|ㄨㄤˊ|玉|4|國王,王子',
+      '目|ㄇㄨˋ|目|5|目光,題目', '耳|ㄦˇ|耳|6|耳朵,木耳',
+      '↓下學期',
+      '王|ㄨㄤˊ|玉|4|國王,王子',
       '田|ㄊㄧㄢˊ|田|5|田地,水田', '白|ㄅㄞˊ|白|5|白色,明白', '石|ㄕˊ|石|5|石頭,石門',
       '米|ㄇㄧˇ|米|6|白米,玉米', '衣|ㄧ|衣|6|衣服,大衣', '花|ㄏㄨㄚ|艸|8|花朵,開花',
       '草|ㄘㄠˇ|艸|10|草地,花草', '雨|ㄩˇ|雨|8|下雨,雨衣', '風|ㄈㄥ|風|9|風車,大風',
@@ -1123,7 +1176,9 @@
       '門|ㄇㄣˊ|門|8|大門,開門', '窗|ㄔㄨㄤ|穴|12|窗戶,窗外', '桌|ㄓㄨㄛ|木|10|書桌,桌子',
       '椅|ㄧˇ|木|12|椅子,座椅', '飯|ㄈㄢˋ|食|12|吃飯,米飯', '菜|ㄘㄞˋ|艸|12|青菜,菜園',
       '吃|ㄔ|口|6|吃飯,好吃', '喝|ㄏㄜ|口|12|喝水,喝茶', '穿|ㄔㄨㄢ|穴|9|穿衣,穿過',
-      '鞋|ㄒㄧㄝˊ|革|15|鞋子,球鞋', '帽|ㄇㄠˋ|巾|12|帽子,草帽', '春|ㄔㄨㄣ|日|9|春天,春節',
+      '鞋|ㄒㄧㄝˊ|革|15|鞋子,球鞋', '帽|ㄇㄠˋ|巾|12|帽子,草帽',
+      '↓下學期',
+      '春|ㄔㄨㄣ|日|9|春天,春節',
       '夏|ㄒㄧㄚˋ|夊|10|夏天,夏日', '秋|ㄑㄧㄡ|禾|9|秋天,中秋', '冬|ㄉㄨㄥ|冫|5|冬天,冬眠',
       '冷|ㄌㄥˇ|冫|7|冷風,寒冷', '熱|ㄖㄜˋ|火|15|天熱,熱鬧', '晚|ㄨㄢˇ|日|11|晚上,晚安',
       '黑|ㄏㄟ|黑|12|黑色,黑板', '亮|ㄌㄧㄤˋ|亠|9|月亮,明亮', '星|ㄒㄧㄥ|日|9|星星,星空',
@@ -1143,6 +1198,7 @@
       '助|ㄓㄨˋ|力|7|幫助,助手', '幫|ㄅㄤ|巾|17|幫忙,幫助', '忙|ㄇㄤˊ|心|6|幫忙,忙碌',
       '快|ㄎㄨㄞˋ|心|7|快樂,很快', '樂|ㄌㄜˋ|木|15|快樂,樂園', '音|ㄧㄣ|音|9|聲音,音樂',
       '聲|ㄕㄥ|耳|17|聲音,大聲', '靜|ㄐㄧㄥˋ|青|16|安靜,平靜', '安|ㄢ|宀|6|安全,平安',
+      '↓下學期',
       '全|ㄑㄩㄢˊ|入|6|全部,安全', '部|ㄅㄨˋ|邑|11|部分,全部', '分|ㄈㄣ|刀|4|分開,十分',
       '合|ㄏㄜˊ|口|6|合作,合起來', '作|ㄗㄨㄛˋ|人|7|作業,工作', '業|ㄧㄝˋ|木|13|作業,職業',
       '場|ㄔㄤˇ|土|12|操場,市場', '操|ㄘㄠ|手|16|操場,體操', '體|ㄊㄧˇ|骨|23|身體,體育',
@@ -1160,6 +1216,7 @@
       '努|ㄋㄨˇ|力|7|努力', '力|ㄌㄧˋ|力|2|用力,努力', '標|ㄅㄧㄠ|木|15|目標,標題',
       '準|ㄓㄨㄣˇ|水|13|標準,準備', '備|ㄅㄟˋ|人|12|準備,設備', '責|ㄗㄜˊ|貝|11|負責,責任',
       '任|ㄖㄣˋ|人|6|責任,任務', '務|ㄨˋ|力|11|任務,服務', '服|ㄈㄨˊ|月|8|衣服,服務',
+      '↓下學期',
       '環|ㄏㄨㄢˊ|玉|17|環境,環保', '境|ㄐㄧㄥˋ|土|14|環境,邊境', '保|ㄅㄠˇ|人|9|保護,環保',
       '護|ㄏㄨˋ|言|20|保護,護士', '資|ㄗ|貝|13|資料,資源', '源|ㄩㄢˊ|水|13|資源,來源',
       '節|ㄐㄧㄝˊ|竹|13|節日,節省', '省|ㄕㄥˇ|目|9|節省,反省', '傳|ㄔㄨㄢˊ|人|13|傳說,傳統',
@@ -1175,7 +1232,9 @@
       '製|ㄓˋ|衣|14|製造,製作', '組|ㄗㄨˇ|糸|11|組織,小組', '織|ㄓ|糸|18|組織,織布',
       '議|ㄧˋ|言|20|會議,建議', '建|ㄐㄧㄢˋ|廴|9|建議,建築', '築|ㄓㄨˋ|竹|16|建築,築巢',
       '訊|ㄒㄩㄣˋ|言|10|資訊,通訊', '通|ㄊㄨㄥ|辵|11|通過,交通', '交|ㄐㄧㄠ|亠|6|交通,交換',
-      '換|ㄏㄨㄢˋ|手|12|交換,換算', '態|ㄊㄞˋ|心|14|態度,生態', '度|ㄉㄨˋ|广|9|態度,溫度',
+      '換|ㄏㄨㄢˋ|手|12|交換,換算',
+      '↓下學期',
+      '態|ㄊㄞˋ|心|14|態度,生態', '度|ㄉㄨˋ|广|9|態度,溫度',
       '溫|ㄨㄣ|水|13|溫暖,溫度', '暖|ㄋㄨㄢˇ|日|13|溫暖,暖流', '熟|ㄕㄡˊ|火|15|成熟,熟練',
       '慮|ㄌㄩˋ|心|15|考慮,憂慮', '考|ㄎㄠˇ|老|6|考試,思考', '試|ㄕˋ|言|13|考試,試驗',
       '承|ㄔㄥˊ|手|8|承認,繼承', '認|ㄖㄣˋ|言|14|認真,承認', '誠|ㄔㄥˊ|言|13|誠實,真誠',
@@ -1191,7 +1250,9 @@
       '隱|ㄧㄣˇ|阜|17|隱藏,隱約', '藏|ㄘㄤˊ|艸|18|收藏,躲藏', '激|ㄐㄧ|水|16|感激,激動',
       '感|ㄍㄢˇ|心|13|感謝,感覺', '謝|ㄒㄧㄝˋ|言|17|感謝,謝謝', '覺|ㄐㄩㄝˊ|見|20|感覺,覺得',
       '慧|ㄏㄨㄟˋ|心|15|智慧,聰慧', '智|ㄓˋ|日|12|智慧,才智', '聰|ㄘㄨㄥ|耳|17|聰明,聰慧',
-      '韻|ㄩㄣˋ|音|19|韻味,押韻', '讚|ㄗㄢˋ|言|26|讚美,稱讚', '稱|ㄔㄥ|禾|14|稱讚,名稱',
+      '韻|ㄩㄣˋ|音|19|韻味,押韻',
+      '↓下學期',
+      '讚|ㄗㄢˋ|言|26|讚美,稱讚', '稱|ㄔㄥ|禾|14|稱讚,名稱',
       '譽|ㄩˋ|言|21|榮譽,名譽', '榮|ㄖㄨㄥˊ|木|14|光榮,榮譽', '耀|ㄧㄠˋ|羽|20|榮耀,照耀',
       '燦|ㄘㄢˋ|火|17|燦爛', '爛|ㄌㄢˋ|火|21|燦爛,腐爛', '攀|ㄆㄢ|手|19|攀登,攀爬',
       '登|ㄉㄥ|癶|12|登山,登記', '峰|ㄈㄥ|山|10|山峰,高峰', '壯|ㄓㄨㄤˋ|士|7|壯觀,強壯',
@@ -1253,18 +1314,22 @@
   /* ────────── 把生字表展開 ────────── */
   var ZI = [], ZMAP = {}, BPMF = {}, ALL = [];
   Object.keys(BANK).forEach(function (g) {
+    var term = 1;                                   // 碰到分隔線之後就是下學期
     BANK[g].forEach(function (line) {
+      if (line.indexOf('|') < 0) { term = 2; return; }
       var f = line.split('|');
       var it = { c: f[0], b: f[1], r: f[2], s: Number(f[3]) || 0,
-                 words: f[4] ? f[4].split(',') : [], g: Number(g), isZi: true };
+                 words: f[4] ? f[4].split(',') : [], g: Number(g), t: term, isZi: true };
       ZI.push(it); ZMAP[it.c] = it; BPMF[it.c] = it.b; ALL.push(it.c);
     });
   });
+  // 一上排第 1、一下第 2、二上第 3……累積複習時用這個比大小
+  function volOrd(g, t) { return (g - 1) * 2 + t; }
   Object.keys(EXTRA).forEach(function (c) { if (!BPMF[c]) BPMF[c] = EXTRA[c]; });
 
   // 自己貼進來的字可能查不到資料，給一個空殼，題型會自動避開查不到的那幾種
   function itemOf(c) {
-    return ZMAP[c] || { c: c, b: BPMF[c] || '', r: '', s: 0, words: [], g: 0, isZi: false };
+    return ZMAP[c] || { c: c, b: BPMF[c] || '', r: '', s: 0, words: [], g: 0, t: 0, isZi: false };
   }
   function hashHue(str) {
     var h = 0;
@@ -1312,11 +1377,11 @@
 
   /* ────────── 資料儲存 ────────── */
   var KEY = 'zh_v1';
-  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, scope: 'only',
+  var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, scope: 'only',
               mode: 'smart', kind: 'all', bkind: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0, nudgeAt: 5, tone: 'soft',
-              mine: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
+              lessons: [], picks: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 熟練度只看每個字最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
   var MEDALS = [
@@ -1347,8 +1412,24 @@
       var raw = localStorage.getItem(KEY);
       db = raw ? Object.assign(blank(), JSON.parse(raw)) : blank();
     } catch (e) { db = blank(); }
-    if (!Array.isArray(db.mine)) db.mine = [];
-    db.mine = db.mine.filter(function (c) { return /[一-鿿]/.test(c); });
+    if (!Array.isArray(db.lessons)) db.lessons = [];
+    // 舊版把自己貼的字存成一整包，沒有分課，收成「我貼的字」這一課
+    if (Array.isArray(db.mine) && db.mine.length && !db.lessons.length) {
+      db.lessons = [{ id: 'L0', name: '我貼的字', chars: db.mine.slice() }];
+    }
+    delete db.mine;
+    db.lessons = db.lessons.filter(function (L) {
+      return L && typeof L.id === 'string' && Array.isArray(L.chars);
+    });
+    db.lessons.forEach(function (L) {
+      L.name = String(L.name || '沒有名字的一課').slice(0, 40);
+      L.chars = L.chars.filter(function (c) { return /^[一-鿿]$/.test(c); });
+    });
+    if (!Array.isArray(db.picks)) db.picks = [];
+    db.picks = db.picks.filter(function (id) {
+      return db.lessons.some(function (L) { return L.id === id; });
+    });
+    if (!db.picks.length && db.lessons.length) db.picks = [db.lessons[db.lessons.length - 1].id];
     if (!Array.isArray(db.known)) db.known = [];
     if (!db.perQ || typeof db.perQ !== 'object') db.perQ = {};
     if (!db.recent || typeof db.recent !== 'object') db.recent = {};
@@ -1356,6 +1437,7 @@
     if (!Array.isArray(db.lastWrong)) db.lastWrong = [];
     if (['zi', 'bpmf', 'mine'].indexOf(db.subject) < 0) db.subject = DEF.subject;
     if ([1, 2, 3, 4, 5, 6].indexOf(db.grade) < 0) db.grade = DEF.grade;
+    if ([0, 1, 2].indexOf(db.term) < 0) db.term = DEF.term;
     if (['only', 'upto'].indexOf(db.scope) < 0) db.scope = DEF.scope;
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if ([0, 20, 30].indexOf(db.secs) < 0) db.secs = DEF.secs;
@@ -1415,6 +1497,8 @@
   }
   function radFace(r) { return RAD_ALT[r] ? r + '（' + RAD_ALT[r] + '）' : r; }
   function gradeName(g) { return '一二三四五六'.charAt(g - 1) + '年級'; }
+  function termName(t) { return t === 1 ? '上學期' : t === 2 ? '下學期' : ''; }
+  function volName(g, t) { return gradeName(g) + termName(t); }
 
   /* ────────── 音效 ────────── */
   var ac = null, master = null;
@@ -1743,14 +1827,25 @@
   segment('kinds', function (m) { db.kind = m.dataset.kind; syncSubject(); });
   segment('bkinds', function (m) { db.bkind = m.dataset.bkind; syncSubject(); });
   segment('grades', function (m) { db.grade = Number(m.dataset.grade); syncSubject(); });
+  segment('terms', function (m) { db.term = Number(m.dataset.term); syncSubject(); });
   segment('scopes', function (m) { db.scope = m.dataset.scope; syncSubject(); });
   segment('subjects', function (m) { db.subject = m.dataset.subject; syncSubject(); });
 
   /* 這一輪的題庫：某個年級（或累積到某個年級）的生字，或自己貼進來的字 */
   function subjectPool() {
-    if (db.subject === 'mine') return db.mine.slice();
+    if (db.subject === 'mine') {
+      var seen = {}, out = [];
+      db.lessons.forEach(function (L) {
+        if (db.picks.indexOf(L.id) < 0) return;
+        L.chars.forEach(function (c) { if (!seen[c]) { seen[c] = 1; out.push(c); } });
+      });
+      return out;
+    }
+    var end = volOrd(db.grade, db.term || 2);       // 選「整個學年」時，累積算到下學期為止
     return ZI.filter(function (x) {
-      return db.scope === 'upto' ? x.g <= db.grade : x.g === db.grade;
+      var o = volOrd(x.g, x.t);
+      if (db.scope === 'upto') return o <= end;
+      return db.term ? o === end : x.g === db.grade;
     }).map(function (x) { return x.c; });
   }
   // 資料不齊的字（自己貼進來的多半查不到部首筆畫）出不了題就先不放進來
@@ -1758,9 +1853,14 @@
     return subjectPool().filter(function (c) { return kindsAvailable(c).length > 0; });
   }
   function subjectName() {
-    if (db.subject === 'mine') return '我的生字';
-    var g = (db.scope === 'upto' ? '一～' : '') + gradeName(db.grade);
-    return (db.subject === 'bpmf' ? 'ㄅㄆㄇ ' : '') + g;
+    if (db.subject === 'mine') {
+      var got = pickedLessons();
+      if (!got.length) return '我的課本';
+      return got.length === 1 ? got[0].name : '我的課本（' + got.length + ' 課）';
+    }
+    var here = volName(db.grade, db.term);
+    return (db.subject === 'bpmf' ? 'ㄅㄆㄇ ' : '') +
+           (db.scope === 'upto' ? '一年級上學期～' + here : here);
   }
 
   function syncSubject() {
@@ -1774,10 +1874,10 @@
       (db.secs ? db.secs + ' 秒' : '不限時');
     var n = usablePool().length;
     $('poolHint').textContent = mine && !n
-      ? '還沒有貼任何字。把課本上的生字貼進上面的框框，存起來就可以練了。'
+      ? '還沒有選到任何字。新增一課、或點一下上面的課，選起來才能開始。'
       : '這次的題庫有 ' + n + ' 個字，都會練到，常錯的會多出現幾次。';
     syncStart();
-    renderMineHint();
+    renderLessons();
     refreshSetup();
   }
   segment('rates', function (m) { db.rate = Number(m.dataset.rate); tryVoice(); });
@@ -1822,32 +1922,113 @@
       : '已關閉用眼提醒，不會要求休息。';
   }
 
-  /* ────────── 我的生字 ──────────
-     康軒各冊的生字表這裡抓不到，所以留一個貼上的入口：
-     課本、聯絡簿、生字簿上的字通通貼進來，程式自己把中文字挑出來。 */
+  /* ────────── 我的課本 ──────────
+     康軒各冊的生字表這裡抓不到，所以留一個自己建課的入口：
+     一課存一筆，課本、聯絡簿、生字簿上的字通通貼進來，
+     程式自己把中文字挑出來。要練哪幾課點一下就好，可以複選。 */
+  var editId = null;
+
+  function esc(t) {
+    return String(t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function pickedLessons() {
+    return db.lessons.filter(function (L) { return db.picks.indexOf(L.id) >= 0; });
+  }
+  function lessonOf(id) {
+    return db.lessons.filter(function (L) { return L.id === id; })[0] || null;
+  }
+
+  function renderLessons() {
+    var box = $('lessonList');
+    if (!box) return;
+    box.innerHTML = '';
+    if (!db.lessons.length) {
+      box.innerHTML = '<div class="empty">還沒有課。按下面的「＋ 新增一課」，' +
+        '把課本上這一課的生字貼進來。</div>';
+    }
+    db.lessons.forEach(function (L) {
+      var b = document.createElement('button');
+      b.className = 'lesson' + (db.picks.indexOf(L.id) >= 0 ? ' sel' : '');
+      b.innerHTML = '<span class="tick">✔</span><b>' + esc(L.name) + '</b>' +
+        '<i>' + L.chars.length + ' 個字</i>' +
+        '<u>' + esc(L.chars.slice(0, 8).join('')) + (L.chars.length > 8 ? '…' : '') + '</u>';
+      b.addEventListener('click', function () {
+        var i = db.picks.indexOf(L.id);
+        if (i >= 0) db.picks.splice(i, 1); else db.picks.push(L.id);
+        save(); syncSubject();
+      });
+      box.appendChild(b);
+    });
+    $('lessonEditBtn').hidden = db.picks.length !== 1;
+    renderMineHint();
+  }
+
   function renderMineHint() {
     var el = $('mineHint');
     if (!el) return;
-    var known = db.mine.filter(function (c) { return ZMAP[c]; }).length;
-    el.textContent = db.mine.length
-      ? '已經存了 ' + db.mine.length + ' 個字，其中 ' + known +
-        ' 個查得到注音、部首和語詞，另外 ' + (db.mine.length - known) +
-        ' 個只會用聽的出題（字典裡沒有的字就只能聽發音認字）。'
-      : '貼上後按「存起來」。查得到的字會自動補上注音、部首、筆畫和語詞；' +
-        '查不到的字也留著，用聽發音的方式練。';
+    var got = pickedLessons();
+    if (!db.lessons.length) {
+      el.textContent = '一課存一筆，之後要練哪一課點一下就好。查得到的字會自動補上注音、' +
+        '部首、筆畫和語詞；查不到的字也留著，用聽發音的方式認字。';
+      return;
+    }
+    var pool = subjectPool();
+    var known = pool.filter(function (c) { return ZMAP[c]; }).length;
+    el.textContent = '選了 ' + got.length + ' 課、共 ' + pool.length + ' 個字，其中 ' + known +
+      ' 個查得到注音、部首和語詞，另外 ' + (pool.length - known) +
+      ' 個只會用聽發音的方式出題。點一下課可以取消選取，也可以一次選好幾課一起練。';
   }
-  $('mineSave').addEventListener('click', function () {
-    var txt = $('mineText').value || '';
-    var got = txt.match(/[一-鿿]/g) || [];
-    var seen = {}, list = [];
-    got.forEach(function (c) { if (!seen[c]) { seen[c] = 1; list.push(c); } });
-    db.mine = list;
+
+  function openLessonForm(id) {
+    editId = id || null;
+    var L = id ? lessonOf(id) : null;
+    $('lessonName').value = L ? L.name : '第 ' + (db.lessons.length + 1) + ' 課';
+    $('mineText').value = L ? L.chars.join(' ') : '';
+    $('lessonDel').hidden = !L;
+    $('lessonForm').hidden = false;
+    $('lessonName').focus();
+  }
+  function closeLessonForm() {
+    editId = null;
+    $('lessonForm').hidden = true;
+  }
+  $('lessonAdd').addEventListener('click', function () { openLessonForm(null); });
+  $('lessonEditBtn').addEventListener('click', function () {
+    if (db.picks.length === 1) openLessonForm(db.picks[0]);
+  });
+  $('lessonCancel').addEventListener('click', closeLessonForm);
+  // 直接整段貼的時候，「第三課」「生字」「語詞」這種標題不是要練的字，先拿掉
+  var LABELS = /第\s*[一二三四五六七八九十百千0-9]+\s*[課冊單元]|生字|語詞|新詞/g;
+  $('lessonSave').addEventListener('click', function () {
+    var got = ($('mineText').value || '').replace(LABELS, ' ').match(/[一-鿿]/g) || [];
+    var seen = {}, chars = [];
+    got.forEach(function (c) { if (!seen[c]) { seen[c] = 1; chars.push(c); } });
+    var name = ($('lessonName').value || '').trim().slice(0, 40) ||
+               ('第 ' + (db.lessons.length + 1) + ' 課');
+    if (!chars.length) {
+      $('mineHint').textContent = '這一課還沒有任何中文字，貼上生字再按一次「存起來」。';
+      return;
+    }
+    var L = editId ? lessonOf(editId) : null;
+    if (L) { L.name = name; L.chars = chars; }
+    else {
+      L = { id: 'L' + Date.now().toString(36), name: name, chars: chars };
+      db.lessons.push(L);
+      db.picks = [L.id];          // 剛存好的這一課直接選起來，按開始就是練它
+    }
+    closeLessonForm();
     db.subject = 'mine';
     save(); syncSubject();
-    if (list.length) sparks('✏️');
+    sparks('✏️');
   });
-  armConfirm($('mineClear'), '確定清空？再按一次', function () {
-    db.mine = []; $('mineText').value = ''; save(); syncSubject();
+  armConfirm($('lessonDel'), '確定刪掉？再按一次', function () {
+    if (!editId) return;
+    db.lessons = db.lessons.filter(function (L) { return L.id !== editId; });
+    db.picks = db.picks.filter(function (id) { return id !== editId; });
+    closeLessonForm();
+    save(); syncSubject();
   });
 
   /* ────────── 認識生字 ────────── */
@@ -3011,9 +3192,9 @@
   }
 
   load();
-  $('mineText').value = db.mine.join(' ');
   [['counts', 'count', 1], ['secs', 'secs', 1], ['modes', 'mode', 0], ['kinds', 'kind', 0],
-   ['bkinds', 'bkind', 0], ['grades', 'grade', 1], ['scopes', 'scope', 0],
+   ['bkinds', 'bkind', 0], ['grades', 'grade', 1], ['terms', 'term', 1],
+   ['scopes', 'scope', 0],
    ['subjects', 'subject', 0], ['rates', 'rate', 1], ['pitches', 'pitch', 1],
    ['rights', 'right', 0], ['limits', 'limit', 1], ['nudges', 'nudge', 1],
    ['tones', 'tone', 0]].forEach(function (x) {
