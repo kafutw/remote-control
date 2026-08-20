@@ -245,22 +245,28 @@
   .hint + .sub-h { margin-top: 22px; }
   .chip .pen { font-size: .8em; }
 
-  /* 崩潰提醒要講的句子：一句一列，點一下就固定講那一句 */
+  /* 崩潰提醒要講的句子：一句一列，每一句都會講，▲▼ 排順序 */
   .lines { display: flex; flex-direction: column; gap: 6px; }
   .line {
-    font-family: inherit; font-size: var(--fs-note); cursor: pointer; text-align: left;
-    color: var(--ink); background: var(--bg); border: 1.5px solid var(--line);
-    border-radius: 12px; padding: 9px 10px; display: flex; align-items: center; gap: 8px;
+    font-size: var(--fs-note); color: var(--ink); background: var(--bg);
+    border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 7px 8px 7px 10px; display: flex; align-items: center; gap: 7px;
   }
+  .line .no { flex: 0 0 auto; font-weight: 800; color: var(--ink-faint);
+              min-width: 1.1em; text-align: right; }
   .line .e { font-size: 1.15em; line-height: 1; flex: 0 0 auto; }
   .line .t { flex: 1; min-width: 0; font-weight: 700; }
   .line .tag { flex: 0 0 auto; font-size: var(--fs-note); font-weight: 800;
                color: var(--ink-faint); background: var(--track);
                border-radius: 99px; padding: 2px 8px; }
-  .line.on { border-color: var(--key); background: var(--key-soft); color: var(--key-deep); }
-  .line.on .tag { background: var(--key); color: #fff; }
-  .line .del { flex: 0 0 auto; border: 0; background: none; font: inherit; cursor: pointer;
-               color: var(--ink-faint); padding: 2px 4px; }
+  .line .mv {
+    flex: 0 0 auto; font-family: inherit; font-size: var(--fs-note); cursor: pointer;
+    color: var(--ink-soft); background: var(--card); border: 1.5px solid var(--line);
+    border-radius: 9px; padding: 5px 8px; line-height: 1;
+  }
+  .line .mv:active { transform: translateY(1px); }
+  .line .mv[disabled] { opacity: .28; cursor: default; }
+  .line .mv.del { color: var(--coral-ink); }
   .paste.mt { margin-top: 10px; }
   .mode[disabled] { opacity: .38; cursor: default; }
   .mode b { display: block; font-size: var(--fs-body); font-weight: 800; }
@@ -1637,7 +1643,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 aa';
+  var VERSION = '2026-08-20 ab';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1989,7 +1995,7 @@
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               nudgeAt: 0, noiseAt: 0.08, tone: 'auto', lastPeak: 0, micFail: '',
-              lines: { soft: [], fun: [] }, pin: { soft: '', fun: '' },
+              lines: null, linesV: 0,
               circle: {}, day: null, medalDays: {},
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 單一個字的熟練度只看最近這麼多題，以前的錯誤會慢慢淡出
@@ -2080,13 +2086,30 @@
     // 舊版的門檻（0.10 / 0.16 / 0.24）在新的刻度上太高，對不上就退回預設
     if ([0, 0.05, 0.08, 0.12, 0.2].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
     if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
-    if (!db.lines || typeof db.lines !== 'object') db.lines = { soft: [], fun: [] };
-    if (!db.pin || typeof db.pin !== 'object') db.pin = { soft: '', fun: '' };
-    ['soft', 'fun'].forEach(function (t) {
+    /* 提醒要講的句子：整份清單（含內建的）自己存一份，順序就是講的順序。
+       舊版只存自己加的、另外用 db.pin 挑一句固定講；換成排順序之後那個沒有意義了，
+       把自己加的接在內建的後面，pin 丟掉。 */
+    if (!db.lines || typeof db.lines !== 'object') db.lines = null;
+    if (db.linesV !== 2) {
+      var mine = db.lines || {};
+      db.lines = {};
+      TONES.forEach(function (t) {
+        var own = (Array.isArray(mine[t]) ? mine[t] : []).filter(function (x) {
+          return Array.isArray(x) && typeof x[1] === 'string' && x[1].trim();
+        }).map(function (x) { return [x[0], x[1], 1]; });
+        db.lines[t] = BUILTIN_LINES[t].map(function (x) { return [x[0], x[1], 0]; }).concat(own);
+      });
+      db.linesV = 2;
+      delete db.pin;
+      save();
+    }
+    TONES.forEach(function (t) {
       db.lines[t] = (Array.isArray(db.lines[t]) ? db.lines[t] : []).filter(function (x) {
         return Array.isArray(x) && typeof x[1] === 'string' && x[1].trim();
       }).slice(0, 20);
-      if (typeof db.pin[t] !== 'string') db.pin[t] = '';
+      if (!db.lines[t].length) {
+        db.lines[t] = BUILTIN_LINES[t].map(function (x) { return [x[0], x[1], 0]; });
+      }
     });
     if (typeof db.lastPeak !== 'number') db.lastPeak = 0;
     if (typeof db.micFail !== 'string') db.micFail = '';
@@ -2882,67 +2905,75 @@
   var TONE_NAME = { soft: '溫柔', fun: '促咪' };
   var TONE_EMOJI = { soft: '🫂', fun: '📺' };
 
-  function allLines(t) { return BUILTIN_LINES[t].concat(db.lines[t] || []); }
-  function pinnedLine(t) {
-    var got = allLines(t).filter(function (x) { return x[1] === db.pin[t]; });
-    return got.length ? got[0] : null;
-  }
-  // 交給元件的清單：選了某一句就只給那一句，沒選就整組輪流
+  // 交給元件的清單：整組都會講，照這裡排的順序輪
   function effLines() {
     var out = {};
     TONES.forEach(function (t) {
-      var one = pinnedLine(t);
-      out[t] = one ? [one] : allLines(t);
+      out[t] = db.lines[t].map(function (x) { return [x[0], x[1]]; });
     });
     return out;
+  }
+  function moveLine(t, i, d) {
+    var j = i + d, list = db.lines[t];
+    if (j < 0 || j >= list.length) return;
+    var tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    save(); syncNudge(); renderLines();
   }
   function renderLines() {
     var box = $('lineList');
     if (!box) return;
     box.innerHTML = '';
     TONES.forEach(function (t) {
-      allLines(t).forEach(function (x, i) {
-        var own = i >= BUILTIN_LINES[t].length;
-        var on = db.pin[t] === x[1];
-        var b = document.createElement('button');
-        b.className = 'line' + (on ? ' on' : '');
-        b.innerHTML = '<span class="e">' + x[0] + '</span>' +
+      var list = db.lines[t];
+      list.forEach(function (x, i) {
+        var row = document.createElement('div');
+        row.className = 'line';
+        row.innerHTML = '<span class="no">' + (i + 1) + '</span>' +
+          '<span class="e">' + x[0] + '</span>' +
           '<span class="t">' + esc(x[1]) + '</span>' +
-          '<span class="tag">' + (on ? '就講這句' : TONE_NAME[t]) + '</span>' +
-          (own ? '<span class="del" data-del="' + t + '|' + esc(x[1]) + '">✕</span>' : '');
-        b.addEventListener('click', function (e) {
-          var d = e.target.getAttribute && e.target.getAttribute('data-del');
-          if (d) {                                   // 按 ✕ 是刪掉，不是選它
-            var w = d.slice(d.indexOf('|') + 1);
-            db.lines[t] = db.lines[t].filter(function (y) { return y[1] !== w; });
-            if (db.pin[t] === w) db.pin[t] = '';
-          } else {
-            db.pin[t] = on ? '' : x[1];              // 再點一次取消，回到輪流
-          }
-          save(); syncNudge(); renderLines();
+          '<span class="tag">' + TONE_NAME[t] + '</span>';
+        [['up', '▲', -1], ['down', '▼', 1]].forEach(function (m) {
+          var b = document.createElement('button');
+          b.className = 'mv';
+          b.textContent = m[1];
+          b.title = m[1] === '▲' ? '往前一句' : '往後一句';
+          b.disabled = m[2] < 0 ? i === 0 : i === list.length - 1;
+          b.addEventListener('click', function () { moveLine(t, i, m[2]); });
+          row.appendChild(b);
         });
-        box.appendChild(b);
+        if (x[2]) {                                   // 自己加的才刪得掉
+          var del = document.createElement('button');
+          del.className = 'mv del';
+          del.textContent = '✕';
+          del.title = '刪掉這一句';
+          del.addEventListener('click', function () {
+            db.lines[t] = db.lines[t].filter(function (y, k) { return k !== i; });
+            save(); syncNudge(); renderLines();
+          });
+          row.appendChild(del);
+        }
+        box.appendChild(row);
       });
     });
     TONES.forEach(function (t) {
-      var one = pinnedLine(t);
       var el = $(t === 'soft' ? 'softNote' : 'funNote');
-      if (el) el.textContent = one ? one[1] : allLines(t)[0][1] + ' …等 ' + allLines(t).length + ' 句';
+      if (el) el.textContent = db.lines[t][0][1] + '…等 ' + db.lines[t].length + ' 句輪流';
     });
-    $('lineHint').textContent = '點一下就固定講那一句，再點一次取消（取消就輪流講）。' +
-      '自己加的可以按 ✕ 刪掉，內建的刪不掉。「自動」是先講溫柔的，鬧不停才換促咪的。';
+    $('lineHint').textContent = '每一句都會講，照上面的順序輪流 —— 用 ▲▼ 排順序，' +
+      '最想先講的排第一。自己加的可以按 ✕ 刪掉，內建的刪不掉。' +
+      '「自動」是先講溫柔那組，鬧不停才換促咪那組。';
   }
   $('lineAdd').addEventListener('click', function (e) {
     var t = e.target.getAttribute && e.target.getAttribute('data-add');
     if (!t) return;
     var txt = ($('lineNew').value || '').trim().slice(0, 30);
     if (!txt) { $('lineHint').textContent = '先在上面打一句話，再按要加到溫柔還是促咪。'; return; }
-    if (allLines(t).some(function (x) { return x[1] === txt; })) {
+    if (db.lines[t].some(function (x) { return x[1] === txt; })) {
       $('lineHint').textContent = '這一句已經有了。';
       return;
     }
-    db.lines[t].push([TONE_EMOJI[t], txt]);
-    db.pin[t] = txt;                 // 加完就選起來，下次跳出來講的就是它
+    if (db.lines[t].length >= 20) { $('lineHint').textContent = '一組最多 20 句，先刪掉幾句再加。'; return; }
+    db.lines[t].push([TONE_EMOJI[t], txt, 1]);     // 加在最後面，要往前排就按 ▲
     $('lineNew').value = '';
     save(); syncNudge(); renderLines();
     sparks('💬');
