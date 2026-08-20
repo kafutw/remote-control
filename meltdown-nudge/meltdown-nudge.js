@@ -339,7 +339,7 @@
       set: function (patch) {
         patch = patch || {};
         ext(cfg, patch);
-        if (patch.lines) lines = patch.lines;
+        if (patch.lines) { lines = patch.lines; pos = {}; }   // 換了清單就從第一句重講
         // noise: null 要真的關掉，所以用 hasOwnProperty 判斷而不是看真假值
         if (Object.prototype.hasOwnProperty.call(patch, 'noise')) {
           noise = patch.noise

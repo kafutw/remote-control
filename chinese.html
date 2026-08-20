@@ -244,6 +244,24 @@
   /* 說明文字後面接小標的時候，貼太緊看起來像同一段 */
   .hint + .sub-h { margin-top: 22px; }
   .chip .pen { font-size: .8em; }
+
+  /* 崩潰提醒要講的句子：一句一列，點一下就固定講那一句 */
+  .lines { display: flex; flex-direction: column; gap: 6px; }
+  .line {
+    font-family: inherit; font-size: var(--fs-note); cursor: pointer; text-align: left;
+    color: var(--ink); background: var(--bg); border: 1.5px solid var(--line);
+    border-radius: 12px; padding: 9px 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .line .e { font-size: 1.15em; line-height: 1; flex: 0 0 auto; }
+  .line .t { flex: 1; min-width: 0; font-weight: 700; }
+  .line .tag { flex: 0 0 auto; font-size: var(--fs-note); font-weight: 800;
+               color: var(--ink-faint); background: var(--track);
+               border-radius: 99px; padding: 2px 8px; }
+  .line.on { border-color: var(--key); background: var(--key-soft); color: var(--key-deep); }
+  .line.on .tag { background: var(--key); color: #fff; }
+  .line .del { flex: 0 0 auto; border: 0; background: none; font: inherit; cursor: pointer;
+               color: var(--ink-faint); padding: 2px 4px; }
+  .paste.mt { margin-top: 10px; }
   .mode[disabled] { opacity: .38; cursor: default; }
   .mode b { display: block; font-size: var(--fs-body); font-weight: 800; }
   .mode i { display: block; font-style: normal; font-size: var(--fs-note); color: var(--ink-soft); margin-top: 3px; }
@@ -252,13 +270,15 @@
   /* 「生字」「ㄅㄆㄇ」「我的生字」是最上面的岔路，用大圖示和不同顏色分開 */
 
   /* 貼生字的框：字要夠大，家長多半是在手機上貼 */
-  textarea.paste {
+  textarea.paste, input.paste {
     font-family: var(--abc); font-size: var(--fs-body); font-weight: 700; color: var(--ink);
     background: var(--bg); border: 2px solid var(--line); border-radius: 14px;
-    padding: 12px; width: 100%; box-sizing: border-box; line-height: 1.9; resize: vertical;
+    padding: 12px; width: 100%; box-sizing: border-box; line-height: 1.9;
   }
-  textarea.paste:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
-  textarea.paste::placeholder { font-family: var(--font); font-weight: 400; color: var(--ink-faint); }
+  textarea.paste { resize: vertical; }
+  textarea.paste:focus-visible, input.paste:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
+  textarea.paste::placeholder, input.paste::placeholder {
+    font-family: var(--font); font-weight: 400; color: var(--ink-faint); }
 
   select.voice {
     font-family: inherit; font-size: var(--fs-body); font-weight: 700; color: var(--ink);
@@ -1116,11 +1136,21 @@
       <div class="sub-h">要說什麼</div>
       <div class="modes three" id="tones">
         <button class="mode sel" data-tone="auto"><b>自動</b><i>先溫柔，鬧不停才促咪</i></button>
-        <button class="mode" data-tone="soft"><b>一直溫柔</b><i>沒關係，慢慢來</i></button>
-        <button class="mode" data-tone="fun"><b>一直促咪</b><i>哭哭浪費看電視時間</i></button>
+        <button class="mode" data-tone="soft"><b>一直溫柔</b><i id="softNote">沒關係，慢慢來</i></button>
+        <button class="mode" data-tone="fun"><b>一直促咪</b><i id="funNote">哭哭浪費看電視時間喔</i></button>
       </div>
       <p class="hint">跳出來的話會念出來，念完停一秒自己繼續，不用等他按。
         提醒開著的時候倒數會凍住，不會偷吃他的時間。</p>
+
+      <div class="sub-h">說哪幾句</div>
+      <div class="lines" id="lineList"></div>
+      <input class="paste one mt" id="lineNew" maxlength="30"
+        placeholder="自己加一句，例如：深呼吸，我們一起數到三">
+      <div class="row mt" id="lineAdd">
+        <button class="btn grow" data-add="soft">🫂 加到溫柔</button>
+        <button class="btn grow" data-add="fun">📺 加到促咪</button>
+      </div>
+      <p class="hint" id="lineHint"></p>
     </div>
 
     <div class="foot">
@@ -1576,7 +1606,7 @@
       set: function (patch) {
         patch = patch || {};
         ext(cfg, patch);
-        if (patch.lines) lines = patch.lines;
+        if (patch.lines) { lines = patch.lines; pos = {}; }   // 換了清單就從第一句重講
         // noise: null 要真的關掉，所以用 hasOwnProperty 判斷而不是看真假值
         if (Object.prototype.hasOwnProperty.call(patch, 'noise')) {
           noise = patch.noise
@@ -1607,7 +1637,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 z';
+  var VERSION = '2026-08-20 aa';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1959,6 +1989,7 @@
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               nudgeAt: 0, noiseAt: 0.08, tone: 'auto', lastPeak: 0, micFail: '',
+              lines: { soft: [], fun: [] }, pin: { soft: '', fun: '' },
               circle: {}, day: null, medalDays: {},
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 單一個字的熟練度只看最近這麼多題，以前的錯誤會慢慢淡出
@@ -2049,6 +2080,14 @@
     // 舊版的門檻（0.10 / 0.16 / 0.24）在新的刻度上太高，對不上就退回預設
     if ([0, 0.05, 0.08, 0.12, 0.2].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
     if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
+    if (!db.lines || typeof db.lines !== 'object') db.lines = { soft: [], fun: [] };
+    if (!db.pin || typeof db.pin !== 'object') db.pin = { soft: '', fun: '' };
+    ['soft', 'fun'].forEach(function (t) {
+      db.lines[t] = (Array.isArray(db.lines[t]) ? db.lines[t] : []).filter(function (x) {
+        return Array.isArray(x) && typeof x[1] === 'string' && x[1].trim();
+      }).slice(0, 20);
+      if (typeof db.pin[t] !== 'string') db.pin[t] = '';
+    });
     if (typeof db.lastPeak !== 'number') db.lastPeak = 0;
     if (typeof db.micFail !== 'string') db.micFail = '';
     if (typeof db.useMs !== 'number' || db.useMs < 0) db.useMs = 0;
@@ -2832,6 +2871,83 @@
         Math.round(BREAK_MS / 60000) + ' 分鐘';
   }
 
+  /* ────────── 崩潰提醒要講的句子 ──────────
+     內建幾句，家長可以自己加。點一下某一句就「固定講那一句」，不點就輪流講。
+     自己加的會排在內建的後面，加完自動選起來，所以下一次跳出來講的就是它。 */
+  var BUILTIN_LINES = {
+    soft: [['🫂', '沒關係，慢慢來'], ['🎥', '我要錄給老師看'], ['🧱', '生氣要扣樂高錢']],
+    fun:  [['📺', '哭哭浪費看電視時間喔'], ['📺', '認真！答完才能看電視喔']]
+  };
+  var TONES = ['soft', 'fun'];
+  var TONE_NAME = { soft: '溫柔', fun: '促咪' };
+  var TONE_EMOJI = { soft: '🫂', fun: '📺' };
+
+  function allLines(t) { return BUILTIN_LINES[t].concat(db.lines[t] || []); }
+  function pinnedLine(t) {
+    var got = allLines(t).filter(function (x) { return x[1] === db.pin[t]; });
+    return got.length ? got[0] : null;
+  }
+  // 交給元件的清單：選了某一句就只給那一句，沒選就整組輪流
+  function effLines() {
+    var out = {};
+    TONES.forEach(function (t) {
+      var one = pinnedLine(t);
+      out[t] = one ? [one] : allLines(t);
+    });
+    return out;
+  }
+  function renderLines() {
+    var box = $('lineList');
+    if (!box) return;
+    box.innerHTML = '';
+    TONES.forEach(function (t) {
+      allLines(t).forEach(function (x, i) {
+        var own = i >= BUILTIN_LINES[t].length;
+        var on = db.pin[t] === x[1];
+        var b = document.createElement('button');
+        b.className = 'line' + (on ? ' on' : '');
+        b.innerHTML = '<span class="e">' + x[0] + '</span>' +
+          '<span class="t">' + esc(x[1]) + '</span>' +
+          '<span class="tag">' + (on ? '就講這句' : TONE_NAME[t]) + '</span>' +
+          (own ? '<span class="del" data-del="' + t + '|' + esc(x[1]) + '">✕</span>' : '');
+        b.addEventListener('click', function (e) {
+          var d = e.target.getAttribute && e.target.getAttribute('data-del');
+          if (d) {                                   // 按 ✕ 是刪掉，不是選它
+            var w = d.slice(d.indexOf('|') + 1);
+            db.lines[t] = db.lines[t].filter(function (y) { return y[1] !== w; });
+            if (db.pin[t] === w) db.pin[t] = '';
+          } else {
+            db.pin[t] = on ? '' : x[1];              // 再點一次取消，回到輪流
+          }
+          save(); syncNudge(); renderLines();
+        });
+        box.appendChild(b);
+      });
+    });
+    TONES.forEach(function (t) {
+      var one = pinnedLine(t);
+      var el = $(t === 'soft' ? 'softNote' : 'funNote');
+      if (el) el.textContent = one ? one[1] : allLines(t)[0][1] + ' …等 ' + allLines(t).length + ' 句';
+    });
+    $('lineHint').textContent = '點一下就固定講那一句，再點一次取消（取消就輪流講）。' +
+      '自己加的可以按 ✕ 刪掉，內建的刪不掉。「自動」是先講溫柔的，鬧不停才換促咪的。';
+  }
+  $('lineAdd').addEventListener('click', function (e) {
+    var t = e.target.getAttribute && e.target.getAttribute('data-add');
+    if (!t) return;
+    var txt = ($('lineNew').value || '').trim().slice(0, 30);
+    if (!txt) { $('lineHint').textContent = '先在上面打一句話，再按要加到溫柔還是促咪。'; return; }
+    if (allLines(t).some(function (x) { return x[1] === txt; })) {
+      $('lineHint').textContent = '這一句已經有了。';
+      return;
+    }
+    db.lines[t].push([TONE_EMOJI[t], txt]);
+    db.pin[t] = txt;                 // 加完就選起來，下次跳出來講的就是它
+    $('lineNew').value = '';
+    save(); syncNudge(); renderLines();
+    sparks('💬');
+  });
+
   /* ────────── 老師的圈詞 ──────────
      選一課、把老師圈的詞打進去，直接併進課本那一課。首頁課次標籤上的 ✏️
      就是「這一課有加過圈詞」。 */
@@ -2917,7 +3033,7 @@
 
   /* ────────── 設定畫面 ────────── */
   $('setBtn').addEventListener('click', function () {
-    closeSheet(); renderUseHint(); renderMicHint();
+    closeSheet(); renderUseHint(); renderMicHint(); renderLines();
     cAt = { g: db.grade, t: db.term, k: db.picked.length ? Math.min.apply(null, db.picked) : 1 };
     renderCircle(); show('settings');
   });
@@ -3285,7 +3401,8 @@
     nudge.set({
       missStreak: db.nudgeAt,
       noise: db.noiseAt ? { level: db.noiseAt } : null,
-      tone: db.tone
+      tone: db.tone,
+      lines: effLines()
     });
   }
 
@@ -4286,6 +4403,7 @@
   syncSubject();
   renderUseHint();
   renderMicHint();
+  renderLines();
   if (db.breakUntil > Date.now()) showBreak();   // 關掉重開也繞不過去
 
   /* ────────── 有沒有新版 ──────────
