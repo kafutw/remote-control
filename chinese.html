@@ -895,9 +895,9 @@
     <div class="card">
       <h2><span class="n">3</span>一輪幾題？</h2>
       <div class="modes three" id="counts">
-        <button class="mode sel" data-count="10"><b>10 題</b><i>約 2 分鐘</i></button>
+        <button class="mode" data-count="10"><b>10 題</b><i>約 2 分鐘</i></button>
         <button class="mode" data-count="15"><b>15 題</b><i>約 3 分鐘</i></button>
-        <button class="mode" data-count="20"><b>20 題</b><i>約 4 分鐘</i></button>
+        <button class="mode sel" data-count="20"><b>20 題</b><i>約 4 分鐘</i></button>
       </div>
       <div class="sub-h">每題幾秒？</div>
       <div class="modes three" id="secs">
@@ -909,7 +909,7 @@
     </div>
 
     <div class="foot">
-      <button class="btn primary big" id="startBtn">開始測驗（10 題）🚀</button>
+      <button class="btn primary big" id="startBtn">開始測驗（20 題）🚀</button>
       <button class="btn" id="reviewBtn" hidden>只練上次答錯的 🔁</button>
       <button class="btn" id="learnBtn">先認識生字 📖</button>
     </div>
@@ -1604,7 +1604,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 w';
+  var VERSION = '2026-08-20 x';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1952,7 +1952,7 @@
   /* ────────── 資料儲存 ────────── */
   var KEY = 'zh_v1';
   var DEF = { sound: true, speak: true, grade: 1, term: 1, picked: [],
-              mode: 'smart', kind: 'all', bkind: 'all', count: 10, secs: 30,
+              mode: 'smart', kind: 'all', bkind: 'all', count: 20, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               nudgeAt: 0, noiseAt: 0.08, tone: 'auto', lastPeak: 0, micFail: '',
