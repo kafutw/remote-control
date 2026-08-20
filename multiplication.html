@@ -560,7 +560,6 @@
     <button class="icobtn" id="speakBtn" title="朗讀開關" aria-label="朗讀開關" hidden>🗣️</button>
     <button class="icobtn" id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
     <button class="icobtn" id="histBtn" title="歷史紀錄" aria-label="歷史紀錄">📊</button>
-    <button class="icobtn" id="setBtn" title="設定" aria-label="設定">⚙️</button>
   </div>
 </header>
 
@@ -719,13 +718,6 @@
       <div class="weak" id="weak"></div>
     </div>
 
-    <div class="foot">
-      <button class="btn primary big" id="hBackBtn">回到首頁</button>
-    </div>
-  </section>
-
-  <!-- ══ 設定 ══ -->
-  <section class="screen" id="settings">
     <div class="card">
       <h2>用眼提醒</h2>
       <div class="modes three" id="limits">
@@ -740,9 +732,10 @@
       <h2>崩潰提醒</h2>
       <div class="sub-h">太吵就提醒</div>
       <div class="modes" id="noises">
-        <button class="mode" data-noise="0.10"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
-        <button class="mode sel" data-noise="0.16"><b>一般</b><i>吵鬧、哭就跳</i></button>
-        <button class="mode" data-noise="0.24"><b>很吵才跳</b><i>要崩潰大哭</i></button>
+        <button class="mode" data-noise="0.05"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
+        <button class="mode sel" data-noise="0.08"><b>一般</b><i>亂叫、哭就跳</i></button>
+        <button class="mode" data-noise="0.12"><b>要再吵一點</b><i>小聲哭不算</i></button>
+        <button class="mode" data-noise="0.20"><b>很吵才跳</b><i>要崩潰大哭</i></button>
         <button class="mode" data-noise="0"><b>關閉</b><i>不開麥克風</i></button>
       </div>
       <div class="row mt">
@@ -763,13 +756,13 @@
         <button class="mode" data-tone="soft"><b>一直溫柔</b><i>沒關係，慢慢來</i></button>
         <button class="mode" data-tone="fun"><b>一直促咪</b><i>再拖就少看一集囉</i></button>
       </div>
-      <p class="hint">吵夠久就跳出來讓他喘一口氣，念一句話給他聽，念完停一秒自己繼續。
+      <p class="hint"><b>亂叫大概一秒</b>就跳出來讓他喘一口氣，念一句話給他聽，念完停一秒自己繼續。
         只在作答時開麥克風、<b>只量音量</b>，不錄音、不上傳、不判斷內容——所以弟弟大叫、
         電視很大聲一樣會跳。<b>要用 https 的網址開</b>，瀏覽器才給麥克風權限。</p>
     </div>
 
     <div class="foot">
-      <button class="btn primary big" id="sBackBtn">回到首頁</button>
+      <button class="btn primary big" id="hBackBtn">回到首頁</button>
       <button class="btn ghost" id="clearBtn">清除所有紀錄</button>
     </div>
   </section>
@@ -867,6 +860,7 @@
       // ── 什麼時候跳 ──
       missStreak: 5,        // 連續失敗幾次跳一次；0 = 不用連錯這條規則
       noise: null,          // { level, sustainMs, decay, cooldownMs }；null = 不開麥克風
+                            // 預設 level 0.08、撐 1 秒就跳（亂叫一聲就會跳）
       // ── 說什麼 ──
       lines: null,          // { soft: [[emoji, 句子], …], fun: […] }
       tone: 'auto',         // 'auto'（先溫柔再促咪）| 'soft' | 'fun'
@@ -889,7 +883,7 @@
     }, opts);
 
     var lines = cfg.lines || DEFAULT_LINES;
-    var noise = cfg.noise ? ext({ level: 0.16, sustainMs: 2500, decay: 0.35,
+    var noise = cfg.noise ? ext({ level: 0.08, sustainMs: 1000, decay: 0.35,
                                   cooldownMs: 90000, tickMs: 150 }, cfg.noise) : null;
 
     var shown = 0;                 // 總共跳過幾次（決定語氣）
@@ -1138,7 +1132,7 @@
         // noise: null 要真的關掉，所以用 hasOwnProperty 判斷而不是看真假值
         if (Object.prototype.hasOwnProperty.call(patch, 'noise')) {
           noise = patch.noise
-            ? ext(noise || { level: 0.16, sustainMs: 2500, decay: 0.35,
+            ? ext(noise || { level: 0.08, sustainMs: 1000, decay: 0.35,
                              cooldownMs: 90000, tickMs: 150 }, patch.noise)
             : null;
           if (!noise) mute();
@@ -1169,7 +1163,7 @@
   var KEY = 'mtq_v2', OLD_KEY = 'mtq_v1';
   var DEF = { sound: true, speak: true, tables: TABLES.slice(), mode: 'smart', count: 10,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
-              nudgeAt: 0, tone: 'auto', noiseAt: 0.16, lastPeak: 0, micFail: '',
+              nudgeAt: 0, tone: 'auto', noiseAt: 0.08, lastPeak: 0, micFail: '',
               perQ: {}, recent: {}, runs: [], quits: [], best: {}, lastWrong: [] };
   var WINDOW = 20;      // 熟練度只看每一段最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 5;   // 視窗裡至少要有這麼多題才給評價
@@ -1390,7 +1384,7 @@
   };
 
   /* ────────── 畫面切換 ────────── */
-  var SCREENS = ['setup', 'play', 'result', 'history', 'settings'];
+  var SCREENS = ['setup', 'play', 'result', 'history'];
   function show(name) {
     SCREENS.forEach(function (s) { $(s).classList.toggle('on', s === name); });
     window.scrollTo(0, 0);
@@ -1571,28 +1565,26 @@
     thawReveal();
   }
 
-  function stopMicTest() {
-    if (!micTesting) return;
-    micTesting = false;
-    if (micTimer) { clearInterval(micTimer); micTimer = null; }
-    if (nudge) nudge.mute();
-    $('micMeter').hidden = true;
-    $('micNow').hidden = true;
-    $('micTestBtn').textContent = '🎤 測一下現在多大聲';
-  }
-
   $('micTestBtn').addEventListener('click', function () {
-    if (micTesting) { stopMicTest(); return; }
+    if (micTesting) {
+      micTesting = false;
+      if (micTimer) { clearInterval(micTimer); micTimer = null; }
+      if (nudge) nudge.mute();
+      $('micMeter').hidden = true;
+      $('micNow').hidden = true;
+      this.textContent = '🎤 測一下現在多大聲';
+      return;
+    }
     micTesting = true;
     nudge.resetPeak();
     nudge.listen();
     $('micMeter').hidden = false;
     $('micNow').hidden = false;
-    $('micTestBtn').textContent = '停止測量';
+    this.textContent = '停止測量';
     micTimer = setInterval(function () {
       var lv = nudge.level();
       $('micBar').style.width = Math.min(100, Math.round(lv * 400)) + '%';
-      $('micMeter').classList.toggle('loud', lv >= (db.noiseAt || 0.16));
+      $('micMeter').classList.toggle('loud', lv >= (db.noiseAt || 0.08));
       $('micNow').textContent = '現在 ' + lv.toFixed(2) + '　剛剛最大 ' + nudge.peak().toFixed(2);
     }, 120);
   });
@@ -2101,6 +2093,7 @@
 
     renderDays();
     renderTables();
+    renderUseHint();
 
     var list = [];
     Object.keys(db.perQ).forEach(function (k) {
@@ -2287,19 +2280,12 @@
     renderHistory(); show('history');
   });
   $('hBackBtn').addEventListener('click', function () { refreshSetup(); show('setup'); });
-  $('setBtn').addEventListener('click', function () {
-    if ($('play').classList.contains('on')) return;   // 作答中不要跳走
-    renderUseHint(); renderMicHint(); show('settings');
-  });
-  $('sBackBtn').addEventListener('click', function () {
-    stopMicTest(); refreshSetup(); show('setup');
-  });
   $('clearBtn').addEventListener('click', function () {
     if (!confirm('確定要清除所有練習紀錄嗎？這個動作無法復原。')) return;
     var keep = { sound: db.sound, speak: db.speak, tables: db.tables.slice(),
                  mode: db.mode, count: db.count };
     db = Object.assign(blank(), keep);
-    save(); renderHistory(); renderUseHint(); syncPick();
+    save(); renderHistory(); syncPick();
   });
 
   /* ────────── 音效開關 ────────── */
@@ -2468,7 +2454,7 @@
   load();
   if ([0, 3, 5].indexOf(db.nudgeAt) < 0) db.nudgeAt = DEF.nudgeAt;
   if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
-  if ([0, 0.1, 0.16, 0.24].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
+  if ([0, 0.05, 0.08, 0.12, 0.2].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
   if (typeof db.lastPeak !== 'number') db.lastPeak = 0;
   if (typeof db.micFail !== 'string') db.micFail = '';
   initNudge();
