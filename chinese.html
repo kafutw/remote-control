@@ -831,12 +831,13 @@
       <h2><span class="n">1</span>今天練什麼？</h2>
       <div class="modes three" id="subjects">
         <button class="mode sel" data-subject="zi">
-          <span class="ic">📖</span><b>生字</b><i>認字、注音、語詞</i></button>
+          <span class="ic">📖</span><b>生字</b><i>課本的字和詞</i></button>
         <button class="mode" data-subject="bpmf">
-          <span class="ic">ㄅ</span><b>ㄅㄆㄇ</b><i>拼音、聽聲音</i></button>
+          <span class="ic">ㄅ</span><b>ㄅㄆㄇ</b><i>只練拼音</i></button>
         <button class="mode" data-subject="mine">
-          <span class="ic">✏️</span><b>我的課本</b><i>自己建課、選課</i></button>
+          <span class="ic">✏️</span><b>我的課本</b><i>老師的圈詞</i></button>
       </div>
+      <p class="hint tight" id="subjectHint"></p>
 
       <div id="gradeBox">
         <div class="sub-h">幾年級的字？</div>
@@ -1615,7 +1616,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 h';
+  var VERSION = '2026-08-20 i';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -2584,9 +2585,21 @@
     }
   }
 
+  /* 三個科目差在「題庫從哪來」和「出什麼題」，這兩件事按鈕上寫不下，寫在底下 */
+  var SUBJECT_HINT = {
+    zi: '用課本這一課的生字和語詞出題：看注音選字、看字選注音、聽聲音選字、' +
+        '語詞填空、找部首、數筆畫。',
+    bpmf: '<b>範圍跟「生字」一模一樣</b>（一樣選年級、學期、第幾課），但只練拼音：' +
+          '聽詞找聲母（「爸爸」是ㄅ還是ㄆ）、聽詞找韻母（ㄢ ㄤ ㄣ ㄥ）、' +
+          '看注音拼出是哪個字。還在學注音符號的時候用這個。',
+    mine: '不用內建課本，練你自己貼的生字和<b>老師畫的圈詞</b>（課本沒有這個，' +
+          '每個班都不一樣）。在 ⚙️ 設定裡建課。'
+  };
+
   function syncSubject() {
     var mine = db.subject === 'mine';
     rebuildCustomWords();
+    $('subjectHint').innerHTML = SUBJECT_HINT[db.subject] || '';
     $('gradeBox').hidden = mine;
     $('mineBox').hidden = !mine;
     $('kinds').hidden = db.subject === 'bpmf';
