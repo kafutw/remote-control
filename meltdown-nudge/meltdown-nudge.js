@@ -336,11 +336,16 @@
       isListening: function () { return !!mic.stream; },
       // 改設定（例如使用者在設定畫面調門檻）
       set: function (patch) {
-        ext(cfg, patch || {});
-        if (patch && patch.lines) lines = patch.lines;
-        if (patch && patch.noise) {
-          noise = patch.noise ? ext(noise || { level: 0.16, sustainMs: 2500, decay: 0.35,
-                                               cooldownMs: 90000, tickMs: 150 }, patch.noise) : null;
+        patch = patch || {};
+        ext(cfg, patch);
+        if (patch.lines) lines = patch.lines;
+        // noise: null 要真的關掉，所以用 hasOwnProperty 判斷而不是看真假值
+        if (Object.prototype.hasOwnProperty.call(patch, 'noise')) {
+          noise = patch.noise
+            ? ext(noise || { level: 0.16, sustainMs: 2500, decay: 0.35,
+                             cooldownMs: 90000, tickMs: 150 }, patch.noise)
+            : null;
+          if (!noise) mute();
         }
       },
       config: function () { return cfg; },
