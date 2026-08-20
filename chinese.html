@@ -855,7 +855,7 @@
     <div class="goal" id="goal" hidden></div>
 
     <div class="card">
-      <h2><span class="n">1</span>今天練什麼？</h2>
+      <h2><span class="n">1</span>今天練哪一課？</h2>
       <div id="gradeBox">
         <div class="sub-h">幾年級的字？</div>
         <div class="tiles grades" id="grades">
@@ -874,8 +874,11 @@
       <div class="sub-h">第幾課？</div>
       <div class="chips" id="lessonChips"></div>
       <p class="hint tight" id="lessonNote"></p>
+      <p class="hint" id="poolHint"></p>
+    </div>
 
-      <div class="sub-h">題型</div>
+    <div class="card">
+      <h2><span class="n">2</span>出什麼題？</h2>
       <div class="modes" id="kinds">
         <button class="mode sel" data-kind="all"><b>都出</b><i>輪流換，練得比較全</i></button>
         <button class="mode" data-kind="b2z"><b>ㄅ 看注音選字</b><i>ㄏㄨㄚ → 花</i></button>
@@ -884,24 +887,22 @@
         <button class="mode" data-kind="cloze"><b>📝 語詞填空</b><i>「＿朵」要填哪個字</i></button>
         <button class="mode" data-kind="rad"><b>🧩 找部首</b><i>花的部首是什麼</i></button>
         <button class="mode" data-kind="stroke"><b>✏️ 數筆畫</b><i>這個字幾畫</i></button>
-        <button class="mode mine-only" data-kind="wlisten" hidden><b>🔊 聽詞選詞</b><i>聽到哪個詞就點它</i></button>
-        <button class="mode mine-only" data-kind="wcloze" hidden><b>📝 語詞填空</b><i>詞裡缺一個字</i></button>
-        <button class="mode mine-only" data-kind="wbpmf" hidden><b>ㄅ 看注音選詞</b><i>ㄏㄨㄚ ㄉㄨㄛˇ → 花朵</i></button>
+        <button class="mode" data-kind="wlisten"><b>🔊 聽詞選詞</b><i>聽到哪個詞就點它</i></button>
+        <button class="mode" data-kind="wbpmf"><b>ㄅ 看注音選詞</b><i>ㄏㄨㄚ ㄉㄨㄛˇ → 花朵</i></button>
         <button class="mode" data-kind="head"><b>🔊 聽詞找聲母</b><i>「爸爸」是ㄅ還是ㄆ</i></button>
         <button class="mode" data-kind="tail"><b>🔊 聽詞找韻母</b><i>ㄢ ㄤ ㄣ ㄥ 分得出來嗎</i></button>
       </div>
       <p class="hint tight">選「都出」的時候不會出找聲母、找韻母 ——
         那兩個是還在學注音的時候，特別挑出來單練的。</p>
-      <div class="sub-h">出題方式</div>
+      <div class="sub-h">怎麼挑題目</div>
       <div class="modes" id="modes">
         <button class="mode sel" data-mode="smart"><b>聰明出題</b><i>常錯的多出現</i></button>
         <button class="mode" data-mode="even"><b>平均出題</b><i>每個字機會一樣</i></button>
       </div>
-      <p class="hint" id="poolHint"></p>
     </div>
 
     <div class="card">
-      <h2><span class="n">2</span>一輪幾題？</h2>
+      <h2><span class="n">3</span>一輪幾題？</h2>
       <div class="modes three" id="counts">
         <button class="mode sel" data-count="10"><b>10 題</b><i>約 2 分鐘</i></button>
         <button class="mode" data-count="15"><b>15 題</b><i>約 3 分鐘</i></button>
@@ -1617,7 +1618,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 p';
+  var VERSION = '2026-08-20 q';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -2677,7 +2678,6 @@
     var mine = db.subject === 'mine';
     rebuildCustomWords();
     $('gradeBox').hidden = mine;      // 練自己的課時，年級學期先收起來
-    document.querySelectorAll('#kinds .mine-only').forEach(function (m) { m.hidden = false; });
     $('learnBtn').textContent = '先認識生字 📖';
     $('subtitle').textContent = subjectName() + ' ・ ' + db.count + ' 題 ・ ' +
       (db.secs ? db.secs + ' 秒' : '不限時');
@@ -3062,7 +3062,9 @@
   }
 
   function kindsAvailable(c) {
-    var ks = db.kind === 'all' ? ZI_KINDS.concat(WORD_KINDS) : [db.kind];
+    // 語詞填空有兩種來源（從生字出發、從語詞出發），對小孩來說是同一種題，合成一個選項
+    var ks = db.kind === 'all' ? ZI_KINDS.concat(WORD_KINDS)
+           : db.kind === 'cloze' ? ['cloze', 'wcloze'] : [db.kind];
     // 這台裝置念不出聲音就別出聽力題，不然小朋友會卡住
     if (!speechUsable()) {
       ks = ks.filter(function (x) { return ['listen', 'head', 'tail', 'wlisten'].indexOf(x) < 0; });
