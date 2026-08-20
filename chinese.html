@@ -451,8 +451,6 @@
     to { transform: scale(1) rotate(0); opacity: 1; }
   }
 
-  #nudge .breakbox .btn + .btn { margin-top: 10px; }
-  #nudge .bhint { margin-bottom: 18px; }
   .breakscreen {
     position: fixed; inset: 0; z-index: 80; overflow: auto;
     background: radial-gradient(120% 70% at 50% 0%, var(--mint-soft), transparent 60%), var(--bg);
@@ -758,6 +756,12 @@
   .chip.sel { border-style: solid; border-color: var(--mint); background: var(--mint-soft); color: var(--mint-ink); }
   .chip.sel small { background: var(--mint); color: #fff; }
   .hint.tight { margin-top: 8px; margin-bottom: 2px; }
+
+  /* 測麥克風的音量條 */
+  .meter { height: 14px; border-radius: 99px; background: var(--track); overflow: hidden; margin-top: 10px; }
+  .meter span { display: block; height: 100%; width: 0; border-radius: 99px;
+                background: var(--mint); transition: width .1s linear; }
+  .meter span.loud { background: var(--coral); }
 
   /* 舊版被瀏覽器快取住的時候，開起來會冒出這條，點一下就換新的 */
   .updatebar {
@@ -1088,19 +1092,41 @@
     </div>
 
     <div class="card">
-      <h2>卡關提醒</h2>
+      <h2>崩潰提醒</h2>
+      <div class="sub-h">太吵就提醒</div>
+      <div class="modes" id="noises">
+        <button class="mode" data-noise="0.10"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
+        <button class="mode sel" data-noise="0.16"><b>一般</b><i>吵鬧、哭就跳</i></button>
+        <button class="mode" data-noise="0.24"><b>很吵才跳</b><i>要崩潰大哭</i></button>
+        <button class="mode" data-noise="0"><b>關閉</b><i>不開麥克風</i></button>
+      </div>
+      <div class="row mt">
+        <button class="btn grow" id="micTestBtn">🎤 測一下現在多大聲</button>
+      </div>
+      <div class="meter" id="micMeter" hidden><span id="micBar"></span></div>
+      <p class="hint" id="micNow" hidden></p>
+      <p class="hint" id="micLast"></p>
+      <p class="hint" id="micHint">開了之後，<b>只有在作答的時候</b>才會開麥克風，一輪結束就關掉。
+        聲音只在這台裝置上量音量，<b>不錄音、不上傳、不判斷內容</b>——所以弟弟大叫、
+        電視開很大聲也會跳。哭是一陣一陣的，中間換氣不會歸零：一直大哭約 2.5 秒就跳；
+        只喊一聲不會跳，提醒過後 90 秒內不會再跳。<br>
+        <b>要用 https 的網址開</b>（GitHub Pages 那個），瀏覽器才給麥克風權限；
+        用檔案直接開、或 http 的網址，這個功能一定不會動。</p>
+
+      <div class="sub-h">連錯幾題也提醒</div>
       <div class="modes three" id="nudges">
         <button class="mode" data-nudge="3"><b>連錯 3 題</b><i>早一點關心</i></button>
-        <button class="mode sel" data-nudge="5"><b>連錯 5 題</b><i>再撐一下</i></button>
-        <button class="mode" data-nudge="0"><b>關閉</b><i>不打斷</i></button>
+        <button class="mode" data-nudge="5"><b>連錯 5 題</b><i>再撐一下</i></button>
+        <button class="mode sel" data-nudge="0"><b>關閉</b><i>答錯不打斷</i></button>
       </div>
       <div class="sub-h">要說什麼</div>
-      <div class="modes" id="tones">
-        <button class="mode sel" data-tone="soft"><b>溫柔</b><i>沒關係，我們慢慢來</i></button>
-        <button class="mode" data-tone="fun"><b>促咪</b><i>再拖下去就少看一集囉</i></button>
+      <div class="modes three" id="tones">
+        <button class="mode sel" data-tone="auto"><b>自動</b><i>先溫柔，鬧不停才促咪</i></button>
+        <button class="mode" data-tone="soft"><b>一直溫柔</b><i>沒關係，慢慢來</i></button>
+        <button class="mode" data-tone="fun"><b>一直促咪</b><i>哭哭浪費看電視時間</i></button>
       </div>
-      <p class="hint">連續答錯太多題的時候跳出來，讓他喘一口氣，順便問要不要今天先到這裡。
-        小孩卡住的時候通常不是不會，是急了。</p>
+      <p class="hint">跳出來的話會念出來，念完停一秒自己繼續，不用等他按。
+        提醒開著的時候倒數會凍住，不會偷吃他的時間。</p>
     </div>
 
     <div class="foot">
@@ -1197,16 +1223,6 @@
   </div>
 </div>
 
-<div class="breakscreen" id="nudge" hidden>
-  <div class="breakbox">
-    <div class="bemoji" id="nudgeEmoji">🫂</div>
-    <h2 id="nudgeTitle">卡住了嗎？</h2>
-    <p class="bhint" id="nudgeMsg"></p>
-    <button class="btn primary big" id="nudgeGo">再試一次 💪</button>
-    <button class="btn" id="nudgeStop">今天先到這裡</button>
-  </div>
-</div>
-
 <div class="breakscreen" id="breakScreen" hidden>
   <div class="breakbox">
     <div class="bemoji">🌿</div>
@@ -1222,12 +1238,381 @@
   </div>
 </div>
 
+<!-- 崩潰提醒元件（meltdown-nudge）：原封不動內嵌，改行為請用 create() 的參數。
+     原始碼在 repo 的 meltdown-nudge/ 資料夾裡，改那邊之後記得同步過來。 -->
+<script>
+/*!
+ * meltdown-nudge — 小孩卡關／崩潰的時候跳出來喘口氣的小元件
+ *
+ * 從「ABC 字母大考驗」抽出來的。做兩件事：
+ *   1. 連續失敗幾次就跳出一句話（可以自動從溫柔換成促咪）
+ *   2. 太吵（哭鬧）也跳——只量麥克風的音量，不錄音、不上傳、不判斷內容
+ * 跳出來的那句話會用語音念，念完停一秒自己關掉繼續，不用等小孩按。
+ *
+ * 沒有相依套件、沒有建置步驟，ES5 寫的，直接 <script> 引入就能用。
+ *
+ * 用法：
+ *   var nudge = MeltdownNudge.create({ missStreak: 5, onResume: next });
+ *   nudge.miss();     // 答錯
+ *   nudge.hit();      // 答對（連錯歸零）
+ *   nudge.listen();   // 開始聽音量（一定要在使用者手勢裡呼叫）
+ *   nudge.mute();     // 停止聽
+ *
+ * 授權：MIT
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.MeltdownNudge = factory();
+}(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  var CSS_ID = 'meltdown-nudge-css';
+  var CSS = [
+    '.mn-veil{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;',
+    'justify-content:center;padding:24px;background:#FFF9F0;color:#40352B;',
+    'font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",',
+    '"Microsoft JhengHei","Segoe UI",Roboto,sans-serif;animation:mn-in .18s ease-out}',
+    '@keyframes mn-in{from{opacity:0}to{opacity:1}}',
+    '.mn-box{width:100%;max-width:420px;text-align:center}',
+    '.mn-emoji{font-size:72px;line-height:1;margin-bottom:14px}',
+    '.mn-line{font-size:26px;font-weight:800;line-height:1.4;margin:0 0 26px}',
+    '.mn-btn{display:block;width:100%;font-family:inherit;font-size:19px;font-weight:800;',
+    'cursor:pointer;border-radius:999px;padding:16px 20px;border:2px solid transparent;',
+    'background:#F09A2E;color:#fff;margin-bottom:10px}',
+    '.mn-btn.mn-ghost{background:transparent;color:#8A7660;border-color:#F0E2CD;',
+    'font-size:16px;width:auto;margin:0 auto;padding:12px 22px}',
+    '.mn-btn:active{transform:translateY(1px)}',
+    '@media (prefers-color-scheme:dark){',
+    '.mn-veil{background:#241E19;color:#F7EDE0}',
+    '.mn-btn{background:#FFC062;color:#2A211A}',
+    '.mn-btn.mn-ghost{color:#C6B199;border-color:#47392C}}'
+  ].join('');
+
+  var DEFAULT_LINES = {
+    soft: [['🫂', '沒關係，慢慢來'], ['🎥', '我要錄給老師看'], ['🧱', '生氣要扣樂高錢']],
+    fun: [['📺', '哭哭浪費看電視時間喔'], ['📺', '認真！答完才能看電視喔']]
+  };
+
+  function ext(a, b) {
+    var k;
+    for (k in b) if (Object.prototype.hasOwnProperty.call(b, k)) a[k] = b[k];
+    return a;
+  }
+
+  function injectCss() {
+    if (document.getElementById(CSS_ID)) return;
+    var st = document.createElement('style');
+    st.id = CSS_ID;
+    st.textContent = CSS;
+    document.head.appendChild(st);
+  }
+
+  function create(opts) {
+    opts = opts || {};
+
+    var cfg = ext({
+      // ── 什麼時候跳 ──
+      missStreak: 5,        // 連續失敗幾次跳一次；0 = 不用連錯這條規則
+      noise: null,          // { level, sustainMs, decay, cooldownMs }；null = 不開麥克風
+      // ── 說什麼 ──
+      lines: null,          // { soft: [[emoji, 句子], …], fun: […] }
+      tone: 'auto',         // 'auto'（先溫柔再促咪）| 'soft' | 'fun'
+      softTimes: 2,         // auto 模式下，前幾次用溫柔的
+      // ── 聲音 ──
+      speak: true,
+      lang: 'zh-TW',
+      rate: 1, pitch: 1, volume: 1,
+      // ── 節奏 ──
+      autoResumeMs: 1000,   // 念完停多久自己繼續；null / 0 = 一定要按按鈕
+      failSafeMs: 9000,     // 語音卡住的保險，時間到就自己走
+      // ── 文字 ──
+      goText: '再試一次 💪',
+      stopText: '今天先到這裡',   // 空字串 = 不顯示這顆
+      // ── 事件 ──
+      onShow: null,         // fn({ reason: 'miss' | 'noise' | 'manual', tone, line })
+      onResume: null,       // 使用者（或自動）選擇繼續
+      onStop: null,         // 使用者選擇今天先到這裡
+      onError: null         // fn(code, message)；code: 'mic'
+    }, opts);
+
+    var lines = cfg.lines || DEFAULT_LINES;
+    var noise = cfg.noise ? ext({ level: 0.16, sustainMs: 2500, decay: 0.35,
+                                  cooldownMs: 90000, tickMs: 150 }, cfg.noise) : null;
+
+    var shown = 0;                 // 總共跳過幾次（決定語氣）
+    var missRun = 0;               // 目前連續失敗幾次
+    var pos = {};                  // 每一組講到第幾句
+    var veil = null, timers = [], closing = false, reason = 'manual';
+    var mic = { stream: null, ctx: null, an: null, buf: null, timer: null,
+                loud: 0, peak: 0, level: 0, muteUntil: 0, owned: false };
+    var dead = false;
+
+    /* ────────── 說話 ────────── */
+    function canSpeak() {
+      return cfg.speak && typeof window !== 'undefined' &&
+             !!window.speechSynthesis && !!window.SpeechSynthesisUtterance;
+    }
+    function pickVoice() {
+      var vs = [];
+      try { vs = window.speechSynthesis.getVoices() || []; } catch (e) {}
+      var want = String(cfg.lang || '').toLowerCase();
+      var base = want.split('-')[0];
+      var exact = null, loose = null, i, l;
+      for (i = 0; i < vs.length; i++) {
+        l = String(vs[i].lang || '').toLowerCase().replace('_', '-');
+        if (!exact && l === want) exact = vs[i];
+        if (!loose && l.split('-')[0] === base) loose = vs[i];
+      }
+      return exact || loose || null;
+    }
+    function say(text, onEnd) {
+      if (!canSpeak()) { if (onEnd) setTimeout(onEnd, 0); return; }
+      var fired = false;
+      function done() { if (!fired) { fired = true; if (onEnd) onEnd(); } }
+      try {
+        var ss = window.speechSynthesis;
+        if (ss.speaking || ss.pending) ss.cancel();
+        var u = new window.SpeechSynthesisUtterance(text);
+        var v = pickVoice();
+        if (v) u.voice = v;
+        u.lang = (v && v.lang) || cfg.lang;
+        u.rate = cfg.rate; u.pitch = cfg.pitch; u.volume = cfg.volume;
+        u.onend = done; u.onerror = done;
+        ss.speak(u);
+        try { ss.resume(); } catch (e2) {}
+      } catch (e) { done(); }
+    }
+    function hush() {
+      if (!canSpeak()) return;
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+
+    /* ────────── 挑句子 ────────── */
+    function toneNow() {
+      if (cfg.tone !== 'auto') return cfg.tone;
+      return shown <= cfg.softTimes ? 'soft' : 'fun';
+    }
+    function nextLine() {
+      var tone = toneNow();
+      var list = lines[tone] || lines.soft || DEFAULT_LINES.soft;
+      if (!list.length) list = DEFAULT_LINES.soft;
+      var i = pos[tone] || 0;
+      pos[tone] = (i + 1) % list.length;
+      return { tone: tone, item: list[i] };
+    }
+
+    /* ────────── 畫面 ────────── */
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+    function clearTimers() {
+      for (var i = 0; i < timers.length; i++) clearTimeout(timers[i]);
+      timers = [];
+    }
+
+    function close(go) {
+      if (closing || !veil) return;
+      closing = true;
+      clearTimers();
+      hush();
+      if (veil.parentNode) veil.parentNode.removeChild(veil);
+      veil = null;
+      if (go) { if (cfg.onResume) cfg.onResume(); }
+      else if (cfg.onStop) cfg.onStop();
+    }
+
+    function show(why) {
+      if (dead || veil) return;
+      injectCss();
+      reason = why || 'manual';
+      shown++;
+      closing = false;
+      var pickd = nextLine();
+      var emoji = pickd.item[0], text = pickd.item[1];
+
+      veil = document.createElement('div');
+      veil.className = 'mn-veil';
+      veil.setAttribute('role', 'dialog');
+      veil.setAttribute('aria-modal', 'true');
+      veil.setAttribute('aria-label', text);
+
+      var box = document.createElement('div');
+      box.className = 'mn-box';
+
+      var e = document.createElement('div');
+      e.className = 'mn-emoji';
+      e.textContent = emoji;
+
+      var p = document.createElement('p');
+      p.className = 'mn-line';
+      p.textContent = text;                       // 一律用 textContent，不吃 HTML
+
+      var go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'mn-btn';
+      go.textContent = cfg.goText;
+      go.addEventListener('click', function () { close(true); });
+
+      box.appendChild(e); box.appendChild(p); box.appendChild(go);
+
+      if (cfg.stopText) {
+        var stop = document.createElement('button');
+        stop.type = 'button';
+        stop.className = 'mn-btn mn-ghost';
+        stop.textContent = cfg.stopText;
+        stop.addEventListener('click', function () { close(false); });
+        box.appendChild(stop);
+      }
+
+      veil.appendChild(box);
+      document.body.appendChild(veil);
+      go.focus();
+
+      if (cfg.onShow) cfg.onShow({ reason: reason, tone: pickd.tone, line: text });
+
+      // 念給他聽，念完停一下自己繼續；沒設 autoResumeMs 就一定要按
+      if (cfg.autoResumeMs) {
+        say(text, function () { later(function () { close(true); }, cfg.autoResumeMs); });
+        later(function () { close(true); }, cfg.failSafeMs);
+      } else {
+        say(text, null);
+      }
+    }
+
+    /* ────────── 麥克風：只量音量 ────────── */
+    function micLevel() {
+      if (!mic.an) return 0;
+      mic.an.getByteTimeDomainData(mic.buf);
+      var sum = 0, i, v;
+      for (i = 0; i < mic.buf.length; i++) {
+        v = (mic.buf[i] - 128) / 128;
+        sum += v * v;
+      }
+      return Math.sqrt(sum / mic.buf.length);
+    }
+
+    function micTick() {
+      var lv = micLevel();
+      mic.level = lv;
+      if (lv > mic.peak) mic.peak = lv;
+      if (!noise || veil) return;
+      // 哭是一陣一陣的，中間換氣不該歸零：吵的時候加、安靜的時候慢慢退
+      mic.loud = Math.max(0, mic.loud +
+        (lv >= noise.level ? noise.tickMs : -noise.tickMs * noise.decay));
+      var now = Date.now();
+      if (mic.loud < noise.sustainMs || now < mic.muteUntil) return;
+      mic.loud = 0;
+      mic.muteUntil = now + noise.cooldownMs;
+      show('noise');
+    }
+
+    function listen(onFail) {
+      if (dead || mic.stream) return;
+      var md = navigator.mediaDevices;
+      if (!md || !md.getUserMedia) {
+        fail('mic', '這個環境沒有 mediaDevices：網址必須是 https（或 localhost）', onFail);
+        return;
+      }
+      md.getUserMedia({ audio: true }).then(function (st) {
+        if (dead) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
+        mic.stream = st;
+        try {
+          var AC = window.AudioContext || window.webkitAudioContext;
+          if (!mic.ctx) { mic.ctx = cfg.audioContext || new AC(); mic.owned = !cfg.audioContext; }
+          if (mic.ctx.state === 'suspended') mic.ctx.resume();
+          var src = mic.ctx.createMediaStreamSource(st);
+          var an = mic.ctx.createAnalyser();
+          an.fftSize = 1024;
+          src.connect(an);                       // 只接到 analyser，不接喇叭，不會有回音
+          mic.an = an;
+          mic.buf = new Uint8Array(an.fftSize);
+          mic.timer = setInterval(micTick, (noise && noise.tickMs) || 150);
+        } catch (e) {
+          mute();
+          fail('mic', '讀不到音量：' + e.message, onFail);
+        }
+      })['catch'](function (e) {
+        fail('mic', '沒拿到麥克風權限（' + (e && e.name) + '）', onFail);
+      });
+    }
+
+    function fail(code, msg, onFail) {
+      if (onFail) onFail(msg);
+      if (cfg.onError) cfg.onError(code, msg);
+    }
+
+    function mute() {
+      if (mic.timer) { clearInterval(mic.timer); mic.timer = null; }
+      if (mic.stream) {
+        mic.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+        mic.stream = null;
+      }
+      if (mic.ctx && mic.owned) { try { mic.ctx.close(); } catch (e) {} mic.ctx = null; }
+      mic.an = null; mic.loud = 0; mic.level = 0;
+    }
+
+    /* ────────── 對外 ────────── */
+    var api = {
+      // 答錯 / 失敗一次。連續次數到了就跳
+      miss: function () {
+        if (dead) return false;
+        missRun++;
+        if (cfg.missStreak && missRun >= cfg.missStreak && !veil) {
+          missRun = 0;
+          show('miss');
+          return true;
+        }
+        return false;
+      },
+      // 答對 / 成功一次，連續次數歸零
+      hit: function () { missRun = 0; },
+      // 手動跳一次（測試或自己判斷的時候用）
+      show: function () { show('manual'); },
+      // 手動關掉：go = true 代表「繼續」
+      close: function (go) { close(go !== false); },
+      listen: listen,
+      mute: mute,
+      // 現在的音量 0～1，拿來畫音量條
+      level: function () { return mic.level; },
+      // 開始聽之後量到的最大音量，設定門檻的時候很好用
+      peak: function () { return mic.peak; },
+      resetPeak: function () { mic.peak = 0; },
+      isOpen: function () { return !!veil; },
+      isListening: function () { return !!mic.stream; },
+      // 改設定（例如使用者在設定畫面調門檻）
+      set: function (patch) {
+        patch = patch || {};
+        ext(cfg, patch);
+        if (patch.lines) lines = patch.lines;
+        // noise: null 要真的關掉，所以用 hasOwnProperty 判斷而不是看真假值
+        if (Object.prototype.hasOwnProperty.call(patch, 'noise')) {
+          noise = patch.noise
+            ? ext(noise || { level: 0.16, sustainMs: 2500, decay: 0.35,
+                             cooldownMs: 90000, tickMs: 150 }, patch.noise)
+            : null;
+          if (!noise) mute();
+        }
+      },
+      config: function () { return cfg; },
+      destroy: function () {
+        dead = true;
+        clearTimers();
+        mute();
+        if (veil && veil.parentNode) veil.parentNode.removeChild(veil);
+        veil = null;
+      }
+    };
+    return api;
+  }
+
+  return { create: create, version: '1.0.0' };
+}));
+</script>
+
 <script>
 (function () {
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 d';
+  var VERSION = '2026-08-20 e';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1536,7 +1921,8 @@
   var DEF = { sound: true, speak: true, subject: 'zi', grade: 1, term: 1, lesson: 0, scope: 'only',
               mode: 'smart', kind: 'all', bkind: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
-              limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0, nudgeAt: 5, tone: 'soft',
+              limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
+              nudgeAt: 0, noiseAt: 0.16, tone: 'auto', lastPeak: 0, micFail: '',
               lessons: [], picks: [], dropped: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 熟練度只看每個字最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
@@ -1635,7 +2021,10 @@
     if (['none', 'zi', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
     if ([0, 20, 30].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
     if ([0, 3, 5].indexOf(db.nudgeAt) < 0) db.nudgeAt = DEF.nudgeAt;
-    if (['soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
+    if ([0, 0.10, 0.16, 0.24].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
+    if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
+    if (typeof db.lastPeak !== 'number') db.lastPeak = 0;
+    if (typeof db.micFail !== 'string') db.micFail = '';
     if (typeof db.useMs !== 'number' || db.useMs < 0) db.useMs = 0;
     if (typeof db.useAt !== 'number') db.useAt = 0;
     if (typeof db.breakUntil !== 'number') db.breakUntil = 0;
@@ -1903,7 +2292,8 @@
     function done() { if (!fired) { fired = true; if (onDone) onDone(); } }
     if (!speakable()) { if (onDone) setTimeout(done, 0); return; }
     function run() {
-      if (!speakable()) { done(); return; }
+      // 崩潰提醒正在講話的時候讓路，不要兩個聲音疊在一起
+      if (!speakable() || (typeof nudge !== 'undefined' && nudge.isOpen())) { done(); return; }
       try {
         var ss = window.speechSynthesis;
         if (ss.speaking || ss.pending) ss.cancel();
@@ -2133,8 +2523,9 @@
   segment('pitches', function (m) { db.pitch = Number(m.dataset.pitch); tryVoice(); });
   segment('rights', function (m) { db.sayOnRight = m.dataset.right; });
   segment('limits', function (m) { db.limitMin = Number(m.dataset.limit); renderUseHint(); });
-  segment('nudges', function (m) { db.nudgeAt = Number(m.dataset.nudge); });
-  segment('tones', function (m) { db.tone = m.dataset.tone; });
+  segment('nudges', function (m) { db.nudgeAt = Number(m.dataset.nudge); syncNudge(); });
+  segment('noises', function (m) { db.noiseAt = Number(m.dataset.noise); syncNudge(); renderMicHint(); });
+  segment('tones', function (m) { db.tone = m.dataset.tone; syncNudge(); });
 
   $('voiceSel').addEventListener('change', function () {
     db.voiceURI = $('voiceSel').value;
@@ -2160,6 +2551,49 @@
     if (!db.sound) { db.sound = true; save(); syncSound(); }
     initAudio(); SFX.right();
     setTimeout(function () { SFX.combo(); }, 320);
+  });
+
+  /* 麥克風：讓人自己校門檻，也讓「為什麼沒跳」查得出來 */
+  var micRaf = 0;
+  function fmtLv(v) { return Math.round(v * 100) + ''; }
+  function renderMicHint() {
+    var last = $('micLast');
+    if (!last) return;
+    if (!db.noiseAt) {
+      last.textContent = '太吵提醒關著，不會開麥克風。';
+    } else {
+      last.textContent = '上一輪最大音量 ' + (db.lastPeak ? fmtLv(db.lastPeak) : '—') +
+        '，門檻 ' + fmtLv(db.noiseAt) + '。' +
+        '（超過門檻持續約 2.5 秒才跳；上一輪如果一直沒跳，把門檻調低一點）' +
+        (db.micFail ? '　⚠️ 上次開麥克風失敗：' + db.micFail : '');
+    }
+  }
+  function micStop() {
+    if (micRaf) { cancelAnimationFrame(micRaf); micRaf = 0; }
+    if (!S || !S.running) nudge.mute();
+    $('micMeter').hidden = true;
+    $('micNow').hidden = true;
+    $('micTestBtn').textContent = '🎤 測一下現在多大聲';
+  }
+  $('micTestBtn').addEventListener('click', function () {
+    if (micRaf) { micStop(); return; }
+    db.micFail = ''; save();
+    nudge.resetPeak();
+    nudge.listen();
+    $('micMeter').hidden = false;
+    $('micNow').hidden = false;
+    $('micTestBtn').textContent = '⏹ 停止測試';
+    (function loop() {
+      var lv = nudge.level();
+      var pct = Math.min(100, Math.round(lv * 250));
+      var bar = $('micBar');
+      bar.style.width = pct + '%';
+      bar.classList.toggle('loud', !!db.noiseAt && lv >= db.noiseAt);
+      $('micNow').textContent = '現在 ' + fmtLv(lv) + '　最大 ' + fmtLv(nudge.peak()) +
+        '　門檻 ' + (db.noiseAt ? fmtLv(db.noiseAt) : '關閉') +
+        (nudge.isListening() ? '' : '　（還沒拿到麥克風）');
+      micRaf = requestAnimationFrame(loop);
+    })();
   });
 
   function renderUseHint() {
@@ -2310,13 +2744,13 @@
 
   /* ────────── 設定畫面 ────────── */
   $('setBtn').addEventListener('click', function () {
-    closeSheet(); renderLessons(); renderUseHint(); show('settings');
+    closeSheet(); renderLessons(); renderUseHint(); renderMicHint(); show('settings');
   });
   $('sBackBtn').addEventListener('click', function () {
-    closeLessonForm(); refreshSetup(); show('setup');
+    micStop(); closeLessonForm(); refreshSetup(); show('setup');
   });
   $('toSettings').addEventListener('click', function () {
-    renderLessons(); renderUseHint(); show('settings');
+    renderLessons(); renderUseHint(); renderMicHint(); show('settings');
     if (!db.lessons.length) openLessonForm(null);
   });
   $('openVoiceBtn').addEventListener('click', function () {
@@ -2652,6 +3086,32 @@
     return shuffle(opts.filter(function (x) { return x !== undefined && x !== null; }));
   }
 
+  /* ────────── 崩潰提醒 ──────────
+     連錯幾題、或哭鬧太吵就跳出來喘口氣。元件是共用的（meltdown-nudge），
+     這裡只負責：什麼時候開麥克風、跳出來的時候把時間凍住。 */
+  var nudge = MeltdownNudge.create({
+    // db 要等最下面 load() 完才有，所以先掛預設值，load 完再 syncNudge() 蓋上去
+    missStreak: DEF.nudgeAt,
+    noise: DEF.noiseAt ? { level: DEF.noiseAt } : null,
+    tone: DEF.tone,
+    lang: 'zh-TW',
+    onShow: function () {
+      if (S) S.pausedAt = Date.now();
+      freezeReveal();
+      hushSpeech();                      // 這個 App 的語音讓路，不要蓋掉提醒講的話
+    },
+    onResume: function () { thawRound(); },
+    onStop: function () { thawRound(); endGame(false); },
+    onError: function (code, msg) { db.micFail = msg; save(); renderMicHint(); }
+  });
+  function syncNudge() {
+    nudge.set({
+      missStreak: db.nudgeAt,
+      noise: db.noiseAt ? { level: db.noiseAt } : null,
+      tone: db.tone
+    });
+  }
+
   /* ────────── 遊戲流程 ────────── */
   var timer = null, lock = false;
 
@@ -2666,7 +3126,7 @@
       mode: review ? 'even' : db.mode,
       total: total, idx: 0, results: [],
       correct: 0, wrong: 0, streak: 0, bestStreak: 0,
-      timeouts: 0, wrongList: [], recentWrong: {}, last: null, badStreak: 0,
+      timeouts: 0, wrongList: [], recentWrong: {}, last: null, pausedAt: 0,
       reviewMode: review, q: null,
       qEndAt: 0, startedAt: 0, finishedAt: 0, ms: 0, running: false
     };
@@ -2684,6 +3144,8 @@
     $('timeBar').className = '';
     $('timeBar').style.width = '100%';
     show('play');
+    // listen() 一定要在使用者按「開始」的那個手勢裡呼叫，不然 iOS 不給權限
+    if (db.noiseAt) { nudge.resetPeak(); nudge.listen(); }
     countdown(3);
   }
 
@@ -2727,6 +3189,7 @@
 
   function tickClock() {
     if (!S || !S.running || lock) return;   // 對答案的空檔先把計時凍住
+    if (S.pausedAt) return;                 // 提醒開著的時候也不要跑
     if (!perQ()) {                          // 不限時：時鐘掛個 ∞ 就好
       $('clock').innerHTML = '∞';
       $('timeBar').style.width = '100%';
@@ -2823,43 +3286,10 @@
     });
   }
 
-  /* 連續答錯太多題就跳出來喘口氣。
-     小孩卡住的時候通常不是不會，是急了、慌了，一直錯下去只會更急。 */
-  var NUDGE = {
-    soft: [
-      ['🫂', '沒關係，慢慢來', '連錯幾題很正常，深呼吸一下，我們再試一次。'],
-      ['👂', '要不要先聽一次？', '不確定的時候，先按喇叭聽一次再選，不用急著點。'],
-      ['🌱', '休息一下也可以', '今天已經很努力了，想停就停，明天再練也一樣。']
-    ],
-    fun: [
-      ['📺', '這樣會少看一集喔', '再拖下去就在浪費自己看電視的時間囉，快點答一答！'],
-      ['🐢', '你比烏龜還慢欸', '再想下去，卡通都演完了。深呼吸，選一個！'],
-      ['🍪', '答完才有點心', '哭歸哭，題目還是在那裡。再三題就好，衝一下！']
-    ]
-  };
-  function showNudge() {
-    var list = NUDGE[db.tone] || NUDGE.soft;
-    var m = list[Math.floor(Math.random() * list.length)];
-    $('nudgeEmoji').textContent = m[0];
-    $('nudgeTitle').textContent = m[1];
-    $('nudgeMsg').textContent = m[2];
-    $('nudge').hidden = false;
-    hushSpeech();
-  }
-  $('nudgeGo').addEventListener('click', function () {
-    $('nudge').hidden = true;
-    nextQuestion();
-  });
-  $('nudgeStop').addEventListener('click', function () {
-    $('nudge').hidden = true;
-    endGame(false);
-  });
-
   function nextQuestion() {
     clearReveal();
     if (!S.running) return;
     if (S.idx >= S.total) { endGame(true); return; }
-    if (db.nudgeAt && S.badStreak >= db.nudgeAt) { S.badStreak = 0; showNudge(); return; }
     S.idx++;
     lock = false;
     S.canSkip = false;
@@ -2889,10 +3319,33 @@
 
   // 公布答案後停留多久才換下一題；前面這段時間不接受點擊，免得他連點把答案跳掉
   var REVEAL_MS = 4000, SKIP_AFTER = 1200;
-  var revealTimer = null, skipTimer = null;
+  var revealTimer = null, skipTimer = null, revealAt = 0, revealLeft = 0;
   function clearReveal() {
     clearTimeout(revealTimer); clearTimeout(skipTimer);
     revealTimer = skipTimer = null;
+    revealAt = revealLeft = 0;
+  }
+  function armReveal(ms) {
+    clearTimeout(revealTimer);
+    revealAt = Date.now() + ms;
+    revealTimer = setTimeout(nextQuestion, ms);
+  }
+  // 提醒跳出來的時候，剩下的秒數先收起來，關掉再補回去
+  function freezeReveal() {
+    if (!revealTimer) return;
+    revealLeft = Math.max(0, revealAt - Date.now());
+    clearTimeout(revealTimer); revealTimer = null;
+  }
+  function thawReveal() {
+    if (!revealLeft) return;
+    armReveal(revealLeft); revealLeft = 0;
+  }
+  function thawRound() {
+    if (S && S.pausedAt) {
+      if (S.qEndAt) S.qEndAt += Date.now() - S.pausedAt;   // 停在提醒上的時間不算他的
+      S.pausedAt = 0;
+    }
+    thawReveal();
   }
 
   // 不管剛剛考的是哪一種，公布答案時整個字的資料都攤開來看一次
@@ -2921,11 +3374,11 @@
       S.canSkip = true;
       $('streakTxt').innerHTML = note + '<small>點一下繼續</small>';
     }, SKIP_AFTER);
-    revealTimer = setTimeout(nextQuestion, REVEAL_MS);
+    armReveal(REVEAL_MS);
   }
 
   function markWrong(q, note) {
-    S.wrong++; S.streak = 0; S.badStreak++;
+    S.wrong++; S.streak = 0;
     logRecent(q.c, 0);
     S.recentWrong[q.c] = true;
     S.results[S.idx - 1] = 'no';
@@ -2935,6 +3388,7 @@
     SFX.wrong();
     updateDots();
     showAnswer(q, note);
+    nudge.miss();          // 連錯太多次的話，元件會自己跳出來（倒數同時凍住）
   }
 
   function timeUp() {
@@ -2957,7 +3411,8 @@
     rec.n++;
 
     if (val === q.ans) {
-      S.correct++; S.streak++; S.badStreak = 0;
+      S.correct++; S.streak++;
+      nudge.hit();
       if (S.streak > S.bestStreak) S.bestStreak = S.streak;
       delete S.recentWrong[q.c];
       logRecent(q.c, 1);
@@ -3122,7 +3577,9 @@
   }
 
   function endGame(completed) {
-    $('nudge').hidden = true;
+    if (db.noiseAt) db.lastPeak = nudge.peak();
+    nudge.mute();
+    nudge.close(true);
     if (!S) return;
     S.running = false;
     clearInterval(timer); timer = null;
@@ -3553,8 +4010,10 @@
    ['scopes', 'scope', 0],
    ['subjects', 'subject', 0], ['rates', 'rate', 1], ['pitches', 'pitch', 1],
    ['rights', 'right', 0], ['limits', 'limit', 1], ['nudges', 'nudge', 1],
+   ['noises', 'noise', 1],
    ['tones', 'tone', 0]].forEach(function (x) {
-    var key = { right: 'sayOnRight', limit: 'limitMin', nudge: 'nudgeAt' }[x[1]] || x[1];
+    var key = { right: 'sayOnRight', limit: 'limitMin', nudge: 'nudgeAt',
+                noise: 'noiseAt' }[x[1]] || x[1];
     document.querySelectorAll('#' + x[0] + ' .mode, #' + x[0] + ' .tile, #' + x[0] + ' .sw').forEach(function (m) {
       var v = m.dataset[x[1]];
       m.classList.toggle('sel', (x[2] ? Number(v) : v) === db[key]);
@@ -3567,8 +4026,10 @@
     window.speechSynthesis.addEventListener('voiceschanged', function () { pickVoice(); syncSpeak(); });
   }
 
+  syncNudge();
   syncSubject();
   renderUseHint();
+  renderMicHint();
   if (db.breakUntil > Date.now()) showBreak();   // 關掉重開也繞不過去
 
   /* ────────── 有沒有新版 ──────────
