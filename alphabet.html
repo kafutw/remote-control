@@ -513,7 +513,7 @@
   }
 
   #nudge .breakbox .btn + .btn { margin-top: 10px; }
-  #nudge .bhint { margin-bottom: 18px; }
+  #nudge h2 { margin-bottom: 20px; }
   .breakscreen {
     position: fixed; inset: 0; z-index: 80; overflow: auto;
     background: radial-gradient(120% 70% at 50% 0%, var(--mint-soft), transparent 60%), var(--bg);
@@ -1088,7 +1088,6 @@
   <div class="breakbox">
     <div class="bemoji" id="nudgeEmoji">🫂</div>
     <h2 id="nudgeTitle">卡住了嗎？</h2>
-    <p class="bhint" id="nudgeMsg"></p>
     <button class="btn primary big" id="nudgeGo">再試一次 💪</button>
     <button class="btn" id="nudgeStop">今天先到這裡</button>
   </div>
@@ -2438,13 +2437,11 @@
      小孩卡住的時候通常不是不會，是急了、慌了，一直錯下去只會更急。 */
   var NUDGE = {
     soft: [
-      ['🫂', '沒關係，慢慢來', '連錯幾題很正常，深呼吸一下，我們再試一次。'],
-      ['👂', '要不要先聽一次？', '不確定的時候，先按喇叭聽一次再選，不用急著點。'],
-      ['🌱', '休息一下也可以', '今天已經很努力了，想停就停，明天再練也一樣。']
+      ['🫂', '沒關係，慢慢來']
     ],
     fun: [
-      ['📺', '這樣會少看一集喔', '再拖下去就在浪費自己看電視的時間囉，快點答一答！'],
-      ['🐢', '你比烏龜還慢欸', '再想下去，卡通都演完了。深呼吸，選一個！']
+      ['📺', '哭哭浪費看電視時間喔'],
+      ['📺', '認真！答完才能看電視喔']
     ]
   };
   /* 太吵提醒：只量音量，不錄音、不判斷內容，所以分不出是哭還是笑。
@@ -2543,16 +2540,6 @@
     $('micTestBtn').textContent = '停止測量';
   });
 
-  var NOISE = {
-    soft: [
-      ['🫂', '怎麼了？', '聽起來有點不開心。先抱一下、深呼吸，我們再一起看這一題。'],
-      ['🍵', '要不要喝口水？', '好像有點煩躁了，休息一下再回來也可以。']
-    ],
-    fun: [
-      ['📺', '哭這麼大聲喔', '再哭下去就在浪費自己看電視的時間囉，快點答一答！'],
-      ['🔊', '整棟樓都聽到了', '深呼吸，選一個就好，卡通還在等你。']
-    ]
-  };
   /* 語氣自動升級：前兩次好好講，還是一直崩潰就換促咪的說法。
      每一組裡的句子輪流出，不會一直聽到同一句。 */
   var SOFT_TIMES = 2;
@@ -2566,30 +2553,51 @@
     tonePos[key] = (i + 1) % list.length;
     return list[i];
   }
-  function showNudge(byNoise) {
-    nudgeCount++;
-    byNoiseOpen = !!byNoise;               // 吵鬧跳出來的話，關掉要回到原本那一題
-    if (S && S.running && S.qEndAt) S.pausedAt = Date.now();   // 先把這一題的時間凍住
-    var box = byNoise ? NOISE : NUDGE;
-    var tone = toneNow();
-    var list = box[tone] || box.soft;
-    var m = nextLine(list, (byNoise ? 'n' : 'q') + tone);
-    $('nudgeEmoji').textContent = m[0];
-    $('nudgeTitle').textContent = m[1];
-    $('nudgeMsg').textContent = m[2];
-    $('nudge').hidden = false;
-    hushSpeech();
+  var nudgeTimers = [], nudgeDone = false;
+  function clearNudgeTimers() {
+    nudgeTimers.forEach(function (t) { clearTimeout(t); });
+    nudgeTimers = [];
   }
-  $('nudgeGo').addEventListener('click', function () {
+  function later(fn, ms) { nudgeTimers.push(setTimeout(fn, ms)); }
+
+  // 關掉提醒：go = true 就繼續考（吵鬧跳出來的回原本那一題，連錯跳出來的換下一題）
+  function closeNudge(go) {
+    if (nudgeDone) return;
+    nudgeDone = true;
+    clearNudgeTimers();
+    hushSpeech();
     $('nudge').hidden = true;
     if (S && S.pausedAt) {                 // 剛剛凍住的時間補回去，不能算他的
       S.qEndAt += Date.now() - S.pausedAt;
       S.pausedAt = 0;
     }
-    if (byNoiseOpen) { byNoiseOpen = false; return; }   // 吵鬧跳出來的，回原本那一題
+    if (!go) return;
+    if (byNoiseOpen) { byNoiseOpen = false; return; }
     nextQuestion();
-  });
+  }
+
+  function showNudge(byNoise) {
+    nudgeCount++;
+    byNoiseOpen = !!byNoise;               // 吵鬧跳出來的話，關掉要回到原本那一題
+    nudgeDone = false;
+    clearNudgeTimers();
+    if (S && S.running && S.qEndAt) S.pausedAt = Date.now();   // 先把這一題的時間凍住
+    var tone = toneNow();
+    var list = NUDGE[tone] || NUDGE.soft;
+    var m = nextLine(list, tone);
+    $('nudgeEmoji').textContent = m[0];
+    $('nudgeTitle').textContent = m[1];
+    $('nudge').hidden = false;
+    hushSpeech();
+    // 念給他聽，念完停一秒就自己繼續，不用等他按
+    speak([[m[1], 1, 'zh']], 0, function () { later(function () { closeNudge(true); }, 1000); });
+    later(function () { closeNudge(true); }, 9000);   // 語音卡住也不會停在這一頁
+  }
+  $('nudgeGo').addEventListener('click', function () { closeNudge(true); });
   $('nudgeStop').addEventListener('click', function () {
+    clearNudgeTimers();
+    nudgeDone = true;
+    hushSpeech();
     $('nudge').hidden = true;
     endGame(false);
   });
@@ -2859,6 +2867,7 @@
   }
 
   function endGame(completed) {
+    clearNudgeTimers();
     $('nudge').hidden = true;
     if (db.noiseAt && mic.on) { db.lastPeak = mic.peak; save(); }
     micStop();
