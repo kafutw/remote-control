@@ -757,6 +757,10 @@
     background: var(--track); border-radius: 99px; padding: 3px 9px; line-height: 1.2;
   }
   .chip.sel { border-style: solid; border-color: var(--mint); background: var(--mint-soft); color: var(--mint-ink); }
+  /* 自己建的課接在課次後面，用另一個顏色分開 */
+  .chip.mine.sel { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
+  .chip.mine.sel small { background: var(--amber); color: #fff; }
+  .chip.add { color: var(--ink-faint); }
   .chip.sel small { background: var(--mint); color: #fff; }
   .hint.tight { margin-top: 8px; margin-bottom: 2px; }
 
@@ -829,16 +833,6 @@
 
     <div class="card">
       <h2><span class="n">1</span>今天練什麼？</h2>
-      <div class="modes three" id="subjects">
-        <button class="mode sel" data-subject="zi">
-          <span class="ic">📖</span><b>生字</b><i>課本的字和詞</i></button>
-        <button class="mode" data-subject="bpmf">
-          <span class="ic">ㄅ</span><b>ㄅㄆㄇ</b><i>只練拼音</i></button>
-        <button class="mode" data-subject="mine">
-          <span class="ic">✏️</span><b>我的課本</b><i>老師的圈詞</i></button>
-      </div>
-      <p class="hint tight" id="subjectHint"></p>
-
       <div id="gradeBox">
         <div class="sub-h">幾年級的字？</div>
         <div class="tiles grades" id="grades">
@@ -853,22 +847,13 @@
           <button class="sw sel" data-term="1">上學期</button>
           <button class="sw" data-term="2">下學期</button>
         </div>
-        <div class="sub-h">第幾課？</div>
-        <div class="chips" id="lessonChips"></div>
-        <p class="hint tight" id="lessonNote"></p>
-        <div class="modes" id="scopes">
-          <button class="mode sel" data-scope="only"><b>只練這一課</b><i>選到的那一課</i></button>
-          <button class="mode" data-scope="upto"><b>累積複習</b><i>一上第 1 課到這裡</i></button>
-        </div>
       </div>
-
-      <div id="mineBox" hidden>
-        <div class="sub-h">要練哪幾課？</div>
-        <div class="lessons" id="lessonList"></div>
-        <p class="hint" id="mineHint"></p>
-        <div class="row mt">
-          <button class="btn grow" id="toSettings">⚙️ 新增或修改課本</button>
-        </div>
+      <div class="sub-h">第幾課？</div>
+      <div class="chips" id="lessonChips"></div>
+      <p class="hint tight" id="lessonNote"></p>
+      <div class="modes" id="scopes">
+        <button class="mode sel" data-scope="only"><b>只練這一課</b><i>選到的那一課</i></button>
+        <button class="mode" data-scope="upto"><b>累積複習</b><i>一上第 1 課到這裡</i></button>
       </div>
 
       <div class="sub-h">題型</div>
@@ -883,14 +868,11 @@
         <button class="mode mine-only" data-kind="wlisten" hidden><b>🔊 聽詞選詞</b><i>聽到哪個詞就點它</i></button>
         <button class="mode mine-only" data-kind="wcloze" hidden><b>📝 語詞填空</b><i>詞裡缺一個字</i></button>
         <button class="mode mine-only" data-kind="wbpmf" hidden><b>ㄅ 看注音選詞</b><i>ㄏㄨㄚ ㄉㄨㄛˇ → 花朵</i></button>
+        <button class="mode" data-kind="head"><b>🔊 聽詞找聲母</b><i>「爸爸」是ㄅ還是ㄆ</i></button>
+        <button class="mode" data-kind="tail"><b>🔊 聽詞找韻母</b><i>ㄢ ㄤ ㄣ ㄥ 分得出來嗎</i></button>
       </div>
-      <div class="modes" id="bkinds" hidden>
-        <button class="mode sel" data-bkind="all"><b>都出</b><i>輪流換，練得比較全</i></button>
-        <button class="mode" data-bkind="head"><b>🔊 聽詞找聲母</b><i>「爸爸」是ㄅ還是ㄆ</i></button>
-        <button class="mode" data-bkind="tail"><b>🔊 聽詞找韻母</b><i>ㄢ ㄤ ㄣ ㄥ 分得出來嗎</i></button>
-        <button class="mode" data-bkind="b2z"><b>🔤 拼拼看是哪個字</b><i>ㄏㄨㄚ → 花</i></button>
-      </div>
-
+      <p class="hint tight">選「都出」的時候不會出找聲母、找韻母 ——
+        那兩個是還在學注音的時候，特別挑出來單練的。</p>
       <div class="sub-h">出題方式</div>
       <div class="modes" id="modes">
         <button class="mode sel" data-mode="smart"><b>聰明出題</b><i>常錯的多出現</i></button>
@@ -1616,7 +1598,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 i';
+  var VERSION = '2026-08-20 j';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -2046,7 +2028,6 @@
     if (!db.recent || typeof db.recent !== 'object') db.recent = {};
     if (!Array.isArray(db.runs)) db.runs = [];
     if (!Array.isArray(db.lastWrong)) db.lastWrong = [];
-    if (['zi', 'bpmf', 'mine'].indexOf(db.subject) < 0) db.subject = DEF.subject;
     if ([1, 2, 3, 4, 5, 6].indexOf(db.grade) < 0) db.grade = DEF.grade;
     if ([1, 2].indexOf(db.term) < 0) db.term = DEF.term;
     if (typeof db.lesson !== 'number' || db.lesson < 0) db.lesson = 0;
@@ -2054,8 +2035,10 @@
     if ([10, 15, 20].indexOf(db.count) < 0) db.count = DEF.count;
     if ([0, 20, 30].indexOf(db.secs) < 0) db.secs = DEF.secs;
     if (['smart', 'even'].indexOf(db.mode) < 0) db.mode = DEF.mode;
-    if (ZI_KINDS.concat(WORD_KINDS).indexOf(db.kind) < 0 && db.kind !== 'all') db.kind = DEF.kind;
-    if (BPMF_KINDS.indexOf(db.bkind) < 0 && db.bkind !== 'all') db.bkind = DEF.bkind;
+    if (ZI_KINDS.concat(WORD_KINDS, BPMF_KINDS).indexOf(db.kind) < 0 && db.kind !== 'all') {
+      db.kind = DEF.kind;
+    }
+    if (['zi', 'mine'].indexOf(db.subject) < 0) db.subject = 'zi';
     if ([0.4, 0.55, 0.75].indexOf(db.rate) < 0) db.rate = DEF.rate;
     if ([0.85, 1.1, 1.4].indexOf(db.pitch) < 0) db.pitch = DEF.pitch;
     if (['none', 'zi', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
@@ -2379,8 +2362,9 @@
 
   /* ────────── 設定畫面 ────────── */
   var ZI_KINDS = ['b2z', 'z2b', 'listen', 'cloze', 'rad', 'stroke'];
-  var WORD_KINDS = ['wlisten', 'wcloze', 'wbpmf'];      // 只有「我的課本」有圈詞
-  var BPMF_KINDS = ['head', 'tail', 'b2z'];
+  var WORD_KINDS = ['wlisten', 'wcloze', 'wbpmf'];
+  // 找聲母、找韻母是還在學注音的時候單練用的，「都出」不會出，要自己挑
+  var BPMF_KINDS = ['head', 'tail'];
   var picked = [];
 
   function logRecent(c, ok) {
@@ -2444,11 +2428,9 @@
   segment('secs', function (m) { db.secs = Number(m.dataset.secs); syncSubject(); });
   segment('modes', function (m) { db.mode = m.dataset.mode; });
   segment('kinds', function (m) { db.kind = m.dataset.kind; syncSubject(); });
-  segment('bkinds', function (m) { db.bkind = m.dataset.bkind; syncSubject(); });
   segment('grades', function (m) { db.grade = Number(m.dataset.grade); clampLesson(); syncSubject(); });
   segment('terms', function (m) { db.term = Number(m.dataset.term); clampLesson(); syncSubject(); });
   segment('scopes', function (m) { db.scope = m.dataset.scope; syncSubject(); });
-  segment('subjects', function (m) { db.subject = m.dataset.subject; syncSubject(); });
 
   /* 這一輪的題庫：某個年級（或累積到某個年級）的生字，或自己貼進來的字 */
   function subjectPool() {
@@ -2522,9 +2504,11 @@
     box.innerHTML = '';
     function chip(n, label, cnt) {
       var b = document.createElement('button');
-      b.className = 'chip' + (db.lesson === n ? ' sel' : '');
+      b.className = 'chip' + (db.subject === 'zi' && db.lesson === n ? ' sel' : '');
       b.innerHTML = '<b>' + label + '</b><small>' + cnt + ' 字</small>';
-      b.addEventListener('click', function () { db.lesson = n; save(); syncSubject(); });
+      b.addEventListener('click', function () {
+        db.subject = 'zi'; db.lesson = n; save(); syncSubject();
+      });
       box.appendChild(b);
     }
     var all = 0;
@@ -2533,6 +2517,39 @@
     list.forEach(function (L) {
       chip(L.k, '第' + L.k + '課', L.zi.length + L.recog.length);
     });
+
+    // 自己建的課接在後面，這樣不用切換模式也選得到
+    db.lessons.forEach(function (M) {
+      var on = db.subject === 'mine' && db.picks.indexOf(M.id) >= 0;
+      var b = document.createElement('button');
+      b.className = 'chip mine' + (on ? ' sel' : '');
+      b.innerHTML = '<b>✏️ ' + esc(M.name) + '</b><small>' +
+        (M.chars.length + (M.words || []).length) + ' 字詞</small>';
+      b.addEventListener('click', function () {
+        db.subject = 'mine'; db.picks = [M.id];
+        save(); syncSubject();
+      });
+      box.appendChild(b);
+    });
+    var addBtn = document.createElement('button');
+    addBtn.className = 'chip add';
+    addBtn.innerHTML = '<b>＋ 我的課本</b>';
+    addBtn.title = '加課本沒有的東西，例如老師畫的圈詞';
+    addBtn.addEventListener('click', function () {
+      renderLessons(); renderUseHint(); renderMicHint(); show('settings');
+      if (!db.lessons.length) openLessonForm(null);
+    });
+    box.appendChild(addBtn);
+
+    if (db.subject === 'mine') {
+      var M2 = pickedLessons()[0];
+      $('lessonNote').innerHTML = M2
+        ? '<b>' + esc(M2.name) + '</b>（自己建的）　' + M2.chars.length + ' 個字' +
+          ((M2.words || []).length ? '、' + M2.words.length + ' 個圈詞' : '') +
+          '　—　要改內容按上面的「＋ 我的課本」進設定。'
+        : '自己建的課。到 ⚙️ 設定裡加生字和圈詞。';
+      return;
+    }
 
     var L = db.lesson ? lessonAt(db.grade, db.term, db.lesson) : null;
     var note = $('lessonNote');
@@ -2585,37 +2602,23 @@
     }
   }
 
-  /* 三個科目差在「題庫從哪來」和「出什麼題」，這兩件事按鈕上寫不下，寫在底下 */
-  var SUBJECT_HINT = {
-    zi: '用課本這一課的生字和語詞出題：看注音選字、看字選注音、聽聲音選字、' +
-        '語詞填空、找部首、數筆畫。',
-    bpmf: '<b>範圍跟「生字」一模一樣</b>（一樣選年級、學期、第幾課），但只練拼音：' +
-          '聽詞找聲母（「爸爸」是ㄅ還是ㄆ）、聽詞找韻母（ㄢ ㄤ ㄣ ㄥ）、' +
-          '看注音拼出是哪個字。還在學注音符號的時候用這個。',
-    mine: '不用內建課本，練你自己貼的生字和<b>老師畫的圈詞</b>（課本沒有這個，' +
-          '每個班都不一樣）。在 ⚙️ 設定裡建課。'
-  };
-
   function syncSubject() {
     var mine = db.subject === 'mine';
     rebuildCustomWords();
-    $('subjectHint').innerHTML = SUBJECT_HINT[db.subject] || '';
-    $('gradeBox').hidden = mine;
-    $('mineBox').hidden = !mine;
-    $('kinds').hidden = db.subject === 'bpmf';
-    $('bkinds').hidden = db.subject !== 'bpmf';
+    $('gradeBox').hidden = mine;      // 練自己的課時，年級學期先收起來
+    $('scopes').hidden = mine;        // 自己的課沒有「累積複習」可言
     document.querySelectorAll('#kinds .mine-only').forEach(function (m) { m.hidden = false; });
     $('learnBtn').textContent = '先認識生字 📖';
     $('subtitle').textContent = subjectName() + ' ・ ' + db.count + ' 題 ・ ' +
       (db.secs ? db.secs + ' 秒' : '不限時');
     var n = usablePool().length;
     $('poolHint').textContent = mine && !n
-      ? '還沒有選到任何字。新增一課、或點一下上面的課，選起來才能開始。'
-      : '這次的題庫有 ' + n + ' 題材（生字＋語詞），都會練到，常錯的會多出現幾次。';
+      ? '這一課還沒有字。到 ⚙️ 設定裡把生字和圈詞加進去。'
+      : '這次的題庫有 ' + n + ' 個字詞，都會練到，常錯的會多出現幾次。';
     syncStart();
     renderLessonChips();
-    if (!mine) syncScopeHint();
     renderLessons();
+    if (!mine) syncScopeHint();
     refreshSetup();
   }
   segment('rates', function (m) { db.rate = Number(m.dataset.rate); tryVoice(); });
@@ -2735,7 +2738,7 @@
         return;
       }
       db.lessons.forEach(function (L) {
-        var on = db.picks.indexOf(L.id) >= 0;
+        var on = db.subject === 'mine' && db.picks.indexOf(L.id) >= 0;
         var btn = document.createElement('button');
         btn.className = 'lesson' + (on ? ' sel' : '');
         var bits = [L.chars.length + ' 字'];
@@ -2745,14 +2748,17 @@
           '<u>' + esc((L.words || []).slice(0, 3).join('・') ||
                       L.chars.slice(0, 8).join('')) + '</u>';
         btn.addEventListener('click', function () {
-          var i = db.picks.indexOf(L.id);
-          if (i >= 0) db.picks.splice(i, 1); else db.picks.push(L.id);
+          if (db.subject === 'mine' && db.picks.indexOf(L.id) >= 0) {
+            db.subject = 'zi';                 // 再點一次就回到課本
+          } else {
+            db.subject = 'mine'; db.picks = [L.id];
+          }
           save(); syncSubject();
         });
         box.appendChild(btn);
       });
     });
-    $('lessonEditBtn').hidden = db.picks.length !== 1;
+    $('lessonEditBtn').hidden = !(db.subject === 'mine' && db.picks.length === 1);
     renderMineHint();
   }
 
@@ -2847,10 +2853,6 @@
   });
   $('sBackBtn').addEventListener('click', function () {
     micStop(); closeLessonForm(); refreshSetup(); show('setup');
-  });
-  $('toSettings').addEventListener('click', function () {
-    renderLessons(); renderUseHint(); renderMicHint(); show('settings');
-    if (!db.lessons.length) openLessonForm(null);
   });
   $('openVoiceBtn').addEventListener('click', function () {
     document.body.classList.add('voice-open');
@@ -2991,9 +2993,7 @@
   }
 
   function kindsAvailable(c) {
-    var ks;
-    if (db.subject === 'bpmf') ks = db.bkind === 'all' ? BPMF_KINDS.slice() : [db.bkind];
-    else ks = db.kind === 'all' ? ZI_KINDS.concat(WORD_KINDS) : [db.kind];
+    var ks = db.kind === 'all' ? ZI_KINDS.concat(WORD_KINDS) : [db.kind];
     // 這台裝置念不出聲音就別出聽力題，不然小朋友會卡住
     if (!speechUsable()) {
       ks = ks.filter(function (x) { return ['listen', 'head', 'tail', 'wlisten'].indexOf(x) < 0; });
