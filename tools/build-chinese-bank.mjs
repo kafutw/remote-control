@@ -145,6 +145,33 @@ for (const c of [...chars].sort()) {
   dictLines.push(`${c}${b}|${String(e.radical).trim()}|${e.stroke_count || 0}`);
 }
 
+/* ── 語詞的意思 ──
+   教育百科每個語詞都附辭典解釋，拿來出「看解釋選詞」。只取第一句、
+   去掉括號和例句，太短或沒鑑別度的（「動物名」「→鯊」這種）就不要，
+   解釋裡本來就有那個詞的也不要（等於把答案寫在題目上）。 */
+const glossRows = [];
+try {
+  const raw = fs.readFileSync('data/康軒國語_114學年_語詞解釋.csv', 'utf8').replace(/^﻿/, '');
+  const lines = raw.trim().split(/\r?\n/).slice(1);
+  for (const line of lines) {
+    // 解釋裡有逗號，所以只切第一個逗號
+    const at = line.indexOf(',');
+    if (at < 0) continue;
+    const w = line.slice(0, at).trim().replace(/^"|"$/g, '');
+    let def = line.slice(at + 1).trim().replace(/^"|"$/g, '').replace(/""/g, '"');
+    def = def.split(/[。；;]|如：|\[例\]|例：/)[0];
+    def = def.replace(/[（(][^)）]*[)）]/g, '').replace(/^\d+\.\s*/, '').trim();
+    def = def.replace(/[|;'\\]/g, '，').replace(/，+/g, '，').replace(/^，|，$/g, '');
+    if (!w || !def) continue;
+    if (/^[→⇒]|^參見|^見「|^同「/.test(def)) continue;      // 只是叫你去看別的詞條
+    if ([...def].length < 4 || [...def].length > 30) continue;
+    if (def.includes(w)) continue;                            // 解釋裡有答案
+    glossRows.push(`${w}|${def}`);
+  }
+} catch (e) {
+  console.log('（沒有找到語詞解釋的 CSV，這次不產生「看解釋選詞」的資料）');
+}
+
 const esc = (s) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 const out = [];
 out.push('  /* 課次資料：康軒版國語 114 學年度，來源是教育部教育百科的「生字詞彙表」');
@@ -164,11 +191,16 @@ out.push('');
 out.push('  /* 每個字的注音、部首、總筆畫，取自教育部《重編國語辭典修訂本》開放資料。');
 out.push('     格式：字＋注音|部首|總筆畫，用分號隔開。 */');
 out.push("  var DICT = '" + dictLines.join(';') + "';");
+out.push('');
+out.push('  /* 語詞的意思，出「看解釋選詞」用。來源同樣是教育百科的辭典解釋，');
+out.push('     只留第一句、去掉例句和括號；沒鑑別度的（「動物名」「→鯊」）不收。 */');
+out.push("  var GLOSS = '" + glossRows.join(';') + "';");
 
 const block = out.join('\n');
 
 console.log(`課 ${lessons}、生字 ${ziCount}、認讀字 ${recogCount}、語詞 ${wordCount}`);
 console.log(`不重複的字 ${chars.size}，其中 ${dictLines.length} 個查得到教育部的注音部首筆畫`);
+console.log(`語詞解釋可用的有 ${glossRows.length} 個`);
 if (missing.length) console.log('查不到的字：', missing.join(''));
 console.log(`產生的資料 ${(Buffer.byteLength(block) / 1024).toFixed(0)} KB`);
 
