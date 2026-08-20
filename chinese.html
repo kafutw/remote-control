@@ -885,15 +885,14 @@
         <button class="mode" data-kind="z2b"><b>🔡 看字選注音</b><i>花 → ㄏㄨㄚ</i></button>
         <button class="mode" data-kind="listen"><b>🔊 聽聲音選字</b><i>聽到什麼字就點它</i></button>
         <button class="mode" data-kind="cloze"><b>📝 語詞填空</b><i>「＿朵」要填哪個字</i></button>
-        <button class="mode" data-kind="rad"><b>🧩 找部首</b><i>花的部首是什麼</i></button>
-        <button class="mode" data-kind="stroke"><b>✏️ 數筆畫</b><i>這個字幾畫</i></button>
+        <button class="mode" data-kind="rad"><b>🧩 找部首</b><i id="radNote">花的部首是什麼</i></button>
+        <button class="mode" data-kind="stroke"><b>✏️ 數筆畫</b><i id="strokeNote">這個字幾畫</i></button>
         <button class="mode" data-kind="wlisten"><b>🔊 聽詞選詞</b><i>聽到哪個詞就點它</i></button>
         <button class="mode" data-kind="wbpmf"><b>ㄅ 看注音選詞</b><i>ㄏㄨㄚ ㄉㄨㄛˇ → 花朵</i></button>
         <button class="mode" data-kind="head"><b>🔊 聽詞找聲母</b><i>「爸爸」是ㄅ還是ㄆ</i></button>
         <button class="mode" data-kind="tail"><b>🔊 聽詞找韻母</b><i>ㄢ ㄤ ㄣ ㄥ 分得出來嗎</i></button>
       </div>
-      <p class="hint tight">選「都出」的時候不會出找聲母、找韻母 ——
-        那兩個是還在學注音的時候，特別挑出來單練的。</p>
+      <p class="hint tight" id="kindNote"></p>
       <div class="sub-h">怎麼挑題目</div>
       <div class="modes" id="modes">
         <button class="mode sel" data-mode="smart"><b>聰明出題</b><i>常錯的多出現</i></button>
@@ -1618,7 +1617,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 q';
+  var VERSION = '2026-08-20 r';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -2389,6 +2388,18 @@
 
   /* ────────── 設定畫面 ────────── */
   var ZI_KINDS = ['b2z', 'z2b', 'listen', 'cloze', 'rad', 'stroke'];
+  /* 「都出」要看年級：
+     ・部首是中年級查字典才教的工具，一二年級出了只是猜
+     ・高年級的字動輒二十幾畫（讚 26 畫），數筆畫沒什麼意義，字典查得到就好
+     手動挑的話還是出得來，這裡只擋「都出」。 */
+  function kindsForAll() {
+    var g = db.subject === 'mine' ? 3 : db.grade;      // 自己建的課不知道年級，按中年級算
+    return ZI_KINDS.filter(function (k) {
+      if (k === 'rad' && g <= 2) return false;
+      if (k === 'stroke' && g >= 5) return false;
+      return true;
+    }).concat(WORD_KINDS);
+  }
   var WORD_KINDS = ['wlisten', 'wcloze', 'wbpmf'];
   // 找聲母、找韻母是還在學注音的時候單練用的，「都出」不會出，要自己挑
   var BPMF_KINDS = ['head', 'tail'];
@@ -2674,9 +2685,24 @@
     });
   }
 
+  /* 「都出」會依年級跳過幾種題型，這件事要寫出來，不然會以為壞掉 */
+  function syncKindNote() {
+    var g = db.subject === 'mine' ? 3 : db.grade;
+    var skip = [];
+    if (g <= 2) skip.push('找部首（部首是中年級查字典才教的）');
+    if (g >= 5) skip.push('數筆畫（高年級的字二十幾畫，數了沒什麼意義）');
+    skip.push('聽詞找聲母、找韻母（還在學注音的時候才單練）');
+    $('kindNote').innerHTML = '選「<b>都出</b>」的時候不會出：' + skip.join('、') +
+      '。要練還是可以自己點那一顆。';
+    var rad = $('radNote'), st = $('strokeNote');
+    if (rad) rad.textContent = g <= 2 ? '花的部首是什麼（中年級才教）' : '花的部首是什麼';
+    if (st) st.textContent = g >= 5 ? '這個字幾畫（高年級用不太到）' : '這個字幾畫';
+  }
+
   function syncSubject() {
     var mine = db.subject === 'mine';
     rebuildCustomWords();
+    syncKindNote();
     $('gradeBox').hidden = mine;      // 練自己的課時，年級學期先收起來
     $('learnBtn').textContent = '先認識生字 📖';
     $('subtitle').textContent = subjectName() + ' ・ ' + db.count + ' 題 ・ ' +
@@ -3063,7 +3089,7 @@
 
   function kindsAvailable(c) {
     // 語詞填空有兩種來源（從生字出發、從語詞出發），對小孩來說是同一種題，合成一個選項
-    var ks = db.kind === 'all' ? ZI_KINDS.concat(WORD_KINDS)
+    var ks = db.kind === 'all' ? kindsForAll()
            : db.kind === 'cloze' ? ['cloze', 'wcloze'] : [db.kind];
     // 這台裝置念不出聲音就別出聽力題，不然小朋友會卡住
     if (!speechUsable()) {
