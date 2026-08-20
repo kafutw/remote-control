@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%AB%82%3C/text%3E%3C/svg%3E">
+<title>meltdown-nudge 示範</title>
+<style>
+  :root {
+    --bg: #FFF9F0; --surface: #fff; --ink: #40352B; --soft: #8A7660;
+    --line: #F0E2CD; --key: #F09A2E; --key-soft: #FFF1DC;
+    --good: #35BE96; --bad: #F2705C; --track: #F3E3CC;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#241E19; --surface:#322A23; --ink:#F7EDE0; --soft:#C6B199;
+            --line:#47392C; --key:#FFC062; --key-soft:rgba(255,192,98,.16);
+            --good:#57D6B0; --bad:#FF8C79; --track:#241E19; }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 20px 16px 60px; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
+                 "Microsoft JhengHei", "Segoe UI", Roboto, sans-serif;
+    line-height: 1.7;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--soft); font-size: 14px; margin: 0 0 22px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+    padding: 18px; margin-bottom: 14px;
+  }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    border: 2px solid var(--line); background: var(--bg); color: var(--ink);
+    border-radius: 999px; padding: 11px 18px;
+  }
+  button.key { background: var(--key); border-color: var(--key); color: #fff; }
+  button.on { border-color: var(--key); background: var(--key-soft); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  pre {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; overflow-x: auto; line-height: 1.6;
+  }
+  .log { font-size: 13px; color: var(--soft); margin-top: 12px; min-height: 3em; white-space: pre-wrap; }
+  .meter { height: 14px; border-radius: 999px; background: var(--track); overflow: hidden; margin: 12px 0 6px; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--good); transition: width .1s linear; }
+  .meter.loud i { background: var(--bad); }
+  .num { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--soft); }
+  .streak { font-size: 13px; color: var(--soft); margin-top: 10px; }
+  .note { font-size: 13px; color: var(--soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>meltdown-nudge</h1>
+  <p class="sub">小孩卡關或崩潰的時候跳出來喘口氣的小元件。一個 JS 檔，沒有相依套件。</p>
+
+  <div class="card">
+    <h2>① 連續答錯就跳</h2>
+    <p class="note">這裡設連錯 3 次。按「答錯」三次看看。</p>
+    <div class="row">
+      <button id="miss" class="key">答錯 ✗</button>
+      <button id="hit">答對 ✓</button>
+      <button id="manual">直接跳一次</button>
+    </div>
+    <div class="streak" id="streak">目前連錯 0 次</div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 太吵也跳</h2>
+    <p class="note">只量音量，不錄音、不上傳、不判斷內容。要 https（或 localhost）才有麥克風權限。</p>
+    <div class="row">
+      <button id="mic">🎤 開始聽</button>
+      <button id="lv016" class="on" data-lv="0.16">門檻 0.16</button>
+      <button id="lv010" data-lv="0.10">0.10</button>
+      <button id="lv024" data-lv="0.24">0.24</button>
+    </div>
+    <div class="meter" id="meter"><i id="bar"></i></div>
+    <div class="num" id="num">還沒開始聽</div>
+  </div>
+
+  <div class="card">
+    <h2>怎麼用</h2>
+<pre>&lt;script src="meltdown-nudge.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+var nudge = MeltdownNudge.create({
+  missStreak: 5,                       // 連錯幾次跳一次
+  noise: { level: 0.16 },              // 要聽音量才給，不給就不開麥克風
+  tone: 'auto',                        // 先溫柔，鬧不停才促咪
+  onResume: function () { nextQuestion(); },
+  onStop:   function () { endRound(); }
+});
+
+nudge.miss();      // 答錯
+nudge.hit();       // 答對，連錯歸零
+nudge.listen();    // 開始聽（一定要在使用者手勢裡呼叫）
+&lt;/script&gt;</pre>
+    <p class="note">句子可以自己換：<code>lines: { soft: [['🫂','沒關係，慢慢來']], fun: [['📺','哭哭浪費看電視時間喔']] }</code>。
+      跳出來的那句話會用語音念，念完停一秒自己關掉繼續。</p>
+  </div>
+</div>
+
+<script src="meltdown-nudge.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var run = 0, level = 0.16;
+
+  function log(t) {
+    $('log').textContent = new Date().toTimeString().slice(0, 8) + '　' + t;
+  }
+
+  var nudge = MeltdownNudge.create({
+    missStreak: 3,
+    softTimes: 1,
+    noise: { level: level },
+    onShow: function (info) {
+      log('跳出來了（' + (info.reason === 'noise' ? '太吵' : info.reason === 'miss' ? '連錯' : '手動') +
+          '・' + (info.tone === 'soft' ? '溫柔' : '促咪') + '）：' + info.line);
+    },
+    onResume: function () { log('繼續作答'); },
+    onStop: function () { log('今天先到這裡'); },
+    onError: function (code, msg) { $('num').textContent = '⚠️ ' + msg; }
+  });
+
+  $('miss').addEventListener('click', function () {
+    run++;
+    if (nudge.miss()) run = 0;
+    $('streak').textContent = '目前連錯 ' + run + ' 次';
+  });
+  $('hit').addEventListener('click', function () {
+    run = 0; nudge.hit();
+    $('streak').textContent = '目前連錯 0 次';
+  });
+  $('manual').addEventListener('click', function () { nudge.show(); });
+
+  $('mic').addEventListener('click', function () {
+    if (nudge.isListening()) {
+      nudge.mute();
+      this.textContent = '🎤 開始聽';
+      $('num').textContent = '已經停止';
+      $('bar').style.width = '0';
+      return;
+    }
+    nudge.resetPeak();
+    nudge.listen();
+    this.textContent = '停止';
+    $('num').textContent = '正在聽…';
+  });
+
+  [].forEach.call(document.querySelectorAll('[data-lv]'), function (b) {
+    b.addEventListener('click', function () {
+      [].forEach.call(document.querySelectorAll('[data-lv]'), function (x) {
+        x.classList.remove('on');
+      });
+      b.classList.add('on');
+      level = Number(b.dataset.lv);
+      nudge.set({ noise: { level: level } });
+    });
+  });
+
+  setInterval(function () {
+    if (!nudge.isListening()) return;
+    var lv = nudge.level();
+    $('bar').style.width = Math.min(100, Math.round(lv * 400)) + '%';
+    $('meter').classList.toggle('loud', lv >= level);
+    $('num').textContent = '現在 ' + lv.toFixed(2) + '　剛剛最大 ' + nudge.peak().toFixed(2) +
+                           '　門檻 ' + level.toFixed(2);
+  }, 120);
+}());
+</script>
+</body>
+</html>
