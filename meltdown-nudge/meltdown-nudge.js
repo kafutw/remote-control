@@ -71,6 +71,7 @@
       // ── 什麼時候跳 ──
       missStreak: 5,        // 連續失敗幾次跳一次；0 = 不用連錯這條規則
       noise: null,          // { level, sustainMs, decay, cooldownMs }；null = 不開麥克風
+                            // 預設 level 0.08、撐 1 秒就跳（亂叫一聲就會跳）
       // ── 說什麼 ──
       lines: null,          // { soft: [[emoji, 句子], …], fun: […] }
       tone: 'auto',         // 'auto'（先溫柔再促咪）| 'soft' | 'fun'
@@ -93,7 +94,7 @@
     }, opts);
 
     var lines = cfg.lines || DEFAULT_LINES;
-    var noise = cfg.noise ? ext({ level: 0.16, sustainMs: 2500, decay: 0.35,
+    var noise = cfg.noise ? ext({ level: 0.08, sustainMs: 1000, decay: 0.35,
                                   cooldownMs: 90000, tickMs: 150 }, cfg.noise) : null;
 
     var shown = 0;                 // 總共跳過幾次（決定語氣）
@@ -342,7 +343,7 @@
         // noise: null 要真的關掉，所以用 hasOwnProperty 判斷而不是看真假值
         if (Object.prototype.hasOwnProperty.call(patch, 'noise')) {
           noise = patch.noise
-            ? ext(noise || { level: 0.16, sustainMs: 2500, decay: 0.35,
+            ? ext(noise || { level: 0.08, sustainMs: 1000, decay: 0.35,
                              cooldownMs: 90000, tickMs: 150 }, patch.noise)
             : null;
           if (!noise) mute();

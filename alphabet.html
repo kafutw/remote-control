@@ -968,9 +968,10 @@
 
       <div class="sub-h">太吵也提醒</div>
       <div class="modes" id="noises">
-        <button class="mode" data-noise="0.10"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
-        <button class="mode sel" data-noise="0.16"><b>一般</b><i>吵鬧、哭就跳</i></button>
-        <button class="mode" data-noise="0.24"><b>很吵才跳</b><i>要崩潰大哭</i></button>
+        <button class="mode" data-noise="0.05"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
+        <button class="mode sel" data-noise="0.08"><b>一般</b><i>亂叫、哭就跳</i></button>
+        <button class="mode" data-noise="0.12"><b>要再吵一點</b><i>小聲哭不算</i></button>
+        <button class="mode" data-noise="0.20"><b>很吵才跳</b><i>要崩潰大哭</i></button>
         <button class="mode" data-noise="0"><b>關閉</b><i>不開麥克風</i></button>
       </div>
       <div class="row mt">
@@ -981,8 +982,8 @@
       <p class="hint" id="micLast"></p>
       <p class="hint" id="micHint">開了之後，<b>只有在作答的時候</b>才會開麥克風，一輪結束就關掉。
         聲音只在這台裝置上量音量，不錄音、不上傳、不判斷內容——所以弟弟大叫、電視開很大聲也會跳。
-        哭是一陣一陣的，中間換氣不會歸零：一直大哭約 2.5 秒就跳，斷斷續續哭大概十幾秒；
-        只喊一聲不會跳。提醒過後 90 秒內不會再跳。<br>
+        <b>亂叫大概一秒就會跳</b>；哭是一陣一陣的，中間換氣不會歸零，斷斷續續哭也跳得出來。
+        提醒過後 90 秒內不會再跳。<br>
         <b>要用 https 的網址開</b>（GitHub Pages 那個），瀏覽器才給麥克風權限；
         用檔案直接開、或 http 的網址，這個功能一定不會動。</p>
     </div>
@@ -1397,7 +1398,7 @@
               subject: 'letters', source: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter', allVoices: false,
               vol: 1, limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
-              nudgeAt: 0, tone: 'auto', noiseAt: 0.16, lastPeak: 0, micFail: '',
+              nudgeAt: 0, tone: 'auto', noiseAt: 0.08, lastPeak: 0, micFail: '',
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 熟練度只看每個字母最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
@@ -1457,9 +1458,10 @@
     if ([0, 20, 30].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
     if ([0, 3, 5].indexOf(db.nudgeAt) < 0) db.nudgeAt = DEF.nudgeAt;
     // 舊版預設是「連錯 5 題就跳」，改成只有崩潰大叫才跳，一次性套到舊紀錄上
-    if (db.v !== 2) { db.nudgeAt = 0; db.noiseAt = 0.16; db.v = 2; needSave = true; }
+    if (db.v !== 2) { db.nudgeAt = 0; db.noiseAt = 0.08; db.v = 2; needSave = true; }
     if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
-    if ([0, 0.1, 0.16, 0.24].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
+    // 舊版的門檻（0.10 / 0.16 / 0.24）在新的刻度上太高，對不上就退回預設
+    if ([0, 0.05, 0.08, 0.12, 0.2].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
     if (typeof db.lastPeak !== 'number') db.lastPeak = 0;
     if (typeof db.useMs !== 'number' || db.useMs < 0) db.useMs = 0;
     if (typeof db.useAt !== 'number') db.useAt = 0;
@@ -2455,7 +2457,7 @@
   };
   /* 太吵提醒：只量音量，不錄音、不判斷內容，所以分不出是哭還是笑。
      連續 LOUD_MS 都超過門檻才跳，跳完 QUIET_MS 內不再吵人。 */
-  var LOUD_MS = 2500, QUIET_MS = 90000, TICK = 150;
+  var LOUD_MS = 1000, QUIET_MS = 90000, TICK = 150;
   var mic = { stream: null, an: null, buf: null, timer: null, loud: 0, peak: 0,
               muteUntil: 0, meter: false, on: false };
 
@@ -2517,7 +2519,7 @@
     if (mic.meter) {
       var pct = Math.min(100, Math.round(lv * 400));
       $('micBar').style.width = pct + '%';
-      $('micMeter').classList.toggle('loud', lv >= (db.noiseAt || 0.16));
+      $('micMeter').classList.toggle('loud', lv >= (db.noiseAt || 0.08));
       $('micNow').textContent = '現在 ' + lv.toFixed(2) + '　剛剛最大 ' + mic.peak.toFixed(2);
     }
     if (!db.noiseAt || !S || !S.running) return;
@@ -2538,7 +2540,7 @@
     $('micNow').hidden = false;
     $('micNow').textContent = '現在 0.00　剛剛最大 0.00';
     $('micHint').textContent = '讓他喊一聲，看「剛剛最大」是多少，' +
-      '再回頭挑一個比那個數字小一點的門檻（很容易跳 0.10／一般 0.16／很吵才跳 0.24）。';
+      '再回頭挑一個比那個數字小一點的門檻（0.05／0.08／0.12／0.20）。';
     micStart(function (why) {
       mic.meter = false;
       micStop();                                 // 權限被拒也要把按鈕和音量條收回去
