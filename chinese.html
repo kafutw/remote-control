@@ -890,8 +890,8 @@
         <button class="mode" data-kind="z2b"><b>🔡 看字選注音</b><i>花 → ㄏㄨㄚ</i></button>
         <button class="mode" data-kind="listen"><b>🔊 聽聲音選字</b><i>聽到什麼字就點它</i></button>
         <button class="mode" data-kind="cloze"><b>📝 語詞填空</b><i>「＿朵」要填哪個字</i></button>
-        <button class="mode" data-kind="rad"><b>🧩 找部首</b><i>花的部首是什麼</i></button>
-        <button class="mode" data-kind="stroke"><b>✏️ 數筆畫</b><i id="strokeNote">這個字幾畫</i></button>
+        <button class="mode" data-kind="rad" id="radBtn"><b>🧩 找部首</b><i>花的部首是什麼</i></button>
+        <button class="mode" data-kind="stroke" id="strokeBtn"><b>✏️ 數筆畫</b><i>這個字幾畫</i></button>
         <button class="mode" data-kind="wlisten"><b>🔊 聽詞選詞</b><i>聽到哪個詞就點它</i></button>
         <button class="mode" data-kind="wbpmf"><b>ㄅ 看注音選詞</b><i>ㄏㄨㄚ ㄉㄨㄛˇ → 花朵</i></button>
         <button class="mode" data-kind="gloss"><b>📖 看解釋選詞</b><i>「鼓掌，雙手相擊拍」→ 拍手</i></button>
@@ -1106,9 +1106,10 @@
       <h2>崩潰提醒</h2>
       <div class="sub-h">太吵就提醒</div>
       <div class="modes" id="noises">
-        <button class="mode" data-noise="0.10"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
-        <button class="mode sel" data-noise="0.16"><b>一般</b><i>吵鬧、哭就跳</i></button>
-        <button class="mode" data-noise="0.24"><b>很吵才跳</b><i>要崩潰大哭</i></button>
+        <button class="mode" data-noise="0.05"><b>很容易跳</b><i>講話大聲一點就跳</i></button>
+        <button class="mode sel" data-noise="0.08"><b>一般</b><i>亂叫、哭就跳</i></button>
+        <button class="mode" data-noise="0.12"><b>要再吵一點</b><i>小聲哭不算</i></button>
+        <button class="mode" data-noise="0.20"><b>很吵才跳</b><i>要崩潰大哭</i></button>
         <button class="mode" data-noise="0"><b>關閉</b><i>不開麥克風</i></button>
       </div>
       <div class="row mt">
@@ -1119,8 +1120,8 @@
       <p class="hint" id="micLast"></p>
       <p class="hint" id="micHint">開了之後，<b>只有在作答的時候</b>才會開麥克風，一輪結束就關掉。
         聲音只在這台裝置上量音量，<b>不錄音、不上傳、不判斷內容</b>——所以弟弟大叫、
-        電視開很大聲也會跳。哭是一陣一陣的，中間換氣不會歸零：一直大哭約 2.5 秒就跳；
-        只喊一聲不會跳，提醒過後 90 秒內不會再跳。<br>
+        電視開很大聲也會跳。<b>亂叫大概一秒就會跳</b>；哭是一陣一陣的，中間換氣不會歸零，
+        斷斷續續哭也跳得出來。提醒過後 90 秒內不會再跳。<br>
         <b>要用 https 的網址開</b>（GitHub Pages 那個），瀏覽器才給麥克風權限；
         用檔案直接開、或 http 的網址，這個功能一定不會動。</p>
 
@@ -1325,6 +1326,7 @@
       // ── 什麼時候跳 ──
       missStreak: 5,        // 連續失敗幾次跳一次；0 = 不用連錯這條規則
       noise: null,          // { level, sustainMs, decay, cooldownMs }；null = 不開麥克風
+                            // 預設 level 0.08、撐 1 秒就跳（亂叫一聲就會跳）
       // ── 說什麼 ──
       lines: null,          // { soft: [[emoji, 句子], …], fun: […] }
       tone: 'auto',         // 'auto'（先溫柔再促咪）| 'soft' | 'fun'
@@ -1347,7 +1349,7 @@
     }, opts);
 
     var lines = cfg.lines || DEFAULT_LINES;
-    var noise = cfg.noise ? ext({ level: 0.16, sustainMs: 2500, decay: 0.35,
+    var noise = cfg.noise ? ext({ level: 0.08, sustainMs: 1000, decay: 0.35,
                                   cooldownMs: 90000, tickMs: 150 }, cfg.noise) : null;
 
     var shown = 0;                 // 總共跳過幾次（決定語氣）
@@ -1596,7 +1598,7 @@
         // noise: null 要真的關掉，所以用 hasOwnProperty 判斷而不是看真假值
         if (Object.prototype.hasOwnProperty.call(patch, 'noise')) {
           noise = patch.noise
-            ? ext(noise || { level: 0.16, sustainMs: 2500, decay: 0.35,
+            ? ext(noise || { level: 0.08, sustainMs: 1000, decay: 0.35,
                              cooldownMs: 90000, tickMs: 150 }, patch.noise)
             : null;
           if (!noise) mute();
@@ -1623,7 +1625,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 s';
+  var VERSION = '2026-08-20 t';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1981,7 +1983,7 @@
               mode: 'smart', kind: 'all', bkind: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'zi', allVoices: false,
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
-              nudgeAt: 0, noiseAt: 0.16, tone: 'auto', lastPeak: 0, micFail: '',
+              nudgeAt: 0, noiseAt: 0.08, tone: 'auto', lastPeak: 0, micFail: '',
               lessons: [], picks: [], dropped: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 單一個字的熟練度只看最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
@@ -2087,7 +2089,8 @@
     if (['none', 'zi', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
     if ([0, 20, 30].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
     if ([0, 3, 5].indexOf(db.nudgeAt) < 0) db.nudgeAt = DEF.nudgeAt;
-    if ([0, 0.10, 0.16, 0.24].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
+    // 舊版的門檻（0.10 / 0.16 / 0.24）在新的刻度上太高，對不上就退回預設
+    if ([0, 0.05, 0.08, 0.12, 0.2].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
     if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
     if (typeof db.lastPeak !== 'number') db.lastPeak = 0;
     if (typeof db.micFail !== 'string') db.micFail = '';
@@ -2405,13 +2408,17 @@
 
   /* ────────── 設定畫面 ────────── */
   var ZI_KINDS = ['b2z', 'z2b', 'listen', 'cloze', 'rad', 'stroke'];
-  /* 「都出」要看年級：高年級的字動輒二十幾畫（讚 26 畫），數筆畫沒什麼意義，
-     字典查得到就好。部首則是低年級也照出——老師考試會考。
-     手動挑的話還是出得來，這裡只擋「都出」。 */
-  function kindsForAll() {
+  /* 部首和筆畫是查字典的工具，五、六年級早就會了，這兩題對他們沒意義，
+     所以高年級直接把那兩顆按鈕收起來，也不會出。
+     低年級和中年級照出——部首老師考試會考。 */
+  function hiddenKinds() {
     var g = db.subject === 'mine' ? 3 : db.grade;      // 自己建的課不知道年級，按中年級算
+    return g >= 5 ? ['rad', 'stroke'] : [];
+  }
+  function kindsForAll() {
+    var off = hiddenKinds();
     return ZI_KINDS.filter(function (k) {
-      return !(k === 'stroke' && g >= 5);
+      return off.indexOf(k) < 0;
     }).concat(WORD_KINDS);
   }
   var WORD_KINDS = ['wlisten', 'wcloze', 'wbpmf', 'gloss'];
@@ -2699,16 +2706,23 @@
     });
   }
 
-  /* 「都出」會依年級跳過幾種題型，這件事要寫出來，不然會以為壞掉 */
+  /* 高年級整顆藏起來，其餘只是「都出」不出，這件事要寫出來，不然會以為壞掉 */
   function syncKindNote() {
-    var g = db.subject === 'mine' ? 3 : db.grade;
-    var skip = [];
-    if (g >= 5) skip.push('數筆畫（高年級的字二十幾畫，數了沒什麼意義）');
-    skip.push('聽詞找聲母、找韻母（還在學注音的時候才單練）');
-    $('kindNote').innerHTML = '選「<b>都出</b>」的時候不會出：' + skip.join('、') +
-      '。要練還是可以自己點那一顆。';
-    var st = $('strokeNote');
-    if (st) st.textContent = g >= 5 ? '這個字幾畫（高年級用不太到）' : '這個字幾畫';
+    var off = hiddenKinds();
+    $('radBtn').hidden = off.indexOf('rad') >= 0;
+    $('strokeBtn').hidden = off.indexOf('stroke') >= 0;
+    // 藏起來的那顆如果正被選著（換年級之前挑的），退回「都出」
+    if (off.indexOf(db.kind) >= 0) {
+      db.kind = 'all'; save();
+      $('kinds').querySelectorAll('.mode').forEach(function (m) {
+        m.classList.toggle('sel', m.dataset.kind === 'all');
+      });
+    }
+    $('kindNote').innerHTML = (off.length
+      ? '五、六年級不出<b>找部首</b>和<b>數筆畫</b> —— 那兩個是查字典的工具，中年級就學會了。<br>'
+      : '') +
+      '選「<b>都出</b>」的時候不會出：聽詞找聲母、找韻母（還在學注音的時候才單練）。' +
+      '要練還是可以自己點那一顆。';
   }
 
   function syncSubject() {
@@ -2773,7 +2787,7 @@
     } else {
       last.textContent = '上一輪最大音量 ' + (db.lastPeak ? fmtLv(db.lastPeak) : '—') +
         '，門檻 ' + fmtLv(db.noiseAt) + '。' +
-        '（超過門檻持續約 2.5 秒才跳；上一輪如果一直沒跳，把門檻調低一點）' +
+        '（超過門檻持續約 1 秒才跳；上一輪如果一直沒跳，把門檻調低一點）' +
         (db.micFail ? '　⚠️ 上次開麥克風失敗：' + db.micFail : '');
     }
   }
