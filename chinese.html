@@ -741,13 +741,19 @@
   .sw.sel { background: var(--key); color: #FFF6F0; box-shadow: var(--shadow); }
 
   /* 課次：小標籤，排不下就換行 */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
   .chip {
     font-family: inherit; cursor: pointer; color: var(--ink);
     background: var(--bg); border: 1.5px dashed var(--line); border-radius: 14px;
     padding: 9px 12px; transition: all .14s; white-space: nowrap;
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 8px; position: relative;
   }
+  /* 這一課的獎牌掛在右上角，跟九九乘法的段數按鈕一樣 */
+  .chip .mark { position: absolute; top: -9px; right: -6px; line-height: 1; }
+  .chip .cup { font-size: calc(var(--icon-medal) * .72);
+               filter: drop-shadow(0 2px 3px rgba(180,120,40,.25)); }
+  .chip .warn { top: -4px; right: -2px; color: var(--coral-ink); font-weight: 800;
+                font-size: var(--fs-note); }
   .chip:active { transform: translateY(1px); }
   .chip:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
   .chip b { font-size: var(--fs-body); font-weight: 800; }
@@ -1600,7 +1606,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 l';
+  var VERSION = '2026-08-20 m';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1810,7 +1816,7 @@
   var COMMON_RADS = '人口木水火土心手日月言金田目艸竹糸貝力刀女宀辵足走衣示玉頁見'.split('');
 
   /* ────────── 把課本展開 ────────── */
-  var ZI = [], ZMAP = {}, BPMF = {}, ALL = [], VOLS = {};
+  var ZI = [], ZMAP = {}, BPMF = {}, ALL = [], VOLS = {}, WLESSON = {};
 
   // 一上排第 1、一下第 2、二上第 3……累積複習時用這個比大小
   function volOrd(g, t) { return (g - 1) * 2 + t; }
@@ -1842,6 +1848,7 @@
       });
       // 語詞裡的每個字都記一份，語詞填空和答案卡要用；先出現的排前面
       L.words.forEach(function (w) {
+        if (!WLESSON[w]) WLESSON[w] = L;          // 這個詞算哪一課的（第一次出現的那課）
         for (var j = 0; j < w.length; j++) {
           var x = ZMAP[w.charAt(j)];
           if (x && x.words.indexOf(w) < 0) x.words.push(w);
@@ -1948,8 +1955,11 @@
               limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0,
               nudgeAt: 0, noiseAt: 0.16, tone: 'auto', lastPeak: 0, micFail: '',
               lessons: [], picks: [], dropped: [], known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
-  var WINDOW = 10;      // 熟練度只看每個字最近這麼多題，以前的錯誤會慢慢淡出
+  var WINDOW = 10;      // 單一個字的熟練度只看最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
+  // 一整課的獎牌跟九九乘法的「段」用同一套標準：最近 20 題、至少 5 題才給評價
+  var UNIT_WINDOW = 20;
+  var UNIT_MIN = 5;
   var MEDALS = [
     { at: 0.9, icon: '🥇', name: '金牌', rank: 3 },
     { at: 0.8, icon: '🥈', name: '銀牌', rank: 2 },
@@ -2376,7 +2386,43 @@
     var r = db.recent[c] || (db.recent[c] = []);
     r.push(ok ? 1 : 0);
     if (r.length > WINDOW) db.recent[c] = r.slice(-WINDOW);
+    // 同一題也記在「這個字是哪一課的」帳上，課的獎牌看這個
+    var u = unitKeyOf(c);
+    if (!u) return;
+    var ur = db.recent[u] || (db.recent[u] = []);
+    ur.push(ok ? 1 : 0);
+    if (ur.length > UNIT_WINDOW) db.recent[u] = ur.slice(-UNIT_WINDOW);
   }
+
+  /* ── 一課的精熟度 ──
+     題目答對答錯除了記在字上，也記在它所屬的那一課上（'L2a-1' 這種 key）。
+     自己建的課記成 'M:課的 id'。 */
+  function unitKeyOf(k) {
+    if (db.subject === 'mine') {
+      var m = pickedLessons()[0];
+      return m ? 'M:' + m.id : '';
+    }
+    var it = itemOf(k);
+    var L = it.isWord ? WLESSON[it.word] : (it.g ? { g: it.g, t: it.t, k: it.k } : null);
+    return L ? 'L' + L.g + (L.t === 1 ? 'a' : 'b') + '-' + L.k : '';
+  }
+  function unitStat(key) {
+    var r = key && db.recent[key];
+    if (!r || !r.length) return { n: 0, rate: 0, enough: false };
+    var ok = r.reduce(function (a, b) { return a + b; }, 0);
+    return { n: r.length, rate: ok / r.length, enough: r.length >= UNIT_MIN };
+  }
+  function unitMedal(key) {
+    var s = unitStat(key);
+    if (!s.enough) return '';
+    for (var i = 0; i < MEDALS.length; i++) if (s.rate >= MEDALS[i].at) return MEDALS[i].icon;
+    return '';
+  }
+  function unitRisk(key) {
+    var s = unitStat(key);
+    return s.enough && s.rate < MEDALS[MEDALS.length - 1].at;
+  }
+  function lessonKey(g, t, k) { return 'L' + g + (t === 1 ? 'a' : 'b') + '-' + k; }
 
   // 熟練度看最近 WINDOW 題；還沒累積夠就先用全部紀錄頂著
   function ziStat(c) {
@@ -2525,7 +2571,11 @@
       var b = document.createElement('button');
       var on = db.subject === 'zi' && (n ? db.picked.indexOf(n) >= 0 : !db.picked.length);
       b.className = 'chip' + (on ? ' sel' : '');
-      b.innerHTML = '<b>' + label + '</b><small>' + cnt + ' 字</small>';
+      var key = n ? lessonKey(db.grade, db.term, n) : '';
+      var medal = key ? unitMedal(key) : '';
+      b.innerHTML = '<b>' + label + '</b><small>' + cnt + ' 字</small>' +
+        (medal ? '<span class="mark cup">' + medal + '</span>'
+               : (key && unitRisk(key) ? '<span class="mark warn">●</span>' : ''));
       b.addEventListener('click', function () {
         if (db.subject !== 'zi') { db.subject = 'zi'; db.picked = n ? [n] : []; }
         else if (!n) db.picked = [];                       // 整冊 = 不挑課
@@ -2549,8 +2599,10 @@
       var on = db.subject === 'mine' && db.picks.indexOf(M.id) >= 0;
       var b = document.createElement('button');
       b.className = 'chip mine' + (on ? ' sel' : '');
+      var mm = unitMedal('M:' + M.id);
       b.innerHTML = '<b>✏️ ' + esc(M.name) + '</b><small>' +
-        (M.chars.length + (M.words || []).length) + ' 字詞</small>';
+        (M.chars.length + (M.words || []).length) + ' 字詞</small>' +
+        (mm ? '<span class="mark cup">' + mm + '</span>' : '');
       b.addEventListener('click', function () {
         db.subject = 'mine'; db.picks = [M.id];
         save(); syncSubject();
@@ -2596,14 +2648,20 @@
       var bits = [L.zi.length + ' 個生字'];
       if (L.recog.length) bits.push(L.recog.length + ' 個認讀字');
       if (L.words.length) bits.push(L.words.length + ' 個語詞');
+      var us = unitStat(lessonKey(L.g, L.t, L.k));
       note.innerHTML = '<b>' + esc(L.name) + '</b>　' + bits.join('、') +
-        '　—　可以再點別課一起練' +
+        (us.n ? '　—　這一課最近 ' + us.n + ' 題答對 ' + Math.round(us.rate * 100) + '%' +
+                (us.enough ? '（' + (unitMedal(lessonKey(L.g, L.t, L.k)) || '還沒拿到獎牌') + '）'
+                           : '，再練 ' + (UNIT_MIN - us.n) + ' 題就給獎牌')
+              : '　—　可以再點別課一起練') +
         (L.recog.length ? '<br>認讀字是課本只要求「認得」、不要求會寫的字，' +
                           '所以不會考它們的部首和筆畫。' : '');
     } else {
       note.innerHTML = '康軒版 ' + shortVol(db.grade, db.term) + ' 一共 ' + list.length +
         ' 課、' + all + ' 個字。<b>課次可以複選</b>（例如第6～9課一起練）。' +
-        '課次和生字表來自教育部教育百科（114 學年度）。';
+        '<br>每一課的獎牌跟九九乘法同一套算法：<b>只看這一課最近 ' + UNIT_WINDOW +
+        ' 題</b>（至少 ' + UNIT_MIN + ' 題才給），🥉 70%、🥈 80%、🥇 90%；' +
+        '低於 70% 會標一個紅點提醒。';
     }
   }
 
@@ -3296,6 +3354,12 @@
     // 先記下開始前的獎牌，結算時才知道這一輪升了哪幾個字
     S.medalsBefore = {};
     S.base.forEach(function (c) { S.medalsBefore[c] = medalOf(c); });
+    S.unitBefore = {};
+    (db.subject === 'mine' ? pickedLessons().map(function (M) {
+      return { key: 'M:' + M.id, name: M.name };
+    }) : scopeLessons().map(function (L) {
+      return { key: lessonKey(L.g, L.t, L.k), name: '第' + L.k + '課 ' + L.name };
+    })).forEach(function (u) { S.unitBefore[u.key] = { icon: unitMedal(u.key), name: u.name }; });
     $('subtitle').textContent = (review ? '複習錯的' : subjectName()) +
       ' ・ ' + total + ' 題 ・ ' + (db.secs ? db.secs + ' 秒' : '不限時');
     renderDots();
@@ -3838,6 +3902,12 @@
   // 這一輪讓哪幾個字升級了？只報進步，不報退步
   function renderLevelUp() {
     var ups = [];
+    Object.keys(S.unitBefore || {}).forEach(function (key) {
+      var was = S.unitBefore[key], now = unitMedal(key);
+      if (now && rankOf(now) > rankOf(was.icon)) {
+        ups.push({ c: was.name, icon: now, unit: true });
+      }
+    });
     Object.keys(S.medalsBefore).forEach(function (c) {
       var before = S.medalsBefore[c], after = medalOf(c);
       if (after && rankOf(after) > rankOf(before)) ups.push({ c: faceOf(c), icon: after });
@@ -3846,7 +3916,8 @@
     if (!ups.length) { el.hidden = true; return; }
     el.hidden = false;
     el.innerHTML = ups.map(function (u) {
-      return '<em>' + u.icon + '</em> ' + u.c + ' 拿到' + medalName(u.icon);
+      return '<em>' + u.icon + '</em> ' + esc(u.c) + ' 拿到' + medalName(u.icon) +
+             (u.unit ? '了！' : '');
     }).join('　');
   }
 
