@@ -13,6 +13,7 @@
     --coral:#F2705C; --coral-ink:#D64B36; --coral-soft:#FFE9E5;
     --amber:#E9A317; --amber-soft:#FFF2DA;
     --shadow:0 1px 2px rgba(180,120,40,.06), 0 8px 22px rgba(180,120,40,.10);
+    --padsz:280px;
     --font:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
     --abc:"BiauKai","DFKai-SB","標楷體","Kaiti TC","楷體-繁","KaiTi","PingFang TC",sans-serif;
   }
@@ -28,11 +29,11 @@
   .q .word u { text-decoration:none; color:var(--ink-faint); border-bottom:4px solid var(--key); padding:0 .18em; }
   .q .hint { color:var(--ink-soft); font-size:.8125rem; margin-top:8px; }
   .padwrap { display:flex; justify-content:center; margin:16px 0 10px; }
-  .pad { position:relative; width:280px; height:280px; border-radius:18px;
+  .pad { position:relative; width:var(--padsz); height:var(--padsz); border-radius:18px;
          background:var(--surface); border:2px solid var(--line); touch-action:none; }
   .pad canvas { position:absolute; inset:0; width:100%; height:100%; border-radius:16px; }
   .pad .ghost { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-                font-family:var(--abc); font-size:230px; line-height:1; color:rgba(64,53,43,.12);
+                font-family:var(--abc); font-size:calc(var(--padsz) * .82); line-height:1; color:rgba(64,53,43,.12);
                 pointer-events:none; user-select:none; }
   .pad .ghost.off { display:none; }
   .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
@@ -45,14 +46,28 @@
   .btn.primary { background:var(--key); color:#fff; border-color:var(--key); }
   .btn.grow { flex:1; min-width:120px; }
   .btn[disabled] { opacity:.4; cursor:default; }
-  .modes { display:flex; gap:8px; margin-bottom:14px; }
-  .mode { flex:1; font-family:inherit; cursor:pointer; text-align:center;
-          background:var(--surface); border:2px solid var(--line); border-radius:16px; padding:12px 8px; }
-  .mode b { display:block; font-size:.9375rem; font-weight:800; }
-  .mode i { display:block; font-style:normal; font-size:.75rem; color:var(--ink-soft); margin-top:3px; }
-  .mode.sel { border-color:var(--key); background:var(--key-soft); }
-  .mode.sel b, .mode.sel i { color:var(--key-deep); }
-  .verdict { text-align:center; margin-top:14px; }
+  /* 家長／老師通道：平常是一行不起眼的小字，「差一點」的時候才亮起來 */
+  .adult-link { display:block; margin:12px auto 0; background:none; border:0; cursor:pointer;
+                font-family:inherit; font-size:.75rem; font-weight:700; color:var(--ink-faint);
+                text-decoration:underline; text-underline-offset:3px; padding:6px 10px; }
+  .adult-link.hot { color:var(--amber); }
+  .near-tag { display:inline-block; font-size:.75rem; font-weight:800; color:#8A6410;
+              background:var(--amber-soft); border-radius:999px; padding:3px 10px; margin-top:6px; }
+  .sheet { position:fixed; inset:0; background:rgba(64,53,43,.45); z-index:50;
+           display:flex; align-items:flex-end; justify-content:center; padding:12px; }
+  .sheet.off { display:none; }
+  .sheet-in { background:var(--surface); border-radius:22px; padding:20px 18px 18px;
+              width:100%; max-width:460px; max-height:88vh; overflow:auto; box-shadow:var(--shadow); }
+  .sheet-in h2 { font-size:1.0625rem; margin:0 0 4px; text-align:center; }
+  .gate-q { font-size:1.75rem; font-weight:800; letter-spacing:.04em; margin:14px 0 10px; text-align:center; }
+  .gate-in { font-family:inherit; font-size:1.375rem; font-weight:800; text-align:center;
+             width:100%; box-sizing:border-box; padding:12px; border-radius:14px;
+             border:2px solid var(--line); background:var(--bg); color:var(--ink); }
+  .gate-in:focus { outline:none; border-color:var(--key); }
+  .off { display:none; }
+  .verdict { text-align:center; }
+  .verdict:not(:empty) { background:var(--surface); border-radius:20px; padding:16px 18px;
+                         box-shadow:var(--shadow); margin-bottom:14px; }
   .compare { display:flex; gap:14px; justify-content:center; align-items:flex-end; margin:10px 0 4px; }
   .compare figure { margin:0; text-align:center; }
   .compare figcaption { font-size:.75rem; color:var(--ink-soft); margin-top:6px; font-weight:800; }
@@ -64,6 +79,28 @@
   .ok { color:var(--mint-ink); font-weight:800; }
   .no { color:var(--coral-ink); font-weight:800; }
   .stroke-n { text-align:center; font-size:.8125rem; color:var(--ink-soft); margin-top:8px; font-weight:800; }
+
+  /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
+  @media (orientation:landscape) and (min-width:760px) {
+    :root { --padsz:330px; }
+    body { max-width:940px; padding:16px 20px 16px;
+           display:grid; grid-template-columns:1fr auto; column-gap:24px; align-items:start; }
+    h1, .sub, .card.q, .verdict, .row, body > .note { grid-column:1; }
+    .card:not(.q) { grid-column:2; grid-row:1 / span 20; width:calc(var(--padsz) + 40px); }
+    .padwrap { margin:10px 0 8px; }
+    .sub { margin-bottom:10px; }
+    .tools { grid-template-columns:repeat(3, 1fr); }
+    /* 判定結果改成「字在左、話在右」，不然橫式的高度吃不下 */
+    .verdict:not(:empty) { display:grid; grid-template-columns:auto 1fr;
+                           column-gap:18px; align-items:center; text-align:left; padding:12px 16px; }
+    .verdict > * { grid-column:2; }
+    .verdict > .compare { grid-column:1; grid-row:1 / span 99; align-self:center; margin:0; }
+    .verdict .row { justify-content:flex-start; }
+    .verdict .btn.grow { flex:0 1 auto; min-width:150px; }
+    .adult-link { margin-left:0; margin-right:auto; }
+    .compare .box { width:84px; height:84px; font-size:67px; }
+    .sheet { align-items:center; }
+  }
 </style>
 </head>
 <body>
@@ -95,11 +132,38 @@
   <div class="row" style="margin-top:10px">
     <button class="btn primary grow" id="doneBtn">我寫好了</button>
   </div>
-  <div class="verdict" id="verdict"></div>
 </div>
+
+<div class="verdict" id="verdict"></div>
 
 <div class="row">
   <button class="btn grow" id="nextBtn">換一題 →</button>
+</div>
+
+<div class="sheet off" id="sheet">
+  <div class="sheet-in">
+    <h2>家長／老師確認</h2>
+    <p class="note" style="text-align:center;margin-top:2px">看一下他寫的。覺得可以算過的話，先答一題再放行。</p>
+    <div class="compare" id="gateCompare"></div>
+    <p class="note" id="gateNums" style="text-align:center;color:var(--ink-faint)"></p>
+    <div id="gateAsk">
+      <p class="gate-q" id="gateQ"></p>
+      <input class="gate-in" id="gateIn" type="number" inputmode="numeric" placeholder="答案">
+      <p class="note no off" id="gateBad" style="text-align:center">不對，換一題再試</p>
+      <div class="row" style="margin-top:12px">
+        <button class="btn grow" id="gateCancel">取消</button>
+        <button class="btn primary grow" id="gateOk">確定</button>
+      </div>
+    </div>
+    <div id="gateDo" class="off">
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary grow" id="gatePass">算他過，下一題</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn grow" id="gateRetry">不算，讓他重寫</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <p class="note">
@@ -135,6 +199,8 @@ var cur = null;                 // { c, b, w }
 var strokesDone = [];           // 已經寫完的筆畫（畫布座標）
 var drawing = null;             // 正在畫的那一筆
 var step = 0;                   // 逐筆模式用的（目前停用）
+var wrongStreak = 0;            // 同一題連續寫錯幾次，連錯 3 次自動開描紅
+var adultPassed = [];           // 被大人放行的字（併進 chinese.html 時要存成 by:'adult'）
 
 var $ = function (id) { return document.getElementById(id); };
 var pad = $('pad'), ink = $('ink'), grid = $('grid');
@@ -343,6 +409,26 @@ function compare(ch, strokes) {
   return { cover: covered / gn, clean: clean / un };
 }
 
+/* 把小孩寫的線畫成一張縮圖（判定面板和家長面板都用這個） */
+function inkThumb(strokes, px) {
+  var cv = document.createElement('canvas');
+  cv.width = px * dpr; cv.height = px * dpr;
+  cv.style.width = '100%'; cv.style.height = '100%';
+  var c2 = cv.getContext('2d');
+  c2.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c2.strokeStyle = '#40352B'; c2.lineWidth = 11 * (px / SIZE);
+  c2.lineCap = 'round'; c2.lineJoin = 'round';
+  strokes.forEach(function (st) {
+    c2.beginPath();
+    st.forEach(function (pt, i) {
+      var x = pt[0] * px / SIZE, y = pt[1] * px / SIZE;
+      if (i) c2.lineTo(x, y); else c2.moveTo(x, y);
+    });
+    c2.stroke();
+  });
+  return cv;
+}
+
 function say(t, cls) {
   $('verdict').innerHTML = t ? '<span class="' + (cls || '') + '">' + t + '</span>' : '';
 }
@@ -360,7 +446,7 @@ function syncStrokeN() {
 
 function loadQ() {
   cur = QS[qi % QS.length];
-  strokesDone = []; drawing = null; step = 0;
+  strokesDone = []; drawing = null; step = 0; wrongStreak = 0;
   if (anim) { clearInterval(anim); anim = null; }
   $('bpmf').textContent = cur.b;
   $('word').innerHTML = cur.w.replace('＿', '<u>＿</u>');
@@ -444,20 +530,7 @@ $('doneBtn').addEventListener('click', function () {
   var cmp = compare(cur.c, strokesDone);
   var want = MOE_STROKES[cur.c] || 0;
   var got = strokesDone.length;
-  var box = document.createElement('canvas');
-  box.width = 130 * dpr; box.height = 130 * dpr;
-  var bc = box.getContext('2d');
-  bc.setTransform(dpr, 0, 0, dpr, 0, 0);
-  bc.strokeStyle = '#40352B'; bc.lineWidth = 11 * (130 / SIZE);
-  bc.lineCap = 'round'; bc.lineJoin = 'round';
-  strokesDone.forEach(function (s) {
-    bc.beginPath();
-    s.forEach(function (p, i) {
-      var x = p[0] * 130 / SIZE, y = p[1] * 130 / SIZE;
-      if (i) bc.lineTo(x, y); else bc.moveTo(x, y);
-    });
-    bc.stroke();
-  });
+  var box = inkThumb(strokesDone, 130);
   var bad = [];
   if (want && got !== want) {
     bad.push(got > want ? '多寫了 ' + (got - want) + ' 筆（這個字 ' + want + ' 畫，你寫了 ' + got + ' 筆）'
@@ -468,6 +541,13 @@ $('doneBtn').addEventListener('click', function () {
     if (cmp.clean < 0.80) bad.push('有些筆畫寫到字的外面去了（' + Math.round((1 - cmp.clean) * 100) + '% 在外面）');
   }
   var pass = !bad.length;
+  /* 「差一點」：只差 1 筆、而且兩個百分比都還在 70 以上。
+     這種才把家長通道亮起來，小孩整個亂寫的話不會亮。 */
+  var near = !pass && Math.abs(got - (want || got)) <= 1 &&
+             !!cmp && cmp.cover >= 0.70 && cmp.clean >= 0.70;
+  if (pass) wrongStreak = 0; else wrongStreak++;
+  var stuck = wrongStreak >= 3;
+  if (stuck) $('ghost').classList.remove('off');   // 連錯三次，描紅自動打開
   $('verdict').innerHTML =
     '<div class="compare">' +
       '<figure><div class="box" id="mine"></div><figcaption>你寫的</figcaption></figure>' +
@@ -479,19 +559,92 @@ $('doneBtn').addEventListener('click', function () {
     (cmp ? '<p class="note" style="color:var(--ink-faint)">寫到了 ' + Math.round(cmp.cover * 100) +
            '%　・　沒寫歪出去 ' + Math.round(cmp.clean * 100) + '%' +
            (want ? '　・　筆畫 ' + got + '／' + want : '') + '</p>' : '') +
-    '<div class="row" style="margin-top:8px">' +
-      '<button class="btn" id="again">✏️ 再寫一次</button>' +
-      '<button class="btn" id="nx">換一題 →</button>' +
-    '</div>';
+    (near ? '<div><span class="near-tag">差一點點</span></div>' : '') +
+    '<div class="row" style="margin-top:10px">' +
+      (pass ? '<button class="btn primary grow" id="nx">換一題 →</button>'
+            : '<button class="btn primary grow" id="again">✏️ 再寫一次</button>') +
+    '</div>' +
+    /* 寫錯的時候不給「換一題」。要跳過只有一條路：大人看過、答對驗證題。 */
+    (pass ? '' :
+      '<button class="adult-link' + (near || stuck ? ' hot' : '') + '" id="adultBtn">' +
+        (stuck ? '寫好幾次了？家長／老師可以看一下 →' : '家長／老師：這樣算過 →') +
+      '</button>');
   $('mine').appendChild(box);
   box.style.width = '100%'; box.style.height = '100%';
-  $('again').addEventListener('click', function () {
-    strokesDone = []; paintInk(); syncStrokeN();
-    say('再寫一次，可以先按「描紅」照著描一遍');
-  });
-  $('nx').addEventListener('click', function () { qi++; loadQ(); });
+  if (pass) {
+    $('nx').addEventListener('click', function () { qi++; loadQ(); });
+  } else {
+    $('again').addEventListener('click', function () {
+      strokesDone = []; paintInk(); syncStrokeN();
+      say(stuck ? '描紅打開了，照著描一遍看看' : '再寫一次，可以先按「描紅」照著描一遍');
+    });
+    $('adultBtn').addEventListener('click', function () { openGate(cmp, got, want); });
+  }
 });
 $('nextBtn').addEventListener('click', function () { qi++; loadQ(); });
+
+/* ────────── 家長／老師通道 ──────────
+   寫錯的時候小孩只有「再寫一次」。要跳過只有這一條路：
+   大人看過他寫的字，再答一題二位數乘法。刻意避開九九表（11–19 × 3–9），
+   一年級算不出來，大人兩秒。答錯就換一題新的。 */
+var gateAns = 0, gateSnap = null;
+
+function newGateQ() {
+  var a = 11 + Math.floor(Math.random() * 9);    // 11–19
+  var b = 3 + Math.floor(Math.random() * 7);     // 3–9
+  gateAns = a * b;
+  $('gateQ').textContent = a + ' × ' + b + ' = ?';
+  $('gateIn').value = '';
+}
+
+function openGate(cmp, got, want) {
+  gateSnap = strokesDone.slice();
+  $('gateCompare').innerHTML =
+    '<figure><div class="box" id="gateMine"></div><figcaption>他寫的</figcaption></figure>' +
+    '<figure><div class="box">' + cur.c + '</div><figcaption>課本的字</figcaption></figure>';
+  $('gateMine').appendChild(inkThumb(gateSnap, 110));
+  $('gateNums').textContent = cmp
+    ? '寫到了 ' + Math.round(cmp.cover * 100) + '%　・　沒寫歪出去 ' +
+      Math.round(cmp.clean * 100) + '%' + (want ? '　・　筆畫 ' + got + '／' + want : '')
+    : '';
+  $('gateAsk').classList.remove('off');
+  $('gateDo').classList.add('off');
+  $('gateBad').classList.add('off');
+  newGateQ();
+  $('sheet').classList.remove('off');
+  setTimeout(function () { $('gateIn').focus(); }, 60);
+}
+function closeGate() { $('sheet').classList.add('off'); }
+
+$('gateOk').addEventListener('click', function () {
+  if (parseInt($('gateIn').value, 10) === gateAns) {
+    $('gateBad').classList.add('off');
+    $('gateAsk').classList.add('off');
+    $('gateDo').classList.remove('off');
+  } else {
+    $('gateBad').classList.remove('off');
+    newGateQ();
+    $('gateIn').focus();
+  }
+});
+$('gateIn').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { e.preventDefault(); $('gateOk').click(); }
+});
+$('gateCancel').addEventListener('click', closeGate);
+$('gateRetry').addEventListener('click', function () {
+  closeGate();
+  strokesDone = []; paintInk(); syncStrokeN();
+  say('再寫一次，可以先按「描紅」照著描一遍');
+});
+$('gatePass').addEventListener('click', function () {
+  /* 併進 chinese.html 的時候，這裡要送 logRecent(cur.c, true, 'adult')，
+     熟練度照算過，但紀錄要留 by:'adult'——被放行的字其實正是最該回頭再練的。 */
+  adultPassed.push(cur.c);
+  closeGate();
+  qi++; loadQ();
+  say('大人說這樣算過 ⭕', 'ok');
+});
+$('sheet').addEventListener('click', function (e) { if (e.target === $('sheet')) closeGate(); });
 loadQ();
 </script>
 </body>
