@@ -90,22 +90,25 @@
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
   @media (orientation:landscape) and (min-width:760px) {
     :root { --padsz:330px; }
-    body { max-width:940px; padding:16px 20px 16px;
+    body { max-width:940px; padding:16px 20px 12px;
            display:grid; grid-template-columns:1fr auto; column-gap:24px; align-items:start; }
     body > h1, body > .sub, body > .card.q, body > .verdict, body > .row,
-    body > .note { grid-column:1; }
+    body > .note, body > .adult-link { grid-column:1; }
     body > .card:not(.q) { grid-column:2; grid-row:1 / span 20; width:calc(var(--padsz) + 40px); }
     .padwrap { margin:10px 0 8px; }
-    .sub { margin-bottom:10px; }
+    .sub { margin-bottom:6px; }
+    body > .card.q { margin-bottom:10px; }
     .tools { grid-template-columns:repeat(3, 1fr); }
     /* 判定結果改成「字在左、話在右」，不然橫式的高度吃不下 */
     .verdict:not(:empty) { display:grid; grid-template-columns:auto 1fr;
-                           column-gap:18px; align-items:center; text-align:left; padding:12px 16px; }
+                           column-gap:18px; align-items:center; text-align:left; padding:10px 16px; }
     .verdict > * { grid-column:2; }
     .verdict > .compare { grid-column:1; grid-row:1 / span 99; align-self:center; margin:0; }
     .verdict .row { justify-content:flex-start; }
     .verdict .btn.grow { flex:0 1 auto; min-width:150px; }
     .verdict .adult-link { margin-left:0; margin-right:auto; }
+    body > .adult-link { margin-top:4px; }
+    body > .note { font-size:.75rem; line-height:1.55; margin-top:8px; }
     .compare .box { width:84px; height:84px; font-size:67px; }
     .sheet { align-items:center; }
   }
@@ -143,6 +146,8 @@
 </div>
 
 <div class="verdict" id="verdict"></div>
+
+<button class="adult-link" id="setupBtn"></button>
 
 <div class="row">
   <button class="btn grow" id="nextBtn">換一題 →</button>
@@ -599,6 +604,7 @@ $('nextBtn').addEventListener('click', function () { qi++; loadQ(); });
    大人看過他寫的字，再答一題二位數乘法。刻意避開九九表（11–19 × 3–9），
    一年級算不出來，大人兩秒。答錯就換一題新的。 */
 var PIN_KEY = 'writeDemoPin';
+var gateCtx = 'verdict';  // verdict：從判定卡進來要放行／setup：家長自己來設金鑰
 var gateAns = 0;          // 算式的答案
 var gateMode = '';        // pin：輸金鑰／math：答算式／setpin：設新金鑰
 var buf = '';             // 鍵盤打到現在的字串
@@ -607,9 +613,18 @@ function hasPin() { try { return !!localStorage.getItem(PIN_KEY); } catch (e) { 
 function getPin()  { try { return localStorage.getItem(PIN_KEY) || ''; } catch (e) { return ''; } }
 function setPin(v) { try { localStorage.setItem(PIN_KEY, v); } catch (e) {} }
 
-/* 數字鍵盤：1–9、⌫、0、清除 */
-(function buildKeypad() {
-  var keys = ['1','2','3','4','5','6','7','8','9','⌫','0','清除'];
+/* 數字鍵盤。輸金鑰的時候把 0–9 打亂重排，這樣小孩在旁邊看，
+   記住的「位置」下次就不管用了。⌫ 和「清除」位置固定，不然大人會找不到。 */
+function buildKeypad(shuffle) {
+  var d = ['1','2','3','4','5','6','7','8','9','0'], i, j, t;
+  if (shuffle) {
+    for (i = d.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      t = d[i]; d[i] = d[j]; d[j] = t;
+    }
+  }
+  var keys = d.slice(0, 9).concat(['⌫', d[9], '清除']);
+  $('keypad').innerHTML = '';
   keys.forEach(function (k) {
     var b = document.createElement('button');
     b.textContent = k;
@@ -617,7 +632,7 @@ function setPin(v) { try { localStorage.setItem(PIN_KEY, v); } catch (e) {} }
     b.addEventListener('click', function () { tapKey(k); });
     $('keypad').appendChild(b);
   });
-})();
+}
 
 function tapKey(k) {
   $('gateBad').classList.add('off');
@@ -645,6 +660,7 @@ function drawDots() {
 
 function gateTo(m) {
   gateMode = m; buf = '';
+  buildKeypad(m === 'pin' || m === 'setpin');   // 只有牽涉到金鑰的時候才打亂
   $('gateBad').classList.add('off');
   $('gateAsk').classList.remove('off');
   $('gateDo').classList.add('off');
@@ -667,7 +683,7 @@ function gateTo(m) {
     $('gateLead').textContent = '設一組四位數，下次直接輸入這組就好。';
     $('gateQ').textContent = hasPin() ? '設一組新的金鑰' : '設一組四位數金鑰';
     $('gateOk').classList.add('off');
-    $('gateAlt').textContent = '先不要，這次直接放行 →';
+    $('gateAlt').textContent = gateCtx === 'setup' ? '取消，先不要設 →' : '先不要，這次直接放行 →';
     $('gateAlt').classList.remove('off');
   }
   drawDots();
@@ -679,18 +695,26 @@ function gateDone() {                              // 驗證過了，給放行�
   $('gateSetPin').textContent = hasPin() ? '重設金鑰' : '設一組金鑰，下次比較快';
 }
 
+function syncSetupBtn() {
+  $('setupBtn').textContent = hasPin() ? '家長設定：重設放行金鑰' : '家長設定：設一組放行金鑰';
+}
+
 function submitGate() {
   if (gateMode === 'setpin') {
     if (buf.length !== 4) return;
     setPin(buf);
-    gateDone();
+    syncSetupBtn();
+    if (gateCtx === 'setup') { closeGate(); say('金鑰設定好了 ⭕', 'ok'); }
+    else gateDone();
     return;
   }
   var ok = gateMode === 'pin' ? (buf === getPin())
                               : (parseInt(buf, 10) === gateAns);
   if (ok) {
-    /* 沒設過金鑰的人，答對算式後順手問一下要不要設 */
-    if (gateMode === 'math' && !hasPin()) gateTo('setpin');
+    /* 家長自己來設定的話，驗過舊金鑰就直接進設定；
+       從判定卡進來的，沒設過金鑰就順手問一下要不要設 */
+    if (gateCtx === 'setup') gateTo('setpin');
+    else if (gateMode === 'math' && !hasPin()) gateTo('setpin');
     else gateDone();
     return;
   }
@@ -703,6 +727,9 @@ function submitGate() {
 }
 
 function openGate(cmp, got, want) {
+  gateCtx = 'verdict';
+  $('gateCompare').style.display = '';
+  $('gateNums').style.display = '';
   $('gateCompare').innerHTML =
     '<figure><div class="box" id="gateMine"></div><figcaption>他寫的</figcaption></figure>' +
     '<figure><div class="box">' + cur.c + '</div><figcaption>課本的字</figcaption></figure>';
@@ -716,10 +743,23 @@ function openGate(cmp, got, want) {
 }
 function closeGate() { $('sheet').classList.add('off'); }
 
+/* 家長自己開的設定入口：不用等小孩寫錯，先把金鑰設好再把 iPad 交出去 */
+function openSetup() {
+  gateCtx = 'setup';
+  $('gateCompare').style.display = 'none';
+  $('gateNums').style.display = 'none';
+  gateTo(hasPin() ? 'pin' : 'setpin');
+  if (hasPin()) $('gateLead').textContent = '要換金鑰，先輸入現在這一組。';
+  $('sheet').classList.remove('off');
+}
+$('setupBtn').addEventListener('click', openSetup);
+syncSetupBtn();
+
 $('gateOk').addEventListener('click', submitGate);
 $('gateAlt').addEventListener('click', function () {
   if (gateMode === 'pin') gateTo('math');
   else if (gateMode === 'math') gateTo('pin');
+  else if (gateCtx === 'setup') closeGate();        // 家長設定的「取消」
   else gateDone();                                  // setpin 的「先不要」
 });
 $('gateSetPin').addEventListener('click', function () { gateTo('setpin'); });
