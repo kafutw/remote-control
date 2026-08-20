@@ -856,6 +856,7 @@
         <button class="mode sel" data-scope="only"><b>只練這一課</b><i>選到的那一課</i></button>
         <button class="mode" data-scope="upto"><b>累積複習</b><i>一上第 1 課到這裡</i></button>
       </div>
+      <p class="hint tight" id="scopeNote" hidden></p>
 
       <div class="sub-h">題型</div>
       <div class="modes" id="kinds">
@@ -1599,7 +1600,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 k';
+  var VERSION = '2026-08-20 l';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -2637,6 +2638,23 @@
       onlyBtn.querySelector('b').textContent = !db.picked.length ? '只練這一冊'
         : db.picked.length > 1 ? '只練選到的課' : '只練這一課';
       onlyBtn.querySelector('i').textContent = here + '　' + countOf('only') + ' 個字詞';
+    }
+    // 累積複習只看選到的最後一課，勾了哪幾課它不管——這件事要講出來，不然會以為沒生效
+    var note = $('scopeNote');
+    if (note) {
+      var many = db.picked.length > 1;
+      note.hidden = !many;
+      if (many) {
+        var top = Math.max.apply(null, db.picked), skipped = [];
+        // 只點出「中間跳過的那幾課」，前面的課本來就在累積範圍裡，不用特別講
+        for (var k = Math.min.apply(null, db.picked); k <= top; k++) {
+          if (db.picked.indexOf(k) < 0) skipped.push(k);
+        }
+        note.innerHTML = '⚠️ <b>累積複習不看你勾了哪幾課</b>，它是「從一上第1課一路練到第' +
+          top + '課」' +
+          (skipped.length ? '，中間跳過的第' + lessonLabel(skipped) + '課也會考到' : '') +
+          '。只想練勾起來的那幾課，選左邊那顆。';
+      }
     }
     if (uptoBtn) {
       var last = db.picked.length ? Math.max.apply(null, db.picked) : 0;
