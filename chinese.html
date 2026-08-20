@@ -764,7 +764,9 @@
   .sw.sel { background: var(--key); color: #FFF6F0; box-shadow: var(--shadow); }
 
   /* 課次：小標籤，排不下就換行 */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
+  /* 上下的間距要比左右大 —— 獎牌是掛在標籤外面（top: -9px）的，
+     行距太窄的話會跟上一排擠在一起，看起來像貼在別課身上 */
+  .chips { display: flex; flex-wrap: wrap; gap: 20px 8px; padding-top: 14px; }
   .chip {
     font-family: inherit; cursor: pointer; color: var(--ink);
     background: var(--bg); border: 1.5px dashed var(--line); border-radius: 14px;
@@ -899,6 +901,7 @@
         <button class="mode" data-count="15"><b>15 題</b><i>約 3 分鐘</i></button>
         <button class="mode sel" data-count="20"><b>20 題</b><i>約 4 分鐘</i></button>
       </div>
+      <p class="hint" id="countHint"></p>
       <div class="sub-h">每題幾秒？</div>
       <div class="modes three" id="secs">
         <button class="mode" data-secs="20"><b>20 秒</b><i>快一點</i></button>
@@ -1208,7 +1211,7 @@
   <canvas id="fwCanvas"></canvas>
   <div class="fwbox">
     <div class="fwj">🏆</div>
-    <div class="fwt">全部答對！</div>
+    <div class="fwt" id="fwTitle">全部答對！</div>
     <div class="fws" id="fwSub"></div>
     <button class="btn primary big" id="fwDone">太棒了 🎉</button>
   </div>
@@ -1604,7 +1607,7 @@
 
   /* 改版日期。畫面最下面會印出來，方便確認手上這台是不是最新版；
      開起來的時候也會拿它跟伺服器上的比對一次（見最下面的 checkUpdate）。 */
-  var VERSION = '2026-08-20 x';
+  var VERSION = '2026-08-20 z';
 
   /* ────────── 生字表 ──────────
      一行一個字：字|注音|部首|總筆畫|語詞（逗號分開）。
@@ -1978,6 +1981,11 @@
   }
   /* 今天的獎牌跟每一課的獎牌、跟九九乘法的段用同一套想法：只看「最近一段」，
      不是今天的總帳。累計平均會讓練越多的人越難維持，等於在罰認真練的小孩。 */
+  /* 放煙火的標準：整輪跑完（沒有中途結束）而且答對率到這個門檻。
+     0.95 對 10 題和 15 題來說還是要全對（9.5 和 14.25 都進不了位），
+     只有 20 題那種長的才容許錯一題 —— 題目越多越難全對，這樣剛好。 */
+  var FW_RATE = 0.95;
+
   var DAY_WINDOW = 20;        // 今天最近這麼多題決定獎牌，更早的會淡出
   var DAY_MIN = 10;           // 今天至少答這麼多題才評，免得一輪僥倖全對就金牌
   var DAILY_MIN_RATE = 0.7;   // 舊紀錄換算「那天有沒有拿到獎牌」用的門檻
@@ -2515,8 +2523,13 @@
 
   function goalDays() { return Object.keys(db.medalDays).length; }
 
+  /* 煙火的標準寫出來 —— 20 題那種長的可以錯一題，10 題和 15 題還是要全對 */
   function syncStart() {
     $('startBtn').textContent = '開始測驗（' + db.count + ' 題）🚀';
+    var allow = db.count - Math.ceil(db.count * FW_RATE);
+    $('countHint').innerHTML = '一輪跑完、答對 <b>' + Math.round(FW_RATE * 100) +
+      '%</b> 以上就放煙火 🎆 —— ' + db.count + ' 題' +
+      (allow ? '最多可以錯 <b>' + allow + ' 題</b>。' : '要<b>全對</b>才行（題數少，錯一題就不到 95%）。');
   }
 
   function segment(boxId, apply) {
@@ -3649,10 +3662,11 @@
     $('fireworks').hidden = true;
   }
 
-  function showFireworks(sub) {
+  function showFireworks(title, sub) {
     var wrap = $('fireworks'), cv = $('fwCanvas');
     var ctx = cv.getContext && cv.getContext('2d');
     if (!ctx) return;
+    $('fwTitle').textContent = title;
     $('fwSub').textContent = sub;
     wrap.hidden = false;
 
@@ -3782,9 +3796,13 @@
     save();
     renderResult(isRecord, completed);
     show('result');
-    if (completed && S.total && S.correct === S.total) {
+    if (completed && S.total && S.correct / S.total >= FW_RATE) {
+      var missed = S.total - S.correct;
       sparks('🏆');
-      showFireworks(S.total + ' 題全對，一題都沒錯！');
+      showFireworks(missed ? '差一點就全對！' : '全部答對！',
+        missed ? S.total + ' 題只錯 ' + missed + ' 題（' +
+                 Math.round(S.correct / S.total * 100) + '%），太厲害了！'
+               : S.total + ' 題全對，一題都沒錯！');
     }
     checkBreak();
   }
