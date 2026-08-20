@@ -208,6 +208,16 @@
   .legend span { font-size: var(--fs-note); font-weight: 800; white-space: nowrap; }
   .legend i { font-style: normal; font-weight: 700; color: var(--ink-soft); margin-left: 5px; }
 
+  .meter {
+    display: block; height: 14px; margin-top: 10px; border-radius: 999px;
+    background: var(--track); overflow: hidden;
+  }
+  .meter span {
+    display: block; height: 100%; width: 0; border-radius: 999px;
+    background: var(--mint); transition: width .1s linear;
+  }
+  .meter.loud span { background: var(--coral); }
+
   .row { display: flex; gap: 8px; align-items: center; }
   .row.mt { margin-top: 12px; }
   .row.wrapme { flex-wrap: wrap; }
@@ -581,6 +591,8 @@
   .mood.sel rt { color: var(--key-deep); }
 
   .wrongs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wchip { font-family: inherit; cursor: pointer; }
+  .wchip.saying { border-color: var(--key); background: var(--key-soft); }
   .wchip {
     background: var(--coral-soft); color: var(--coral-ink); border-radius: 12px;
     padding: 9px 13px; font-size: var(--fs-body); font-weight: 800;
@@ -927,12 +939,27 @@
         <button class="mode" data-nudge="0"><b>關閉</b><i>不打斷</i></button>
       </div>
       <div class="sub-h">要說什麼</div>
-      <div class="modes" id="tones">
-        <button class="mode sel" data-tone="soft"><b>溫柔</b><i>沒關係，我們慢慢來</i></button>
-        <button class="mode" data-tone="fun"><b>促咪</b><i>再拖下去就少看一集囉</i></button>
+      <div class="modes three" id="tones">
+        <button class="mode sel" data-tone="auto"><b>自動</b><i>先溫柔，鬧不停才促咪</i></button>
+        <button class="mode" data-tone="soft"><b>一直溫柔</b><i>沒關係，慢慢來</i></button>
+        <button class="mode" data-tone="fun"><b>一直促咪</b><i>再拖就少看一集囉</i></button>
       </div>
       <p class="hint">連續答錯太多題的時候跳出來，讓他喘一口氣，順便問要不要今天先到這裡。
         小孩卡住的時候通常不是不會，是急了。</p>
+
+      <div class="sub-h">太吵也提醒</div>
+      <div class="modes three" id="noises">
+        <button class="mode" data-noise="0.30"><b>很大聲</b><i>崩潰大哭才跳</i></button>
+        <button class="mode" data-noise="0.20"><b>有點吵</b><i>大聲鬧就跳</i></button>
+        <button class="mode sel" data-noise="0"><b>關閉</b><i>不開麥克風</i></button>
+      </div>
+      <div class="row mt">
+        <button class="btn grow" id="micTestBtn">🎤 測一下現在多大聲</button>
+      </div>
+      <div class="meter" id="micMeter" hidden><span id="micBar"></span></div>
+      <p class="hint" id="micHint">開了之後，<b>只有在作答的時候</b>才會開麥克風，一輪結束就關掉。
+        聲音只在這台裝置上量音量，不錄音、不上傳、不判斷內容——所以弟弟大叫、電視開很大聲也會跳。
+        連續 3 秒超過門檻才會提醒，提醒過後 90 秒內不會再跳。</p>
     </div>
 
     <div class="foot">
@@ -1338,7 +1365,7 @@
   var DEF = { sound: true, speak: true, letters: [], mode: 'smart', kind: 'all', wkind: 'all',
               subject: 'letters', source: 'all', count: 10, secs: 30,
               rate: 0.55, pitch: 1.1, voiceURI: '', sayOnRight: 'letter', allVoices: false,
-              limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0, nudgeAt: 5, tone: 'soft',
+              limitMin: 20, useMs: 0, useAt: 0, breakUntil: 0, nudgeAt: 5, tone: 'auto', noiseAt: 0,
               known: [], perQ: {}, recent: {}, runs: [], best: {}, lastWrong: [] };
   var WINDOW = 10;      // 熟練度只看每個字母最近這麼多題，以前的錯誤會慢慢淡出
   var MIN_WINDOW = 4;   // 視窗裡至少要有這麼多題才給評價
@@ -1395,7 +1422,8 @@
     if (['none', 'letter', 'full'].indexOf(db.sayOnRight) < 0) db.sayOnRight = DEF.sayOnRight;
     if ([0, 20, 30].indexOf(db.limitMin) < 0) db.limitMin = DEF.limitMin;
     if ([0, 3, 5].indexOf(db.nudgeAt) < 0) db.nudgeAt = DEF.nudgeAt;
-    if (['soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
+    if (['auto', 'soft', 'fun'].indexOf(db.tone) < 0) db.tone = DEF.tone;
+    if ([0, 0.2, 0.3].indexOf(db.noiseAt) < 0) db.noiseAt = DEF.noiseAt;
     if (typeof db.useMs !== 'number' || db.useMs < 0) db.useMs = 0;
     if (typeof db.useAt !== 'number') db.useAt = 0;
     if (typeof db.breakUntil !== 'number') db.breakUntil = 0;
@@ -1508,7 +1536,7 @@
      單一個大寫字母會被某些語音念成「大寫 B」，所以一律送小寫進去。 */
   var canSpeak = typeof window.speechSynthesis !== 'undefined' &&
                  typeof window.SpeechSynthesisUtterance !== 'undefined';
-  var enVoices = [], voice = null;
+  var enVoices = [], voice = null, zhVoice = null;
 
   var ACCENT = {
     'en-US': '美式', 'en_US': '美式', 'en-CA': '加拿大', 'en-GB': '英式', 'en_GB': '英式',
@@ -1565,6 +1593,10 @@
     if (!canSpeak) return;
     var vs = [];
     try { vs = window.speechSynthesis.getVoices() || []; } catch (e) {}
+    // 中文的部分要用中文語音念，用英文語音念「乳牛」會變成怪腔怪調
+    var zhs = vs.filter(function (v) { return /^zh([-_]|$)/i.test(v.lang || ''); });
+    zhVoice = zhs.filter(function (v) { return /TW|Hant|Taiwan/i.test(v.lang + ' ' + v.name); })[0] ||
+              zhs[0] || null;
     enVoices = vs.filter(function (v) { return /^en([-_]|$)/i.test(v.lang || ''); });
     enVoices.sort(function (a, b) { return voiceScore(a) - voiceScore(b); });
     voice = null;
@@ -1700,8 +1732,9 @@
         if (ss.speaking || ss.pending) ss.cancel();
         parts.forEach(function (p, i) {
           var u = new SpeechSynthesisUtterance(p[0]);
-          if (voice) u.voice = voice;
-          u.lang = (voice && voice.lang) || 'en-US';
+          var vc = p[2] === 'zh' ? (zhVoice || voice) : voice;
+          if (vc) u.voice = vc;
+          u.lang = (vc && vc.lang) || (p[2] === 'zh' ? 'zh-TW' : 'en-US');
           u.rate = Math.max(MIN_RATE, db.rate * (p[1] || 1));
           u.pitch = db.pitch;
           if (i === 0) u.onstart = markHeard;
@@ -1716,6 +1749,25 @@
   }
   var lower = function (c) { return c.toLowerCase(); };
   function sayLetter(c, delay, onDone) { speak([[lower(c), 1]], delay, onDone); }
+  /* 點一下複習卡：先念英文，停一秒再念中文。
+     字母就連字母一起念（「b ・ bear」→ 熊）。 */
+  var chipTimer = null;
+  function sayChip(k, el) {
+    initAudioIfOn(); unlockSpeech();
+    if (chipTimer) { clearTimeout(chipTimer); chipTimer = null; }
+    document.querySelectorAll('.wchip.saying').forEach(function (x) { x.classList.remove('saying'); });
+    if (el) el.classList.add('saying');
+    var it = itemOf(k);
+    var first = isWord(k) ? [[it.word, 1.15]] : [[lower(k), 1], [it.word, 1.25]];
+    speak(first, 0, function () {
+      chipTimer = setTimeout(function () {
+        speak([[it.zh, 1, 'zh']], 0, function () {
+          if (el) el.classList.remove('saying');
+        });
+      }, 1000);                                  // 中間留一秒，讓他把兩個對起來
+    });
+  }
+
   function sayFull(c, delay, onDone) {
     speak([[lower(c), 1], [letterOf(c).word, 1.25]], delay, onDone);
   }
@@ -1846,6 +1898,10 @@
   segment('limits', function (m) { db.limitMin = Number(m.dataset.limit); renderUseHint(); });
   segment('nudges', function (m) { db.nudgeAt = Number(m.dataset.nudge); });
   segment('tones', function (m) { db.tone = m.dataset.tone; });
+  segment('noises', function (m) {
+    db.noiseAt = Number(m.dataset.noise);
+    if (!db.noiseAt) micStop();
+  });
 
   $('voiceSel').addEventListener('change', function () {
     db.voiceURI = $('voiceSel').value;
@@ -2175,6 +2231,7 @@
     $('timeBar').className = '';
     $('timeBar').style.width = '100%';
     show('play');
+    if (db.noiseAt) { mic.meter = false; micStart(null); }   // 只有作答時才開
     countdown(3);
   }
 
@@ -2340,9 +2397,115 @@
       ['🍪', '答完才有點心', '哭歸哭，題目還是在那裡。再三題就好，衝一下！']
     ]
   };
-  function showNudge() {
-    var list = NUDGE[db.tone] || NUDGE.soft;
-    var m = list[Math.floor(Math.random() * list.length)];
+  /* 太吵提醒：只量音量，不錄音、不判斷內容，所以分不出是哭還是笑。
+     連續 LOUD_MS 都超過門檻才跳，跳完 QUIET_MS 內不再吵人。 */
+  var LOUD_MS = 3000, QUIET_MS = 90000;
+  var mic = { stream: null, an: null, buf: null, timer: null, since: 0, muteUntil: 0, meter: false };
+
+  function micStop() {
+    if (mic.timer) { clearInterval(mic.timer); mic.timer = null; }
+    if (mic.stream) {
+      mic.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+      mic.stream = null;
+    }
+    mic.an = null; mic.since = 0;
+    $('micMeter').hidden = true;
+    $('micTestBtn').textContent = '🎤 測一下現在多大聲';
+  }
+
+  function micStart(onFail) {
+    if (mic.stream) return;
+    var md = navigator.mediaDevices;
+    if (!md || !md.getUserMedia) { if (onFail) onFail('這台裝置沒辦法開麥克風'); return; }
+    initAudio();
+    md.getUserMedia({ audio: true }).then(function (st) {
+      mic.stream = st;
+      try {
+        var src = ac.createMediaStreamSource(st);
+        var an = ac.createAnalyser();
+        an.fftSize = 1024;
+        src.connect(an);                      // 只接到 analyser，不接喇叭，不會有回音
+        mic.an = an;
+        mic.buf = new Uint8Array(an.fftSize);
+        mic.timer = setInterval(micTick, 150);
+      } catch (e) { micStop(); if (onFail) onFail('讀不到音量'); }
+    }).catch(function () {
+      if (onFail) onFail('沒有麥克風權限');
+    });
+  }
+
+  // 回傳 0～1 的音量（RMS）。安靜的房間大概 0.01，講話 0.1，大哭大叫 0.3 以上
+  function micLevel() {
+    if (!mic.an) return 0;
+    mic.an.getByteTimeDomainData(mic.buf);
+    var sum = 0;
+    for (var i = 0; i < mic.buf.length; i++) {
+      var v = (mic.buf[i] - 128) / 128;
+      sum += v * v;
+    }
+    return Math.sqrt(sum / mic.buf.length);
+  }
+
+  function micTick() {
+    var lv = micLevel();
+    if (mic.meter) {
+      var pct = Math.min(100, Math.round(lv * 250));
+      $('micBar').style.width = pct + '%';
+      $('micMeter').classList.toggle('loud', db.noiseAt ? lv >= db.noiseAt : lv >= 0.2);
+    }
+    if (!db.noiseAt || !S || !S.running) { mic.since = 0; return; }
+    var now = Date.now();
+    if (lv < db.noiseAt) { mic.since = 0; return; }
+    if (!mic.since) { mic.since = now; return; }
+    if (now - mic.since < LOUD_MS || now < mic.muteUntil) return;
+    mic.since = 0;
+    mic.muteUntil = now + QUIET_MS;
+    showNudge(true);
+  }
+
+  $('micTestBtn').addEventListener('click', function () {
+    if (mic.meter) { mic.meter = false; micStop(); return; }
+    mic.meter = true;
+    $('micHint').textContent = '對著它說說話，看看棒子跑多長；門檻設在「有點吵」是 0.20、「很大聲」是 0.30。';
+    micStart(function (why) {
+      mic.meter = false;
+      micStop();                                 // 權限被拒也要把按鈕和音量條收回去
+      $('micHint').textContent = why + '。iPhone／iPad 要用 https 開這一頁，' +
+        '而且第一次會跳權限視窗，要按「允許」。';
+    });
+    $('micMeter').hidden = false;
+    $('micTestBtn').textContent = '停止測量';
+  });
+
+  var NOISE = {
+    soft: [
+      ['🫂', '怎麼了？', '聽起來有點不開心。先抱一下、深呼吸，我們再一起看這一題。'],
+      ['🍵', '要不要喝口水？', '好像有點煩躁了，休息一下再回來也可以。']
+    ],
+    fun: [
+      ['📺', '哭這麼大聲喔', '再哭下去就在浪費自己看電視的時間囉，快點答一答！'],
+      ['🔊', '整棟樓都聽到了', '深呼吸，選一個就好，卡通還在等你。']
+    ]
+  };
+  /* 語氣自動升級：前兩次好好講，還是一直崩潰就換促咪的說法。
+     每一組裡的句子輪流出，不會一直聽到同一句。 */
+  var SOFT_TIMES = 2;
+  var nudgeCount = 0, tonePos = {};
+  function toneNow() {
+    if (db.tone !== 'auto') return db.tone;
+    return nudgeCount <= SOFT_TIMES ? 'soft' : 'fun';
+  }
+  function nextLine(list, key) {
+    var i = tonePos[key] || 0;
+    tonePos[key] = (i + 1) % list.length;
+    return list[i];
+  }
+  function showNudge(byNoise) {
+    nudgeCount++;
+    var box = byNoise ? NOISE : NUDGE;
+    var tone = toneNow();
+    var list = box[tone] || box.soft;
+    var m = nextLine(list, (byNoise ? 'n' : 'q') + tone);
     $('nudgeEmoji').textContent = m[0];
     $('nudgeTitle').textContent = m[1];
     $('nudgeMsg').textContent = m[2];
@@ -2624,6 +2787,7 @@
 
   function endGame(completed) {
     $('nudge').hidden = true;
+    micStop();
     if (!S) return;
     S.running = false;
     clearInterval(timer); timer = null;
@@ -2700,8 +2864,11 @@
     } else {
       S.wrongList.forEach(function (k) {
         var it = itemOf(k);
-        var el = document.createElement('span');
+        var el = document.createElement('button');
         el.className = 'wchip';
+        el.type = 'button';
+        el.setAttribute('aria-label', '再念一次 ' + it.word);
+        el.addEventListener('click', function () { sayChip(k, el); });
         el.innerHTML = it.isWord
           ? '<u>' + it.word + '</u>' + it.emoji + '<small class="bpmf">' + zhRuby(it.zh) + '</small>'
           : '<u>' + k + ' ' + lower(k) + '</u>' + it.emoji + ' ' + it.word +
@@ -3098,6 +3265,9 @@
   });
   document.querySelectorAll('#tones .mode').forEach(function (m) {
     m.classList.toggle('sel', m.dataset.tone === db.tone);
+  });
+  document.querySelectorAll('#noises .mode').forEach(function (m) {
+    m.classList.toggle('sel', Number(m.dataset.noise) === db.noiseAt);
   });
   syncSound();
   pickVoice();
