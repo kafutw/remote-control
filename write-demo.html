@@ -29,7 +29,8 @@
   body { padding:16px 16px 40px; max-width:600px; margin:0 auto; }
   h1 { font-size:1.5rem; margin:6px 0 2px; }
   .sub { color:var(--ink-soft); font-size:.8125rem; margin:0 0 16px; line-height:1.6; }
-  .card { background:var(--surface); border-radius:20px; padding:18px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .card { background:var(--surface); border:1.5px solid var(--line); border-radius:20px;
+          padding:16px; box-shadow:var(--shadow); margin-bottom:14px; }
   .q { text-align:center; }
   .q .bpmf { font-family:var(--abc); font-size:2.5rem; font-weight:700; letter-spacing:.1em; color:var(--key); }
   .q .word { font-family:var(--abc); font-size:2rem; font-weight:700; margin-top:6px; }
@@ -135,6 +136,26 @@
   .modes { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .modes.three { grid-template-columns:repeat(3, 1fr); }
   .hint { font-size:.75rem; color:var(--ink-soft); margin:10px 2px 0; line-height:1.6; }
+  .tiny { font-size:.75rem; color:var(--ink-faint); text-align:center; margin-top:16px; }
+  .tally { margin-left:auto; font-size:.75rem; font-weight:800; color:var(--ink-soft); }
+  .foot { margin-top:18px; display:flex; flex-direction:column; gap:10px; }
+  .btn.big { width:100%; font-size:1.1875rem; padding:16px; min-height:58px; border-radius:18px; }
+  /* 最近 7 天：顏色越深代表那天練越多次（跟 multiplication.html 同一套） */
+  .days7 { display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:6px; }
+  .d7 { background:var(--bg); border:2px solid var(--line); border-radius:14px;
+        padding:9px 2px 10px; text-align:center; }
+  .d7 u { display:block; text-decoration:none; font-size:.75rem; font-weight:800; color:var(--ink-soft); }
+  .d7 b { display:block; font-size:.75rem; font-weight:700; color:var(--ink-faint);
+          font-variant-numeric:tabular-nums; margin-top:1px; }
+  .d7 span { display:block; margin-top:7px; font-size:.9375rem; font-weight:800;
+             font-variant-numeric:tabular-nums; color:var(--ink-faint); }
+  .d7.lv1 { background:var(--mint-soft); border-color:var(--mint-soft); }
+  .d7.lv2 { background:var(--mint-soft); border-color:var(--mint); }
+  .d7.lv3 { background:var(--mint); border-color:var(--mint); }
+  .d7.lv1 span, .d7.lv2 span { color:var(--mint-ink); }
+  .d7.lv3 span, .d7.lv3 u, .d7.lv3 b { color:#fff; }
+  .d7.today { border-color:var(--key); }
+  .d7.today u { color:var(--key-deep); }
   /* 設定頁維持一欄置中，跟其他幾支 app 同寬 */
   #home { max-width:560px; margin:0 auto; }
   #home .card { margin-bottom:14px; }
@@ -167,7 +188,7 @@
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
   @media (orientation:landscape) and (min-width:760px) {
     /* 書寫空間優先：格子吃到高度和寬度的極限，左欄留 460px 給題目和判定 */
-    :root { --padmax:min(calc(100dvh - 252px), calc(100vw - 560px), 760px); }
+    :root { --padmax:min(calc(100dvh - 258px), calc(100vw - 560px), 760px); }
     body { max-width:1500px; padding:14px 20px 10px; }
     #play:not(.off) { display:grid; grid-template-columns:1fr auto;
                       column-gap:22px; align-items:start; }
@@ -211,7 +232,7 @@
     .topbar-t i { font-size:.875rem; }
     .icobtn { width:46px; height:46px; }
     /* 練習頁：格子上限拉高，題目和判定的字也跟著放大 */
-    :root { --padmax:min(calc(100dvh - 274px), calc(100vw - 640px), 900px); }
+    :root { --padmax:min(calc(100dvh - 280px), calc(100vw - 640px), 900px); }
     #play > .card.q { padding:18px 20px; margin-bottom:12px; }
     .q .bpmf { font-size:2.5rem; }
     .q .word { font-size:2.25rem; }
@@ -256,13 +277,26 @@
 
 <div id="home">
   <div class="card">
-    <h2><span class="n">1</span>選哪一課？</h2>
+    <h2>最近 7 天<span class="tally" id="calTally"></span></h2>
+    <div class="days7" id="days7"></div>
+    <p class="hint" id="calHint"></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">1</span>今天要寫哪一課？</h2>
     <div class="sub-h">年級</div>
     <div class="modes three" id="gradeSeg"></div>
     <div class="sub-h">學期</div>
     <div class="modes" id="termSeg"></div>
     <div class="sub-h">課次</div>
     <div class="modes" id="lessonList"></div>
+    <div class="legend">
+      <div><b>🥇</b><span>金牌<i>對 9 成</i></span></div>
+      <div><b>🥈</b><span>銀牌<i>對 8 成</i></span></div>
+      <div><b>🥉</b><span>銅牌<i>對 7 成</i></span></div>
+      <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
+    </div>
+    <p class="hint">一課寫完就結算，獎牌看這一輪答對幾成。</p>
   </div>
 
   <div class="card">
@@ -277,19 +311,10 @@
     <p class="hint" id="levelHint2"></p>
   </div>
 
-  <div class="card">
-    <h2><span class="n">3</span>開始寫</h2>
-    <div class="legend">
-      <div><b>🥇</b><span>金牌<i>對 9 成</i></span></div>
-      <div><b>🥈</b><span>銀牌<i>對 8 成</i></span></div>
-      <div><b>🥉</b><span>銅牌<i>對 7 成</i></span></div>
-      <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
-    </div>
-    <p class="hint">用手指在格子裡寫，寫完按「我寫好了」會自動幫你對。一課寫完就結算，獎牌看這一輪答對幾成。</p>
-    <div class="row" style="margin-top:12px">
-      <button class="btn primary grow" id="startBtn" disabled>先選一課</button>
-    </div>
+  <div class="foot">
+    <button class="btn primary big" id="startBtn" disabled>先選一課</button>
   </div>
+  <p class="tiny">紀錄只存在這台裝置的瀏覽器裡，不會上傳。</p>
 </div>
 
 <div id="play" class="off">
@@ -1024,7 +1049,38 @@ function modeHTML(items, cur, attr) {
   }).join('');
 }
 
+/* 最近 7 天有沒有練、各練幾次（跟 multiplication.html 同一套呈現） */
+var WEEKDAY = ['日','一','二','三','四','五','六'];
+function dayKey(t) { var d = new Date(t); d.setHours(0,0,0,0); return d.getTime(); }
+
+function renderWeek() {
+  var box = $('days7'); box.innerHTML = '';
+  var counts = {};
+  loadRuns().forEach(function (r) {
+    var k = dayKey(r.at); counts[k] = (counts[k] || 0) + 1;
+  });
+  var today = new Date(); today.setHours(0,0,0,0);
+  var practised = 0, streak = 0, live = true;
+  for (var i = 6; i >= 0; i--) {
+    var d = new Date(today); d.setDate(d.getDate() - i);
+    var n = counts[dayKey(d.getTime())] || 0;
+    if (n) practised++;
+    if (i > 0 || n) { if (n && live) streak++; else if (i > 0) live = false; }
+    var el = document.createElement('div');
+    el.className = 'd7' + (n >= 5 ? ' lv3' : n >= 3 ? ' lv2' : n ? ' lv1' : '') + (i === 0 ? ' today' : '');
+    el.innerHTML = '<u>' + (i === 0 ? '今天' : WEEKDAY[d.getDay()]) + '</u>' +
+                   '<b>' + (d.getMonth() + 1) + '/' + d.getDate() + '</b>' +
+                   '<span>' + (n ? n + ' 次' : '—') + '</span>';
+    box.appendChild(el);
+  }
+  $('calTally').textContent = practised ? '7 天裡練了 ' + practised + ' 天' : '';
+  $('calHint').textContent = practised
+    ? '顏色越深代表那天練越多次。'
+    : '這 7 天還沒有練習紀錄。';
+}
+
 function drawHome() {
+  renderWeek();
   var grades = [];
   [1,2,3,4,5,6].forEach(function (g) {
     if (termsOf(g).length) grades.push([g, g + '年級']);
