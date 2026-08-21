@@ -212,6 +212,46 @@
     .compare .box { width:84px; height:84px; font-size:67px; }
     .sheet { align-items:center; }
   }
+
+  /* 大螢幕（桌機）：內容跟著放大並置中，不然一小塊擠在上面、下面一大片空的 */
+  @media (orientation:landscape) and (min-width:1280px) {
+    #home:not(.off) { max-width:min(1460px, 90vw);
+                      min-height:calc(100dvh - 96px); align-content:center; column-gap:26px; }
+    #home > .sub { font-size:.9375rem; margin-bottom:12px; }
+    #home .card { padding:20px 22px; margin-bottom:14px; }
+    /* 維持兩欄——三欄會讓「大個子，小個子」這種長課名折行 */
+    #home .lesson-list { gap:8px; margin-top:12px; }
+    #home .lesson { padding:10px 12px; }
+    #home .lesson b { font-size:.9375rem; }
+    #home .lesson i { font-size:.75rem; }
+    .pick-label { font-size:.9375rem; margin-bottom:10px; }
+    .seg button { font-size:.875rem; padding:8px 18px; }
+    #home .mode { padding:14px 16px; }
+    .mode b { font-size:1.0625rem; }
+    .mode i { font-size:.8125rem; }
+    .legend span { font-size:.8125rem; }
+    .legend b { font-size:1.1875rem; }
+    #home .settings-hint { font-size:.875rem; }
+    #home .btn { font-size:1.0625rem; padding:15px 18px; }
+    .topbar-t b { font-size:1.375rem; }
+    .topbar-t i { font-size:.875rem; }
+    .icobtn { width:46px; height:46px; }
+    /* 練習頁：格子上限拉高，題目和判定的字也跟著放大 */
+    :root { --padmax:min(calc(100dvh - 274px), calc(100vw - 640px), 900px); }
+    #play > .card.q { padding:18px 20px; margin-bottom:12px; }
+    .q .bpmf { font-size:2.5rem; }
+    .q .word { font-size:2.25rem; }
+    .tools .btn { font-size:1rem; padding:13px 6px; }
+    #play .btn.primary { font-size:1.0625rem; padding:15px 18px; }
+    .stroke-n { font-size:.9375rem; }
+    .compare .box { width:104px; height:104px; font-size:83px; }
+    .verdict .note { font-size:.875rem; }
+    .verdict:not(:empty) { padding:14px 20px; }
+    .result { max-width:520px; margin-top:12vh; }
+    .medal { font-size:5rem; }
+    .rname { font-size:1.75rem; }
+    .rline { font-size:1.125rem; }
+  }
 </style>
 </head>
 <body>
