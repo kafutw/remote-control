@@ -92,16 +92,45 @@
   .note { font-size:.8125rem; color:var(--ink-soft); line-height:1.7; margin-top:10px; }
   .ok { color:var(--mint-ink); font-weight:800; }
   .no { color:var(--coral-ink); font-weight:800; }
+  .topbar { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .topbar-t { flex:1; min-width:0; }
+  .topbar-t b { display:block; font-size:1.25rem; font-weight:800; line-height:1.25; }
+  .topbar-t i { display:block; font-style:normal; font-size:.75rem; color:var(--ink-soft);
+                margin-top:2px; }
+  .topbar-b { display:flex; gap:8px; flex:0 0 auto; }
+  .icobtn { width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+            border-radius:999px; border:2px solid var(--line); background:var(--surface);
+            color:var(--ink-soft); cursor:pointer; padding:0; }
+  .icobtn:active { background:var(--key-soft); border-color:var(--key); color:var(--key-deep); }
+  .legend { display:grid; grid-template-columns:repeat(4, auto); justify-content:space-between;
+            gap:6px 10px; margin-top:10px; padding-top:10px; border-top:2px solid var(--line); }
+  .legend > div { display:flex; align-items:center; gap:6px; }
+  .legend b { font-size:1.0625rem; line-height:1; flex:0 0 auto; }
+  .legend b.reddot { color:var(--coral-ink); font-size:.875rem; }
+  .legend span { font-size:.6875rem; font-weight:800; white-space:nowrap; }
+  .legend i { font-style:normal; font-weight:700; color:var(--ink-soft); margin-left:5px; }
+  .result { text-align:center; max-width:420px; margin:8vh auto 0; }
+  .medal { font-size:4rem; line-height:1; }
+  .rname { font-size:1.375rem; font-weight:800; margin-top:6px; }
+  .rline { font-size:1rem; font-weight:800; color:var(--ink-soft); margin:10px 0 0; }
+  .hist-row { display:flex; align-items:center; gap:10px; padding:10px 2px;
+              border-bottom:2px solid var(--line); }
+  .hist-row:last-child { border-bottom:0; }
+  .hist-row b { font-size:1.25rem; flex:0 0 auto; }
+  .hist-row .h-t { flex:1; min-width:0; font-size:.8125rem; font-weight:800; }
+  .hist-row .h-t i { display:block; font-style:normal; font-weight:700;
+                     font-size:.6875rem; color:var(--ink-faint); margin-top:2px; }
+  .hist-row .h-s { font-size:.8125rem; font-weight:800; color:var(--ink-soft); white-space:nowrap; }
   .pick-label { font-size:.8125rem; font-weight:800; color:var(--ink-soft); margin-bottom:8px; }
   /* 首頁要一次看完，間距全部收緊一點 */
-  #home .card { padding:14px; margin-bottom:10px; }
+  #home .card { padding:13px 14px; margin-bottom:8px; }
   #home .sub { margin-bottom:10px; }
   #home .mode { padding:10px 12px; }
   #home .settings-hint { margin-top:8px; }
   .wrapseg { flex-wrap:wrap; }
   /* 課次一次全部攤開，不要內捲——切一半看不到後面幾課 */
   .lesson-list { display:grid; grid-template-columns:repeat(2, 1fr); gap:6px; margin-top:10px; }
-  .lesson { font-family:inherit; text-align:left; cursor:pointer; padding:8px 10px;
+  .lesson { font-family:inherit; text-align:left; cursor:pointer; padding:7px 10px;
             border:2px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink);
             display:flex; align-items:baseline; gap:8px; }
   .lesson b { font-size:.8125rem; font-weight:800; flex:1; min-width:0; }
@@ -115,11 +144,6 @@
   .mode i { display:block; font-style:normal; font-size:.75rem; color:var(--ink-soft); margin-top:3px; }
   .mode.sel { border-color:var(--key); background:var(--key-soft); }
   .mode.sel b, .mode.sel i { color:var(--key-deep); }
-  .gear { position:absolute; top:14px; right:16px; z-index:30; cursor:pointer;
-          width:40px; height:40px; display:flex; align-items:center; justify-content:center;
-          border-radius:999px; border:2px solid var(--line); background:var(--surface);
-          color:var(--ink-soft); padding:0; }
-  .gear:active { background:var(--key-soft); border-color:var(--key); color:var(--key-deep); }
   .cfg-row { display:flex; align-items:center; justify-content:space-between; gap:12px;
              flex-wrap:wrap; margin-top:14px; }
   .note-box { margin-top:12px; }
@@ -142,7 +166,7 @@
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
   @media (orientation:landscape) and (min-width:760px) {
     /* 書寫空間優先：格子吃到高度和寬度的極限，左欄留 460px 給題目和判定 */
-    :root { --padmax:min(calc(100dvh - 200px), calc(100vw - 560px), 760px); }
+    :root { --padmax:min(calc(100dvh - 252px), calc(100vw - 560px), 760px); }
     body { max-width:1500px; padding:14px 20px 10px; }
     #play:not(.off) { display:grid; grid-template-columns:1fr auto;
                       column-gap:22px; align-items:start; }
@@ -150,13 +174,14 @@
     #play > .card:not(.q) { grid-column:2; grid-row:1 / span 20;
                             width:calc(var(--padmax) + 36px); padding:16px; }
     /* 首頁橫式也分兩欄：左邊選課，右邊選模式和難易度，一頁看完不用捲 */
-    #home { max-width:1080px; margin:0 auto;
+    /* 一定要 :not(.off)，不然媒體查詢裡的 display:grid 會蓋掉 .off 的 display:none */
+    #home:not(.off) { max-width:1080px; margin:0 auto;
             display:grid; grid-template-columns:1.15fr 1fr; column-gap:18px; align-items:start; }
-    #home > h1, #home > .sub { grid-column:1 / -1; }
-    #home > .card:nth-of-type(1) { grid-column:1; grid-row:3 / span 3; }
+    /* 標題已經搬到頁首，#home 的第一列就是選課卡 */
+    #home > .sub { grid-column:1 / -1; margin-bottom:8px; }
+    #home > .card:nth-of-type(1) { grid-column:1; grid-row:2 / span 3; }
     #home > .card:nth-of-type(2), #home > .card:nth-of-type(3), #home > .row { grid-column:2; }
     #home .lesson-list { grid-template-columns:repeat(2, 1fr); }
-    #home > h1 { margin-bottom:2px; }
     #home .card { margin-bottom:12px; }
   
     h1 { font-size:1.125rem; margin:0 0 8px; }
@@ -178,7 +203,11 @@
     .verdict .btn.grow { flex:0 1 auto; min-width:150px; }
     .verdict .adult-link { margin-left:0; margin-right:auto; }
     .verdict .note { line-height:1.45; margin-top:5px; }
-    .gear { top:10px; right:12px; }
+    /* 橫式左欄擠，獎牌說明排成一列、提示句收起來 */
+    .legend { gap:4px 10px; margin-top:8px; padding-top:8px; }
+    .legend b { font-size:.9375rem; }
+    .topbar { margin-bottom:10px; }
+    .topbar-t b { font-size:1.0625rem; }
     h1 { padding-right:52px; }                          /* 標題別跑到齒輪底下 */
     .compare .box { width:84px; height:84px; font-size:67px; }
     .sheet { align-items:center; }
@@ -187,23 +216,44 @@
 </head>
 <body>
 
-<button class="gear" id="gearBtn" aria-label="設定" title="設定">
+<header class="topbar">
+  <div class="topbar-t">
+    <b id="topTitle">看注音寫字</b>
+    <i id="topSub">選一課就可以開始</i>
+  </div>
+  <div class="topbar-b">
+    <button class="icobtn" id="histBtn" title="練習紀錄" aria-label="練習紀錄">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="6" y1="20" x2="6" y2="13"></line>
+        <line x1="12" y1="20" x2="12" y2="7"></line>
+        <line x1="18" y1="20" x2="18" y2="10"></line>
+      </svg>
+    </button>
+    <button class="icobtn" id="gearBtn" aria-label="設定" title="設定">
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <circle cx="12" cy="12" r="3"></circle>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-  </svg>
-</button>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </div>
+</header>
 
 <div id="home">
-  <h1>看注音寫字</h1>
-  <p class="sub">選一課，選要練什麼，然後就可以開始寫了。</p>
+  <p class="sub">用手指在格子裡寫，寫完按「我寫好了」會自動幫你對。一課寫完就結算，獎牌看這一輪答對幾成。</p>
 
   <div class="card">
     <div class="pick-label">選一課</div>
     <div class="seg wrapseg" id="gradeSeg"></div>
     <div class="seg wrapseg" id="termSeg" style="margin-top:8px"></div>
     <div class="lesson-list" id="lessonList"></div>
+    <div class="legend">
+      <div><b>🥇</b><span>金牌<i>對 9 成</i></span></div>
+      <div><b>🥈</b><span>銀牌<i>對 8 成</i></span></div>
+      <div><b>🥉</b><span>銅牌<i>對 7 成</i></span></div>
+      <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
+    </div>
   </div>
 
   <div class="card">
@@ -227,10 +277,6 @@
 </div>
 
 <div id="play" class="off">
-<h1 id="playTitle">看注音寫字</h1>
-<p class="sub">試做版。用手指在格子裡寫，寫完按「我寫好了」會自動幫你對。<br>
-  這一頁不會存任何東西，只是給你試手感。</p>
-
 <div class="card q">
   <div class="bpmf" id="bpmf"></div>
   <div class="word" id="word"></div>
@@ -263,6 +309,31 @@
 </div>
 
 </div><!-- /#play -->
+
+<div id="done" class="off">
+  <div class="card result">
+    <div class="medal" id="rMedal">🥇</div>
+    <div class="rname" id="rName">金牌</div>
+    <p class="rline" id="rLine"></p>
+    <p class="note" id="rNote"></p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary grow" id="againBtn">再寫一次這一課</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn grow" id="backBtn">← 換一課</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet off" id="hist">
+  <div class="sheet-in">
+    <h2>練習紀錄</h2>
+    <div id="histBody"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary grow" id="histClose">好了</button>
+    </div>
+  </div>
+</div>
 
 <div class="sheet off" id="cfg">
   <div class="sheet-in">
@@ -710,14 +781,16 @@ function syncStrokeN() {
 
 function loadQ() {
   cur = QS[qi % QS.length];
+  cur.scored = false;                  // 同一題重寫不重複計分
   strokesDone = []; drawing = null; step = 0; wrongStreak = 0;
   if (anim) { clearInterval(anim); anim = null; }
   $('bpmf').textContent = cur.b;
   $('word').innerHTML = cur.w;
-  $('playTitle').textContent = curLesson
-    ? curLesson[0] + '年級 ' + (curLesson[1] === 1 ? '上' : '下') + '學期 第' + curLesson[2] + '課　' +
-      curLesson[3] + '（第 ' + ((qi % QS.length) + 1) + ' / ' + QS.length + ' 字）'
-    : '看注音寫字';
+  if (curLesson) {
+    setTop(curLesson[3],
+      curLesson[0] + '年級' + (curLesson[1] === 1 ? '上' : '下') + '　第 ' +
+      (qi + 1) + ' / ' + QS.length + ' 字　已對 ' + roundOK);
+  }
   $('qhint').textContent = mode === 'stroke'
     ? '照筆順一筆一筆寫，寫錯那一筆會退回去'
     : '在格子裡寫這個字，寫好按下面那顆';
@@ -821,7 +894,8 @@ $('doneBtn').addEventListener('click', function () {
      這種才把家長通道亮起來，小孩整個亂寫的話不會亮。 */
   var near = !pass && diff <= lv.strokeSlack + 1 &&
              !!cmp && cmp.cover >= lv.cover - 0.12 && cmp.clean >= lv.clean - 0.12;
-  if (pass) wrongStreak = 0; else wrongStreak++;
+  if (pass) { wrongStreak = 0; if (!cur.scored) { cur.scored = true; roundOK++; } }
+  else wrongStreak++;
   var stuck = wrongStreak >= 3;
   if (stuck) $('ghost').classList.remove('off');   // 連錯三次，描紅自動打開
   $('verdict').innerHTML =
@@ -854,7 +928,7 @@ $('doneBtn').addEventListener('click', function () {
   $('mine').appendChild(box);
   box.style.width = '100%'; box.style.height = '100%';
   if (pass) {
-    $('nx').addEventListener('click', function () { qi++; loadQ(); });
+    $('nx').addEventListener('click', nextQ);
   } else {
     $('again').addEventListener('click', function () {
       strokesDone = []; paintInk(); syncStrokeN();
@@ -863,7 +937,7 @@ $('doneBtn').addEventListener('click', function () {
     $('adultBtn').addEventListener('click', function () { openGate(cmp, got, want); });
   }
 });
-$('nextBtn').addEventListener('click', function () { qi++; loadQ(); });
+$('nextBtn').addEventListener('click', nextQ);
 
 /* 判定寬鬆度的開關。併進 chinese.html 的時候這一段要搬進設定頁，不要留在練習畫面上。 */
 function levelText() {
@@ -892,6 +966,29 @@ function syncLevel() {
 }
 /* ────────── 首頁：選課、選模式、選難易度 ────────── */
 var pickG = 1, pickT = 1, curLesson = null;
+
+/* 獎牌門檻跟乘法表那支對齊：9 成金、8 成銀、7 成銅 */
+var MEDALS = [
+  { at: 0.9, icon: '🥇', name: '金牌' },
+  { at: 0.8, icon: '🥈', name: '銀牌' },
+  { at: 0.7, icon: '🥉', name: '銅牌' }
+];
+function medalOf(rate) {
+  for (var i = 0; i < MEDALS.length; i++) if (rate >= MEDALS[i].at) return MEDALS[i];
+  return { at: 0, icon: '💪', name: '加油' };
+}
+
+var roundOK = 0, roundAdult = 0;      // 這一輪對幾題、其中幾題是大人放行的
+
+function loadRuns() {
+  try { return JSON.parse(localStorage.getItem('writeDemoRuns') || '[]'); } catch (e) { return []; }
+}
+function saveRun(r) {
+  var all = loadRuns(); all.unshift(r); all = all.slice(0, 20);
+  try { localStorage.setItem('writeDemoRuns', JSON.stringify(all)); } catch (e) {}
+}
+
+function setTop(title, sub) { $('topTitle').textContent = title; $('topSub').textContent = sub; }
 
 function lessonsOf(g, t) {
   return LESSONS.filter(function (L) { return L[0] === g && L[1] === t; });
@@ -964,25 +1061,67 @@ $('levelSeg2').addEventListener('click', function (e) {
   setLevel(b.dataset.level); drawHome();
 });
 
-function showGear(on) { $('gearBtn').style.display = on ? 'flex' : 'none'; }
-
-$('startBtn').addEventListener('click', function () {
+function startRound() {
   QS = curLesson[4].split('').map(questionOf).filter(Boolean);
-  qi = 0;
+  qi = 0; roundOK = 0; roundAdult = 0;
+  $('done').classList.add('off');
   $('home').classList.add('off');
   $('play').classList.remove('off');
-  showGear(true);
   loadQ(); relayout();
-});
+}
+$('startBtn').addEventListener('click', startRound);
+$('againBtn').addEventListener('click', startRound);
+$('backBtn').addEventListener('click', function () { $('done').classList.add('off'); backHome(); });
+
+/* 一課寫完就結算 */
+function finishRound() {
+  var total = QS.length, rate = total ? roundOK / total : 0, m = medalOf(rate);
+  $('play').classList.add('off');
+  $('done').classList.remove('off');
+  $('rMedal').textContent = m.icon;
+  $('rName').textContent = m.name;
+  $('rLine').textContent = total + ' 個字，寫對 ' + roundOK + ' 個';
+  $('rNote').textContent = roundAdult
+    ? '其中 ' + roundAdult + ' 個是大人放行的，那幾個字值得再練一次。'
+    : (rate >= 0.9 ? '這一課很穩了。' : rate >= 0.7 ? '再練一輪就更熟了。' : '慢慢來，多寫幾次就順了。');
+  setTop(curLesson[3], '寫完了 · ' + m.name);
+  saveRun({ g: curLesson[0], t: curLesson[1], k: curLesson[2], name: curLesson[3],
+            ok: roundOK, total: total, icon: m.icon, mode: mode, at: Date.now() });
+}
+
+function nextQ() {
+  qi++;
+  if (qi >= QS.length) finishRound();
+  else loadQ();
+}
 
 function backHome() {
   $('play').classList.add('off');
+  $('done').classList.add('off');
   $('home').classList.remove('off');
-  showGear(false);
+  setTop('看注音寫字', '選一課就可以開始');
   drawHome();
 }
 
 /* 齒輪：所有可調的東西都在這個面板裡 */
+$('histBtn').addEventListener('click', function () {
+  var runs = loadRuns();
+  $('histBody').innerHTML = runs.length
+    ? runs.map(function (r) {
+        var d = new Date(r.at);
+        var md = (d.getMonth() + 1) + '/' + d.getDate();
+        var mn = { shape: '寫得工整', order: '照筆順寫', both: '兩個都要' }[r.mode] || '';
+        return '<div class="hist-row"><b>' + r.icon + '</b>' +
+               '<span class="h-t">' + r.name +
+               '<i>' + r.g + '年級' + (r.t === 1 ? '上' : '下') + '　第' + r.k + '課　' + mn + '　' + md + '</i></span>' +
+               '<span class="h-s">' + r.ok + ' / ' + r.total + '</span></div>';
+      }).join('')
+    : '<p class="note" style="text-align:center">還沒有練習紀錄。寫完一課就會記在這裡。</p>';
+  $('hist').classList.remove('off');
+});
+$('histClose').addEventListener('click', function () { $('hist').classList.add('off'); });
+$('hist').addEventListener('click', function (e) { if (e.target === $('hist')) $('hist').classList.add('off'); });
+
 $('gearBtn').addEventListener('click', function () { $('cfg').classList.remove('off'); });
 $('cfgClose').addEventListener('click', function () { $('cfg').classList.add('off'); });
 $('cfgHome').addEventListener('click', function () { $('cfg').classList.add('off'); backHome(); });
@@ -996,7 +1135,6 @@ $('levelSeg').addEventListener('click', function (e) {
 });
 syncLevel();
 drawHome();
-showGear(false);
 
 /* ────────── 家長／老師通道 ──────────
    寫錯的時候小孩只有「再寫一次」。要跳過只有這一條路：
@@ -1084,8 +1222,9 @@ $('gatePass').addEventListener('click', function () {
   /* 併進 chinese.html 的時候，這裡要送 logRecent(cur.c, true, 'adult')，
      熟練度照算過，但紀錄要留 by:'adult'——被放行的字其實正是最該回頭再練的。 */
   adultPassed.push(cur.c);
+  roundOK++; roundAdult++;
   closeGate();
-  qi++; loadQ();
+  nextQ();
   say('大人說這樣算過 ⭕', 'ok');
 });
 $('sheet').addEventListener('click', function (e) { if (e.target === $('sheet')) closeGate(); });
