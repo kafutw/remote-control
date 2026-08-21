@@ -64,6 +64,8 @@
                 font-family:var(--abc); line-height:1; color:rgba(64,53,43,.12);
                 pointer-events:none; user-select:none; }
   .pad .ghost.off { display:none; }
+  .pad .ghost.faint { color:rgba(64,53,43,.055); }   /* 連錯兩次才自動出現的淡提示 */
+  body.no-trace .tools { grid-template-columns:1fr 1fr; }
   .fx { position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:16px; }
   .spark { position:absolute; font-size:2rem; animation:fly .9s ease-out forwards; }
   @keyframes fly {
@@ -439,6 +441,14 @@
         <button class="mode" data-snd="0"><b>關</b></button>
       </div>
     </div>
+    <div class="cfg-row">
+      <span class="settings-label">描紅按鈕</span>
+      <div class="modes three" id="traceSeg" style="flex:1 1 220px">
+        <button class="mode" data-tr="1"><b>顯示</b></button>
+        <button class="mode" data-tr="0"><b>隱藏</b></button>
+      </div>
+    </div>
+    <p class="settings-hint">預設隱藏，讓孩子自己想。連錯兩次之後，第三次會自動出現很淺的提示。真的很不會就把它打開。</p>
     <details class="note-box">
 <summary>這是怎麼判的？</summary>
 <p class="note">
@@ -888,6 +898,7 @@ function loadQ() {
     : '在格子裡寫這個字，寫好按下面那顆';
   $('ghost').textContent = cur.c; fitGhost();
   $('ghost').classList.add('off');
+  $('ghost').classList.remove('faint');
   say('');
   drawGrid(); paintInk(); syncStrokeN();
   $('doneBtn').hidden = (mode === 'order');   // 逐筆檢查會自己判，不用這顆
@@ -958,8 +969,24 @@ $('undoBtn').addEventListener('click', function () {
   paintInk(); syncStrokeN(); say('');
 });
 $('ghostBtn').addEventListener('click', function () {
+  $('ghost').classList.remove('faint');     // 手動打開的是正常濃度
   $('ghost').classList.toggle('off');
 });
+
+function syncTrace() {
+  $('ghostBtn').style.display = showTrace ? '' : 'none';
+  document.body.classList.toggle('no-trace', !showTrace);
+  document.querySelectorAll('#traceSeg .mode').forEach(function (b) {
+    b.classList.toggle('sel', (b.dataset.tr === '1') === showTrace);
+  });
+}
+$('traceSeg').addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('.mode'); if (!b) return;
+  showTrace = b.dataset.tr === '1';
+  try { localStorage.setItem('writeDemoTrace', showTrace ? '1' : '0'); } catch (err) {}
+  syncTrace();
+});
+syncTrace();
 function judge() {
   if (!strokesDone.length) { say('還沒寫喔', 'no'); return; }
   var cmp = compare(cur.c, strokesDone);
@@ -984,15 +1011,20 @@ function judge() {
     : '';
   if (op && (mode === 'order' || lv.order === 'fail')) bad.push('筆順不對：' + orderMsg);
   var pass = !bad.length;
-  if (pass) { SFX.right(); sparks('⭐'); } else SFX.wrong();
+  if (pass) {
+    SFX.right(); sparks('⭐');
+    clearAdv();
+    advTimer = setTimeout(function () { advTimer = 0; nextQ(); }, 2000);
+  } else { clearAdv(); SFX.wrong(); }
   /* 「差一點」：只差 1 筆、而且兩個百分比都還在 70 以上。
      這種才把家長通道亮起來，小孩整個亂寫的話不會亮。 */
   var near = !pass && diff <= lv.strokeSlack + 1 &&
              !!cmp && cmp.cover >= lv.cover - 0.12 && cmp.clean >= lv.clean - 0.12;
   if (pass) { wrongStreak = 0; if (!cur.scored) { cur.scored = true; roundOK++; } }
   else wrongStreak++;
-  var stuck = wrongStreak >= 3;
-  if (stuck) $('ghost').classList.remove('off');   // 連錯三次，描紅自動打開
+  /* 連錯兩次 → 第三次動筆時就有很淺的字在底下 */
+  var stuck = wrongStreak >= 2;
+  if (stuck) { $('ghost').classList.remove('off'); $('ghost').classList.add('faint'); }
   $('verdict').innerHTML =
     '<div class="compare">' +
       '<figure><div class="box" id="mine"></div><figcaption>你寫的</figcaption></figure>' +
@@ -1012,7 +1044,7 @@ function judge() {
            (want ? '　・　筆畫 ' + got + '／' + want : '') + '</p>' : '') +
     (near ? '<div><span class="near-tag">差一點點</span></div>' : '') +
     '<div class="row" style="margin-top:10px">' +
-      (pass ? '<button class="btn primary grow" id="nx">換一題 →</button>'
+      (pass ? '<button class="btn primary grow" id="nx">下一題 →</button>'
             : '<button class="btn primary grow" id="again">✏️ 再寫一次</button>') +
     '</div>' +
     /* 寫錯的時候不給「換一題」。要跳過只有一條路：大人看過、答對驗證題。 */
@@ -1027,7 +1059,7 @@ function judge() {
   } else {
     $('again').addEventListener('click', function () {
       strokesDone = []; paintInk(); syncStrokeN();
-      say(stuck ? '描紅打開了，照著描一遍看看' : '再寫一次，可以先按「描紅」照著描一遍');
+      say(stuck ? '底下有很淡的字，照著寫看看' : '再寫一次');
     });
     $('adultBtn').addEventListener('click', function () { openGate(cmp, got, want); });
   }
@@ -1064,6 +1096,9 @@ function syncLevel() {
    ⚠️ iOS 只允許在使用者手勢裡建立／喚醒 AudioContext，所以要在點擊時才 init。 */
 var soundOn = true;
 try { soundOn = localStorage.getItem('writeDemoSound') !== '0'; } catch (e) {}
+/* 描紅預設不給，讓孩子自己想；連錯兩次才自動出現很淺的提示 */
+var showTrace = false;
+try { showTrace = localStorage.getItem('writeDemoTrace') === '1'; } catch (e) {}
 var ac = null, master = null;
 
 function initAudio() {
@@ -1340,6 +1375,7 @@ $('levelSeg2').addEventListener('click', function (e) {
 });
 
 function startRound() {
+  clearAdv();
   hideFireworks();
   QS = curLesson[4].split('').map(questionOf).filter(Boolean);
   qi = 0; roundOK = 0; roundAdult = 0;
@@ -1354,6 +1390,7 @@ $('backBtn').addEventListener('click', function () { $('done').classList.add('of
 
 /* 一課寫完就結算 */
 function finishRound() {
+  clearAdv();
   var total = QS.length, rate = total ? roundOK / total : 0, m = medalOf(rate);
   $('play').classList.add('off');
   $('done').classList.remove('off');
@@ -1372,13 +1409,19 @@ function finishRound() {
             ok: roundOK, total: total, icon: m.icon, mode: mode, at: Date.now() });
 }
 
+/* 寫對之後自己換下一題，不用等他按 */
+var advTimer = 0;
+function clearAdv() { if (advTimer) { clearTimeout(advTimer); advTimer = 0; } }
+
 function nextQ() {
+  clearAdv();
   qi++;
   if (qi >= QS.length) finishRound();
   else loadQ();
 }
 
 function backHome() {
+  clearAdv();
   hideFireworks();
   $('play').classList.add('off');
   $('done').classList.add('off');
@@ -1425,7 +1468,7 @@ $('fireworks').addEventListener('click', function (e) {
   if (e.target === $('fireworks')) hideFireworks();
 });
 
-$('gearBtn').addEventListener('click', function () { $('cfg').classList.remove('off'); });
+$('gearBtn').addEventListener('click', function () { clearAdv(); $('cfg').classList.remove('off'); });
 $('cfgClose').addEventListener('click', function () { $('cfg').classList.add('off'); });
 $('cfgHome').addEventListener('click', function () { $('cfg').classList.add('off'); backHome(); });
 $('cfg').addEventListener('click', function (e) { if (e.target === $('cfg')) $('cfg').classList.add('off'); });
@@ -1500,6 +1543,7 @@ function submitGate() {
 }
 
 function openGate(cmp, got, want) {
+  clearAdv();                       /* 大人在看的時候不要自己跳題 */
   $('gateCompare').innerHTML =
     '<figure><div class="box" id="gateMine"></div><figcaption>他寫的</figcaption></figure>' +
     '<figure><div class="box">' + cur.c + '</div><figcaption>課本的字</figcaption></figure>';
@@ -1519,7 +1563,7 @@ $('gateCancel').addEventListener('click', closeGate);
 $('gateRetry').addEventListener('click', function () {
   closeGate();
   strokesDone = []; paintInk(); syncStrokeN();
-  say('再寫一次，可以先按「描紅」照著描一遍');
+  say('再寫一次');
 });
 $('gatePass').addEventListener('click', function () {
   /* 併進 chinese.html 的時候，這裡要送 logRecent(cur.c, true, 'adult')，
