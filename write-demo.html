@@ -538,16 +538,17 @@ var cur = null;                 // { c, b, w, s, o }
 var strokesDone = [];           // 已經寫完的筆畫（畫布座標）
 var drawing = null;             // 正在畫的那一筆
 var step = 0;                   // 逐筆模式用的（目前停用）
-var wrongStreak = 0;            // 同一題連續寫錯幾次，連錯 3 次自動開描紅
+var wrongStreak = 0;            // 同一題連續寫錯幾次
+var blockedAt = 0;              // 同一筆被擋幾次，擋兩次就放行，不讓人卡死
 var adultPassed = [];           // 被大人放行的字（併進 chinese.html 時要存成 by:'adult'）
 
 /* 判定寬鬆度。用手指在大格子裡寫，本來就會超出筆畫邊緣，
    原本 80/80 太嚴——實測「左」寫到 82%、沒歪出去 78%、筆畫也對，卻被判不過。
    strokeSlack 是容許的筆畫數誤差（剛開始學的孩子少寫一筆很常見）。 */
 var LEVELS = {
-  easy:   { name: '輕鬆', cover: 0.60, clean: 0.55, strokeSlack: 1, order: 'off'  },
-  normal: { name: '標準', cover: 0.70, clean: 0.65, strokeSlack: 0, order: 'hint' },
-  hard:   { name: '嚴格', cover: 0.80, clean: 0.78, strokeSlack: 0, order: 'fail' }
+  easy:   { name: '輕鬆', cover: 0.60, clean: 0.55, strokeSlack: 1, order: 'off',  live: 'never'  },
+  normal: { name: '標準', cover: 0.70, clean: 0.65, strokeSlack: 0, order: 'hint', live: 'clear'  },
+  hard:   { name: '嚴格', cover: 0.80, clean: 0.78, strokeSlack: 0, order: 'fail', live: 'strict' }
 };
 var level = 'normal';
 try { if (LEVELS[localStorage.getItem('writeDemoLevel')]) level = localStorage.getItem('writeDemoLevel'); } catch (e) {}
@@ -578,6 +579,16 @@ function relayout() {
   fitGhost(); drawGrid(); paintInk();
 }
 relayout();
+
+/* 自帶的楷體是非同步載入的。沒等它載完就畫，第一個字的「標準答案」會是
+   退回去的黑體，形狀不同、分數也會跟著不同。載完重畫一次。 */
+if (document.fonts && document.fonts.load) {
+  document.fonts.load("700 100px 'TWKai'", '字寫').then(function () {
+    relayout();
+    if (typeof cur !== 'undefined' && cur) { fitGhost(); paintInk(); }
+  }).catch(function () {});
+}
+
 /* 兩種都掛：ResizeObserver 抓容器變化，resize/orientationchange 抓轉向。
    實測 ResizeObserver 在某些情況不會因為轉向而觸發，所以不能只靠它。 */
 if (window.ResizeObserver) new ResizeObserver(relayout).observe(pad);
@@ -709,6 +720,15 @@ function strokeType(p) {
   if (dy > 0)              return { t: '2', sure: Math.abs(a - 90) < 25 && sharp < 45 && left < thr * 0.5 };
   return { t: '1', sure: false };
 }
+
+/* 哪些筆畫容易互相認錯——這幾組不拿來擋人。
+   實測最常見的誤判就是把橫、豎、點都認成「折」（手抖會製造假轉角），
+   其次是撇和豎、撇和點分不開。這些配對只提示，不退回去重寫。 */
+var CONFUSE = {};
+[['1','5'],['2','5'],['3','5'],['4','5'],['2','3'],['3','4']].forEach(function (p) {
+  CONFUSE[p[0] + p[1]] = 1; CONFUSE[p[1] + p[0]] = 1;
+});
+function confusable(a, b) { return !!CONFUSE[a + b]; }
 
 /* 找出第一個「有把握」的筆順錯誤。筆數對不上就不比，位置對不起來比了沒意義。 */
 function orderProblem(ch, strokes) {
@@ -884,7 +904,7 @@ function syncStrokeN() {
 function loadQ() {
   cur = QS[qi % QS.length];
   cur.scored = false;                  // 同一題重寫不重複計分
-  strokesDone = []; drawing = null; step = 0; wrongStreak = 0;
+  strokesDone = []; drawing = null; step = 0; wrongStreak = 0; blockedAt = 0;
   if (anim) { clearInterval(anim); anim = null; }
   $('bpmf').textContent = cur.b;
   $('word').innerHTML = cur.w;
@@ -936,12 +956,20 @@ function endStroke() {
       return;
     }
     var g = strokeType(s), wantT = cur.o.charAt(strokesDone.length);
-    if (g.sure && g.t !== wantT) {
+    var live = L().live;
+    /* 擋人要很有把握才行——被冤枉一次就卡住，比漏抓難受得多。
+       同一筆擋兩次就放行，不讓任何人卡死在一筆上。 */
+    var block = (g.t !== wantT) && g.sure && live !== 'never' &&
+                (live === 'strict' || !confusable(g.t, wantT)) &&
+                blockedAt < 2;
+    if (block) {
+      blockedAt++;
       paintInk();
       say('第 ' + (strokesDone.length + 1) + ' 筆應該是「' + STROKE_NAME[wantT] +
           '」，你寫成「' + STROKE_NAME[g.t] + '」，再寫一次', 'no');
       return;
     }
+    blockedAt = 0;
     strokesDone.push(s);
     step++;
     paintInk(); syncStrokeN();
@@ -1069,7 +1097,14 @@ $('doneBtn').addEventListener('click', judge);
 /* 判定寬鬆度的開關。併進 chinese.html 的時候這一段要搬進設定頁，不要留在練習畫面上。 */
 function levelText() {
   var lv = L();
-  if (mode === 'order') return '「照筆順寫」只看順序，這裡的寬鬆度不影響判定。';
+  if (mode === 'order') {
+    var lv2 = L();
+    return lv2.live === 'never'
+      ? '寫的時候不擋你，寫完才告訴你哪一筆的順序不對。'
+      : lv2.live === 'clear'
+        ? '只有明顯寫錯才會退回去重寫（容易認錯的筆畫只提示）。同一筆擋兩次就放行。'
+        : '每一筆都嚴格比對，認出來不一樣就退回去重寫。';
+  }
   return '寫到 ' + Math.round(lv.cover * 100) + '% 以上、沒歪出去 ' +
     Math.round(lv.clean * 100) + '% 以上就算過' +
     (lv.strokeSlack ? '，筆畫數差 ' + lv.strokeSlack + ' 筆之內也算' : '，筆畫數要正確') +
