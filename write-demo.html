@@ -609,6 +609,29 @@ var gateAns = 0;          // 算式的答案
 var gateMode = '';        // pin：輸金鑰／math：答算式／setpin：設新金鑰
 var buf = '';             // 鍵盤打到現在的字串
 
+/* 大人一定會、一年級一定不會的題目。
+   刻意不用純算術——九九乘法背熟就破了（隔壁 multiplication.html 就在練那個）。
+   這些考的是「還沒教到的概念」：平方、面積、時間換算。
+   而且數字每次都換，小孩在旁邊看大人按也學不起來。
+   不用分子分母那種：答案就印在題目上，兩個數字亂猜有一半會中。 */
+function adultQ() {
+  var n, kinds = [
+    function () {                                  // 平方：一年級沒有這個概念
+      n = 4 + Math.floor(Math.random() * 9);       // 4–12
+      return { q: n + ' 的平方是多少？', a: n * n };
+    },
+    function () {                                  // 面積：同上，換個問法
+      n = 4 + Math.floor(Math.random() * 9);
+      return { q: '邊長 ' + n + ' 公分的正方形，面積多少？', a: n * n };
+    },
+    function () {                                  // 時間換算：要知道一小時 60 分再乘
+      n = 2 + Math.floor(Math.random() * 5);       // 2–6
+      return { q: n + ' 小時是幾分鐘？', a: n * 60 };
+    }
+  ];
+  return kinds[Math.floor(Math.random() * kinds.length)]();
+}
+
 function hasPin() { try { return !!localStorage.getItem(PIN_KEY); } catch (e) { return false; } }
 function getPin()  { try { return localStorage.getItem(PIN_KEY) || ''; } catch (e) { return ''; } }
 function setPin(v) { try { localStorage.setItem(PIN_KEY, v); } catch (e) {} }
@@ -668,14 +691,13 @@ function gateTo(m) {
     $('gateLead').textContent = '看一下他寫的。要放行請輸入家長金鑰。';
     $('gateQ').textContent = '輸入四位數金鑰';
     $('gateOk').classList.add('off');
-    $('gateAlt').textContent = '忘記金鑰？改用算式 →';
+    $('gateAlt').textContent = '忘記金鑰？改用題目 →';
     $('gateAlt').classList.remove('off');
   } else if (m === 'math') {
-    var a = 11 + Math.floor(Math.random() * 9);    // 11–19
-    var b = 3 + Math.floor(Math.random() * 7);     // 3–9
-    gateAns = a * b;
+    var q = adultQ();
+    gateAns = q.a;
     $('gateLead').textContent = '看一下他寫的。覺得可以算過的話，先答一題再放行。';
-    $('gateQ').textContent = a + ' × ' + b + ' = ?';
+    $('gateQ').textContent = q.q;
     $('gateOk').classList.remove('off');
     $('gateAlt').classList.toggle('off', !hasPin());
     $('gateAlt').textContent = '想起來了，改用金鑰 →';
@@ -719,7 +741,7 @@ function submitGate() {
     return;
   }
   buf = '';
-  var msg = gateMode === 'pin' ? '金鑰不對，再試一次' : '不對，換一題再試';
+  var msg = gateMode === 'pin' ? '金鑰不對，再試一次' : '不對，換一題再試';   // 換一題新的
   if (gateMode === 'math') gateTo('math');          // 算式答錯就換一題新的
   else drawDots();
   $('gateBad').textContent = msg;
