@@ -132,6 +132,8 @@
   .seg button { font-family:inherit; font-size:.75rem; font-weight:800; cursor:pointer;
                 border:0; background:none; color:var(--ink-soft); border-radius:999px; padding:6px 14px; }
   .seg button.sel { background:var(--surface); color:var(--key-deep); box-shadow:var(--shadow); }
+  .next-k { display:inline-block; background:var(--key-soft); color:var(--key-deep);
+            border-radius:999px; padding:2px 12px; font-weight:800; }
   .stroke-n { text-align:center; font-size:.8125rem; color:var(--ink-soft); margin-top:8px; font-weight:800; }
 
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
@@ -691,13 +693,15 @@ function say(t, cls) {
 }
 
 function syncStrokeN() {
-  var n = strokeCount(cur.c);
-  if (mode === 'stroke') {
-    $('strokeN').textContent = !n ? '這個字還沒有筆順資料'
-      : step >= n ? '寫完了，一共 ' + n + ' 筆'
-      : '第 ' + (step + 1) + ' 筆 / 一共 ' + n + ' 筆';
+  var el = $('strokeN'), done = strokesDone.length;
+  if (mode === 'order' && cur && cur.o) {
+    var n = cur.o.length;
+    el.innerHTML = done >= n
+      ? '寫完了，一共 ' + n + ' 筆'
+      : '第 ' + (done + 1) + ' 筆 / 一共 ' + n + ' 筆　　接下來要寫 <b class="next-k">' +
+        STROKE_NAME[cur.o.charAt(done)] + '</b>';
   } else {
-    $('strokeN').textContent = strokesDone.length ? '寫了 ' + strokesDone.length + ' 筆' : '';
+    el.textContent = done ? '寫了 ' + done + ' 筆' : '';
   }
 }
 
@@ -742,26 +746,26 @@ pad.addEventListener('pointermove', function (e) {
 function endStroke() {
   if (!drawing) return;
   var s = drawing; drawing = null;
-  if (mode === 'stroke') {
-    var n = strokeCount(cur.c);
-    if (!n) { strokesDone.push(s); paintInk(); syncStrokeN(); return; }   // 沒有筆順資料就不判
-    if (step >= n) {                        // 寫完了還多寫，不能默默收下
+  /* 「照筆順寫」逐筆檢查：每寫一筆就認它是什麼類型，跟台灣的正確序列比。
+     不需要座標——認不出來的那一筆就默默收下，不冤枉人。 */
+  if (mode === 'order' && cur.o) {
+    var n = cur.o.length;
+    if (strokesDone.length >= n) {           // 寫完了還多寫，不能默默收下
       paintInk();
       say('這個字只有 ' + n + ' 筆，已經寫完了 —— 多的那一筆不算', 'no');
       return;
     }
-    var want = medianPts(cur.c, step);
-    var r = checkStroke(s, want);
-    if (!r.ok) {
-      paintInk(function (line) { line(want, 'rgba(242,112,92,.45)', 11); });  // 正確的那一筆亮出來
-      say('第 ' + (step + 1) + ' 筆' + r.why + '，再寫一次（灰色的是正確的那一筆）', 'no');
-      setTimeout(function () { paintInk(); }, 1400);
+    var g = strokeType(s), wantT = cur.o.charAt(strokesDone.length);
+    if (g.sure && g.t !== wantT) {
+      paintInk();
+      say('第 ' + (strokesDone.length + 1) + ' 筆應該是「' + STROKE_NAME[wantT] +
+          '」，你寫成「' + STROKE_NAME[g.t] + '」，再寫一次', 'no');
       return;
     }
-    strokesDone.push(want);        // 收進來的是標準的那一筆，寫完會是漂亮的字
+    strokesDone.push(s);
     step++;
     paintInk(); syncStrokeN();
-    if (step >= strokeCount(cur.c)) say('全部 ' + step + ' 筆都對了！🎉', 'ok');
+    if (strokesDone.length >= n) say('全部 ' + n + ' 筆都對了！按下面那顆 ⭕', 'ok');
     else say('第 ' + step + ' 筆對了 ✓', 'ok');
     return;
   }
