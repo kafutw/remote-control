@@ -61,10 +61,8 @@
   .sheet-in h2 { font-size:1.0625rem; margin:0 0 4px; text-align:center; }
   .gate-q { font-size:1.75rem; font-weight:800; letter-spacing:.04em; margin:14px 0 10px; text-align:center; }
   /* 自己畫的數字鍵盤：iPad 橫式叫出系統鍵盤會吃掉半個畫面 */
-  .dots { display:flex; gap:10px; justify-content:center; align-items:center; height:40px;
+  .dots { display:flex; justify-content:center; align-items:center; height:40px;
           font-size:1.5rem; font-weight:800; letter-spacing:.12em; color:var(--ink); }
-  .dot { width:15px; height:15px; border-radius:50%; background:var(--line); }
-  .dot.on { background:var(--key); }
   .keypad { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin:10px 0 12px; }
   .keypad button { font-family:inherit; font-size:1.375rem; font-weight:800; cursor:pointer;
                    padding:13px 0; border-radius:14px; border:2px solid var(--line);
@@ -93,7 +91,7 @@
     body { max-width:940px; padding:16px 20px 12px;
            display:grid; grid-template-columns:1fr auto; column-gap:24px; align-items:start; }
     body > h1, body > .sub, body > .card.q, body > .verdict, body > .row,
-    body > .note, body > .adult-link { grid-column:1; }
+    body > .note { grid-column:1; }
     body > .card:not(.q) { grid-column:2; grid-row:1 / span 20; width:calc(var(--padsz) + 40px); }
     .padwrap { margin:10px 0 8px; }
     .sub { margin-bottom:6px; }
@@ -107,7 +105,6 @@
     .verdict .row { justify-content:flex-start; }
     .verdict .btn.grow { flex:0 1 auto; min-width:150px; }
     .verdict .adult-link { margin-left:0; margin-right:auto; }
-    body > .adult-link { margin-top:4px; }
     body > .note { font-size:.75rem; line-height:1.55; margin-top:8px; }
     .compare .box { width:84px; height:84px; font-size:67px; }
     .sheet { align-items:center; }
@@ -118,7 +115,7 @@
 
 <h1>看注音寫字</h1>
 <p class="sub">試做版。用手指在格子裡寫，寫完按「我寫好了」會自動幫你對。<br>
-  除了家長金鑰以外，這一頁不會存任何東西。</p>
+  這一頁不會存任何東西，只是給你試手感。</p>
 
 <div class="card q">
   <div class="bpmf" id="bpmf"></div>
@@ -147,8 +144,6 @@
 
 <div class="verdict" id="verdict"></div>
 
-<button class="adult-link" id="setupBtn"></button>
-
 <div class="row">
   <button class="btn grow" id="nextBtn">換一題 →</button>
 </div>
@@ -156,19 +151,18 @@
 <div class="sheet off" id="sheet">
   <div class="sheet-in">
     <h2>家長／老師確認</h2>
-    <p class="note" id="gateLead" style="text-align:center;margin-top:2px"></p>
+    <p class="note" id="gateLead" style="text-align:center;margin-top:2px">看一下他寫的。覺得可以算過的話，答一題就能放行。</p>
     <div class="compare" id="gateCompare"></div>
     <p class="note" id="gateNums" style="text-align:center;color:var(--ink-faint)"></p>
     <div id="gateAsk">
       <p class="gate-q" id="gateQ"></p>
       <div class="dots" id="gateDots"></div>
-      <p class="note no off" id="gateBad" style="text-align:center;margin-top:0"></p>
+      <p class="note no off" id="gateBad" style="text-align:center;margin-top:0">不對，換一題再試</p>
       <div class="keypad" id="keypad"></div>
       <div class="row">
         <button class="btn grow" id="gateCancel">取消</button>
-        <button class="btn primary grow off" id="gateOk">確定</button>
+        <button class="btn primary grow" id="gateOk">確定</button>
       </div>
-      <button class="adult-link" id="gateAlt"></button>
     </div>
     <div id="gateDo" class="off">
       <div class="row" style="margin-top:14px">
@@ -177,7 +171,6 @@
       <div class="row" style="margin-top:8px">
         <button class="btn grow" id="gateRetry">不算，讓他重寫</button>
       </div>
-      <button class="adult-link" id="gateSetPin">設定／重設金鑰</button>
     </div>
   </div>
 </div>
@@ -603,17 +596,17 @@ $('nextBtn').addEventListener('click', function () { qi++; loadQ(); });
    寫錯的時候小孩只有「再寫一次」。要跳過只有這一條路：
    大人看過他寫的字，再答一題二位數乘法。刻意避開九九表（11–19 × 3–9），
    一年級算不出來，大人兩秒。答錯就換一題新的。 */
-var PIN_KEY = 'writeDemoPin';
-var gateCtx = 'verdict';  // verdict：從判定卡進來要放行／setup：家長自己來設金鑰
-var gateAns = 0;          // 算式的答案
-var gateMode = '';        // pin：輸金鑰／math：答算式／setpin：設新金鑰
+/* ────────── 家長／老師通道 ──────────
+   只有一道關卡：一題大人一定會、一年級一定不會的數學。
+   不用設定、不用記、不存任何東西，所以每一台平板、每一支手機行為都一樣。 */
+var gateAns = 0;
 var buf = '';             // 鍵盤打到現在的字串
 
-/* 大人一定會、一年級一定不會的題目。
-   刻意不用純算術——九九乘法背熟就破了（隔壁 multiplication.html 就在練那個）。
+/* 題目刻意不用純九九乘法——隔壁 multiplication.html 就在練那個，背熟就破了。
    這些考的是「還沒教到的概念」：平方、面積、時間換算。
-   而且數字每次都換，小孩在旁邊看大人按也學不起來。
-   不用分子分母那種：答案就印在題目上，兩個數字亂猜有一半會中。 */
+   數字每次隨機，小孩在旁邊看大人按也學不起來。
+   不用分子分母那種：答案就印在題目上，兩個數字亂猜有一半會中。
+   也不用固定答案那種（例如三角形內角和永遠是 180）：看一次就記住了。 */
 function adultQ() {
   var n, kinds = [
     function () {                                  // 平方：一年級沒有這個概念
@@ -632,126 +625,46 @@ function adultQ() {
   return kinds[Math.floor(Math.random() * kinds.length)]();
 }
 
-function hasPin() { try { return !!localStorage.getItem(PIN_KEY); } catch (e) { return false; } }
-function getPin()  { try { return localStorage.getItem(PIN_KEY) || ''; } catch (e) { return ''; } }
-function setPin(v) { try { localStorage.setItem(PIN_KEY, v); } catch (e) {} }
-
-/* 數字鍵盤。輸金鑰的時候把 0–9 打亂重排，這樣小孩在旁邊看，
-   記住的「位置」下次就不管用了。⌫ 和「清除」位置固定，不然大人會找不到。 */
-function buildKeypad(shuffle) {
-  var d = ['1','2','3','4','5','6','7','8','9','0'], i, j, t;
-  if (shuffle) {
-    for (i = d.length - 1; i > 0; i--) {
-      j = Math.floor(Math.random() * (i + 1));
-      t = d[i]; d[i] = d[j]; d[j] = t;
-    }
-  }
-  var keys = d.slice(0, 9).concat(['⌫', d[9], '清除']);
-  $('keypad').innerHTML = '';
-  keys.forEach(function (k) {
+/* 數字鍵盤。iPad 橫式叫出系統鍵盤會吃掉大半個畫面，所以自己畫一個。 */
+(function buildKeypad() {
+  ['1','2','3','4','5','6','7','8','9','⌫','0','清除'].forEach(function (k) {
     var b = document.createElement('button');
     b.textContent = k;
     if (k === '⌫' || k === '清除') b.className = 'k-sub';
     b.addEventListener('click', function () { tapKey(k); });
     $('keypad').appendChild(b);
   });
-}
+})();
 
 function tapKey(k) {
   $('gateBad').classList.add('off');
   if (k === '清除') buf = '';
   else if (k === '⌫') buf = buf.slice(0, -1);
   else if (buf.length < 6) buf += k;
-  drawDots();
-  /* 金鑰是固定四位，打滿就自己送出，不用再按確定 */
-  if ((gateMode === 'pin' || gateMode === 'setpin') && buf.length === 4) submitGate();
+  $('gateDots').textContent = buf || '　';
 }
 
-function drawDots() {
-  var el = $('gateDots');
-  if (gateMode === 'pin') {                       // 金鑰遮起來
-    el.innerHTML = '';
-    for (var i = 0; i < 4; i++) {
-      var d = document.createElement('span');
-      d.className = 'dot' + (i < buf.length ? ' on' : '');
-      el.appendChild(d);
-    }
-  } else {
-    el.textContent = buf || '　';                  // 算式和設定金鑰直接顯示數字
-  }
-}
-
-function gateTo(m) {
-  gateMode = m; buf = '';
-  buildKeypad(m === 'pin' || m === 'setpin');   // 只有牽涉到金鑰的時候才打亂
-  $('gateBad').classList.add('off');
+function newQuestion() {
+  var q = adultQ();
+  gateAns = q.a;
+  buf = '';
+  $('gateQ').textContent = q.q;
+  $('gateDots').textContent = '　';
   $('gateAsk').classList.remove('off');
   $('gateDo').classList.add('off');
-  if (m === 'pin') {
-    $('gateLead').textContent = '看一下他寫的。要放行請輸入家長金鑰。';
-    $('gateQ').textContent = '輸入四位數金鑰';
-    $('gateOk').classList.add('off');
-    $('gateAlt').textContent = '忘記金鑰？改用題目 →';
-    $('gateAlt').classList.remove('off');
-  } else if (m === 'math') {
-    var q = adultQ();
-    gateAns = q.a;
-    $('gateLead').textContent = '看一下他寫的。覺得可以算過的話，先答一題再放行。';
-    $('gateQ').textContent = q.q;
-    $('gateOk').classList.remove('off');
-    $('gateAlt').classList.toggle('off', !hasPin());
-    $('gateAlt').textContent = '想起來了，改用金鑰 →';
-  } else {                                         // setpin
-    $('gateLead').textContent = '設一組四位數，下次直接輸入這組就好。';
-    $('gateQ').textContent = hasPin() ? '設一組新的金鑰' : '設一組四位數金鑰';
-    $('gateOk').classList.add('off');
-    $('gateAlt').textContent = gateCtx === 'setup' ? '取消，先不要設 →' : '先不要，這次直接放行 →';
-    $('gateAlt').classList.remove('off');
-  }
-  drawDots();
-}
-
-function gateDone() {                              // 驗證過了，給放行選項
-  $('gateAsk').classList.add('off');
-  $('gateDo').classList.remove('off');
-  $('gateSetPin').textContent = hasPin() ? '重設金鑰' : '設一組金鑰，下次比較快';
-}
-
-function syncSetupBtn() {
-  $('setupBtn').textContent = hasPin() ? '家長設定：重設放行金鑰' : '家長設定：設一組放行金鑰';
 }
 
 function submitGate() {
-  if (gateMode === 'setpin') {
-    if (buf.length !== 4) return;
-    setPin(buf);
-    syncSetupBtn();
-    if (gateCtx === 'setup') { closeGate(); say('金鑰設定好了 ⭕', 'ok'); }
-    else gateDone();
+  if (parseInt(buf, 10) === gateAns) {             // 答對，給放行選項
+    $('gateAsk').classList.add('off');
+    $('gateDo').classList.remove('off');
     return;
   }
-  var ok = gateMode === 'pin' ? (buf === getPin())
-                              : (parseInt(buf, 10) === gateAns);
-  if (ok) {
-    /* 家長自己來設定的話，驗過舊金鑰就直接進設定；
-       從判定卡進來的，沒設過金鑰就順手問一下要不要設 */
-    if (gateCtx === 'setup') gateTo('setpin');
-    else if (gateMode === 'math' && !hasPin()) gateTo('setpin');
-    else gateDone();
-    return;
-  }
-  buf = '';
-  var msg = gateMode === 'pin' ? '金鑰不對，再試一次' : '不對，換一題再試';   // 換一題新的
-  if (gateMode === 'math') gateTo('math');          // 算式答錯就換一題新的
-  else drawDots();
-  $('gateBad').textContent = msg;
+  newQuestion();                                   // 答錯就換一題新的
   $('gateBad').classList.remove('off');
 }
 
 function openGate(cmp, got, want) {
-  gateCtx = 'verdict';
-  $('gateCompare').style.display = '';
-  $('gateNums').style.display = '';
   $('gateCompare').innerHTML =
     '<figure><div class="box" id="gateMine"></div><figcaption>他寫的</figcaption></figure>' +
     '<figure><div class="box">' + cur.c + '</div><figcaption>課本的字</figcaption></figure>';
@@ -760,31 +673,13 @@ function openGate(cmp, got, want) {
     ? '寫到了 ' + Math.round(cmp.cover * 100) + '%　・　沒寫歪出去 ' +
       Math.round(cmp.clean * 100) + '%' + (want ? '　・　筆畫 ' + got + '／' + want : '')
     : '';
-  gateTo(hasPin() ? 'pin' : 'math');
+  $('gateBad').classList.add('off');
+  newQuestion();
   $('sheet').classList.remove('off');
 }
 function closeGate() { $('sheet').classList.add('off'); }
 
-/* 家長自己開的設定入口：不用等小孩寫錯，先把金鑰設好再把 iPad 交出去 */
-function openSetup() {
-  gateCtx = 'setup';
-  $('gateCompare').style.display = 'none';
-  $('gateNums').style.display = 'none';
-  gateTo(hasPin() ? 'pin' : 'setpin');
-  if (hasPin()) $('gateLead').textContent = '要換金鑰，先輸入現在這一組。';
-  $('sheet').classList.remove('off');
-}
-$('setupBtn').addEventListener('click', openSetup);
-syncSetupBtn();
-
 $('gateOk').addEventListener('click', submitGate);
-$('gateAlt').addEventListener('click', function () {
-  if (gateMode === 'pin') gateTo('math');
-  else if (gateMode === 'math') gateTo('pin');
-  else if (gateCtx === 'setup') closeGate();        // 家長設定的「取消」
-  else gateDone();                                  // setpin 的「先不要」
-});
-$('gateSetPin').addEventListener('click', function () { gateTo('setpin'); });
 $('gateCancel').addEventListener('click', closeGate);
 $('gateRetry').addEventListener('click', function () {
   closeGate();
