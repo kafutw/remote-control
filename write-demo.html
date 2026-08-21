@@ -25,6 +25,7 @@
     --fs-head:  1.25rem;   /* 段落標題、主要按鈕 */
     --fs-body:  .9375rem;  /* 內文 */
     --fs-note:  .75rem;    /* 說明、標籤 */
+    --fs-mega:  4rem;      /* 煙火頁的獎盃 */
     --wrap: 560px;
     --font:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
     --abc:"BiauKai","DFKai-SB","標楷體","Kaiti TC","楷體-繁","KaiTi","PingFang TC",sans-serif;
@@ -32,11 +33,11 @@
   :root { --padmax:clamp(200px, calc(100dvh - 505px), 620px); }
   @media (min-width: 700px) {
     :root { --fs-title:1.85rem; --fs-head:1.5rem; --fs-body:1.0625rem; --fs-note:.85rem;
-            --wrap:720px; }
+            --fs-mega:5.5rem; --wrap:720px; }
   }
   @media (min-width: 1100px) and (min-height: 900px) {
     :root { --fs-title:2.1rem; --fs-head:1.7rem; --fs-body:1.15rem; --fs-note:.92rem;
-            --wrap:840px; }
+            --fs-mega:6.5rem; --wrap:840px; }
   }
   @media (max-width: 360px) {
     :root { --fs-title:1.32rem; --fs-head:1.15rem; }
@@ -63,6 +64,29 @@
                 font-family:var(--abc); line-height:1; color:rgba(64,53,43,.12);
                 pointer-events:none; user-select:none; }
   .pad .ghost.off { display:none; }
+  .fx { position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:16px; }
+  .spark { position:absolute; font-size:2rem; animation:fly .9s ease-out forwards; }
+  @keyframes fly {
+    from { transform:translate(0,0) rotate(0deg) scale(.6); opacity:1; }
+    to   { transform:translate(var(--dx), -130px) rotate(var(--rot)) scale(1.2); opacity:0; }
+  }
+  /* 一課全對的煙火：夜空當底，字在最上面 */
+  .fireworks { position:fixed; inset:0; z-index:90; overflow:hidden;
+    background:radial-gradient(120% 90% at 50% 110%, #2A2140 0%, #14101F 60%, #0C0A14 100%);
+    display:flex; align-items:center; justify-content:center; padding:24px; }
+  .fireworks.off { display:none; }
+  .fireworks canvas { position:absolute; inset:0; }
+  .fwbox { position:relative; text-align:center; color:#fff; max-width:420px; width:100%; }
+  .fwj { font-size:var(--fs-mega); line-height:1; animation:fwpop .7s cubic-bezier(.3,1.5,.5,1); }
+  .fwt { font-size:var(--fs-title); font-weight:900; margin-top:10px; letter-spacing:.02em;
+         text-shadow:0 2px 18px rgba(255,209,102,.55); }
+  .fws { font-size:var(--fs-body); font-weight:700; color:#FFE7B0; margin-top:8px; }
+  .fireworks .btn.big { margin-top:26px; max-width:280px; margin-left:auto; margin-right:auto; }
+  @keyframes fwpop {
+    from { transform:scale(.3) rotate(-12deg); opacity:0; }
+    60%  { transform:scale(1.15) rotate(4deg); opacity:1; }
+    to   { transform:scale(1) rotate(0deg); opacity:1; }
+  }
   .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
   .tools { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
   .tools .btn { padding:12px 6px; }
@@ -343,6 +367,7 @@
       <canvas id="grid"></canvas>
       <div class="ghost off" id="ghost"></div>
       <canvas id="ink"></canvas>
+      <div class="fx" id="fx"></div>
     </div>
   </div>
   <div class="stroke-n" id="strokeN"></div>
@@ -375,6 +400,16 @@
   </div>
 </div>
 
+<div class="fireworks off" id="fireworks">
+  <canvas id="fwCanvas"></canvas>
+  <div class="fwbox">
+    <div class="fwj">🏆</div>
+    <div class="fwt" id="fwTitle">整課全對！</div>
+    <div class="fws" id="fwSub"></div>
+    <button class="btn primary big" id="fwDone">太棒了 🎉</button>
+  </div>
+</div>
+
 <div class="sheet off" id="hist">
   <div class="sheet-in">
     <h2>練習紀錄</h2>
@@ -397,6 +432,13 @@
   </div>
     </div>
     <p class="settings-hint" id="levelHint"></p>
+    <div class="cfg-row">
+      <span class="settings-label">音效</span>
+      <div class="modes three" id="soundSeg" style="flex:1 1 220px">
+        <button class="mode" data-snd="1"><b>開</b></button>
+        <button class="mode" data-snd="0"><b>關</b></button>
+      </div>
+    </div>
     <details class="note-box">
 <summary>這是怎麼判的？</summary>
 <p class="note">
@@ -942,6 +984,7 @@ function judge() {
     : '';
   if (op && (mode === 'order' || lv.order === 'fail')) bad.push('筆順不對：' + orderMsg);
   var pass = !bad.length;
+  if (pass) { SFX.right(); sparks('⭐'); } else SFX.wrong();
   /* 「差一點」：只差 1 筆、而且兩個百分比都還在 70 以上。
      這種才把家長通道亮起來，小孩整個亂寫的話不會亮。 */
   var near = !pass && diff <= lv.strokeSlack + 1 &&
@@ -1016,6 +1059,153 @@ function syncLevel() {
   $('levelHint').textContent = levelText();
   if ($('levelHint2')) $('levelHint2').textContent = levelText();
 }
+/* ────────── 音效 ──────────
+   用 WebAudio 即時合成，沒有音檔。音色沿用 chinese.html 那一組。
+   ⚠️ iOS 只允許在使用者手勢裡建立／喚醒 AudioContext，所以要在點擊時才 init。 */
+var soundOn = true;
+try { soundOn = localStorage.getItem('writeDemoSound') !== '0'; } catch (e) {}
+var ac = null, master = null;
+
+function initAudio() {
+  try {
+    if (!ac) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ac = new AC();
+      master = ac.createGain();
+      master.gain.value = 0.9;
+      master.connect(ac.destination);
+    }
+    if (ac.state === 'suspended') ac.resume();
+  } catch (e) { ac = null; }
+}
+document.addEventListener('pointerdown', initAudio, { once: false });
+
+function beep(freq, dur, type, vol, delay) {
+  if (!soundOn) return;
+  try {
+    initAudio();
+    if (!ac) return;
+    var t0 = ac.currentTime + (delay || 0);
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.4, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(master);
+    o.start(t0); o.stop(t0 + dur + 0.02);
+  } catch (e) {}
+}
+
+var SFX = {
+  right: function () { beep(880, 0.11, 'sine', 0.46, 0); beep(1320, 0.15, 'sine', 0.40, 0.07); },
+  wrong: function () { beep(240, 0.22, 'triangle', 0.42, 0); beep(180, 0.26, 'triangle', 0.36, 0.11); },
+  tick:  function () { beep(620, 0.09, 'sine', 0.34, 0); },
+  end:   function () { [660, 830, 990, 1320].forEach(function (f, i) {
+                         beep(f, 0.20, 'sine', 0.40, i * 0.11); }); }
+};
+
+/* 寫對時從格子裡飛出來的小星星 */
+function sparks(ch) {
+  var box = $('fx');
+  if (!box) return;
+  for (var i = 0; i < 8; i++) {
+    var el = document.createElement('span');
+    el.className = 'spark';
+    el.textContent = ch;
+    el.style.left = (12 + Math.random() * 76) + '%';
+    el.style.top = (45 + Math.random() * 25) + '%';
+    el.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+    el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+    box.appendChild(el);
+    (function (n) { setTimeout(function () { n.remove(); }, 950); })(el);
+  }
+}
+
+/* ────────── 一課全對的煙火 ────────── */
+var FW_COLORS = ['#FFD166','#FF8FA3','#6FD5A3','#7CC6F2','#FFC062','#C9F26D','#E4A0FF'];
+var fwRaf = 0, fwTimer = 0;
+
+function hideFireworks() {
+  if (fwRaf) { cancelAnimationFrame(fwRaf); fwRaf = 0; }
+  if (fwTimer) { clearTimeout(fwTimer); fwTimer = 0; }
+  $('fireworks').classList.add('off');
+}
+
+function showFireworks(title, sub) {
+  var wrap = $('fireworks'), cv = $('fwCanvas');
+  var ctx = cv.getContext && cv.getContext('2d');
+  if (!ctx) return;
+  $('fwTitle').textContent = title;
+  $('fwSub').textContent = sub;
+  wrap.classList.remove('off');
+
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = window.innerWidth, H = window.innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  var reduce = window.matchMedia &&
+               window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var shells = [], parts = [], last = Date.now(), nextLaunch = 0;
+
+  function launch() {
+    shells.push({ x: W * (0.15 + Math.random() * 0.7), y: H + 10,
+                  vy: -(H * 0.0011 + Math.random() * H * 0.00035),
+                  goal: H * (0.18 + Math.random() * 0.3),
+                  color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)] });
+  }
+  function burst(x, y, color) {
+    var n = 46 + Math.floor(Math.random() * 26);
+    var speed = 0.10 + Math.random() * 0.06;
+    for (var i = 0; i < n; i++) {
+      var a = (Math.PI * 2 * i) / n + Math.random() * 0.15;
+      var v = speed * (0.55 + Math.random() * 0.65);
+      parts.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+                   life: 1, color: color, size: 1.6 + Math.random() * 1.8 });
+    }
+    beep(520 + Math.random() * 420, 0.16, 'sine', 0.22, 0);   // 一朵配一聲，音高隨機
+  }
+  function frame() {
+    var now = Date.now(), dt = Math.min(now - last, 40); last = now;
+    ctx.clearRect(0, 0, W, H);
+    nextLaunch -= dt;
+    if (nextLaunch <= 0 && shells.length < 6) { launch(); nextLaunch = 260 + Math.random() * 320; }
+    for (var i = shells.length - 1; i >= 0; i--) {
+      var sh = shells[i];
+      sh.y += sh.vy * dt;
+      ctx.globalAlpha = 1; ctx.fillStyle = sh.color;
+      ctx.beginPath(); ctx.arc(sh.x, sh.y, 2.4, 0, 7); ctx.fill();
+      if (sh.y <= sh.goal) { burst(sh.x, sh.y, sh.color); shells.splice(i, 1); }
+    }
+    for (var k = parts.length - 1; k >= 0; k--) {
+      var pt = parts[k];
+      pt.vy += 0.00016 * dt;               // 重力
+      pt.x += pt.vx * dt; pt.y += pt.vy * dt;
+      pt.vx *= 0.995; pt.vy *= 0.995;      // 空氣阻力
+      pt.life -= dt / 1500;
+      if (pt.life <= 0) { parts.splice(k, 1); continue; }
+      ctx.globalAlpha = Math.max(pt.life, 0);
+      ctx.fillStyle = pt.color;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.size, 0, 7); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    fwRaf = requestAnimationFrame(frame);
+  }
+  if (reduce) {                            // 使用者要求減少動態就只畫一張定格
+    for (var j = 0; j < 5; j++)
+      burst(W * (0.2 + j * 0.15), H * (0.25 + (j % 2) * 0.12), FW_COLORS[j % FW_COLORS.length]);
+    ctx.globalAlpha = 1;
+    parts.forEach(function (pt) {
+      ctx.fillStyle = pt.color;
+      ctx.beginPath(); ctx.arc(pt.x + pt.vx * 260, pt.y + pt.vy * 260, pt.size, 0, 7); ctx.fill();
+    });
+  } else { launch(); fwRaf = requestAnimationFrame(frame); }
+  fwTimer = setTimeout(hideFireworks, 9000);
+}
+
 /* ────────── 首頁：選課、選模式、選難易度 ────────── */
 var pickG = 1, pickT = 1, curLesson = null;
 
@@ -1150,6 +1340,7 @@ $('levelSeg2').addEventListener('click', function (e) {
 });
 
 function startRound() {
+  hideFireworks();
   QS = curLesson[4].split('').map(questionOf).filter(Boolean);
   qi = 0; roundOK = 0; roundAdult = 0;
   $('done').classList.add('off');
@@ -1173,6 +1364,10 @@ function finishRound() {
     ? '其中 ' + roundAdult + ' 個是大人放行的，那幾個字值得再練一次。'
     : (rate >= 0.9 ? '這一課很穩了。' : rate >= 0.7 ? '再練一輪就更熟了。' : '慢慢來，多寫幾次就順了。');
   setTop(curLesson[3], '寫完了 · ' + m.name);
+  SFX.end();
+  if (total && roundOK === total) {
+    showFireworks('整課全對！', curLesson[3] + '　' + total + ' 個字一個都沒錯');
+  }
   saveRun({ g: curLesson[0], t: curLesson[1], k: curLesson[2], name: curLesson[3],
             ok: roundOK, total: total, icon: m.icon, mode: mode, at: Date.now() });
 }
@@ -1184,6 +1379,7 @@ function nextQ() {
 }
 
 function backHome() {
+  hideFireworks();
   $('play').classList.add('off');
   $('done').classList.add('off');
   $('home').classList.remove('off');
@@ -1209,6 +1405,25 @@ $('histBtn').addEventListener('click', function () {
 });
 $('histClose').addEventListener('click', function () { $('hist').classList.add('off'); });
 $('hist').addEventListener('click', function (e) { if (e.target === $('hist')) $('hist').classList.add('off'); });
+
+function syncSound() {
+  document.querySelectorAll('#soundSeg .mode').forEach(function (b) {
+    b.classList.toggle('sel', (b.dataset.snd === '1') === soundOn);
+  });
+}
+$('soundSeg').addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('.mode'); if (!b) return;
+  soundOn = b.dataset.snd === '1';
+  try { localStorage.setItem('writeDemoSound', soundOn ? '1' : '0'); } catch (err) {}
+  syncSound();
+  if (soundOn) SFX.right();          // 開起來馬上聽得到
+});
+syncSound();
+
+$('fwDone').addEventListener('click', hideFireworks);
+$('fireworks').addEventListener('click', function (e) {
+  if (e.target === $('fireworks')) hideFireworks();
+});
 
 $('gearBtn').addEventListener('click', function () { $('cfg').classList.remove('off'); });
 $('cfgClose').addEventListener('click', function () { $('cfg').classList.add('off'); });
