@@ -27,7 +27,6 @@
   html,body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); }
   body { position:relative; }                       /* 齒輪定位在內容區的右上角 */
   body { padding:16px 16px 40px; max-width:600px; margin:0 auto; }
-  body:has(#home:not(.off)) { padding-bottom:16px; }
   h1 { font-size:1.5rem; margin:6px 0 2px; }
   .sub { color:var(--ink-soft); font-size:.8125rem; margin:0 0 16px; line-height:1.6; }
   .card { background:var(--surface); border-radius:20px; padding:18px; box-shadow:var(--shadow); margin-bottom:14px; }
@@ -93,6 +92,8 @@
   .ok { color:var(--mint-ink); font-weight:800; }
   .no { color:var(--coral-ink); font-weight:800; }
   .topbar { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  /* 設定頁時頁首跟著內容置中對齊（考試頁要滿版，所以只在首頁限寬） */
+  body:has(#home:not(.off)) .topbar { max-width:560px; margin-left:auto; margin-right:auto; }
   .topbar-t { flex:1; min-width:0; }
   .topbar-t b { display:block; font-size:1.25rem; font-weight:800; line-height:1.25; }
   .topbar-t i { display:block; font-style:normal; font-size:.75rem; color:var(--ink-soft);
@@ -121,25 +122,25 @@
   .hist-row .h-t i { display:block; font-style:normal; font-weight:700;
                      font-size:.6875rem; color:var(--ink-faint); margin-top:2px; }
   .hist-row .h-s { font-size:.8125rem; font-weight:800; color:var(--ink-soft); white-space:nowrap; }
-  .pick-label { font-size:.8125rem; font-weight:800; color:var(--ink-soft); margin-bottom:8px; }
-  /* 首頁要一次看完，間距全部收緊一點 */
-  #home .card { padding:13px 14px; margin-bottom:8px; }
-  #home .sub { margin-bottom:10px; }
-  #home .mode { padding:10px 12px; }
-  #home .settings-hint { margin-top:8px; }
-  .wrapseg { flex-wrap:wrap; }
-  /* 課次一次全部攤開，不要內捲——切一半看不到後面幾課 */
-  .lesson-list { display:grid; grid-template-columns:repeat(2, 1fr); gap:6px; margin-top:10px; }
-  .lesson { font-family:inherit; text-align:left; cursor:pointer; padding:7px 10px;
-            border:2px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink);
-            display:flex; align-items:baseline; gap:8px; }
-  .lesson b { font-size:.8125rem; font-weight:800; flex:1; min-width:0; }
-  .lesson i { font-style:normal; font-size:.6875rem; color:var(--ink-faint); white-space:nowrap; }
-  .lesson.sel { border-color:var(--key); background:var(--key-soft); }
-  .lesson.sel b, .lesson.sel i { color:var(--key-deep); }
-  .modes { display:grid; gap:8px; }
-  .mode { font-family:inherit; text-align:left; cursor:pointer; padding:12px 14px;
-          border:2px solid var(--line); border-radius:14px; background:var(--surface); color:var(--ink); }
+  /* 設定頁的版式跟 alphabet.html / multiplication.html 一致：
+     一欄、大標號、小節標題、兩欄選項卡。往下捲是正常的，不用擠成一頁。 */
+  .card h2 { font-size:1.1875rem; font-weight:800; margin:0 0 14px; letter-spacing:-.01em;
+             display:flex; align-items:center; gap:10px; }
+  .card h2 .n { flex:0 0 auto; width:30px; height:30px; border-radius:99px;
+                background:var(--key); color:#fff; font-size:.9375rem;
+                display:inline-flex; align-items:center; justify-content:center;
+                font-variant-numeric:tabular-nums; }
+  .sub-h { font-size:.75rem; font-weight:800; color:var(--ink-soft);
+           margin:14px 2px 8px; letter-spacing:.04em; }
+  .modes { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .modes.three { grid-template-columns:repeat(3, 1fr); }
+  .hint { font-size:.75rem; color:var(--ink-soft); margin:10px 2px 0; line-height:1.6; }
+  /* 設定頁維持一欄置中，跟其他幾支 app 同寬 */
+  #home { max-width:560px; margin:0 auto; }
+  #home .card { margin-bottom:14px; }
+  .mode { font-family:inherit; text-align:left; cursor:pointer; padding:12px 13px;
+          border:2px solid var(--line); border-radius:16px; background:var(--bg); color:var(--ink);
+          transition:border-color .14s, background .14s; }
   .mode b { display:block; font-size:.9375rem; font-weight:800; }
   .mode i { display:block; font-style:normal; font-size:.75rem; color:var(--ink-soft); margin-top:3px; }
   .mode.sel { border-color:var(--key); background:var(--key-soft); }
@@ -173,17 +174,7 @@
     #play > h1, #play > .card.q, #play > .verdict, #play > .row { grid-column:1; }
     #play > .card:not(.q) { grid-column:2; grid-row:1 / span 20;
                             width:calc(var(--padmax) + 36px); padding:16px; }
-    /* 首頁橫式也分兩欄：左邊選課，右邊選模式和難易度，一頁看完不用捲 */
-    /* 一定要 :not(.off)，不然媒體查詢裡的 display:grid 會蓋掉 .off 的 display:none */
-    #home:not(.off) { max-width:1080px; margin:0 auto;
-            display:grid; grid-template-columns:1.15fr 1fr; column-gap:18px; align-items:start; }
-    /* 標題已經搬到頁首，#home 的第一列就是選課卡 */
-    #home > .sub { grid-column:1 / -1; margin-bottom:8px; }
-    #home > .card:nth-of-type(1) { grid-column:1; grid-row:2 / span 3; }
-    #home > .card:nth-of-type(2), #home > .card:nth-of-type(3), #home > .row { grid-column:2; }
-    #home .lesson-list { grid-template-columns:repeat(2, 1fr); }
-    #home .card { margin-bottom:12px; }
-  
+    /* 設定頁不跟著變寬——它跟其他幾支 app 一樣是一欄往下捲 */
     h1 { font-size:1.125rem; margin:0 0 8px; }
     /* 題目壓小，把高度讓給田字格 */
     #play > .card.q { margin-bottom:10px; padding:12px 14px; }
@@ -215,24 +206,7 @@
 
   /* 大螢幕（桌機）：內容跟著放大並置中，不然一小塊擠在上面、下面一大片空的 */
   @media (orientation:landscape) and (min-width:1280px) {
-    #home:not(.off) { max-width:min(1460px, 90vw);
-                      min-height:calc(100dvh - 96px); align-content:center; column-gap:26px; }
-    #home > .sub { font-size:.9375rem; margin-bottom:12px; }
-    #home .card { padding:20px 22px; margin-bottom:14px; }
-    /* 維持兩欄——三欄會讓「大個子，小個子」這種長課名折行 */
-    #home .lesson-list { gap:8px; margin-top:12px; }
-    #home .lesson { padding:10px 12px; }
-    #home .lesson b { font-size:.9375rem; }
-    #home .lesson i { font-size:.75rem; }
-    .pick-label { font-size:.9375rem; margin-bottom:10px; }
-    .seg button { font-size:.875rem; padding:8px 18px; }
-    #home .mode { padding:14px 16px; }
-    .mode b { font-size:1.0625rem; }
-    .mode i { font-size:.8125rem; }
-    .legend span { font-size:.8125rem; }
-    .legend b { font-size:1.1875rem; }
-    #home .settings-hint { font-size:.875rem; }
-    #home .btn { font-size:1.0625rem; padding:15px 18px; }
+    /* 設定頁在大螢幕上維持 560px 一欄，跟其他幾支 app 一樣，只有考試頁放大 */
     .topbar-t b { font-size:1.375rem; }
     .topbar-t i { font-size:.875rem; }
     .icobtn { width:46px; height:46px; }
@@ -281,38 +255,40 @@
 </header>
 
 <div id="home">
-  <p class="sub">用手指在格子裡寫，寫完按「我寫好了」會自動幫你對。一課寫完就結算，獎牌看這一輪答對幾成。</p>
+  <div class="card">
+    <h2><span class="n">1</span>選哪一課？</h2>
+    <div class="sub-h">年級</div>
+    <div class="modes three" id="gradeSeg"></div>
+    <div class="sub-h">學期</div>
+    <div class="modes" id="termSeg"></div>
+    <div class="sub-h">課次</div>
+    <div class="modes" id="lessonList"></div>
+  </div>
 
   <div class="card">
-    <div class="pick-label">選一課</div>
-    <div class="seg wrapseg" id="gradeSeg"></div>
-    <div class="seg wrapseg" id="termSeg" style="margin-top:8px"></div>
-    <div class="lesson-list" id="lessonList"></div>
+    <h2><span class="n">2</span>要練什麼？</h2>
+    <div class="modes" id="modeList">
+      <button class="mode" data-m="shape"><b>✍️ 寫得工整</b><i>只看字形和筆畫數，不管筆順</i></button>
+      <button class="mode" data-m="order"><b>🔢 照筆順寫</b><i>只看每一筆的順序對不對</i></button>
+      <button class="mode sel" data-m="both"><b>⭐ 兩個都要</b><i>字要工整，筆順也要對</i></button>
+    </div>
+    <div class="sub-h">判定寬鬆度</div>
+    <div class="modes three" id="levelSeg2"></div>
+    <p class="hint" id="levelHint2"></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">3</span>開始寫</h2>
     <div class="legend">
       <div><b>🥇</b><span>金牌<i>對 9 成</i></span></div>
       <div><b>🥈</b><span>銀牌<i>對 8 成</i></span></div>
       <div><b>🥉</b><span>銅牌<i>對 7 成</i></span></div>
       <div><b class="reddot">●</b><span>加油<i>再多練幾次</i></span></div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="pick-label">要練什麼</div>
-    <div class="modes" id="modeList">
-      <button class="mode" data-m="shape"><b>寫得工整</b><i>只看字形和筆畫數，不管筆順</i></button>
-      <button class="mode" data-m="order"><b>照筆順寫</b><i>只看每一筆的順序對不對</i></button>
-      <button class="mode sel" data-m="both"><b>兩個都要</b><i>字要工整，筆順也要對</i></button>
+    <p class="hint">用手指在格子裡寫，寫完按「我寫好了」會自動幫你對。一課寫完就結算，獎牌看這一輪答對幾成。</p>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary grow" id="startBtn" disabled>先選一課</button>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="pick-label">難易度</div>
-    <div class="seg" id="levelSeg2"></div>
-    <p class="settings-hint" id="levelHint2"></p>
-  </div>
-
-  <div class="row" style="margin-top:4px">
-    <button class="btn primary grow" id="startBtn" disabled>先選一課</button>
   </div>
 </div>
 
@@ -1039,40 +1015,44 @@ function termsOf(g) {
   return out;
 }
 
-function segHTML(items, cur, attr) {
+/* 年級、學期、難易度都用同一種選項卡（house style 的 .mode） */
+function modeHTML(items, cur, attr) {
   return items.map(function (it) {
-    return '<button ' + attr + '="' + it[0] + '"' +
-           (it[0] === cur ? ' class="sel"' : '') + '>' + it[1] + '</button>';
+    return '<button class="mode' + (it[0] === cur ? ' sel' : '') + '" ' +
+           attr + '="' + it[0] + '"><b>' + it[1] + '</b>' +
+           (it[2] ? '<i>' + it[2] + '</i>' : '') + '</button>';
   }).join('');
 }
 
 function drawHome() {
   var grades = [];
-  [1,2,3,4,5,6].forEach(function (g) { if (termsOf(g).length) grades.push([g, g + '年級']); });
-  $('gradeSeg').innerHTML = segHTML(grades, pickG, 'data-g');
+  [1,2,3,4,5,6].forEach(function (g) {
+    if (termsOf(g).length) grades.push([g, g + '年級']);
+  });
+  $('gradeSeg').innerHTML = modeHTML(grades, pickG, 'data-g');
 
   var ts = termsOf(pickG);
   if (ts.indexOf(pickT) < 0) pickT = ts[0];
-  $('termSeg').innerHTML = segHTML(ts.map(function (t) {
+  $('termSeg').innerHTML = modeHTML(ts.map(function (t) {
     return [t, t === 1 ? '上學期' : '下學期'];
   }), pickT, 'data-t');
 
   var ls = lessonsOf(pickG, pickT);
   $('lessonList').innerHTML = ls.map(function (L) {
     var on = curLesson && curLesson[0] === L[0] && curLesson[1] === L[1] && curLesson[2] === L[2];
-    return '<button class="lesson' + (on ? ' sel' : '') + '" data-k="' + L[2] + '">' +
-           '<b>第' + L[2] + '課　' + L[3] + '</b><i>' + L[4].length + ' 字</i></button>';
+    return '<button class="mode' + (on ? ' sel' : '') + '" data-k="' + L[2] + '">' +
+           '<b>第' + L[2] + '課　' + L[3] + '</b><i>' + L[4].length + ' 個生字</i></button>';
   }).join('');
 
-  $('levelSeg2').innerHTML = ['easy','normal','hard'].map(function (k) {
-    return '<button data-level="' + k + '"' + (k === level ? ' class="sel"' : '') + '>' +
-           LEVELS[k].name + '</button>';
-  }).join('');
+  var LV = { easy: '寫得像就好', normal: '一般標準', hard: '要求嚴格' };
+  $('levelSeg2').innerHTML = modeHTML(['easy','normal','hard'].map(function (k) {
+    return [k, LEVELS[k].name, LV[k]];
+  }), level, 'data-level');
   $('levelHint2').textContent = levelText();
 
   $('startBtn').disabled = !curLesson;
   $('startBtn').textContent = curLesson
-    ? '開始寫（' + curLesson[4].length + ' 個字）' : '先選一課';
+    ? '開始寫（' + curLesson[4].length + ' 個字）🚀' : '先選一課';
 }
 
 $('gradeSeg').addEventListener('click', function (e) {
@@ -1084,7 +1064,7 @@ $('termSeg').addEventListener('click', function (e) {
   pickT = Number(b.dataset.t); curLesson = null; drawHome();
 });
 $('lessonList').addEventListener('click', function (e) {
-  var b = e.target.closest && e.target.closest('.lesson'); if (!b) return;
+  var b = e.target.closest && e.target.closest('.mode'); if (!b) return;
   var k = Number(b.dataset.k);
   curLesson = lessonsOf(pickG, pickT).filter(function (L) { return L[2] === k; })[0];
   drawHome();
@@ -1095,6 +1075,7 @@ $('modeList').addEventListener('click', function (e) {
   document.querySelectorAll('#modeList .mode').forEach(function (x) {
     x.classList.toggle('sel', x.dataset.m === mode);
   });
+  syncLevel();          // 說明文字會隨模式改變（order 模式不看寬鬆度）
 });
 $('levelSeg2').addEventListener('click', function (e) {
   var b = e.target.closest && e.target.closest('button'); if (!b) return;
