@@ -18,24 +18,42 @@
     --shadow:0 1px 2px rgba(180,120,40,.06), 0 8px 22px rgba(180,120,40,.10);
     /* 田字格能長多大：寬度吃滿容器，再被「畫面剩多少高」和上限夾住。
        dvh 那行給支援的瀏覽器覆蓋，Safari 網址列縮放時才不會跳。 */
-    --padmax:clamp(200px, calc(100vh - 515px), 560px);
+    --padmax:clamp(200px, calc(100vh - 505px), 620px);
+    /* 字級 token 跟 chinese.html / multiplication.html 完全同一套。
+       不要寫死 rem——那些 app 在 iPad 上會整組往上跳一級，寫死就會小一號。 */
+    --fs-title: 1.5rem;    /* 主標 */
+    --fs-head:  1.25rem;   /* 段落標題、主要按鈕 */
+    --fs-body:  .9375rem;  /* 內文 */
+    --fs-note:  .75rem;    /* 說明、標籤 */
+    --wrap: 560px;
     --font:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
     --abc:"BiauKai","DFKai-SB","標楷體","Kaiti TC","楷體-繁","KaiTi","PingFang TC",sans-serif;
   }
-  :root { --padmax:clamp(200px, calc(100dvh - 515px), 560px); }
+  :root { --padmax:clamp(200px, calc(100dvh - 505px), 620px); }
+  @media (min-width: 700px) {
+    :root { --fs-title:1.85rem; --fs-head:1.5rem; --fs-body:1.0625rem; --fs-note:.85rem;
+            --wrap:720px; }
+  }
+  @media (min-width: 1100px) and (min-height: 900px) {
+    :root { --fs-title:2.1rem; --fs-head:1.7rem; --fs-body:1.15rem; --fs-note:.92rem;
+            --wrap:840px; }
+  }
+  @media (max-width: 360px) {
+    :root { --fs-title:1.32rem; --fs-head:1.15rem; }
+  }
   * { -webkit-tap-highlight-color: transparent; }
   html,body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); }
   body { position:relative; }                       /* 齒輪定位在內容區的右上角 */
   body { padding:16px 16px 40px; max-width:600px; margin:0 auto; }
   h1 { font-size:1.5rem; margin:6px 0 2px; }
-  .sub { color:var(--ink-soft); font-size:.8125rem; margin:0 0 16px; line-height:1.6; }
+  .sub { color:var(--ink-soft); font-size:var(--fs-note); margin:0 0 16px; line-height:1.6; }
   .card { background:var(--surface); border:1.5px solid var(--line); border-radius:20px;
           padding:16px; box-shadow:var(--shadow); margin-bottom:14px; }
   .q { text-align:center; }
   .q .bpmf { font-family:var(--abc); font-size:2.5rem; font-weight:700; letter-spacing:.1em; color:var(--key); }
   .q .word { font-family:var(--abc); font-size:2rem; font-weight:700; margin-top:6px; }
   .q .word u { text-decoration:none; color:var(--ink-faint); border-bottom:4px solid var(--key); padding:0 .18em; }
-  .q .hint { color:var(--ink-soft); font-size:.8125rem; margin-top:8px; }
+  .q .hint { color:var(--ink-soft); font-size:var(--fs-note); margin-top:8px; }
   .padwrap { display:flex; justify-content:center; margin:16px 0 10px; }
   .pad { position:relative; width:100%; max-width:var(--padmax); aspect-ratio:1 / 1;
          border-radius:18px; background:var(--surface); border:2px solid var(--line);
@@ -48,7 +66,7 @@
   .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
   .tools { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
   .tools .btn { padding:12px 6px; }
-  .btn { font-family:inherit; font-size:.9375rem; font-weight:800; cursor:pointer;
+  .btn { font-family:inherit; font-size:var(--fs-body); font-weight:800; cursor:pointer;
          border-radius:999px; padding:12px 18px; border:2px solid var(--line);
          background:var(--surface); color:var(--ink); }
   .btn:active { transform:translateY(1px); }
@@ -57,17 +75,17 @@
   .btn[disabled] { opacity:.4; cursor:default; }
   /* 家長／老師通道：平常是一行不起眼的小字，「差一點」的時候才亮起來 */
   .adult-link { display:block; margin:12px auto 0; background:none; border:0; cursor:pointer;
-                font-family:inherit; font-size:.75rem; font-weight:700; color:var(--ink-faint);
+                font-family:inherit; font-size:var(--fs-note); font-weight:700; color:var(--ink-faint);
                 text-decoration:underline; text-underline-offset:3px; padding:6px 10px; }
   .adult-link.hot { color:var(--amber); }
-  .near-tag { display:inline-block; font-size:.75rem; font-weight:800; color:#8A6410;
+  .near-tag { display:inline-block; font-size:var(--fs-note); font-weight:800; color:#8A6410;
               background:var(--amber-soft); border-radius:999px; padding:3px 10px; margin-top:6px; }
   .sheet { position:fixed; inset:0; background:rgba(64,53,43,.45); z-index:50;
            display:flex; align-items:flex-end; justify-content:center; padding:12px; }
   .sheet.off { display:none; }
   .sheet-in { background:var(--surface); border-radius:22px; padding:20px 18px 18px;
               width:100%; max-width:460px; max-height:88vh; overflow:auto; box-shadow:var(--shadow); }
-  .sheet-in h2 { font-size:1.0625rem; margin:0 0 4px; text-align:center; }
+  .sheet-in h2 { font-size:var(--fs-head); margin:0 0 4px; text-align:center; }
   .gate-q { font-size:1.75rem; font-weight:800; letter-spacing:.04em; margin:14px 0 10px; text-align:center; }
   /* 自己畫的數字鍵盤：iPad 橫式叫出系統鍵盤會吃掉半個畫面 */
   .dots { display:flex; justify-content:center; align-items:center; height:40px;
@@ -89,15 +107,15 @@
                   background:var(--surface); display:flex; align-items:center; justify-content:center;
                   font-family:var(--abc); font-size:104px; line-height:1; }
   .compare .box canvas { width:100%; height:100%; }
-  .note { font-size:.8125rem; color:var(--ink-soft); line-height:1.7; margin-top:10px; }
+  .note { font-size:var(--fs-note); color:var(--ink-soft); line-height:1.7; margin-top:10px; }
   .ok { color:var(--mint-ink); font-weight:800; }
   .no { color:var(--coral-ink); font-weight:800; }
   .topbar { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
   /* 設定頁時頁首跟著內容置中對齊（考試頁要滿版，所以只在首頁限寬） */
-  body:has(#home:not(.off)) .topbar { max-width:560px; margin-left:auto; margin-right:auto; }
+  body:has(#home:not(.off)) .topbar { max-width:var(--wrap); margin-left:auto; margin-right:auto; }
   .topbar-t { flex:1; min-width:0; }
-  .topbar-t b { display:block; font-size:1.25rem; font-weight:800; line-height:1.25; }
-  .topbar-t i { display:block; font-style:normal; font-size:.75rem; color:var(--ink-soft);
+  .topbar-t b { display:block; font-size:var(--fs-title); font-weight:800; line-height:1.25; }
+  .topbar-t i { display:block; font-style:normal; font-size:var(--fs-note); color:var(--ink-soft);
                 margin-top:2px; }
   .topbar-b { display:flex; gap:8px; flex:0 0 auto; }
   .icobtn { width:40px; height:40px; display:flex; align-items:center; justify-content:center;
@@ -107,47 +125,47 @@
   .legend { display:grid; grid-template-columns:repeat(4, auto); justify-content:space-between;
             gap:6px 10px; margin-top:10px; padding-top:10px; border-top:2px solid var(--line); }
   .legend > div { display:flex; align-items:center; gap:6px; }
-  .legend b { font-size:1.0625rem; line-height:1; flex:0 0 auto; }
-  .legend b.reddot { color:var(--coral-ink); font-size:.875rem; }
-  .legend span { font-size:.6875rem; font-weight:800; white-space:nowrap; }
-  .legend i { font-style:normal; font-weight:700; color:var(--ink-soft); margin-left:5px; }
+  .legend b { font-size:calc(var(--fs-body) * 1.15); line-height:1; flex:0 0 auto; }
+  .legend b.reddot { color:var(--coral-ink); font-size:var(--fs-note); }
+  .legend span { font-size:var(--fs-note); font-weight:800; white-space:nowrap; }
+  .legend i { font-style:normal; font-weight:700; color:var(--ink-soft); margin-left:5px; font-size:var(--fs-note); }
   .result { text-align:center; max-width:420px; margin:8vh auto 0; }
   .medal { font-size:4rem; line-height:1; }
-  .rname { font-size:1.375rem; font-weight:800; margin-top:6px; }
-  .rline { font-size:1rem; font-weight:800; color:var(--ink-soft); margin:10px 0 0; }
+  .rname { font-size:calc(var(--fs-head) * 1.15); font-weight:800; margin-top:6px; }
+  .rline { font-size:var(--fs-body); font-weight:800; color:var(--ink-soft); margin:10px 0 0; }
   .hist-row { display:flex; align-items:center; gap:10px; padding:10px 2px;
               border-bottom:2px solid var(--line); }
   .hist-row:last-child { border-bottom:0; }
-  .hist-row b { font-size:1.25rem; flex:0 0 auto; }
-  .hist-row .h-t { flex:1; min-width:0; font-size:.8125rem; font-weight:800; }
+  .hist-row b { font-size:var(--fs-head); flex:0 0 auto; }
+  .hist-row .h-t { flex:1; min-width:0; font-size:var(--fs-body); font-weight:800; }
   .hist-row .h-t i { display:block; font-style:normal; font-weight:700;
-                     font-size:.6875rem; color:var(--ink-faint); margin-top:2px; }
-  .hist-row .h-s { font-size:.8125rem; font-weight:800; color:var(--ink-soft); white-space:nowrap; }
+                     font-size:var(--fs-note); color:var(--ink-faint); margin-top:2px; }
+  .hist-row .h-s { font-size:var(--fs-body); font-weight:800; color:var(--ink-soft); white-space:nowrap; }
   /* 設定頁的版式跟 alphabet.html / multiplication.html 一致：
      一欄、大標號、小節標題、兩欄選項卡。往下捲是正常的，不用擠成一頁。 */
-  .card h2 { font-size:1.1875rem; font-weight:800; margin:0 0 14px; letter-spacing:-.01em;
+  .card h2 { font-size:var(--fs-head); font-weight:800; margin:0 0 14px; letter-spacing:-.01em;
              display:flex; align-items:center; gap:10px; }
-  .card h2 .n { flex:0 0 auto; width:30px; height:30px; border-radius:99px;
-                background:var(--key); color:#fff; font-size:.9375rem;
+  .card h2 .n { flex:0 0 auto; width:1.6em; height:1.6em; border-radius:99px;
+                background:var(--key); color:#fff; font-size:var(--fs-body);
                 display:inline-flex; align-items:center; justify-content:center;
                 font-variant-numeric:tabular-nums; }
-  .sub-h { font-size:.75rem; font-weight:800; color:var(--ink-soft);
+  .sub-h { font-size:var(--fs-note); font-weight:800; color:var(--ink-soft);
            margin:14px 2px 8px; letter-spacing:.04em; }
   .modes { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .modes.three { grid-template-columns:repeat(3, 1fr); }
-  .hint { font-size:.75rem; color:var(--ink-soft); margin:10px 2px 0; line-height:1.6; }
-  .tiny { font-size:.75rem; color:var(--ink-faint); text-align:center; margin-top:16px; }
-  .tally { margin-left:auto; font-size:.75rem; font-weight:800; color:var(--ink-soft); }
+  .hint { font-size:var(--fs-note); color:var(--ink-soft); margin:10px 2px 0; line-height:1.6; }
+  .tiny { font-size:var(--fs-note); color:var(--ink-faint); text-align:center; margin-top:16px; }
+  .tally { margin-left:auto; font-size:var(--fs-note); font-weight:800; color:var(--ink-soft); }
   .foot { margin-top:18px; display:flex; flex-direction:column; gap:10px; }
-  .btn.big { width:100%; font-size:1.1875rem; padding:16px; min-height:58px; border-radius:18px; }
+  .btn.big { width:100%; font-size:var(--fs-head); padding:16px; min-height:58px; border-radius:18px; }
   /* 最近 7 天：顏色越深代表那天練越多次（跟 multiplication.html 同一套） */
   .days7 { display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:6px; }
   .d7 { background:var(--bg); border:2px solid var(--line); border-radius:14px;
         padding:9px 2px 10px; text-align:center; }
-  .d7 u { display:block; text-decoration:none; font-size:.75rem; font-weight:800; color:var(--ink-soft); }
-  .d7 b { display:block; font-size:.75rem; font-weight:700; color:var(--ink-faint);
+  .d7 u { display:block; text-decoration:none; font-size:var(--fs-note); font-weight:800; color:var(--ink-soft); }
+  .d7 b { display:block; font-size:var(--fs-note); font-weight:700; color:var(--ink-faint);
           font-variant-numeric:tabular-nums; margin-top:1px; }
-  .d7 span { display:block; margin-top:7px; font-size:.9375rem; font-weight:800;
+  .d7 span { display:block; margin-top:7px; font-size:var(--fs-body); font-weight:800;
              font-variant-numeric:tabular-nums; color:var(--ink-faint); }
   .d7.lv1 { background:var(--mint-soft); border-color:var(--mint-soft); }
   .d7.lv2 { background:var(--mint-soft); border-color:var(--mint); }
@@ -157,38 +175,41 @@
   .d7.today { border-color:var(--key); }
   .d7.today u { color:var(--key-deep); }
   /* 設定頁維持一欄置中，跟其他幾支 app 同寬 */
-  #home { max-width:560px; margin:0 auto; }
+  #home { max-width:var(--wrap); margin:0 auto; }
   #home .card { margin-bottom:14px; }
   .mode { font-family:inherit; text-align:left; cursor:pointer; padding:12px 13px;
           border:2px solid var(--line); border-radius:16px; background:var(--bg); color:var(--ink);
           transition:border-color .14s, background .14s; }
-  .mode b { display:block; font-size:.9375rem; font-weight:800; }
-  .mode i { display:block; font-style:normal; font-size:.75rem; color:var(--ink-soft); margin-top:3px; }
+  .mode b { display:block; font-size:var(--fs-body); font-weight:800; }
+  .mode i { display:block; font-style:normal; font-size:var(--fs-note); color:var(--ink-soft); margin-top:3px; }
   .mode.sel { border-color:var(--key); background:var(--key-soft); }
   .mode.sel b, .mode.sel i { color:var(--key-deep); }
   .cfg-row { display:flex; align-items:center; justify-content:space-between; gap:12px;
              flex-wrap:wrap; margin-top:14px; }
   .note-box { margin-top:12px; }
-  .note-box > summary { font-size:.75rem; font-weight:800; color:var(--ink-faint);
+  .note-box > summary { font-size:var(--fs-note); font-weight:800; color:var(--ink-faint);
                         cursor:pointer; padding:6px 2px; list-style:none; }
   .note-box > summary::-webkit-details-marker { display:none; }
   .note-box > summary::before { content:'▸ '; }
   .note-box[open] > summary::before { content:'▾ '; }
   .note-box .note { margin-top:4px; }
-  .settings-label { font-size:.75rem; font-weight:800; color:var(--ink-soft); }
-  .settings-hint { font-size:.75rem; color:var(--ink-soft); line-height:1.6; margin-top:10px; }
+  .settings-label { font-size:var(--fs-note); font-weight:800; color:var(--ink-soft); }
+  .settings-hint { font-size:var(--fs-note); color:var(--ink-soft); line-height:1.6; margin-top:10px; }
   .seg { display:flex; gap:4px; background:var(--track); border-radius:999px; padding:3px; }
   .seg button { font-family:inherit; font-size:.75rem; font-weight:800; cursor:pointer;
                 border:0; background:none; color:var(--ink-soft); border-radius:999px; padding:6px 14px; }
   .seg button.sel { background:var(--surface); color:var(--key-deep); box-shadow:var(--shadow); }
   .next-k { display:inline-block; background:var(--key-soft); color:var(--key-deep);
             border-radius:999px; padding:2px 12px; font-weight:800; }
-  .stroke-n { text-align:center; font-size:.8125rem; color:var(--ink-soft); margin-top:8px; font-weight:800; }
+  .stroke-n { text-align:center; font-size:var(--fs-body); color:var(--ink-soft); margin-top:8px; font-weight:800; }
 
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
   @media (orientation:landscape) and (min-width:760px) {
     /* 書寫空間優先：格子吃到高度和寬度的極限，左欄留 460px 給題目和判定 */
-    :root { --padmax:min(calc(100dvh - 258px), calc(100vw - 560px), 760px); }
+    /* 「照筆順寫」沒有「我寫好了」那顆，格子可以再大一圈 */
+    :root { --padmax:min(calc(100dvh - 286px), calc(100vw - 560px), 820px); }
+    body.m-order { --padmax:min(calc(100dvh - 248px), calc(100vw - 560px), 820px); }
+    .topbar-t b { font-size:var(--fs-head); }        /* 橫式標題壓一級，高度讓給格子 */
     body { max-width:1500px; padding:14px 20px 10px; }
     #play:not(.off) { display:grid; grid-template-columns:1fr auto;
                       column-gap:22px; align-items:start; }
@@ -196,7 +217,6 @@
     #play > .card:not(.q) { grid-column:2; grid-row:1 / span 20;
                             width:calc(var(--padmax) + 36px); padding:16px; }
     /* 設定頁不跟著變寬——它跟其他幾支 app 一樣是一欄往下捲 */
-    h1 { font-size:1.125rem; margin:0 0 8px; }
     /* 題目壓小，把高度讓給田字格 */
     #play > .card.q { margin-bottom:10px; padding:12px 14px; }
     .q .bpmf { font-size:1.875rem; }
@@ -216,31 +236,23 @@
     .verdict .adult-link { margin-left:0; margin-right:auto; }
     .verdict .note { line-height:1.45; margin-top:5px; }
     /* 橫式左欄擠，獎牌說明排成一列、提示句收起來 */
-    .legend { gap:4px 10px; margin-top:8px; padding-top:8px; }
-    .legend b { font-size:.9375rem; }
     .topbar { margin-bottom:10px; }
-    .topbar-t b { font-size:1.0625rem; }
-    h1 { padding-right:52px; }                          /* 標題別跑到齒輪底下 */
     .compare .box { width:84px; height:84px; font-size:67px; }
     .sheet { align-items:center; }
   }
 
   /* 大螢幕（桌機）：內容跟著放大並置中，不然一小塊擠在上面、下面一大片空的 */
   @media (orientation:landscape) and (min-width:1280px) {
-    /* 設定頁在大螢幕上維持 560px 一欄，跟其他幾支 app 一樣，只有考試頁放大 */
-    .topbar-t b { font-size:1.375rem; }
-    .topbar-t i { font-size:.875rem; }
     .icobtn { width:46px; height:46px; }
     /* 練習頁：格子上限拉高，題目和判定的字也跟著放大 */
-    :root { --padmax:min(calc(100dvh - 280px), calc(100vw - 640px), 900px); }
+    :root { --padmax:min(calc(100dvh - 300px), calc(100vw - 640px), 940px); }
+    body.m-order { --padmax:min(calc(100dvh - 264px), calc(100vw - 640px), 940px); }
     #play > .card.q { padding:18px 20px; margin-bottom:12px; }
     .q .bpmf { font-size:2.5rem; }
     .q .word { font-size:2.25rem; }
-    .tools .btn { font-size:1rem; padding:13px 6px; }
-    #play .btn.primary { font-size:1.0625rem; padding:15px 18px; }
-    .stroke-n { font-size:.9375rem; }
+    .tools .btn { padding:13px 6px; }
+    #play .btn.primary { padding:15px 18px; }
     .compare .box { width:104px; height:104px; font-size:83px; }
-    .verdict .note { font-size:.875rem; }
     .verdict:not(:empty) { padding:14px 20px; }
     .result { max-width:520px; margin-top:12vh; }
     .medal { font-size:5rem; }
@@ -344,10 +356,6 @@
 </div>
 
 <div class="verdict" id="verdict"></div>
-
-<div class="row">
-  <button class="btn grow" id="nextBtn">換一題 →</button>
-</div>
 
 </div><!-- /#play -->
 
@@ -839,7 +847,8 @@ function loadQ() {
   $('ghost').classList.add('off');
   say('');
   drawGrid(); paintInk(); syncStrokeN();
-  $('doneBtn').hidden = mode === 'stroke';
+  $('doneBtn').hidden = (mode === 'order');   // 逐筆檢查會自己判，不用這顆
+  document.body.classList.toggle('m-order', mode === 'order');   // 少一顆按鈕，格子可以放大
 }
 
 /* ── 手指／滑鼠 ── */
@@ -882,7 +891,8 @@ function endStroke() {
     strokesDone.push(s);
     step++;
     paintInk(); syncStrokeN();
-    if (strokesDone.length >= n) say('全部 ' + n + ' 筆都對了！按下面那顆 ⭕', 'ok');
+    /* 最後一筆寫完就自己結算，這個模式不需要「我寫好了」 */
+    if (strokesDone.length >= n) { say('全部 ' + n + ' 筆都對了！🎉', 'ok'); judge(); }
     else say('第 ' + step + ' 筆對了 ✓', 'ok');
     return;
   }
@@ -907,7 +917,7 @@ $('undoBtn').addEventListener('click', function () {
 $('ghostBtn').addEventListener('click', function () {
   $('ghost').classList.toggle('off');
 });
-$('doneBtn').addEventListener('click', function () {
+function judge() {
   if (!strokesDone.length) { say('還沒寫喔', 'no'); return; }
   var cmp = compare(cur.c, strokesDone);
   var want = cur.s || 0;
@@ -977,8 +987,8 @@ $('doneBtn').addEventListener('click', function () {
     });
     $('adultBtn').addEventListener('click', function () { openGate(cmp, got, want); });
   }
-});
-$('nextBtn').addEventListener('click', nextQ);
+}
+$('doneBtn').addEventListener('click', judge);
 
 /* 判定寬鬆度的開關。併進 chinese.html 的時候這一段要搬進設定頁，不要留在練習畫面上。 */
 function levelText() {
