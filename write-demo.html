@@ -22,6 +22,7 @@
   :root { --padmax:clamp(200px, calc(100dvh - 515px), 560px); }
   * { -webkit-tap-highlight-color: transparent; }
   html,body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); }
+  body { position:relative; }                       /* 齒輪定位在內容區的右上角 */
   body { padding:16px 16px 40px; max-width:600px; margin:0 auto; }
   h1 { font-size:1.5rem; margin:6px 0 2px; }
   .sub { color:var(--ink-soft); font-size:.8125rem; margin:0 0 16px; line-height:1.6; }
@@ -87,6 +88,13 @@
   .note { font-size:.8125rem; color:var(--ink-soft); line-height:1.7; margin-top:10px; }
   .ok { color:var(--mint-ink); font-weight:800; }
   .no { color:var(--coral-ink); font-weight:800; }
+  .gear { position:absolute; top:14px; right:16px; z-index:30; cursor:pointer;
+          width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+          border-radius:999px; border:2px solid var(--line); background:var(--surface);
+          color:var(--ink-soft); padding:0; }
+  .gear:active { background:var(--key-soft); border-color:var(--key); color:var(--key-deep); }
+  .cfg-row { display:flex; align-items:center; justify-content:space-between; gap:12px;
+             flex-wrap:wrap; margin-top:14px; }
   .note-box { margin-top:12px; }
   .note-box > summary { font-size:.75rem; font-weight:800; color:var(--ink-faint);
                         cursor:pointer; padding:6px 2px; list-style:none; }
@@ -94,10 +102,8 @@
   .note-box > summary::before { content:'▸ '; }
   .note-box[open] > summary::before { content:'▾ '; }
   .note-box .note { margin-top:4px; }
-  .settings { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:14px;
-              padding:12px 14px; border:2px dashed var(--line); border-radius:16px; }
   .settings-label { font-size:.75rem; font-weight:800; color:var(--ink-soft); }
-  .settings-hint { font-size:.6875rem; color:var(--ink-faint); flex:1 1 100%; line-height:1.5; }
+  .settings-hint { font-size:.75rem; color:var(--ink-soft); line-height:1.6; margin-top:10px; }
   .seg { display:flex; gap:4px; background:var(--track); border-radius:999px; padding:3px; }
   .seg button { font-family:inherit; font-size:.75rem; font-weight:800; cursor:pointer;
                 border:0; background:none; color:var(--ink-soft); border-radius:999px; padding:6px 14px; }
@@ -110,8 +116,7 @@
     :root { --padmax:min(calc(100dvh - 200px), calc(100vw - 560px), 760px); }
     body { max-width:1500px; padding:14px 20px 10px;
            display:grid; grid-template-columns:1fr auto; column-gap:22px; align-items:start; }
-    body > h1, body > .card.q, body > .verdict, body > .row,
-    body > .note-box, body > .settings { grid-column:1; }
+    body > h1, body > .card.q, body > .verdict, body > .row { grid-column:1; }
     body > .sub { display:none; }                      /* 說明搬到收合區，橫式不佔位置 */
     body > .card:not(.q) { grid-column:2; grid-row:1 / span 20; width:calc(var(--padmax) + 36px); }
     body > .card:not(.q) { padding:16px; }
@@ -133,19 +138,23 @@
     .verdict .row { justify-content:flex-start; }
     .verdict .btn.grow { flex:0 1 auto; min-width:150px; }
     .verdict .adult-link { margin-left:0; margin-right:auto; }
-    .note-box { margin-top:8px; }
-    .note-box .note { font-size:.6875rem; line-height:1.5; }
     .verdict .note { line-height:1.45; margin-top:5px; }
-    /* 橫式的左欄放不下，設定框收成一行，說明字收進 title */
-    .settings { margin-top:10px; padding:8px 12px; gap:8px; }
-    .settings-hint { display:none; }
-    .seg button { padding:5px 12px; }
+    .gear { top:10px; right:12px; }
+    h1 { padding-right:52px; }                          /* 標題別跑到齒輪底下 */
     .compare .box { width:84px; height:84px; font-size:67px; }
     .sheet { align-items:center; }
   }
 </style>
 </head>
 <body>
+
+<button class="gear" id="gearBtn" aria-label="設定" title="設定">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="3"></circle>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+  </svg>
+</button>
 
 <h1>看注音寫字</h1>
 <p class="sub">試做版。用手指在格子裡寫，寫完按「我寫好了」會自動幫你對。<br>
@@ -182,6 +191,31 @@
   <button class="btn grow" id="nextBtn">換一題 →</button>
 </div>
 
+<div class="sheet off" id="cfg">
+  <div class="sheet-in">
+    <h2>設定</h2>
+    <div class="cfg-row">
+      <span class="settings-label">判定寬鬆度</span>
+      <div class="seg" id="levelSeg">
+    <button data-level="easy">輕鬆</button>
+    <button data-level="normal">標準</button>
+    <button data-level="hard">嚴格</button>
+  </div>
+    </div>
+    <p class="settings-hint" id="levelHint"></p>
+    <details class="note-box">
+<summary>這是怎麼判的？</summary>
+<p class="note">
+  寫完按「我寫好了」，程式會拿楷體字型畫出來的字當標準答案，比對「該有的地方寫到沒有」和「有沒有多寫」，再加上總筆畫數要跟教育部辭典一致。<br>
+  <b>筆順用的是台灣標準</b>（全字庫 CNS11643，跟教育部辭典的筆畫數逐字對過，2257 字裡只差 5 字）。它從你寫的軌跡反推每一筆是橫還是豎還是撇，認不準就不出聲——寧可漏抓，也不要跟寫對的孩子說他寫錯。<b>沒有筆順示範動畫</b>，那需要每一筆的座標，目前找得到有座標的都是大陸標準。
+</p>
+</details>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary grow" id="cfgClose">好了</button>
+    </div>
+  </div>
+</div>
+
 <div class="sheet off" id="sheet">
   <div class="sheet-in">
     <h2>家長／老師確認</h2>
@@ -209,23 +243,6 @@
   </div>
 </div>
 
-<div class="settings">
-  <span class="settings-label">家長設定 · 判定寬鬆度</span>
-  <div class="seg" id="levelSeg">
-    <button data-level="easy">輕鬆</button>
-    <button data-level="normal">標準</button>
-    <button data-level="hard">嚴格</button>
-  </div>
-  <span class="settings-hint" id="levelHint"></span>
-</div>
-
-<details class="note-box">
-<summary>這是怎麼判的？</summary>
-<p class="note">
-  寫完按「我寫好了」，程式會拿楷體字型畫出來的字當標準答案，比對「該有的地方寫到沒有」和「有沒有多寫」，再加上總筆畫數要跟教育部辭典一致。<br>
-  <b>筆順用的是台灣標準</b>（全字庫 CNS11643，跟教育部辭典的筆畫數逐字對過，2257 字裡只差 5 字）。它從你寫的軌跡反推每一筆是橫還是豎還是撇，認不準就不出聲——寧可漏抓，也不要跟寫對的孩子說他寫錯。<b>沒有筆順示範動畫</b>，那需要每一筆的座標，目前找得到有座標的都是大陸標準。
-</p>
-</details>
 
 <script>
 /* 教育部辭典的總筆畫（台灣的標準），筆畫數用這個查，不用大陸的筆順資料 */
@@ -766,6 +783,11 @@ function syncLevel() {
     (lv.strokeSlack ? '，筆畫數差 ' + lv.strokeSlack + ' 筆之內也算' : '，筆畫數要正確') +
     '。筆順' + (lv.order === 'off' ? '不看' : lv.order === 'hint' ? '只提示、不算不過' : '不對就不算過') + '。';
 }
+/* 齒輪：所有可調的東西都在這個面板裡 */
+$('gearBtn').addEventListener('click', function () { $('cfg').classList.remove('off'); });
+$('cfgClose').addEventListener('click', function () { $('cfg').classList.add('off'); });
+$('cfg').addEventListener('click', function (e) { if (e.target === $('cfg')) $('cfg').classList.add('off'); });
+
 $('levelSeg').addEventListener('click', function (e) {
   var b = e.target.closest && e.target.closest('button');
   if (!b) return;
