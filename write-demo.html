@@ -13,13 +13,16 @@
     --coral:#F2705C; --coral-ink:#D64B36; --coral-soft:#FFE9E5;
     --amber:#E9A317; --amber-soft:#FFF2DA;
     --shadow:0 1px 2px rgba(180,120,40,.06), 0 8px 22px rgba(180,120,40,.10);
-    --padsz:280px;
+    /* 田字格能長多大：寬度吃滿容器，再被「畫面剩多少高」和上限夾住。
+       dvh 那行給支援的瀏覽器覆蓋，Safari 網址列縮放時才不會跳。 */
+    --padmax:clamp(200px, calc(100vh - 515px), 560px);
     --font:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
     --abc:"BiauKai","DFKai-SB","標楷體","Kaiti TC","楷體-繁","KaiTi","PingFang TC",sans-serif;
   }
+  :root { --padmax:clamp(200px, calc(100dvh - 515px), 560px); }
   * { -webkit-tap-highlight-color: transparent; }
   html,body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); }
-  body { padding:16px 16px 40px; max-width:520px; margin:0 auto; }
+  body { padding:16px 16px 40px; max-width:600px; margin:0 auto; }
   h1 { font-size:1.5rem; margin:6px 0 2px; }
   .sub { color:var(--ink-soft); font-size:.8125rem; margin:0 0 16px; line-height:1.6; }
   .card { background:var(--surface); border-radius:20px; padding:18px; box-shadow:var(--shadow); margin-bottom:14px; }
@@ -29,11 +32,12 @@
   .q .word u { text-decoration:none; color:var(--ink-faint); border-bottom:4px solid var(--key); padding:0 .18em; }
   .q .hint { color:var(--ink-soft); font-size:.8125rem; margin-top:8px; }
   .padwrap { display:flex; justify-content:center; margin:16px 0 10px; }
-  .pad { position:relative; width:var(--padsz); height:var(--padsz); border-radius:18px;
-         background:var(--surface); border:2px solid var(--line); touch-action:none; }
+  .pad { position:relative; width:100%; max-width:var(--padmax); aspect-ratio:1 / 1;
+         border-radius:18px; background:var(--surface); border:2px solid var(--line);
+         touch-action:none; }
   .pad canvas { position:absolute; inset:0; width:100%; height:100%; border-radius:16px; }
   .pad .ghost { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-                font-family:var(--abc); font-size:calc(var(--padsz) * .82); line-height:1; color:rgba(64,53,43,.12);
+                font-family:var(--abc); line-height:1; color:rgba(64,53,43,.12);
                 pointer-events:none; user-select:none; }
   .pad .ghost.off { display:none; }
   .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
@@ -83,16 +87,24 @@
   .note { font-size:.8125rem; color:var(--ink-soft); line-height:1.7; margin-top:10px; }
   .ok { color:var(--mint-ink); font-weight:800; }
   .no { color:var(--coral-ink); font-weight:800; }
+  .settings { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:14px;
+              padding:12px 14px; border:2px dashed var(--line); border-radius:16px; }
+  .settings-label { font-size:.75rem; font-weight:800; color:var(--ink-soft); }
+  .settings-hint { font-size:.6875rem; color:var(--ink-faint); flex:1 1 100%; line-height:1.5; }
+  .seg { display:flex; gap:4px; background:var(--track); border-radius:999px; padding:3px; }
+  .seg button { font-family:inherit; font-size:.75rem; font-weight:800; cursor:pointer;
+                border:0; background:none; color:var(--ink-soft); border-radius:999px; padding:6px 14px; }
+  .seg button.sel { background:var(--surface); color:var(--key-deep); box-shadow:var(--shadow); }
   .stroke-n { text-align:center; font-size:.8125rem; color:var(--ink-soft); margin-top:8px; font-weight:800; }
 
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
   @media (orientation:landscape) and (min-width:760px) {
-    :root { --padsz:330px; }
-    body { max-width:940px; padding:16px 20px 12px;
+    :root { --padmax:min(calc(100dvh - 285px), 46vw, 560px); }
+    body { max-width:1100px; padding:16px 20px 12px;
            display:grid; grid-template-columns:1fr auto; column-gap:24px; align-items:start; }
     body > h1, body > .sub, body > .card.q, body > .verdict, body > .row,
-    body > .note { grid-column:1; }
-    body > .card:not(.q) { grid-column:2; grid-row:1 / span 20; width:calc(var(--padsz) + 40px); }
+    body > .note, body > .settings { grid-column:1; }
+    body > .card:not(.q) { grid-column:2; grid-row:1 / span 20; width:calc(var(--padmax) + 40px); }
     .padwrap { margin:10px 0 8px; }
     .sub { margin-bottom:6px; }
     body > .card.q { margin-bottom:10px; }
@@ -105,7 +117,12 @@
     .verdict .row { justify-content:flex-start; }
     .verdict .btn.grow { flex:0 1 auto; min-width:150px; }
     .verdict .adult-link { margin-left:0; margin-right:auto; }
-    body > .note { font-size:.75rem; line-height:1.55; margin-top:8px; }
+    body > .note { font-size:.625rem; line-height:1.4; margin-top:6px; }
+    .verdict .note { line-height:1.45; margin-top:5px; }
+    /* 橫式的左欄放不下，設定框收成一行，說明字收進 title */
+    .settings { margin-top:10px; padding:8px 12px; gap:8px; }
+    .settings-hint { display:none; }
+    .seg button { padding:5px 12px; }
     .compare .box { width:84px; height:84px; font-size:67px; }
     .sheet { align-items:center; }
   }
@@ -175,6 +192,16 @@
   </div>
 </div>
 
+<div class="settings">
+  <span class="settings-label">家長設定 · 判定寬鬆度</span>
+  <div class="seg" id="levelSeg">
+    <button data-level="easy">輕鬆</button>
+    <button data-level="normal">標準</button>
+    <button data-level="hard">嚴格</button>
+  </div>
+  <span class="settings-hint" id="levelHint"></span>
+</div>
+
 <p class="note">
   寫完按「我寫好了」，程式會拿楷體字型畫出來的字當標準答案，比對「該有的地方寫到沒有」和「有沒有多寫」，再加上總筆畫數要跟教育部辭典一致。<br>
   <b>這一頁不判筆順、也不示範筆順。</b>唯一能用的筆順資料是大陸標準（艹 算 3 畫，台灣算 4 畫），照著練會跟學校教的打架，所以先拿掉，等找到教育部的筆順資料再放回來。
@@ -211,16 +238,48 @@ var step = 0;                   // 逐筆模式用的（目前停用）
 var wrongStreak = 0;            // 同一題連續寫錯幾次，連錯 3 次自動開描紅
 var adultPassed = [];           // 被大人放行的字（併進 chinese.html 時要存成 by:'adult'）
 
+/* 判定寬鬆度。用手指在大格子裡寫，本來就會超出筆畫邊緣，
+   原本 80/80 太嚴——實測「左」寫到 82%、沒歪出去 78%、筆畫也對，卻被判不過。
+   strokeSlack 是容許的筆畫數誤差（剛開始學的孩子少寫一筆很常見）。 */
+var LEVELS = {
+  easy:   { name: '輕鬆', cover: 0.60, clean: 0.55, strokeSlack: 1 },
+  normal: { name: '標準', cover: 0.70, clean: 0.65, strokeSlack: 0 },
+  hard:   { name: '嚴格', cover: 0.80, clean: 0.78, strokeSlack: 0 }
+};
+var level = 'normal';
+try { if (LEVELS[localStorage.getItem('writeDemoLevel')]) level = localStorage.getItem('writeDemoLevel'); } catch (e) {}
+function L() { return LEVELS[level]; }
+
 var $ = function (id) { return document.getElementById(id); };
 var pad = $('pad'), ink = $('ink'), grid = $('grid');
 var ictx = ink.getContext('2d'), gctx = grid.getContext('2d');
+/* SIZE 只是內部座標系，跟畫面上多大無關——所有筆畫都存成 0–280 的座標，
+   實際尺寸由 CSS 決定，指標位置在 xy() 用 getBoundingClientRect 換算回來。
+   所以田字格要放多大都行，判定邏輯完全不用動。 */
 var SIZE = 280, dpr = Math.min(window.devicePixelRatio || 1, 3);
 
+function padPx() { return pad.getBoundingClientRect().width || SIZE; }
+
 function fitCanvas(cv, ctx) {
-  cv.width = SIZE * dpr; cv.height = SIZE * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  /* 解析度跟著實際尺寸走，格子放大了線條才不會糊 */
+  var k = Math.min((padPx() / SIZE) * dpr, 4);
+  cv.width = Math.round(SIZE * k); cv.height = Math.round(SIZE * k);
+  ctx.setTransform(k, 0, 0, k, 0, 0);
 }
-fitCanvas(ink, ictx); fitCanvas(grid, gctx);
+
+/* 描紅的字跟著格子一起縮放 */
+function fitGhost() { $('ghost').style.fontSize = Math.round(padPx() * 0.82) + 'px'; }
+
+function relayout() {
+  fitCanvas(ink, ictx); fitCanvas(grid, gctx);
+  fitGhost(); drawGrid(); paintInk();
+}
+relayout();
+/* 兩種都掛：ResizeObserver 抓容器變化，resize/orientationchange 抓轉向。
+   實測 ResizeObserver 在某些情況不會因為轉向而觸發，所以不能只靠它。 */
+if (window.ResizeObserver) new ResizeObserver(relayout).observe(pad);
+window.addEventListener('resize', relayout);
+window.addEventListener('orientationchange', function () { setTimeout(relayout, 200); });
 
 /* 田字格：外框已經是 CSS 的框，這裡只畫中間的十字和對角線 */
 function drawGrid() {
@@ -462,7 +521,7 @@ function loadQ() {
   $('qhint').textContent = mode === 'stroke'
     ? '照筆順一筆一筆寫，寫錯那一筆會退回去'
     : '在格子裡寫這個字，寫好按下面那顆';
-  $('ghost').textContent = cur.c;
+  $('ghost').textContent = cur.c; fitGhost();
   $('ghost').classList.add('off');
   say('');
   drawGrid(); paintInk(); syncStrokeN();
@@ -540,20 +599,21 @@ $('doneBtn').addEventListener('click', function () {
   var want = MOE_STROKES[cur.c] || 0;
   var got = strokesDone.length;
   var box = inkThumb(strokesDone, 130);
-  var bad = [];
-  if (want && got !== want) {
+  var lv = L(), bad = [];
+  var diff = want ? Math.abs(got - want) : 0;
+  if (want && diff > lv.strokeSlack) {
     bad.push(got > want ? '多寫了 ' + (got - want) + ' 筆（這個字 ' + want + ' 畫，你寫了 ' + got + ' 筆）'
                         : '少了 ' + (want - got) + ' 筆（這個字 ' + want + ' 畫，你寫了 ' + got + ' 筆）');
   }
   if (cmp) {
-    if (cmp.cover < 0.80) bad.push('有些地方沒寫到（寫到 ' + Math.round(cmp.cover * 100) + '%）');
-    if (cmp.clean < 0.80) bad.push('有些筆畫寫到字的外面去了（' + Math.round((1 - cmp.clean) * 100) + '% 在外面）');
+    if (cmp.cover < lv.cover) bad.push('有些地方沒寫到（寫到 ' + Math.round(cmp.cover * 100) + '%）');
+    if (cmp.clean < lv.clean) bad.push('有些筆畫寫到字的外面去了（' + Math.round((1 - cmp.clean) * 100) + '% 在外面）');
   }
   var pass = !bad.length;
   /* 「差一點」：只差 1 筆、而且兩個百分比都還在 70 以上。
      這種才把家長通道亮起來，小孩整個亂寫的話不會亮。 */
-  var near = !pass && Math.abs(got - (want || got)) <= 1 &&
-             !!cmp && cmp.cover >= 0.70 && cmp.clean >= 0.70;
+  var near = !pass && diff <= lv.strokeSlack + 1 &&
+             !!cmp && cmp.cover >= lv.cover - 0.12 && cmp.clean >= lv.clean - 0.12;
   if (pass) wrongStreak = 0; else wrongStreak++;
   var stuck = wrongStreak >= 3;
   if (stuck) $('ghost').classList.remove('off');   // 連錯三次，描紅自動打開
@@ -592,6 +652,26 @@ $('doneBtn').addEventListener('click', function () {
 });
 $('nextBtn').addEventListener('click', function () { qi++; loadQ(); });
 
+/* 判定寬鬆度的開關。併進 chinese.html 的時候這一段要搬進設定頁，不要留在練習畫面上。 */
+function syncLevel() {
+  var lv = L();
+  document.querySelectorAll('#levelSeg button').forEach(function (b) {
+    b.classList.toggle('sel', b.dataset.level === level);
+  });
+  $('levelHint').textContent = '寫到 ' + Math.round(lv.cover * 100) + '% 以上、沒歪出去 ' +
+    Math.round(lv.clean * 100) + '% 以上就算過' +
+    (lv.strokeSlack ? '，筆畫數差 ' + lv.strokeSlack + ' 筆之內也算' : '，筆畫數要正確');
+}
+$('levelSeg').addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('button');
+  if (!b) return;
+  level = b.dataset.level;
+  try { localStorage.setItem('writeDemoLevel', level); } catch (err) {}
+  syncLevel();
+  say('改成「' + L().name + '」了，再寫一次試試看');
+});
+syncLevel();
+
 /* ────────── 家長／老師通道 ──────────
    寫錯的時候小孩只有「再寫一次」。要跳過只有這一條路：
    大人看過他寫的字，再答一題二位數乘法。刻意避開九九表（11–19 × 3–9），
@@ -602,27 +682,15 @@ $('nextBtn').addEventListener('click', function () { qi++; loadQ(); });
 var gateAns = 0;
 var buf = '';             // 鍵盤打到現在的字串
 
-/* 題目刻意不用純九九乘法——隔壁 multiplication.html 就在練那個，背熟就破了。
-   這些考的是「還沒教到的概念」：平方、面積、時間換算。
+/* 只出平方題，2–9。答案是 4、9、16、25、36、49、64、81，大人一眼就有。
+   刻意不用純九九乘法——隔壁 multiplication.html 就在練那個，背熟就破了；
+   平方是一年級還沒有的概念，不是算不出來，是不知道在問什麼。
    數字每次隨機，小孩在旁邊看大人按也學不起來。
    不用分子分母那種：答案就印在題目上，兩個數字亂猜有一半會中。
    也不用固定答案那種（例如三角形內角和永遠是 180）：看一次就記住了。 */
 function adultQ() {
-  var n, kinds = [
-    function () {                                  // 平方：一年級沒有這個概念
-      n = 4 + Math.floor(Math.random() * 9);       // 4–12
-      return { q: n + ' 的平方是多少？', a: n * n };
-    },
-    function () {                                  // 面積：同上，換個問法
-      n = 4 + Math.floor(Math.random() * 9);
-      return { q: '邊長 ' + n + ' 公分的正方形，面積多少？', a: n * n };
-    },
-    function () {                                  // 時間換算：要知道一小時 60 分再乘
-      n = 2 + Math.floor(Math.random() * 5);       // 2–6
-      return { q: n + ' 小時是幾分鐘？', a: n * 60 };
-    }
-  ];
-  return kinds[Math.floor(Math.random() * kinds.length)]();
+  var n = 2 + Math.floor(Math.random() * 8);       // 2–9
+  return { q: n + ' 的平方是多少？', a: n * n };
 }
 
 /* 數字鍵盤。iPad 橫式叫出系統鍵盤會吃掉大半個畫面，所以自己畫一個。 */
