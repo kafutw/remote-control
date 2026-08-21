@@ -226,18 +226,20 @@
     .stroke-n { margin-top:6px; }
     .tools { grid-template-columns:repeat(3, 1fr); gap:6px; }
     .tools .btn { padding:10px 6px; }
-    /* 判定結果改成「字在左、話在右」，不然橫式的高度吃不下 */
-    .verdict:not(:empty) { display:grid; grid-template-columns:auto 1fr;
-                           column-gap:18px; align-items:center; text-align:left; padding:10px 16px; }
-    .verdict > * { grid-column:2; }
-    .verdict > .compare { grid-column:1; grid-row:1 / span 99; align-self:center; margin:0; }
-    .verdict .row { justify-content:flex-start; }
-    .verdict .btn.grow { flex:0 1 auto; min-width:150px; }
-    .verdict .adult-link { margin-left:0; margin-right:auto; }
-    .verdict .note { line-height:1.45; margin-top:5px; }
+    /* 判定卡：比對圖佔滿一行、文字在下面一行、按鈕最後——
+       這樣卡片長高，底部的按鈕剛好跟右邊的「我寫好了」齊高 */
+    .verdict:not(:empty) { padding:16px 18px; }
+    .compare { gap:16px; margin:2px 0 10px; align-items:stretch; }
+    /* flex 子元素是 figure 不是 .box，下錯地方兩個框就不等寬 */
+    .compare figure { flex:1 1 0; min-width:0; container-type:inline-size; }
+    .compare .box { width:100%; max-width:none; height:auto; aspect-ratio:1 / 1;
+                    font-size:clamp(72px, 11vw, 200px); }
+    /* 字要跟著框長大——用 vw 算會跟框的實際寬度脫鉤 */
+    @supports (font-size: 1cqw) { .compare .box { font-size:76cqw; } }
+    .verdict .btn.grow { flex:0 1 auto; min-width:180px; }
+    .verdict .note { line-height:1.5; margin-top:6px; }
     /* 橫式左欄擠，獎牌說明排成一列、提示句收起來 */
     .topbar { margin-bottom:10px; }
-    .compare .box { width:84px; height:84px; font-size:67px; }
     .sheet { align-items:center; }
   }
 
@@ -252,7 +254,6 @@
     .q .word { font-size:2.25rem; }
     .tools .btn { padding:13px 6px; }
     #play .btn.primary { padding:15px 18px; }
-    .compare .box { width:104px; height:104px; font-size:83px; }
     .verdict:not(:empty) { padding:14px 20px; }
     .result { max-width:520px; margin-top:12vh; }
     .medal { font-size:5rem; }
