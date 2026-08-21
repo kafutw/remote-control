@@ -87,6 +87,13 @@
   .note { font-size:.8125rem; color:var(--ink-soft); line-height:1.7; margin-top:10px; }
   .ok { color:var(--mint-ink); font-weight:800; }
   .no { color:var(--coral-ink); font-weight:800; }
+  .note-box { margin-top:12px; }
+  .note-box > summary { font-size:.75rem; font-weight:800; color:var(--ink-faint);
+                        cursor:pointer; padding:6px 2px; list-style:none; }
+  .note-box > summary::-webkit-details-marker { display:none; }
+  .note-box > summary::before { content:'▸ '; }
+  .note-box[open] > summary::before { content:'▾ '; }
+  .note-box .note { margin-top:4px; }
   .settings { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:14px;
               padding:12px 14px; border:2px dashed var(--line); border-radius:16px; }
   .settings-label { font-size:.75rem; font-weight:800; color:var(--ink-soft); }
@@ -99,16 +106,25 @@
 
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
   @media (orientation:landscape) and (min-width:760px) {
-    :root { --padmax:min(calc(100dvh - 285px), 46vw, 560px); }
-    body { max-width:1100px; padding:16px 20px 12px;
-           display:grid; grid-template-columns:1fr auto; column-gap:24px; align-items:start; }
-    body > h1, body > .sub, body > .card.q, body > .verdict, body > .row,
-    body > .note, body > .settings { grid-column:1; }
-    body > .card:not(.q) { grid-column:2; grid-row:1 / span 20; width:calc(var(--padmax) + 40px); }
-    .padwrap { margin:10px 0 8px; }
-    .sub { margin-bottom:6px; }
-    body > .card.q { margin-bottom:10px; }
-    .tools { grid-template-columns:repeat(3, 1fr); }
+    /* 書寫空間優先：格子吃到高度和寬度的極限，左欄留 460px 給題目和判定 */
+    :root { --padmax:min(calc(100dvh - 200px), calc(100vw - 560px), 760px); }
+    body { max-width:1500px; padding:14px 20px 10px;
+           display:grid; grid-template-columns:1fr auto; column-gap:22px; align-items:start; }
+    body > h1, body > .card.q, body > .verdict, body > .row,
+    body > .note-box, body > .settings { grid-column:1; }
+    body > .sub { display:none; }                      /* 說明搬到收合區，橫式不佔位置 */
+    body > .card:not(.q) { grid-column:2; grid-row:1 / span 20; width:calc(var(--padmax) + 36px); }
+    body > .card:not(.q) { padding:16px; }
+    h1 { font-size:1.125rem; margin:0 0 8px; }
+    /* 題目壓小，把高度讓給田字格 */
+    body > .card.q { margin-bottom:10px; padding:12px 14px; }
+    .q .bpmf { font-size:1.875rem; }
+    .q .word { font-size:1.625rem; margin-top:2px; }
+    .q .hint { display:none; }
+    .padwrap { margin:8px 0 6px; }
+    .stroke-n { margin-top:6px; }
+    .tools { grid-template-columns:repeat(3, 1fr); gap:6px; }
+    .tools .btn { padding:10px 6px; }
     /* 判定結果改成「字在左、話在右」，不然橫式的高度吃不下 */
     .verdict:not(:empty) { display:grid; grid-template-columns:auto 1fr;
                            column-gap:18px; align-items:center; text-align:left; padding:10px 16px; }
@@ -117,7 +133,8 @@
     .verdict .row { justify-content:flex-start; }
     .verdict .btn.grow { flex:0 1 auto; min-width:150px; }
     .verdict .adult-link { margin-left:0; margin-right:auto; }
-    body > .note { font-size:.625rem; line-height:1.4; margin-top:6px; }
+    .note-box { margin-top:8px; }
+    .note-box .note { font-size:.6875rem; line-height:1.5; }
     .verdict .note { line-height:1.45; margin-top:5px; }
     /* 橫式的左欄放不下，設定框收成一行，說明字收進 title */
     .settings { margin-top:10px; padding:8px 12px; gap:8px; }
@@ -202,10 +219,13 @@
   <span class="settings-hint" id="levelHint"></span>
 </div>
 
+<details class="note-box">
+<summary>這是怎麼判的？</summary>
 <p class="note">
   寫完按「我寫好了」，程式會拿楷體字型畫出來的字當標準答案，比對「該有的地方寫到沒有」和「有沒有多寫」，再加上總筆畫數要跟教育部辭典一致。<br>
   <b>筆順用的是台灣標準</b>（全字庫 CNS11643，跟教育部辭典的筆畫數逐字對過，2257 字裡只差 5 字）。它從你寫的軌跡反推每一筆是橫還是豎還是撇，認不準就不出聲——寧可漏抓，也不要跟寫對的孩子說他寫錯。<b>沒有筆順示範動畫</b>，那需要每一筆的座標，目前找得到有座標的都是大陸標準。
 </p>
+</details>
 
 <script>
 /* 教育部辭典的總筆畫（台灣的標準），筆畫數用這個查，不用大陸的筆順資料 */
@@ -269,7 +289,7 @@ function padPx() { return pad.getBoundingClientRect().width || SIZE; }
 
 function fitCanvas(cv, ctx) {
   /* 解析度跟著實際尺寸走，格子放大了線條才不會糊 */
-  var k = Math.min((padPx() / SIZE) * dpr, 4);
+  var k = Math.min((padPx() / SIZE) * dpr, 5);   // 上限 1400px，再高記憶體吃太兇
   cv.width = Math.round(SIZE * k); cv.height = Math.round(SIZE * k);
   ctx.setTransform(k, 0, 0, k, 0, 0);
 }
