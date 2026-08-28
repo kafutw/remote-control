@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-28T12:41:03.334Z",
-  "generatedAtTaipei": "2026-08-28 20:41:03",
+  "generatedAt": "2026-08-28T14:33:18.805Z",
+  "generatedAtTaipei": "2026-08-28 22:33:18",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -84,12 +84,11 @@
       "group": "adr",
       "dp": 2,
       "via": "cnbc:TSM",
-      "price": 427.3,
+      "price": 425.67,
       "prevClose": 427.3,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
-      "marketState": "PRE_MKT",
+      "change": -1.63,
+      "pct": -0.3815,
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -97,11 +96,10 @@
       "group": "sox",
       "dp": 2,
       "via": "cnbc:.SOX",
-      "price": 11882.169,
+      "price": 11724.961,
       "prevClose": 11882.169,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": -157.208,
+      "pct": -1.3231,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -110,11 +108,10 @@
       "group": "ixic",
       "dp": 2,
       "via": "cnbc:.IXIC",
-      "price": 26541.352,
+      "price": 26518.181,
       "prevClose": 26541.352,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": -23.171,
+      "pct": -0.0873,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -123,11 +120,10 @@
       "group": "gspc",
       "dp": 2,
       "via": "cnbc:.SPX",
-      "price": 7730.99,
+      "price": 7731.55,
       "prevClose": 7730.99,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 0.56,
+      "pct": 0.0072,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -136,11 +132,10 @@
       "group": "dji",
       "dp": 2,
       "via": "cnbc:.DJI",
-      "price": 53569.44,
+      "price": 53557.75,
       "prevClose": 53569.44,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": -11.69,
+      "pct": -0.0218,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -149,10 +144,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 14.48,
+      "price": 14.28,
       "prevClose": 14.51,
-      "change": -0.03,
-      "pct": -0.2068,
+      "change": -0.23,
+      "pct": -1.5851,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -580,10 +575,10 @@
     ]
   },
   "adrPremium": {
-    "converted": 2707.25,
+    "converted": 2696.92,
     "fxAsOf": "2026-08-28",
-    "premiumPct": 11.87,
-    "impliedOpen": null,
+    "premiumPct": 11.44,
+    "impliedOpen": 2411,
     "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
 }
