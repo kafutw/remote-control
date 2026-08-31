@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-31T06:56:39.502Z",
-  "generatedAtTaipei": "2026-08-31 14:56:39",
+  "generatedAt": "2026-08-31T08:52:26.137Z",
+  "generatedAtTaipei": "2026-08-31 16:52:26",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "REG_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -149,11 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 14.43,
+      "price": 15.22,
       "prevClose": 14.43,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 0.79,
+      "pct": 5.4747,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -315,20 +314,20 @@
       "而且已達 1.30 兆過熱區 —— 沒有前置條件可以分辨這是換手還是出貨，要自己看"
     ],
     "ready": true,
-    "last": 13600.16,
+    "last": 15631.1,
     "reach": {
       "lo": 8426.39,
-      "hi": 13828.04,
-      "days": 20,
-      "fired": 9,
-      "fireRate": 0.45,
+      "hi": 15631.1,
+      "days": 21,
+      "fired": 10,
+      "fireRate": 0.47619047619047616,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 20,
+    "complete": 21,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
@@ -583,6 +582,12 @@
         "twse": 10689.85,
         "tpex": 2910.31,
         "total": 13600.16
+      },
+      {
+        "date": "2026-08-31",
+        "twse": 12419.17,
+        "tpex": 3211.93,
+        "total": 15631.1
       }
     ]
   },
