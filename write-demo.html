@@ -56,6 +56,10 @@
      這是寫字 app，全頁都不需要選字。 */
   * { -webkit-tap-highlight-color: transparent; }
   html, body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  /* 考試頁不准縮放——孩子的手掌邊緣一碰就會捏到，字寫到一半畫面整個跑掉。
+     pan-y 是「還能上下捲，但不准捏合、不准連點兩下放大」。
+     Safari 不完全吃這一條，所以下面還有 JS 擋 gesture 事件那一段，兩個一起才擋得住。 */
+  #play:not(.off) { touch-action:pan-y; }
   html,body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); }
   body { position:relative; }                       /* 齒輪定位在內容區的右上角 */
   body { padding:16px 16px 40px; max-width:600px; margin:0 auto; }
@@ -981,6 +985,27 @@ function loadQ() {
   setWriting(true);
 }
 
+/* ── 考試頁擋縮放 ──
+   iOS 從 10 開始就故意忽略 meta viewport 的 user-scalable=no（無障礙考量），
+   所以只能一個一個事件擋。只在考試畫面擋，選課、設定那些頁面照樣可以放大來看。
+   三種進入縮放的方式都要堵：Safari 的 gesture 事件、兩指以上的 touchmove、連點兩下。 */
+function inPlay() { return !$('play').classList.contains('off'); }
+['gesturestart', 'gesturechange', 'gestureend'].forEach(function (ev) {
+  document.addEventListener(ev, function (e) { if (inPlay()) e.preventDefault(); }, { passive: false });
+});
+document.addEventListener('touchmove', function (e) {
+  if (inPlay() && e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+var lastTapAt = 0;
+document.addEventListener('touchend', function (e) {
+  /* 田字格自己是 touch-action:none，本來就不會被連點放大，
+     這裡要放它過去——「冫」那種連續兩點寫得快，會被誤判成連點兩下。 */
+  if (!inPlay() || pad.contains(e.target)) return;
+  var now = Date.now();
+  if (now - lastTapAt <= 320) e.preventDefault();   // 連點兩下＝放大，擋掉
+  lastTapAt = now;
+}, { passive: false });
+
 /* ── 手指／滑鼠 ── */
 function xy(e) {
   var r = pad.getBoundingClientRect();
@@ -1468,9 +1493,21 @@ $('levelSeg2').addEventListener('click', function (e) {
   setLevel(b.dataset.level); drawHome();
 });
 
+/* 選課頁還是可以放大來看，所以孩子有可能縮放完才按開始，一進考試頁畫面就是歪的。
+   進場前把倍率拉回 1：暫時塞一個 maximum-scale=1 逼瀏覽器重設，再換回原本的設定。
+   沒縮放就完全不要碰 viewport——每動一次畫面都會閃一下。 */
+function resetZoom() {
+  var vv = window.visualViewport, mv = document.querySelector('meta[name=viewport]');
+  if (!vv || !mv || vv.scale <= 1.01) return;
+  var keep = mv.getAttribute('content');
+  mv.setAttribute('content', keep + ', maximum-scale=1');
+  setTimeout(function () { mv.setAttribute('content', keep); }, 300);
+}
+
 function startRound() {
   clearAdv();
   hideFireworks();
+  resetZoom();
   QS = curLesson[4].split('').map(questionOf).filter(Boolean);
   /* 每一輪都重新洗牌。固定順序練幾次之後，孩子會靠「第幾題」記答案，
      不是真的認得那個字。同一輪裡每個字還是只出現一次。 */
