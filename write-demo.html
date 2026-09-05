@@ -1079,7 +1079,13 @@ function judge() {
   var box = inkThumb(strokesDone, 130);
   var lv = L(), bad = [];
   var diff = want ? Math.abs(got - want) : 0;
-  if (want && diff > lv.strokeSlack) {
+  /* 形狀的免死金牌。
+     筆畫數我只能靠「提筆幾次」來數，孩子連著寫下去不斷筆就會少算——
+     「還」17 畫寫成 15 筆、⻍ 三筆連成一筆，是寫得順不是寫錯，字愈多筆愈常發生。
+     但 cover 是「課本的字有幾成被墨蓋到」：真的漏寫兩筆，它不可能到 95%。
+     所以形狀夠滿分的時候，就不要再拿提筆次數去否決它——筆順也一樣（見下面）。 */
+  var shapePerfect = !!cmp && cmp.cover >= 0.95 && cmp.clean >= 0.95;
+  if (want && diff > lv.strokeSlack && !shapePerfect) {
     bad.push(got > want ? '多寫了 ' + (got - want) + ' 筆（這個字 ' + want + ' 畫，你寫了 ' + got + ' 筆）'
                         : '少了 ' + (want - got) + ' 筆（這個字 ' + want + ' 畫，你寫了 ' + got + ' 筆）');
   }
@@ -1093,9 +1099,8 @@ function judge() {
   var orderMsg = op
     ? '第 ' + op.at + ' 筆應該是「' + STROKE_NAME[op.want] + '」，你寫成「' + STROKE_NAME[op.got] + '」'
     : '';
-  /* 形狀幾乎滿分、筆畫數又對，就別再用筆順判他錯。
+  /* 形狀幾乎滿分就別再用筆順判他錯。
      這種情況多半是我的辨識器認錯，不是孩子寫錯——冤枉一次的代價比漏抓大得多。 */
-  var shapePerfect = !!cmp && cmp.cover >= 0.90 && cmp.clean >= 0.95 && diff === 0;
   if (op && !shapePerfect) bad.push('筆順不對：' + orderMsg);
   var pass = !bad.length;
   if (pass) {
@@ -1121,6 +1126,11 @@ function judge() {
       (pass ? '寫對了！ ⭕' : '再看一下 ✗') + '</p>' +
     (bad.length ? '<p class="note" style="margin-top:2px">' + bad.join('<br>') + '</p>' : '') +
     /* 正確筆順只在真的寫錯的時候列，不然每題都多一行佔位置 */
+    (shapePerfect && want && diff > lv.strokeSlack
+       ? '<p class="note" style="color:var(--amber)">字寫得很好。你提筆 ' + got +
+         ' 次、課本是 ' + want + ' 畫，多半是' +
+         (got > want ? '有一筆分成兩次寫' : '有幾筆連著寫下去沒斷') +
+         '，這次算你過。</p>' : '') +
     (op && shapePerfect
        ? '<p class="note" style="color:var(--amber)">字寫得很好。筆順我看起來是「' +
          STROKE_NAME[op.got] + '」，正確是「' + STROKE_NAME[op.want] +
@@ -1163,6 +1173,7 @@ function levelText() {
   return '字形：寫到 ' + Math.round(lv.cover * 100) + '% 以上、沒歪出去 ' +
     Math.round(lv.clean * 100) + '% 以上' +
     (lv.strokeSlack ? '，筆畫數差 ' + lv.strokeSlack + ' 筆之內也算' : '，筆畫數要正確') +
+    '（但兩項都到 95% 以上就不看筆畫數，連筆不算錯）' +
     '。筆順一律要對，' +
     (lv.live === 'never' ? '但寫的時候不擋你，寫完才講。'
      : lv.live === 'clear' ? '寫錯明顯的那一筆會退回去重寫（容易認錯的只提示）。'
