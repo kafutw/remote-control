@@ -912,12 +912,17 @@ function inkThumb(strokes, px) {
 }
 
 function say(t, cls) {
+  /* 判定卡上有「再寫一次／下一題」，判過之後誰都不准蓋掉它，
+     否則畫面會變成一個按鈕都沒有（踩過一次：寫滿筆數自動判定後又多畫一筆）。 */
+  if (judged) return;
   $('verdict').innerHTML = t ? '<span class="' + (cls || '') + '">' + t + '</span>' : '';
 }
 
 /* 判定出來之後，寫字用的按鈕全部收起來——這時候只有「下一題」或「再寫一次」兩條路。
    留著「我寫好了」會讓人以為還能再按，「上一筆」還會改到已經判完的筆畫。 */
+var judged = false;              // 這一題判過了沒——判過就鎖住畫布
 function setWriting(on) {
+  judged = !on;
   $('tools').style.display = on ? '' : 'none';
   $('doneRow').style.display = on ? '' : 'none';
 }
@@ -936,6 +941,7 @@ function syncStrokeN() {
 }
 
 function loadQ() {
+  judged = false;                      // 先解鎖，不然下面的 say('') 清不掉上一題的判定卡
   cur = QS[qi % QS.length];
   cur.scored = false;                  // 同一題重寫不重複計分
   strokesDone = []; drawing = null; step = 0; wrongStreak = 0; blockedAt = 0;
@@ -964,6 +970,7 @@ function xy(e) {
   return [(e.clientX - r.left) * (SIZE / r.width), (e.clientY - r.top) * (SIZE / r.height)];
 }
 pad.addEventListener('pointerdown', function (e) {
+  if (judged) return;          // 判定出來就鎖住畫布，不然多畫一筆會蓋掉判定卡
   if (anim) { clearInterval(anim); anim = null; paintInk(); }
   pad.setPointerCapture(e.pointerId);
   drawing = [xy(e)];
