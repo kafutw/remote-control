@@ -15,7 +15,7 @@
      授權：政府資料開放授權條款－第一版（可商用，需標示來源 https://www.cns11643.gov.tw）。 */
   @font-face {
     font-family: 'TWKai';
-    src: url('fonts-TW-Kai-subset.woff2') format('woff2');
+    src: url('fonts-TW-Kai-subset.woff2?v=2') format('woff2');
     font-display: swap;
     font-weight: normal; font-style: normal;
   }
@@ -459,6 +459,8 @@
       </div>
     </div>
     <p class="settings-hint">預設隱藏，讓孩子自己想。連錯兩次之後，第三次會自動出現很淺的提示。真的很不會就把它打開。</p>
+    <div class="cfg-row"><span class="settings-label">字型</span>
+      <span class="settings-hint" id="fontState" style="margin:0;text-align:right">檢查中…</span></div>
     <details class="note-box">
 <summary>這是怎麼判的？</summary>
 <p class="note">
@@ -1513,7 +1515,20 @@ $('fireworks').addEventListener('click', function (e) {
   if (e.target === $('fireworks')) hideFireworks();
 });
 
-$('gearBtn').addEventListener('click', function () { clearAdv(); $('cfg').classList.remove('off'); });
+/* 直接把字型狀態寫在設定裡——載不到的話至少看得出來，不用猜 */
+function syncFontState() {
+  var el = $('fontState'); if (!el) return;
+  var ok = document.fonts && document.fonts.check("100px 'TWKai'");
+  el.textContent = ok ? '教育部標準楷體（已載入）' : '載入中／失敗，暫時用系統字型';
+  el.style.color = ok ? 'var(--mint-ink)' : 'var(--coral-ink)';
+}
+if (document.fonts) {
+  document.fonts.ready.then(syncFontState);
+  if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', syncFontState);
+}
+syncFontState();
+
+$('gearBtn').addEventListener('click', function () { clearAdv(); syncFontState(); $('cfg').classList.remove('off'); });
 $('cfgClose').addEventListener('click', function () { $('cfg').classList.add('off'); });
 $('cfgHome').addEventListener('click', function () { $('cfg').classList.add('off'); backHome(); });
 $('cfg').addEventListener('click', function (e) { if (e.target === $('cfg')) $('cfg').classList.add('off'); });
