@@ -383,12 +383,12 @@
     </div>
   </div>
   <div class="stroke-n" id="strokeN"></div>
-  <div class="tools">
+  <div class="tools" id="tools">
     <button class="btn" id="undoBtn">↩︎ 上一筆</button>
     <button class="btn" id="clearBtn">🧽 清掉重寫</button>
     <button class="btn" id="ghostBtn">✍️ 描紅</button>
   </div>
-  <div class="row" style="margin-top:10px">
+  <div class="row" id="doneRow" style="margin-top:10px">
     <button class="btn primary grow" id="doneBtn">我寫好了</button>
   </div>
 </div>
@@ -900,6 +900,13 @@ function say(t, cls) {
   $('verdict').innerHTML = t ? '<span class="' + (cls || '') + '">' + t + '</span>' : '';
 }
 
+/* 判定出來之後，寫字用的按鈕全部收起來——這時候只有「下一題」或「再寫一次」兩條路。
+   留著「我寫好了」會讓人以為還能再按，「上一筆」還會改到已經判完的筆畫。 */
+function setWriting(on) {
+  $('tools').style.display = on ? '' : 'none';
+  $('doneRow').style.display = (on && mode !== 'order') ? '' : 'none';
+}
+
 function syncStrokeN() {
   var el = $('strokeN'), done = strokesDone.length;
   if (mode === 'order' && cur && cur.o) {
@@ -934,6 +941,7 @@ function loadQ() {
   say('');
   drawGrid(); paintInk(); syncStrokeN();
   $('doneBtn').hidden = (mode === 'order');   // 逐筆檢查會自己判，不用這顆
+  setWriting(true);
   document.body.classList.toggle('m-order', mode === 'order');   // 少一顆按鈕，格子可以放大
 }
 
@@ -1092,12 +1100,14 @@ function judge() {
       '<button class="adult-link' + (near || stuck ? ' hot' : '') + '" id="adultBtn">' +
         (stuck ? '寫好幾次了？家長／老師可以看一下 →' : '家長／老師：這樣算過 →') +
       '</button>');
+  setWriting(false);
   $('mine').appendChild(box);
   box.style.width = '100%'; box.style.height = '100%';
   if (pass) {
     $('nx').addEventListener('click', nextQ);
   } else {
     $('again').addEventListener('click', function () {
+      setWriting(true);
       strokesDone = []; paintInk(); syncStrokeN();
       say(stuck ? '底下有很淡的字，照著寫看看' : '再寫一次');
     });
@@ -1622,6 +1632,7 @@ $('gateOk').addEventListener('click', submitGate);
 $('gateCancel').addEventListener('click', closeGate);
 $('gateRetry').addEventListener('click', function () {
   closeGate();
+  setWriting(true);
   strokesDone = []; paintInk(); syncStrokeN();
   say('再寫一次');
 });
