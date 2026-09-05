@@ -443,7 +443,6 @@
     <div class="cfg-row">
       <span class="settings-label">判定寬鬆度</span>
       <div class="seg" id="levelSeg">
-    <button data-level="easy">輕鬆</button>
     <button data-level="normal">標準</button>
     <button data-level="hard">嚴格</button>
   </div>
@@ -575,8 +574,10 @@ var adultPassed = [];           // 被大人放行的字（併進 chinese.html �
 /* 判定寬鬆度。用手指在大格子裡寫，本來就會超出筆畫邊緣，
    原本 80/80 太嚴——實測「左」寫到 82%、沒歪出去 78%、筆畫也對，卻被判不過。
    strokeSlack 是容許的筆畫數誤差（剛開始學的孩子少寫一筆很常見）。 */
+/* 只留標準和嚴格。原本還有一個「輕鬆」（cover .60 / clean .55 / 筆畫數差 1 筆也算 /
+   筆順完全不判），實際用起來太鬆——寫得不像也會過，等於沒在教。
+   舊裝置的 localStorage 可能還存著 'easy'，下面那行查得到才採用，查不到就退回標準。 */
 var LEVELS = {
-  easy:   { name: '輕鬆', cover: 0.60, clean: 0.55, strokeSlack: 1, order: 'off',  live: 'never'  },
   normal: { name: '標準', cover: 0.70, clean: 0.65, strokeSlack: 0, order: 'hint', live: 'clear'  },
   hard:   { name: '嚴格', cover: 0.80, clean: 0.78, strokeSlack: 0, order: 'fail', live: 'strict' }
 };
@@ -770,10 +771,10 @@ function orderProblem(ch, strokes) {
   for (var i = 0; i < strokes.length; i++) {
     var g = strokeType(strokes[i]);
     if (!g.sure) continue;
-    /* 「輕鬆」連容易認錯的那幾組都不算數；標準和嚴格照抓——
-        實測（手抖模擬）：套過濾器 誤判 0% 但只抓到 24%；不套 誤判 1% 抓到 82%。
-        真正防冤枉的是「短筆畫不算數」和「字形滿分就不判筆順」那兩條。 */
-    if (g.t !== want[i] && !(L().live === 'never' && confusable(g.t, want[i]))) {
+    /* 曾經在「輕鬆」把容易認錯的那幾組（橫↔折、撇↔點…）整組排除，
+        實測（手抖模擬）誤判降到 0% 但也只抓到 24%，等於沒在抓，隨「輕鬆」一起拿掉。
+        現在防冤枉靠的是「短筆畫不算數」和「字形滿分就不判筆順」那兩條。 */
+    if (g.t !== want[i]) {
       return { at: i + 1, want: want[i], got: g.t };
     }
   }
@@ -1016,7 +1017,7 @@ function endStroke() {
     var live = L().live;
     /* 擋人要很有把握才行——被冤枉一次就卡住，比漏抓難受得多。
        同一筆擋兩次就放行，不讓任何人卡死在一筆上。 */
-    var block = (g.t !== wantT) && g.sure && live !== 'never' &&
+    var block = (g.t !== wantT) && g.sure &&
                 (live === 'strict' || !confusable(g.t, wantT)) &&
                 blockedAt < 2;
     if (block) {
@@ -1172,11 +1173,9 @@ function levelText() {
   var lv = L();
   return '字形：寫到 ' + Math.round(lv.cover * 100) + '% 以上、沒歪出去 ' +
     Math.round(lv.clean * 100) + '% 以上' +
-    (lv.strokeSlack ? '，筆畫數差 ' + lv.strokeSlack + ' 筆之內也算' : '，筆畫數要正確') +
-    '（但兩項都到 95% 以上就不看筆畫數，連筆不算錯）' +
+    '，筆畫數要正確（但兩項都到 95% 以上就不看筆畫數，連筆不算錯）' +
     '。筆順一律要對，' +
-    (lv.live === 'never' ? '但寫的時候不擋你，寫完才講。'
-     : lv.live === 'clear' ? '寫錯明顯的那一筆會退回去重寫（容易認錯的只提示）。'
+    (lv.live === 'clear' ? '寫錯明顯的那一筆會退回去重寫（容易認錯的只提示）。'
      : '每一筆都嚴格比對，不一樣就退回去重寫。');
 }
 
@@ -1439,8 +1438,8 @@ function drawHome() {
            '<b>第' + L[2] + '課　' + L[3] + '</b><i>' + L[4].length + ' 個生字</i></button>';
   }).join('');
 
-  var LV = { easy: '寫得像就好', normal: '一般標準', hard: '要求嚴格' };
-  $('levelSeg2').innerHTML = modeHTML(['easy','normal','hard'].map(function (k) {
+  var LV = { normal: '一般標準', hard: '要求嚴格' };
+  $('levelSeg2').innerHTML = modeHTML(['normal','hard'].map(function (k) {
     return [k, LEVELS[k].name, LV[k]];
   }), level, 'data-level');
   $('levelHint2').textContent = levelText();
