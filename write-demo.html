@@ -1439,6 +1439,12 @@ function startRound() {
   clearAdv();
   hideFireworks();
   QS = curLesson[4].split('').map(questionOf).filter(Boolean);
+  /* 每一輪都重新洗牌。固定順序練幾次之後，孩子會靠「第幾題」記答案，
+     不是真的認得那個字。同一輪裡每個字還是只出現一次。 */
+  for (var i = QS.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = QS[i]; QS[i] = QS[j]; QS[j] = t;
+  }
   qi = 0; roundOK = 0; roundAdult = 0;
   $('done').classList.add('off');
   $('home').classList.add('off');
