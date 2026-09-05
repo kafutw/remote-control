@@ -52,7 +52,10 @@
   @media (max-width: 360px) {
     :root { --fs-title:1.32rem; --fs-head:1.15rem; }
   }
+  /* iOS：在畫布上拖曳會被當成選取文字，整頁反白還跳出「拷貝／查詢／翻譯」那排。
+     這是寫字 app，全頁都不需要選字。 */
   * { -webkit-tap-highlight-color: transparent; }
+  html, body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
   html,body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); }
   body { position:relative; }                       /* 齒輪定位在內容區的右上角 */
   body { padding:16px 16px 40px; max-width:600px; margin:0 auto; }
@@ -73,7 +76,8 @@
   .padwrap { display:flex; justify-content:center; margin:16px 0 10px; }
   .pad { position:relative; width:100%; max-width:var(--padmax); aspect-ratio:1 / 1;
          border-radius:18px; background:var(--surface); border:2px solid var(--line);
-         touch-action:none; }
+         touch-action:none; -webkit-user-select:none; user-select:none;
+         -webkit-touch-callout:none; }
   .pad canvas { position:absolute; inset:0; width:100%; height:100%; border-radius:16px; }
   .pad .ghost { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
                 font-family:var(--abc); line-height:1; color:rgba(64,53,43,.12);
@@ -556,7 +560,8 @@ var mode = 'both';
 var cur = null;                 // { c, b, w, s, o }
 var strokesDone = [];           // 已經寫完的筆畫（畫布座標）
 var drawing = null;             // 正在畫的那一筆
-var step = 0;                   // 逐筆模式用的（目前停用）
+/* 不要另外養一個計數器——之前用 step，按「再寫一次」時忘了歸零，
+   重寫幾次就變成「第 23 筆對了」。一律用 strokesDone.length。 */
 var wrongStreak = 0;            // 同一題連續寫錯幾次
 var blockedAt = 0;              // 同一筆被擋幾次，擋兩次就放行，不讓人卡死
 var adultPassed = [];           // 被大人放行的字（併進 chinese.html 時要存成 by:'adult'）
@@ -944,7 +949,7 @@ function loadQ() {
   judged = false;                      // 先解鎖，不然下面的 say('') 清不掉上一題的判定卡
   cur = QS[qi % QS.length];
   cur.scored = false;                  // 同一題重寫不重複計分
-  strokesDone = []; drawing = null; step = 0; wrongStreak = 0; blockedAt = 0;
+  strokesDone = []; drawing = null; wrongStreak = 0; blockedAt = 0;
   if (anim) { clearInterval(anim); anim = null; }
   $('word').innerHTML = cur.w;
   if (curLesson) {
@@ -971,6 +976,7 @@ function xy(e) {
 }
 pad.addEventListener('pointerdown', function (e) {
   if (judged) return;          // 判定出來就鎖住畫布，不然多畫一筆會蓋掉判定卡
+  e.preventDefault();          // 不擋的話 iOS 會把拖曳當成選字
   if (anim) { clearInterval(anim); anim = null; paintInk(); }
   pad.setPointerCapture(e.pointerId);
   drawing = [xy(e)];
@@ -1011,11 +1017,10 @@ function endStroke() {
     }
     blockedAt = 0;
     strokesDone.push(s);
-    step++;
     paintInk(); syncStrokeN();
     /* 最後一筆寫完就自己結算，這個模式不需要「我寫好了」 */
     if (strokesDone.length >= n) { say('全部 ' + n + ' 筆都對了！🎉', 'ok'); judge(); }
-    else say('第 ' + step + ' 筆對了 ✓', 'ok');
+    else say('第 ' + strokesDone.length + ' 筆對了 ✓', 'ok');
     return;
   }
   strokesDone.push(s);
@@ -1027,13 +1032,13 @@ pad.addEventListener('pointerleave', function () { if (drawing) endStroke(); });
 
 /* ── 按鈕 ── */
 $('clearBtn').addEventListener('click', function () {
-  strokesDone = []; drawing = null; step = 0;
+  strokesDone = []; drawing = null;
   if (anim) { clearInterval(anim); anim = null; }
   paintInk(); syncStrokeN(); say('');
 });
 $('undoBtn').addEventListener('click', function () {
   strokesDone.pop();
-  if (mode === 'stroke' && step > 0) step--;
+  blockedAt = 0;
   paintInk(); syncStrokeN(); say('');
 });
 $('ghostBtn').addEventListener('click', function () {
