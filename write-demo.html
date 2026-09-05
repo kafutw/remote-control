@@ -9,6 +9,16 @@
 <link rel="icon" href="write-icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="write-icon-180.png">
 <style>
+  /* 教育部標準字體（全字庫 正楷體 TW-Kai），只留題庫用得到的 2346 個字元，1.27MB。
+     為什麼要自己帶字型：課本的字、描紅、以及「判定的標準答案」都是拿這支畫出來的，
+     裝置上沒有楷體就會掉到黑體——看起來不對，判分的基準也跟著不對。
+     授權：政府資料開放授權條款－第一版（可商用，需標示來源 https://www.cns11643.gov.tw）。 */
+  @font-face {
+    font-family: 'TWKai';
+    src: url('fonts-TW-Kai-subset.woff2') format('woff2');
+    font-display: swap;
+    font-weight: normal; font-style: normal;
+  }
   :root {
     --bg:#FDF6EC; --surface:#fff; --track:#F3E3CC; --ink:#40352B; --ink-soft:#8A7660;
     --ink-faint:#BCA893; --line:#F0E2CD; --key:#D9603C; --key-deep:#B24322; --key-soft:#FDEAE2;
@@ -28,7 +38,7 @@
     --fs-mega:  4rem;      /* 煙火頁的獎盃 */
     --wrap: 560px;
     --font:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
-    --abc:"BiauKai","DFKai-SB","標楷體","Kaiti TC","楷體-繁","KaiTi","PingFang TC",sans-serif;
+    --abc:'TWKai',"BiauKai","DFKai-SB","標楷體","Kaiti TC","楷體-繁","KaiTi","PingFang TC",sans-serif;
   }
   :root { --padmax:clamp(200px, calc(100dvh - 505px), 620px); }
   @media (min-width: 700px) {
