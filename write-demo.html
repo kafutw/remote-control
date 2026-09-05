@@ -242,9 +242,7 @@
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
   @media (orientation:landscape) and (min-width:760px) {
     /* 書寫空間優先：格子吃到高度和寬度的極限，左欄留 460px 給題目和判定 */
-    /* 「照筆順寫」沒有「我寫好了」那顆，格子可以再大一圈 */
-    :root { --padmax:min(calc(100dvh - 286px), calc(100vw - 560px), 820px); }
-    body.m-order { --padmax:min(calc(100dvh - 248px), calc(100vw - 560px), 820px); }
+    :root { --padmax:min(calc(100dvh - 304px), calc(100vw - 560px), 820px); }
     .topbar-t b { font-size:var(--fs-head); }        /* 橫式標題壓一級，高度讓給格子 */
     body { max-width:1500px; padding:14px 20px 10px; }
     #play:not(.off) { display:grid; grid-template-columns:1fr auto;
@@ -283,8 +281,7 @@
   @media (orientation:landscape) and (min-width:1280px) {
     .icobtn { width:46px; height:46px; }
     /* 練習頁：格子上限拉高，題目和判定的字也跟著放大 */
-    :root { --padmax:min(calc(100dvh - 300px), calc(100vw - 640px), 940px); }
-    body.m-order { --padmax:min(calc(100dvh - 264px), calc(100vw - 640px), 940px); }
+    :root { --padmax:min(calc(100dvh - 318px), calc(100vw - 640px), 940px); }
     #play > .card.q { padding:18px 20px; margin-bottom:12px; }
     .q .bpmf { font-size:2.5rem; }
     .q .word { font-size:2.25rem; }
@@ -349,13 +346,7 @@
   </div>
 
   <div class="card">
-    <h2><span class="n">2</span>要練什麼？</h2>
-    <div class="modes" id="modeList">
-      <button class="mode" data-m="shape"><b>✍️ 寫得工整</b><i>只看字形和筆畫數，不管筆順</i></button>
-      <button class="mode" data-m="order"><b>🔢 照筆順寫</b><i>只看每一筆的順序對不對</i></button>
-      <button class="mode sel" data-m="both"><b>⭐ 兩個都要</b><i>字要工整，筆順也要對</i></button>
-    </div>
-    <div class="sub-h">判定寬鬆度</div>
+    <h2><span class="n">2</span>判定寬鬆度</h2>
     <div class="modes three" id="levelSeg2"></div>
     <p class="hint" id="levelHint2"></p>
   </div>
@@ -545,7 +536,8 @@ function questionOf(c) {
 
 var QS = [];                    // 選好課之後才生出來
 var qi = 0;
-var mode = 'both';              // shape：只看工整／order：只看筆順／both：兩個都要
+/* 不再分模式：筆順一定要對，字也要工整。 */
+var mode = 'both';
 var cur = null;                 // { c, b, w, s, o }
 var strokesDone = [];           // 已經寫完的筆畫（畫布座標）
 var drawing = null;             // 正在畫的那一筆
@@ -904,12 +896,12 @@ function say(t, cls) {
    留著「我寫好了」會讓人以為還能再按，「上一筆」還會改到已經判完的筆畫。 */
 function setWriting(on) {
   $('tools').style.display = on ? '' : 'none';
-  $('doneRow').style.display = (on && mode !== 'order') ? '' : 'none';
+  $('doneRow').style.display = on ? '' : 'none';
 }
 
 function syncStrokeN() {
   var el = $('strokeN'), done = strokesDone.length;
-  if (mode === 'order' && cur && cur.o) {
+  if (cur && cur.o) {
     var n = cur.o.length;
     el.innerHTML = done >= n
       ? '寫完了，一共 ' + n + ' 筆'
@@ -940,9 +932,8 @@ function loadQ() {
   $('ghost').classList.remove('faint');
   say('');
   drawGrid(); paintInk(); syncStrokeN();
-  $('doneBtn').hidden = (mode === 'order');   // 逐筆檢查會自己判，不用這顆
+  $('doneBtn').hidden = false;
   setWriting(true);
-  document.body.classList.toggle('m-order', mode === 'order');   // 少一顆按鈕，格子可以放大
 }
 
 /* ── 手指／滑鼠 ── */
@@ -968,7 +959,7 @@ function endStroke() {
   var s = drawing; drawing = null;
   /* 「照筆順寫」逐筆檢查：每寫一筆就認它是什麼類型，跟台灣的正確序列比。
      不需要座標——認不出來的那一筆就默默收下，不冤枉人。 */
-  if (mode === 'order' && cur.o) {
+  if (cur.o) {
     var n = cur.o.length;
     if (strokesDone.length >= n) {           // 寫完了還多寫，不能默默收下
       paintInk();
@@ -1048,16 +1039,16 @@ function judge() {
                         : '少了 ' + (want - got) + ' 筆（這個字 ' + want + ' 畫，你寫了 ' + got + ' 筆）');
   }
   /* 「照筆順寫」模式不管字漂不漂亮，只看順序；形狀數字還是照列給大人看 */
-  if (cmp && mode !== 'order') {
+  if (cmp) {
     if (cmp.cover < lv.cover) bad.push('有些地方沒寫到（寫到 ' + Math.round(cmp.cover * 100) + '%）');
     if (cmp.clean < lv.clean) bad.push('有些筆畫寫到字的外面去了（' + Math.round((1 - cmp.clean) * 100) + '% 在外面）');
   }
   /* 筆順：辨識有 1～2% 的誤報，所以預設只提示、不判不過，「嚴格」才算數 */
-  var op = (mode === 'shape') ? null : orderProblem(cur.c, strokesDone);
+  var op = orderProblem(cur.c, strokesDone);
   var orderMsg = op
     ? '第 ' + op.at + ' 筆應該是「' + STROKE_NAME[op.want] + '」，你寫成「' + STROKE_NAME[op.got] + '」'
     : '';
-  if (op && (mode === 'order' || lv.order === 'fail')) bad.push('筆順不對：' + orderMsg);
+  if (op) bad.push('筆順不對：' + orderMsg);        // 筆順一定要對，不再只是提示
   var pass = !bad.length;
   if (pass) {
     SFX.right(); sparks('⭐');
@@ -1081,10 +1072,8 @@ function judge() {
     '<p class="' + (pass ? 'ok' : 'no') + '" style="font-size:1.05rem;margin:10px 0 2px">' +
       (pass ? '寫對了！ ⭕' : '再看一下 ✗') + '</p>' +
     (bad.length ? '<p class="note" style="margin-top:2px">' + bad.join('<br>') + '</p>' : '') +
-    (op && mode === 'both' && lv.order === 'hint'
-       ? '<p class="note" style="color:var(--amber)">✍️ 筆順：' + orderMsg + '</p>' : '') +
     /* 正確筆順只在真的寫錯的時候列，不然每題都多一行佔位置 */
-    (op && mode !== 'shape'
+    (op
        ? '<p class="note" style="color:var(--ink-faint)">正確筆順：' +
          cur.o.split('').map(function (k) { return STROKE_NAME[k]; }).join('') + '</p>' : '') +
     (cmp ? '<p class="note" style="color:var(--ink-faint)">寫到了 ' + Math.round(cmp.cover * 100) +
@@ -1119,19 +1108,13 @@ $('doneBtn').addEventListener('click', judge);
 /* 判定寬鬆度的開關。併進 chinese.html 的時候這一段要搬進設定頁，不要留在練習畫面上。 */
 function levelText() {
   var lv = L();
-  if (mode === 'order') {
-    var lv2 = L();
-    return lv2.live === 'never'
-      ? '寫的時候不擋你，寫完才告訴你哪一筆的順序不對。'
-      : lv2.live === 'clear'
-        ? '只有明顯寫錯才會退回去重寫（容易認錯的筆畫只提示）。同一筆擋兩次就放行。'
-        : '每一筆都嚴格比對，認出來不一樣就退回去重寫。';
-  }
-  return '寫到 ' + Math.round(lv.cover * 100) + '% 以上、沒歪出去 ' +
-    Math.round(lv.clean * 100) + '% 以上就算過' +
+  return '字形：寫到 ' + Math.round(lv.cover * 100) + '% 以上、沒歪出去 ' +
+    Math.round(lv.clean * 100) + '% 以上' +
     (lv.strokeSlack ? '，筆畫數差 ' + lv.strokeSlack + ' 筆之內也算' : '，筆畫數要正確') +
-    (mode === 'shape' ? '。這個模式不看筆順。'
-      : '。筆順' + (lv.order === 'hint' ? '只提示、不算不過' : lv.order === 'off' ? '不看' : '不對就不算過') + '。');
+    '。筆順一律要對，' +
+    (lv.live === 'never' ? '但寫的時候不擋你，寫完才講。'
+     : lv.live === 'clear' ? '寫錯明顯的那一筆會退回去重寫（容易認錯的只提示）。'
+     : '每一筆都嚴格比對，不一樣就退回去重寫。');
 }
 
 function setLevel(k) {
@@ -1417,14 +1400,6 @@ $('lessonList').addEventListener('click', function (e) {
   var k = Number(b.dataset.k);
   curLesson = lessonsOf(pickG, pickT).filter(function (L) { return L[2] === k; })[0];
   drawHome();
-});
-$('modeList').addEventListener('click', function (e) {
-  var b = e.target.closest && e.target.closest('.mode'); if (!b) return;
-  mode = b.dataset.m;
-  document.querySelectorAll('#modeList .mode').forEach(function (x) {
-    x.classList.toggle('sel', x.dataset.m === mode);
-  });
-  syncLevel();          // 說明文字會隨模式改變（order 模式不看寬鬆度）
 });
 $('levelSeg2').addEventListener('click', function (e) {
   var b = e.target.closest && e.target.closest('button'); if (!b) return;
