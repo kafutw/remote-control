@@ -302,6 +302,12 @@
     .rname { font-size:1.75rem; }
     .rline { font-size:1.125rem; }
   }
+
+  /* 直式（含窄螢幕橫放）：判定後把整張寫字卡收起來，讓按鈕留在畫面內。
+     條件寫成上面那個橫式兩欄規則的反面，兩邊不會同時成立。 */
+  @media (orientation:portrait), (max-width:759px) {
+    #play.judged > #padCard { display:none; }
+  }
 </style>
 </head>
 <body>
@@ -372,7 +378,7 @@
   <div class="hint" id="qhint"></div>
 </div>
 
-<div class="card">
+<div class="card" id="padCard">
   <div class="padwrap">
     <div class="pad" id="pad">
       <canvas id="grid"></canvas>
@@ -930,6 +936,11 @@ function setWriting(on) {
   judged = !on;
   $('tools').style.display = on ? '' : 'none';
   $('doneRow').style.display = on ? '' : 'none';
+  /* 直式是單欄：田字格 612px 一擋，判定卡的「再寫一次」就被推出畫面
+     （實測 768x1024 要捲 214px 才看得到）。判過之後格子已經沒作用了——
+     工具列收了、判定卡裡本來就有「你寫的／課本的字」兩張對照圖——
+     所以直式乾脆整張收起來，按「再寫一次」再叫回來。橫式兩欄不受影響。 */
+  $('play').classList.toggle('judged', !on);
 }
 
 function syncStrokeN() {
