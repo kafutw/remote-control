@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-09-07T05:58:10.910Z",
+  "generatedAt": "2026-09-07T07:30:58.202Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
     "2330": {
       "name": "台積電",
       "from": "2024-02-01",
-      "to": "2026-09-04",
-      "sessions": 626,
+      "to": "2026-09-07",
+      "sessions": 627,
       "splitsApplied": [],
       "breaks": 16,
       "eff": 6,
       "fake": 10,
-      "perYear": 6.31,
+      "perYear": 6.3,
       "deepMed": -6.22,
       "deepQ25": -11.73,
       "deepQ75": -1.18,
@@ -92,6 +92,6 @@
     }
   },
   "window": "2024/02 ～ 2026/09",
-  "coverageTo": "2026-09-04",
-  "staleDays": 3
+  "coverageTo": "2026-09-07",
+  "staleDays": 0
 }
