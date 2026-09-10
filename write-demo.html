@@ -244,6 +244,12 @@
   .note-box .note { margin-top:4px; }
   .settings-label { font-size:var(--fs-note); font-weight:800; color:var(--ink-soft); }
   .settings-hint { font-size:var(--fs-note); color:var(--ink-soft); line-height:1.6; margin-top:10px; }
+  /* 貼在題目卡右上角，不佔垂直空間——直式的田字格已經把高度吃滿了，
+     這顆按鈕如果自己排一行，寫字的時候會多捲 58px。 */
+  .card.q { position:relative; }
+  .say-btn { position:absolute; top:10px; right:10px; width:46px; height:46px;
+             padding:0; border-radius:50%; font-size:1.25rem; line-height:1; }
+  .q .word { padding:0 52px; }
   .cw-text { width:100%; box-sizing:border-box; min-height:96px; resize:vertical;
              font-family:inherit; font-size:var(--fs-body); line-height:1.9; letter-spacing:.04em;
              padding:12px 14px; border-radius:14px; border:2px solid var(--line);
@@ -392,6 +398,7 @@
 <div class="card q">
   <div class="word" id="word"></div>
   <div class="hint" id="qhint"></div>
+  <button class="btn say-btn" id="sayBtn" aria-label="再念一次" title="再念一次">🔊</button>
 </div>
 
 <div class="card" id="padCard">
@@ -471,6 +478,14 @@
         <button class="mode" data-snd="0"><b>關</b></button>
       </div>
     </div>
+    <div class="cfg-row">
+      <span class="settings-label">題目念出來</span>
+      <div class="modes three" id="speakSeg" style="flex:1 1 220px">
+        <button class="mode" data-sp="1"><b>開</b></button>
+        <button class="mode" data-sp="0"><b>關</b></button>
+      </div>
+    </div>
+    <p class="settings-hint" id="speakHint">出題的時候用平板的語音把整個詞念一遍，像老師唸生詞。念的是整個詞（「淡淡」），要寫的是挖空那個字。</p>
     <div class="cfg-row">
       <span class="settings-label">描紅按鈕</span>
       <div class="modes three" id="traceSeg" style="flex:1 1 220px">
@@ -622,7 +637,8 @@ function questionOf(c, custom) {
     html = '<span class="qc qc-blank"><i>' + d[0] + '</i><b>＿</b></span>' +
            '<small>部首「' + (d[4] || '？') + '」</small>';
   }
-  return { c: c, b: d[0], w: html, s: d[1], o: d[2] };
+  return { c: c, b: d[0], w: html, s: d[1], o: d[2],
+           wd: (w && w.indexOf(c) >= 0) ? w : c };   // 唸出來用的純文字
 }
 
 /* ── 老師的圈詞 ──
@@ -1082,6 +1098,8 @@ function loadQ() {
   drawGrid(); paintInk(); syncStrokeN();
   $('doneBtn').hidden = false;
   setWriting(true);
+  $('sayBtn').style.display = (speakOn && window.speechSynthesis) ? '' : 'none';
+  speakWord(cur.wd);
 }
 
 /* ── 考試頁擋縮放 ──
@@ -1290,6 +1308,10 @@ function judge() {
     $('adultBtn').addEventListener('click', function () { openGate(cmp, got, want); });
   }
 }
+$('sayBtn').addEventListener('click', function () {
+  warmUpSpeak();
+  if (cur) speakWord(cur.wd);
+});
 $('doneBtn').addEventListener('click', judge);
 
 /* 判定寬鬆度的開關。併進 chinese.html 的時候這一段要搬進設定頁，不要留在練習畫面上。 */
@@ -1322,6 +1344,44 @@ function syncLevel() {
    ⚠️ iOS 只允許在使用者手勢裡建立／喚醒 AudioContext，所以要在點擊時才 init。 */
 var soundOn = true;
 try { soundOn = localStorage.getItem('writeDemoSound') !== '0'; } catch (e) {}
+
+/* ── 把題目念出來，像老師在唸生詞 ──
+   兩個坑：一、iOS 第一次 speak() 一定要在使用者的手勢裡，
+   所以按「開始寫」的時候先偷念一個空白解鎖（warmUpSpeak），
+   之後 setTimeout 自動換題才念得出來。
+   二、語音清單是非同步載入的，一開始 getVoices() 常常是空陣列，
+   要掛 voiceschanged 再挑一次。 */
+var speakOn = true;
+try { speakOn = localStorage.getItem('writeSpeak') !== '0'; } catch (e) {}
+var zhVoice = null, speakReady = false;
+function pickVoice() {
+  if (!window.speechSynthesis) return;
+  var vs = speechSynthesis.getVoices() || [];
+  zhVoice = vs.filter(function (v) { return /zh[-_]TW/i.test(v.lang); })[0] ||
+            vs.filter(function (v) { return /^zh/i.test(v.lang); })[0] || null;
+}
+if (window.speechSynthesis) {
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+function warmUpSpeak() {
+  if (speakReady || !window.speechSynthesis) return;
+  try {
+    var u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0; speechSynthesis.speak(u); speakReady = true;
+  } catch (e) {}
+}
+function speakWord(t) {
+  if (!speakOn || !window.speechSynthesis || !t) return;
+  try {
+    speechSynthesis.cancel();               // 上一題還在念就切掉
+    var u = new SpeechSynthesisUtterance(t);
+    u.lang = 'zh-TW';
+    if (zhVoice) u.voice = zhVoice;
+    u.rate = 0.8;                           // 慢一點，像老師唸題
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
 /* 描紅預設不給，讓孩子自己想；連錯兩次才自動出現很淺的提示 */
 var showTrace = false;
 try { showTrace = localStorage.getItem('writeDemoTrace') === '1'; } catch (e) {}
@@ -1642,6 +1702,7 @@ function startRound() {
    除了乾瞪眼什麼線索都沒有（踩過一次：map(questionOf) 把索引當第二個參數傳進去，
    所有課次都開不起來）。出錯就把訊息印在畫面上，至少知道是哪一行。 */
 function safeStart() {
+  warmUpSpeak();                 // 一定要在使用者的手勢裡，iOS 才准後面自動念
   try { startRound(); }
   catch (err) {
     $('home').classList.remove('off');
@@ -1738,6 +1799,29 @@ $('soundSeg').addEventListener('click', function (e) {
   if (soundOn) SFX.right();          // 開起來馬上聽得到
 });
 syncSound();
+
+function syncSpeak() {
+  document.querySelectorAll('#speakSeg .mode').forEach(function (b) {
+    b.classList.toggle('sel', (b.dataset.sp === '1') === speakOn);
+  });
+  $('speakHint').textContent = !window.speechSynthesis
+    ? '這台裝置的瀏覽器不會念（沒有語音功能），這個開關沒有作用。'
+    : '出題的時候用平板的語音把整個詞念一遍，像老師唸生詞。' +
+      '念的是整個詞（「淡淡」），要寫的是挖空那個字。' +
+      (zhVoice ? '' : '　注意：這台裝置目前找不到中文語音，念起來可能怪怪的。');
+}
+$('speakSeg').addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('.mode'); if (!b) return;
+  speakOn = b.dataset.sp === '1';
+  try { localStorage.setItem('writeSpeak', speakOn ? '1' : '0'); } catch (err) {}
+  syncSpeak();
+  if (speakOn) { warmUpSpeak(); speakWord('淡淡'); }   // 開起來馬上聽得到
+});
+syncSpeak();
+if (window.speechSynthesis) {                          // 語音清單晚一步才到，到了再更新提示
+  var _ov = speechSynthesis.onvoiceschanged;
+  speechSynthesis.onvoiceschanged = function () { if (_ov) _ov(); syncSpeak(); };
+}
 
 $('fwDone').addEventListener('click', hideFireworks);
 $('fireworks').addEventListener('click', function (e) {
