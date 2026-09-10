@@ -696,8 +696,8 @@ var LEVELS = {
      'fail'／'strict' = 判不過、寫錯那一筆當場退回去重寫（嚴格）
      標準難度求的是「字寫對」，筆順只當教學提示——寫得工整卻因為筆順被擋，
      大人自己都過不了，孩子只會放棄。想認真練筆順就切到嚴格。 */
-  normal: { name: '標準', cover: 0.70, clean: 0.65, strokeSlack: 0, order: 'tell', live: 'tell'   },
-  hard:   { name: '嚴格', cover: 0.80, clean: 0.78, strokeSlack: 0, order: 'fail', live: 'strict' }
+  normal: { name: '標準', cover: 0.80, clean: 0.75, strokeSlack: 0, order: 'tell', live: 'tell'   },
+  hard:   { name: '嚴格', cover: 0.88, clean: 0.84, strokeSlack: 0, order: 'fail', live: 'strict' }
 };
 var level = 'normal';
 try { if (LEVELS[localStorage.getItem('writeDemoLevel')]) level = localStorage.getItem('writeDemoLevel'); } catch (e) {}
