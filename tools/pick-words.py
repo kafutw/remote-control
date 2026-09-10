@@ -2,7 +2,10 @@
 """替題庫裡每個生字挑一個「看得懂的語詞」當填空線索，並附上兩個字的注音。
 
 規則（順序就是優先度）：
-1. 課本語詞優先——那是他這一課真的學過的
+1. 課本語詞優先，而且要挑「他這一課的那個詞」——
+   語詞表是照課次排的，所以一個字**第一次出現**在語詞表的那個詞，
+   就是他學到這個字時課本教的詞。不照這條的話會挑到後面年級才出現的詞：
+   老師圈的是「書香」卻出「書僮」、「老師」卻出「廚師」、「淡淡」卻出「恬淡」。
 2. 課本沒有的，從教育部《國語辭典簡編本》挑兩字詞
 3. 硬性檢查：選到的詞裡，那個字的讀音必須跟課本一致
    （不擋的話會出現「注音 ㄉㄡ、語詞 國都(ㄉㄨ)」這種自相矛盾的題）
@@ -53,6 +56,14 @@ def main():
     for w in WORDS:
         for ch in w: by_char[ch].append(w)
 
+    # ── 課本語詞表：照課次排的，所以行號就是「第幾課教的」 ──
+    book_rows = [r[0].strip() for r in
+                 csv.reader(io.open(P('data', '康軒國語_114學年_語詞解釋.csv'), encoding='utf-8'))][1:]
+    book_rows = [w for w in book_rows if w]
+    book_idx = collections.defaultdict(list)
+    for i, w in enumerate(book_rows):
+        for ch in set(w): book_idx[ch].append((i, w))
+
     def bopo_of(ch):
         return norm(BANK[ch][0]) if ch in BANK else None
 
@@ -67,6 +78,21 @@ def main():
     GOOD_PREFIX = ('一', '好', '大', '小', '很', '這', '那')
     GOOD_SUFFIX = ('們', '子', '兒', '了', '上', '下', '裡', '到', '住', '過')
 
+    def book_first(ch):
+        """這個字第一次出現在課本語詞表的那個詞。同一課附近（前後 3 列）的候選裡，
+           先要兩個字的，再照行號。四字以上的成語對小孩太難，跳過。"""
+        hits = book_idx.get(ch)
+        if not hits: return None
+        lo = hits[0][0]
+        near = [x for x in hits if x[0] <= lo + 3]
+        near.sort(key=lambda x: (abs(len(x[1]) - 2), x[0]))
+        for i, w in near:
+            if len(w) > 3: continue
+            # 課本的詞也要驗讀音——字典查得到就查，查不到就相信課本
+            if len(w) == 2 and w in WORDS and not ok_reading(w, ch): continue
+            return w
+        return None
+
     def rank(word, ch):
         i = word.index(ch)
         other = word[1 - i]
@@ -79,7 +105,7 @@ def main():
                 0 if other in BANK else 1,       # 在題庫裡的更好
                 i, word)
 
-    out, filled, manual, still = {}, 0, 0, []
+    out, filled, manual, book, still = {}, 0, 0, 0, []
     HAND = {  # 字典沒有兩字詞條的虛詞，手動指定
         '這':'這裡','誰':'誰的','您':'您好','很':'很多','嗎':'好嗎','仍':'仍然',
         '飄':'飄動','棵':'一棵','踮':'踮腳','揉':'揉眼','披':'披上','踩':'踩到',
@@ -101,6 +127,10 @@ def main():
     for c, v in BANK.items():
         if c in HAND:                             # 手動指定最優先，規則挑不贏它
             out[c] = HAND[c]; manual += 1
+            continue
+        bw = book_first(c)                        # 他這一課課本教的那個詞，最優先
+        if bw:
+            out[c] = bw; book += 1
             continue
         cands = [x for x in by_char.get(c, []) if ok_reading(x, c)]
         w = v[3]
@@ -129,8 +159,8 @@ def main():
 
     io.open(P('data', 'write-words.json'), 'w', encoding='utf-8').write(
         json.dumps(result, ensure_ascii=False, indent=0))
-    print('課本原有 %d，字典補 %d，手動補 %d，仍然沒有 %d' %
-          (len(BANK) - filled - manual - len(still), filled, manual, len(still)))
+    print('課本這一課的詞 %d，課本其他詞 %d，字典補 %d，手動補 %d，仍然沒有 %d' %
+          (book, len(BANK) - book - filled - manual - len(still), filled, manual, len(still)))
     if still: print('沒補到：', ''.join(still))
 
 if __name__ == '__main__':
