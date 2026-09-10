@@ -1105,7 +1105,7 @@ function loadQ() {
   $('doneBtn').hidden = false;
   setWriting(true);
   $('sayBtn').style.display = (speakOn && window.speechSynthesis) ? '' : 'none';
-  speakWord(cur.wd);
+  speakSoon(cur.wd, 2000);
 }
 
 /* ── 考試頁擋縮放 ──
@@ -1346,6 +1346,7 @@ function judge() {
 }
 $('sayBtn').addEventListener('click', function () {
   warmUpSpeak();
+  clearSay();                       // 排程中的那次不要等一下又念一遍
   if (cur) speakWord(cur.wd);
 });
 $('doneBtn').addEventListener('click', judge);
@@ -1406,6 +1407,16 @@ function warmUpSpeak() {
     var u = new SpeechSynthesisUtterance(' ');
     u.volume = 0; speechSynthesis.speak(u); speakReady = true;
   } catch (e) {}
+}
+/* 換到下一題不要馬上念——上一題的「寫對了」音效才剛響、畫面才剛換，
+   接著就開口太趕。空兩秒讓孩子看清楚題目、準備好，再像老師那樣唸出來。
+   按 🔊 是他自己要求的，那個不延遲，立刻念。 */
+var sayTimer = 0;
+function clearSay() { if (sayTimer) { clearTimeout(sayTimer); sayTimer = 0; } }
+function speakSoon(t, delay) {
+  clearSay();
+  if (!delay) { speakWord(t); return; }
+  sayTimer = setTimeout(function () { sayTimer = 0; speakWord(t); }, delay);
 }
 function speakWord(t) {
   if (!speakOn || !window.speechSynthesis || !t) return;
@@ -1793,6 +1804,8 @@ function nextQ() {
 
 function backHome() {
   clearAdv();
+  clearSay();
+  if (window.speechSynthesis) { try { speechSynthesis.cancel(); } catch (e) {} }
   hideFireworks();
   $('play').classList.add('off');
   $('done').classList.add('off');
