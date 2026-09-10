@@ -1595,7 +1595,11 @@ function startRound() {
   resetZoom();
   QS = (curLesson[5]
           ? curLesson[5].map(function (x) { return questionOf(x[0], x[1]); })
-          : curLesson[4].split('').map(questionOf)).filter(Boolean);
+          /* 一定要包一層。直接寫 .map(questionOf) 的話，map 會把「索引」
+             當成第二個參數（自訂圈詞用的那個 w）傳進去——第一個字索引 0 還好，
+             第二個字索引 1 就變成 w=1，w.indexOf 不是函式，整個課次都開不起來。 */
+          : curLesson[4].split('').map(function (c) { return questionOf(c); })
+        ).filter(Boolean);
   /* 每一輪都重新洗牌。固定順序練幾次之後，孩子會靠「第幾題」記答案，
      不是真的認得那個字。同一輪裡每個字還是只出現一次。 */
   for (var i = QS.length - 1; i > 0; i--) {
@@ -1608,8 +1612,27 @@ function startRound() {
   $('play').classList.remove('off');
   loadQ(); relayout();
 }
-$('startBtn').addEventListener('click', startRound);
-$('againBtn').addEventListener('click', startRound);
+/* 「開始寫」出錯的話，畫面上只會表現成「按鈕沒反應」——在 iPad 上看不到主控台，
+   除了乾瞪眼什麼線索都沒有（踩過一次：map(questionOf) 把索引當第二個參數傳進去，
+   所有課次都開不起來）。出錯就把訊息印在畫面上，至少知道是哪一行。 */
+function safeStart() {
+  try { startRound(); }
+  catch (err) {
+    $('home').classList.remove('off');
+    $('play').classList.add('off');
+    var box = $('startFail');
+    if (!box) {
+      box = document.createElement('p');
+      box.id = 'startFail';
+      box.className = 'tiny';
+      box.style.cssText = 'color:var(--coral-ink);font-weight:800;line-height:1.7';
+      $('startBtn').parentNode.appendChild(box);
+    }
+    box.textContent = '開不起來，把這行念給我聽：' + (err && err.message ? err.message : err);
+  }
+}
+$('startBtn').addEventListener('click', safeStart);
+$('againBtn').addEventListener('click', safeStart);
 $('backBtn').addEventListener('click', function () { $('done').classList.add('off'); backHome(); });
 
 /* 一課寫完就結算 */
