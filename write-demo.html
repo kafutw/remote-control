@@ -1278,7 +1278,9 @@ function judge() {
   if (pass) {
     SFX.right(); sparks('⭐');
     clearAdv();
-    advTimer = setTimeout(function () { advTimer = 0; nextQ(); }, 2000);
+    /* 寫對之後停 3 秒才換下一題——看一下自己寫的跟課本的字並排在一起，
+       那三秒是這一題唯一的回饋時間。換題之後還會再空 2 秒才唸下一題。 */
+    advTimer = setTimeout(function () { advTimer = 0; nextQ(); }, 3000);
   } else { clearAdv(); SFX.wrong(); }
   /* 「差一點」：只差 1 筆、而且兩個百分比都還在 70 以上。
      這種才把家長通道亮起來，小孩整個亂寫的話不會亮。 */
