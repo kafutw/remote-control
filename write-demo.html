@@ -159,6 +159,7 @@
   .note { font-size:var(--fs-note); color:var(--ink-soft); line-height:1.7; margin-top:10px; }
   .ok { color:var(--mint-ink); font-weight:800; }
   .no { color:var(--coral-ink); font-weight:800; }
+  .hint-amber { color:var(--amber); font-weight:800; }
   .topbar { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
   /* 設定頁時頁首跟著內容置中對齊（考試頁要滿版，所以只在首頁限寬） */
   body:has(#home:not(.off)) .topbar { max-width:var(--wrap); margin-left:auto; margin-right:auto; }
@@ -690,7 +691,12 @@ var adultPassed = [];           // 被大人放行的字（併進 chinese.html �
    筆順完全不判），實際用起來太鬆——寫得不像也會過，等於沒在教。
    舊裝置的 localStorage 可能還存著 'easy'，下面那行查得到才採用，查不到就退回標準。 */
 var LEVELS = {
-  normal: { name: '標準', cover: 0.70, clean: 0.65, strokeSlack: 0, order: 'hint', live: 'clear'  },
+  /* order／live 是筆順這一關的嚴格度：
+     'tell' = 只告訴他哪一筆不一樣，不判不過、寫的時候也不擋（標準）
+     'fail'／'strict' = 判不過、寫錯那一筆當場退回去重寫（嚴格）
+     標準難度求的是「字寫對」，筆順只當教學提示——寫得工整卻因為筆順被擋，
+     大人自己都過不了，孩子只會放棄。想認真練筆順就切到嚴格。 */
+  normal: { name: '標準', cover: 0.70, clean: 0.65, strokeSlack: 0, order: 'tell', live: 'tell'   },
   hard:   { name: '嚴格', cover: 0.80, clean: 0.78, strokeSlack: 0, order: 'fail', live: 'strict' }
 };
 var level = 'normal';
@@ -1152,7 +1158,7 @@ function endStroke() {
     var live = L().live;
     /* 擋人要很有把握才行——被冤枉一次就卡住，比漏抓難受得多。
        同一筆擋兩次就放行，不讓任何人卡死在一筆上。 */
-    var block = (g.t !== wantT) && g.sure &&
+    var block = (g.t !== wantT) && g.sure && live !== 'tell' &&
                 (live === 'strict' || !confusable(g.t, wantT)) &&
                 blockedAt < 2;
     if (block) {
@@ -1163,11 +1169,20 @@ function endStroke() {
       return;
     }
     blockedAt = 0;
+    /* 不擋，但也不能把寫錯的那一筆說成「對了 ✓」。認得出不一樣就照實講，
+       語氣是提醒不是判錯——標準難度求的是字寫對，筆順只提示。 */
+    var off = (g.t !== wantT) && g.sure;
     strokesDone.push(s);
     paintInk(); syncStrokeN();
     /* 最後一筆寫完就自己結算，這個模式不需要「我寫好了」 */
-    if (strokesDone.length >= n) { say('全部 ' + n + ' 筆都對了！🎉', 'ok'); judge(); }
-    else say('第 ' + strokesDone.length + ' 筆對了 ✓', 'ok');
+    if (strokesDone.length >= n) {
+      if (!off) say('全部 ' + n + ' 筆都對了！🎉', 'ok');
+      judge();
+    } else if (off) {
+      say('這一筆課本上是「' + STROKE_NAME[wantT] + '」，先繼續寫沒關係', 'hint-amber');
+    } else {
+      say('第 ' + strokesDone.length + ' 筆對了 ✓', 'ok');
+    }
     return;
   }
   strokesDone.push(s);
@@ -1243,11 +1258,13 @@ function judge() {
   var orderLet = false;
   if (op && !shapePerfect) {
     var otherBad = bad.length;                  // 筆順以外還有沒有問題
-    if (otherBad || orderBlocked < 1) {
+    if (lv.order !== 'fail') {
+      orderLet = true;                          // 標準：只講，不判不過
+    } else if (otherBad || orderBlocked < 1) {
       bad.push('筆順不對：' + orderMsg);
       if (!otherBad) orderBlocked++;
     } else {
-      orderLet = true;                          // 已經擋過一次了，這次放他過
+      orderLet = true;                          // 嚴格：已經擋過一次了，這次放他過
     }
   }
   var pass = !bad.length;
@@ -1278,8 +1295,9 @@ function judge() {
     (bad.length ? '<p class="note" style="margin-top:2px">' + bad.join('<br>') + '</p>' : '') +
     /* 正確筆順只在真的寫錯的時候列，不然每題都多一行佔位置 */
     (orderLet
-       ? '<p class="note" style="color:var(--amber)">筆順還是不太對（' + orderMsg +
-         '），不過剛剛已經提醒過一次了，這次算你過。下次照上面的順序寫寫看。</p>' : '') +
+       ? '<p class="note" style="color:var(--amber)">' +
+         (pass ? '字寫對了。筆順這裡不太一樣：' : '另外筆順這裡也不太一樣：') + orderMsg +
+         '。下次照下面的正確筆順寫寫看。</p>' : '') +
     (shapePerfect && want && diff > lv.strokeSlack
        ? '<p class="note" style="color:var(--amber)">字寫得很好。你提筆 ' + got +
          ' 次、課本是 ' + want + ' 畫，多半是' +
@@ -1331,9 +1349,9 @@ function levelText() {
   return '字形：寫到 ' + Math.round(lv.cover * 100) + '% 以上、沒歪出去 ' +
     Math.round(lv.clean * 100) + '% 以上' +
     '，筆畫數要正確（但兩項都到 95% 以上就不看筆畫數，連筆不算錯）' +
-    '。筆順一律要對，' +
-    (lv.live === 'clear' ? '寫錯明顯的那一筆會退回去重寫（容易認錯的只提示）。'
-     : '每一筆都嚴格比對，不一樣就退回去重寫。');
+    (lv.order === 'fail'
+     ? '。筆順一律要對，每一筆都嚴格比對，不一樣就當場退回去重寫。'
+     : '。筆順只提示不擋——寫錯會告訴你哪一筆、正確順序是什麼，但字寫對就算過。');
 }
 
 function setLevel(k) {
