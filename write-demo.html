@@ -1249,20 +1249,27 @@ function judge() {
   var box = inkThumb(strokesDone, 130);
   var lv = L(), bad = [];
   var diff = want ? Math.abs(got - want) : 0;
+  /* 筆畫數的容忍度跟字的難度連動。「還」17 畫寫成 15 筆，⻍ 連著寫下去很正常，
+     字愈多筆愈容易連——要求一筆不差等於處罰難字。嚴格難度不放寬。 */
+  var slack = (lv.order === 'fail') ? lv.strokeSlack
+            : want >= 13 ? 3 : want >= 9 ? 2 : 1;
+  /* 筆畫多的字擠在同一個格子裡，筆畫互相靠近、容易碰到邊，clean 天生就低
+     （真人寫「還」是 87%，寫「現」是 93～96%）。所以複雜字的門檻也要跟著鬆。 */
+  var needClean = lv.clean - (want >= 15 ? 0.04 : want >= 12 ? 0.02 : 0);
   /* 形狀的免死金牌。
      筆畫數我只能靠「提筆幾次」來數，孩子連著寫下去不斷筆就會少算——
      「還」17 畫寫成 15 筆、⻍ 三筆連成一筆，是寫得順不是寫錯，字愈多筆愈常發生。
      但 cover 是「課本的字有幾成被墨蓋到」：真的漏寫兩筆，它不可能到 95%。
      所以形狀夠滿分的時候，就不要再拿提筆次數去否決它——筆順也一樣（見下面）。 */
   var shapePerfect = !!cmp && cmp.cover >= 0.95 && cmp.clean >= 0.95;
-  if (want && diff > lv.strokeSlack && !shapePerfect) {
+  if (want && diff > slack && !shapePerfect) {
     bad.push(got > want ? '多寫了 ' + (got - want) + ' 筆（這個字 ' + want + ' 畫，你寫了 ' + got + ' 筆）'
                         : '少了 ' + (want - got) + ' 筆（這個字 ' + want + ' 畫，你寫了 ' + got + ' 筆）');
   }
   /* 「照筆順寫」模式不管字漂不漂亮，只看順序；形狀數字還是照列給大人看 */
   if (cmp) {
     if (cmp.cover < lv.cover) bad.push('有些地方沒寫到（寫到 ' + Math.round(cmp.cover * 100) + '%）');
-    if (cmp.clean < lv.clean) bad.push('有些筆畫寫到字的外面去了（' + Math.round((1 - cmp.clean) * 100) + '% 在外面）');
+    if (cmp.clean < needClean) bad.push('有些筆畫寫到字的外面去了（' + Math.round((1 - cmp.clean) * 100) + '% 在外面）');
   }
   /* 筆順：辨識有 1～2% 的誤報，所以預設只提示、不判不過，「嚴格」才算數 */
   var op = orderProblem(cur.c, strokesDone);
@@ -1296,8 +1303,8 @@ function judge() {
   } else { clearAdv(); SFX.wrong(); }
   /* 「差一點」：只差 1 筆、而且兩個百分比都還在 70 以上。
      這種才把家長通道亮起來，小孩整個亂寫的話不會亮。 */
-  var near = !pass && diff <= lv.strokeSlack + 1 &&
-             !!cmp && cmp.cover >= lv.cover - 0.12 && cmp.clean >= lv.clean - 0.12;
+  var near = !pass && diff <= slack + 1 &&
+             !!cmp && cmp.cover >= lv.cover - 0.12 && cmp.clean >= needClean - 0.12;
   if (pass) { wrongStreak = 0; if (!cur.scored) { cur.scored = true; roundOK++; } }
   else wrongStreak++;
   /* 連錯四次 → 第五次動筆時才有很淺的字在底下。
@@ -1319,7 +1326,7 @@ function judge() {
        ? '<p class="note" style="color:var(--amber)">' +
          (pass ? '字寫對了。筆順這裡不太一樣：' : '另外筆順這裡也不太一樣：') + orderMsg +
          '。下次照下面的正確筆順寫寫看。</p>' : '') +
-    (shapePerfect && want && diff > lv.strokeSlack
+    (shapePerfect && want && diff > slack
        ? '<p class="note" style="color:var(--amber)">字寫得很好。你提筆 ' + got +
          ' 次、課本是 ' + want + ' 畫，多半是' +
          (got > want ? '有一筆分成兩次寫' : '有幾筆連著寫下去沒斷') +
@@ -1370,7 +1377,10 @@ function levelText() {
   var lv = L();
   return '字形：寫到 ' + Math.round(lv.cover * 100) + '% 以上、沒歪出去 ' +
     Math.round(lv.clean * 100) + '% 以上' +
-    '，筆畫數要正確（但兩項都到 95% 以上就不看筆畫數，連筆不算錯）' +
+    (lv.order === 'fail'
+       ? '，筆畫數要正確'
+       : '，筆畫數：8 畫以內的字可以差 1 筆、9～12 畫差 2 筆、13 畫以上差 3 筆（連筆寫很正常，難字更常見）') +
+    '（兩項都到 95% 以上就完全不看筆畫數）' +
     (lv.order === 'fail'
      ? '。筆順一律要對，每一筆都嚴格比對，不一樣就當場退回去重寫。'
      : '。筆順只提示不擋——寫錯會告訴你哪一筆、正確順序是什麼，但字寫對就算過。');
