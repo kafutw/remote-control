@@ -87,7 +87,7 @@
                 font-family:var(--abc); line-height:1; color:rgba(64,53,43,.12);
                 pointer-events:none; user-select:none; }
   .pad .ghost.off { display:none; }
-  .pad .ghost.faint { color:rgba(64,53,43,.055); }   /* 連錯兩次才自動出現的淡提示 */
+  .pad .ghost.faint { color:rgba(64,53,43,.055); }   /* 連錯四次才自動出現的淡提示 */
   body.no-trace .tools { grid-template-columns:1fr 1fr; }
   .fx { position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:16px; }
   .spark { position:absolute; font-size:2rem; animation:fly .9s ease-out forwards; }
@@ -493,7 +493,7 @@
         <button class="mode" data-tr="0"><b>隱藏</b></button>
       </div>
     </div>
-    <p class="settings-hint">預設隱藏，讓孩子自己想。連錯兩次之後，第三次會自動出現很淺的提示。真的很不會就把它打開。</p>
+    <p class="settings-hint">預設隱藏，讓孩子自己想。同一個字連錯四次之後，第五次才會自動出現很淺的提示——先讓他多練幾次。真的很不會就把它打開。</p>
     <div class="cfg-row"><span class="settings-label">字型</span>
       <span class="settings-hint" id="fontState" style="margin:0;text-align:right">檢查中…</span></div>
     <details class="note-box">
@@ -1257,8 +1257,11 @@ function judge() {
              !!cmp && cmp.cover >= lv.cover - 0.12 && cmp.clean >= lv.clean - 0.12;
   if (pass) { wrongStreak = 0; if (!cur.scored) { cur.scored = true; roundOK++; } }
   else wrongStreak++;
-  /* 連錯兩次 → 第三次動筆時就有很淺的字在底下 */
-  var stuck = wrongStreak >= 2;
+  /* 連錯四次 → 第五次動筆時才有很淺的字在底下。
+     原本是連錯兩次就給，太快看到正確寫法，孩子不會多想幾次就等著描。
+     家長通道另外算（連錯兩次就亮），大人想早點介入不必等到第五次。 */
+  var stuck = wrongStreak >= 4;
+  var tried = wrongStreak >= 2;
   if (stuck) { $('ghost').classList.remove('off'); $('ghost').classList.add('faint'); }
   $('verdict').innerHTML =
     '<div class="compare">' +
@@ -1291,8 +1294,8 @@ function judge() {
     '</div>' +
     /* 寫錯的時候不給「換一題」。要跳過只有一條路：大人看過、答對驗證題。 */
     (pass ? '' :
-      '<button class="adult-link' + (near || stuck ? ' hot' : '') + '" id="adultBtn">' +
-        (stuck ? '寫好幾次了？家長／老師可以看一下 →' : '家長／老師：這樣算過 →') +
+      '<button class="adult-link' + (near || tried ? ' hot' : '') + '" id="adultBtn">' +
+        (tried ? '寫好幾次了？家長／老師可以看一下 →' : '家長／老師：這樣算過 →') +
       '</button>');
   setWriting(false);
   $('mine').appendChild(box);
@@ -1382,7 +1385,7 @@ function speakWord(t) {
     speechSynthesis.speak(u);
   } catch (e) {}
 }
-/* 描紅預設不給，讓孩子自己想；連錯兩次才自動出現很淺的提示 */
+/* 描紅預設不給，讓孩子自己想；連錯四次才自動出現很淺的提示 */
 var showTrace = false;
 try { showTrace = localStorage.getItem('writeDemoTrace') === '1'; } catch (e) {}
 var ac = null, master = null;
