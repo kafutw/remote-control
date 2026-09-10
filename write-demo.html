@@ -531,7 +531,7 @@
 <div class="sheet off" id="sheet">
   <div class="sheet-in">
     <h2>家長／老師確認</h2>
-    <p class="note" id="gateLead" style="text-align:center;margin-top:2px">看一下他寫的。覺得可以算過的話，答一題就能放行。</p>
+    <p class="note" id="gateLead" style="text-align:center;margin-top:2px">看一下他寫的。覺得可以算過的話，答對這一題就直接放行、跳下一題。</p>
     <div class="compare" id="gateCompare"></div>
     <p class="note" id="gateNums" style="text-align:center;color:var(--ink-faint)"></p>
     <div id="gateAsk">
@@ -542,14 +542,6 @@
       <div class="row">
         <button class="btn grow" id="gateCancel">取消</button>
         <button class="btn primary grow" id="gateOk">確定</button>
-      </div>
-    </div>
-    <div id="gateDo" class="off">
-      <div class="row" style="margin-top:14px">
-        <button class="btn primary grow" id="gatePass">算他過，下一題</button>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn grow" id="gateRetry">不算，讓他重寫</button>
       </div>
     </div>
   </div>
@@ -688,6 +680,7 @@ var drawing = null;             // 正在畫的那一筆
    重寫幾次就變成「第 23 筆對了」。一律用 strokesDone.length。 */
 var wrongStreak = 0;            // 同一題連續寫錯幾次
 var blockedAt = 0;              // 同一筆被擋幾次，擋兩次就放行，不讓人卡死
+var orderBlocked = 0;           // 這一題因為「只有筆順不對」被判不過幾次，最多一次
 var adultPassed = [];           // 被大人放行的字（併進 chinese.html 時要存成 by:'adult'）
 
 /* 判定寬鬆度。用手指在大格子裡寫，本來就會超出筆畫邊緣，
@@ -1080,7 +1073,7 @@ function loadQ() {
   judged = false;                      // 先解鎖，不然下面的 say('') 清不掉上一題的判定卡
   cur = QS[qi % QS.length];
   cur.scored = false;                  // 同一題重寫不重複計分
-  strokesDone = []; drawing = null; wrongStreak = 0; blockedAt = 0;
+  strokesDone = []; drawing = null; wrongStreak = 0; blockedAt = 0; orderBlocked = 0;
   if (anim) { clearInterval(anim); anim = null; }
   $('word').innerHTML = cur.w;
   if (curLesson) {
@@ -1244,7 +1237,19 @@ function judge() {
     : '';
   /* 形狀幾乎滿分就別再用筆順判他錯。
      這種情況多半是我的辨識器認錯，不是孩子寫錯——冤枉一次的代價比漏抓大得多。 */
-  if (op && !shapePerfect) bad.push('筆順不對：' + orderMsg);
+  /* 筆順最多擋一次。第一次告訴他哪一筆錯、正確順序是什麼；
+     同一個字再寫一次還是只有筆順的問題，就放行——學得到，但不會卡死在同一個字。
+     字形或筆畫數本來就不過的話不算在這個額度裡（那次本來就要重寫）。 */
+  var orderLet = false;
+  if (op && !shapePerfect) {
+    var otherBad = bad.length;                  // 筆順以外還有沒有問題
+    if (otherBad || orderBlocked < 1) {
+      bad.push('筆順不對：' + orderMsg);
+      if (!otherBad) orderBlocked++;
+    } else {
+      orderLet = true;                          // 已經擋過一次了，這次放他過
+    }
+  }
   var pass = !bad.length;
   if (pass) {
     SFX.right(); sparks('⭐');
@@ -1272,6 +1277,9 @@ function judge() {
       (pass ? '寫對了！ ⭕' : '再看一下 ✗') + '</p>' +
     (bad.length ? '<p class="note" style="margin-top:2px">' + bad.join('<br>') + '</p>' : '') +
     /* 正確筆順只在真的寫錯的時候列，不然每題都多一行佔位置 */
+    (orderLet
+       ? '<p class="note" style="color:var(--amber)">筆順還是不太對（' + orderMsg +
+         '），不過剛剛已經提醒過一次了，這次算你過。下次照上面的順序寫寫看。</p>' : '') +
     (shapePerfect && want && diff > lv.strokeSlack
        ? '<p class="note" style="color:var(--amber)">字寫得很好。你提筆 ' + got +
          ' 次、課本是 ' + want + ' 畫，多半是' +
@@ -1941,17 +1949,24 @@ function newQuestion() {
   $('gateQ').textContent = q.q;
   $('gateDots').textContent = '　';
   $('gateAsk').classList.remove('off');
-  $('gateDo').classList.add('off');
 }
 
 function submitGate() {
-  if (parseInt(buf, 10) === gateAns) {             // 答對，給放行選項
-    $('gateAsk').classList.add('off');
-    $('gateDo').classList.remove('off');
-    return;
-  }
+  /* 答對就直接放行。原本這裡還有一層「算他過／不算」的確認畫面——
+     大人已經看過上面的對照圖才會按進來，還要再確認一次是白按的。 */
+  if (parseInt(buf, 10) === gateAns) { adultPass(); return; }
   newQuestion();                                   // 答錯就換一題新的
   $('gateBad').classList.remove('off');
+}
+
+function adultPass() {
+  /* 併進 chinese.html 的時候，這裡要送 logRecent(cur.c, true, 'adult')，
+     熟練度照算過，但紀錄要留 by:'adult'——被放行的字其實正是最該回頭再練的。 */
+  adultPassed.push(cur.c);
+  roundOK++; roundAdult++;
+  closeGate();
+  nextQ();
+  say('大人說這樣算過 ⭕', 'ok');
 }
 
 function openGate(cmp, got, want) {
@@ -1972,21 +1987,6 @@ function closeGate() { $('sheet').classList.add('off'); }
 
 $('gateOk').addEventListener('click', submitGate);
 $('gateCancel').addEventListener('click', closeGate);
-$('gateRetry').addEventListener('click', function () {
-  closeGate();
-  setWriting(true);
-  strokesDone = []; paintInk(); syncStrokeN();
-  say('再寫一次');
-});
-$('gatePass').addEventListener('click', function () {
-  /* 併進 chinese.html 的時候，這裡要送 logRecent(cur.c, true, 'adult')，
-     熟練度照算過，但紀錄要留 by:'adult'——被放行的字其實正是最該回頭再練的。 */
-  adultPassed.push(cur.c);
-  roundOK++; roundAdult++;
-  closeGate();
-  nextQ();
-  say('大人說這樣算過 ⭕', 'ok');
-});
 $('sheet').addEventListener('click', function (e) { if (e.target === $('sheet')) closeGate(); });
 /* 不在這裡 loadQ()——要先在首頁選課，按「開始寫」才進練習畫面 */
 </script>
