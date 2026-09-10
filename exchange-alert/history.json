@@ -1980,6 +1980,34 @@
       "usd_jpy": 156.02,
       "jpy_twd": 0.2031,
       "source": "open.er-api.com(國際中價)"
+    },
+    {
+      "date": "2026-09-07",
+      "usd_twd": 31.6318,
+      "usd_jpy": 156.177,
+      "jpy_twd": 0.20254,
+      "source": "open.er-api.com(國際中價)"
+    },
+    {
+      "date": "2026-09-08",
+      "usd_twd": 31.5382,
+      "usd_jpy": 154.415,
+      "jpy_twd": 0.20424,
+      "source": "open.er-api.com(國際中價)"
+    },
+    {
+      "date": "2026-09-09",
+      "usd_twd": 31.5009,
+      "usd_jpy": 153.818,
+      "jpy_twd": 0.20479,
+      "source": "open.er-api.com(國際中價)"
+    },
+    {
+      "date": "2026-09-10",
+      "usd_twd": 31.4702,
+      "usd_jpy": 153.594,
+      "jpy_twd": 0.20489,
+      "source": "open.er-api.com(國際中價)"
     }
   ],
   "last_alerts": {
