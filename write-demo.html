@@ -700,11 +700,13 @@ var LEVELS = {
      cover（寫到了）＝課本那個字的筆畫有多少被墨蓋到 → 低就是「字寫錯、寫漏、位置差很多」
      clean（沒歪出去）＝他的墨有多少落在字該在的範圍內 → 低就是「手抖、寫太大、出格」＝工整度
      這支的目標是「學會寫對的字，不是考倒他」，所以 cover 拉高、clean 放寬。 */
-  /* cover 的實測基準線（真人用手指在大格子裡寫、字是對的）：92%、82%。
-     手寫線條的粗細跟字型輪廓本來就對不齊，寫對的字大概落在 78～92%，
-     所以 85% 太貼近真實分布，會擋掉寫對的字。抓 75% 留餘裕。 */
-  normal: { name: '標準', cover: 0.75, clean: 0.60, strokeSlack: 0, order: 'tell', live: 'tell'   },
-  hard:   { name: '嚴格', cover: 0.85, clean: 0.75, strokeSlack: 0, order: 'fail', live: 'strict' }
+  /* ⚠️ 動這兩個數字之前先讀 docs/寫字功能-交接.md 的「兩個指標的鑑別力」。
+     實測結論：cover 幾乎沒有鑑別力，clean 才是分辨「寫對」和「亂畫」的那一個。
+       cover（寫到了）  亂畫 79～88%，真人寫對 82～92%——完全重疊，不能靠它。
+       clean（沒歪出去）亂畫 81～82%，真人寫對 93～96%——中間有乾淨的空隙。
+     所以 cover 放低（只擋漏一大塊），clean 壓在空隙中間。 */
+  normal: { name: '標準', cover: 0.72, clean: 0.88, strokeSlack: 0, order: 'tell', live: 'tell'   },
+  hard:   { name: '嚴格', cover: 0.85, clean: 0.93, strokeSlack: 0, order: 'fail', live: 'strict' }
 };
 var level = 'normal';
 try { if (LEVELS[localStorage.getItem('writeDemoLevel')]) level = localStorage.getItem('writeDemoLevel'); } catch (e) {}
