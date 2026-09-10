@@ -588,16 +588,18 @@ function questionOf(c, custom) {
   if (w && w.indexOf(c) >= 0) {
     var blanked = false;
     for (var i = 0; i < w.length; i++) {
-      /* 只挖第一個。疊字詞（淡淡、靜靜、慢慢…）如果兩個都挖，
-         題目會變成「＿＿」，孩子看不出要寫什麼字。 */
-      var isTarget = w.charAt(i) === c && !blanked;
+      /* 疊字詞（淡淡、靜靜、慢慢…）兩個都挖，但一定要標注音，
+         不然「＿＿」看不出要寫什麼。疊字的兩個字就是同一個字，
+         注音必然相同，所以這裡標注音沒有多音字標錯的風險。
+         非疊字只挖第一個（老師圈「書香」就挖「書」，另一個字留著當線索）。 */
+      var multi = w.split(c).length - 1 > 1;     // 目標字在這個詞裡出現不只一次
+      var isTarget = w.charAt(i) === c && (multi || !blanked);
       if (isTarget) blanked = true;
       /* 注音：內建語詞的注音是逐詞查教育部辭典來的，整串都對。
-         自訂圈詞查不到詞，只能拿字庫收的單字讀音，多音字就會標錯——
+         圈詞查不到整個詞，只能拿字庫收的單字讀音，多音字就會標錯——
          實例：課文「比我還高了」念ㄏㄞˊ，字庫收的是ㄏㄨㄢˊ（還手）。
-         所以自訂圈詞一律不標注音，題目只給詞、挖掉要寫的那個字。
-         寧可少一個提示，也不要在注音上教錯。 */
-      var ru = custom ? '' : (bo[i] || '');
+         所以圈詞題預設不標注音，只有上面那種「兩個都挖」的疊字例外。 */
+      var ru = custom ? (isTarget && multi ? d[0] : '') : (bo[i] || '');
       html += '<span class="qc' + (isTarget ? ' qc-blank' : '') + '">' +
               '<i>' + ru + '</i>' +
               '<b>' + (isTarget ? '＿' : w.charAt(i)) + '</b></span>';
