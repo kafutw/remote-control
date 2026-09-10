@@ -267,22 +267,32 @@
   /* iPad 橫著拿：左邊題目、右邊田字格，格子放大，整頁不用上下捲 */
   @media (orientation:landscape) and (min-width:760px) {
     /* 書寫空間優先：格子吃到高度和寬度的極限，左欄留 460px 給題目和判定 */
-    :root { --padmax:min(calc(100dvh - 304px), calc(100vw - 560px), 820px); }
+    :root { --padmax:min(calc(100dvh - 228px), calc(100vw - 570px), 880px); }
     .topbar-t b { font-size:var(--fs-head); }        /* 橫式標題壓一級，高度讓給格子 */
+    .topbar { margin-bottom:6px; }
+    .icobtn { width:38px; height:38px; }
     body { max-width:1500px; padding:14px 20px 10px; }
     #play:not(.off) { display:grid; grid-template-columns:1fr auto;
                       column-gap:22px; align-items:start; }
     #play > h1, #play > .card.q, #play > .verdict, #play > .row { grid-column:1; }
     #play > .card:not(.q) { grid-column:2; grid-row:1 / span 20;
-                            width:calc(var(--padmax) + 36px); padding:16px; }
+                            width:calc(var(--padmax) + 28px); padding:14px; }
     /* 設定頁不跟著變寬——它跟其他幾支 app 一樣是一欄往下捲 */
+    /* 工具列和「我寫好了」併成同一列——各佔一整行的話，
+       等於從田字格身上拿走 120px。孩子在 iPad 橫著寫，格子越大越好寫。 */
+    #play > .card:not(.q) { display:grid; grid-template-columns:1fr auto; align-content:start; }
+    #play > .card:not(.q) > .padwrap,
+    #play > .card:not(.q) > .stroke-n { grid-column:1 / -1; }
+    #play > .card:not(.q) > .tools { grid-column:1; margin-top:8px; }
+    #play > .card:not(.q) > .row { grid-column:2; margin-top:8px !important;
+                                   margin-left:10px; min-width:190px; }
     /* 題目壓小，把高度讓給田字格 */
     #play > .card.q { margin-bottom:10px; padding:12px 14px; }
     .q .bpmf { font-size:1.875rem; }
     .q .word { font-size:1.625rem; margin-top:2px; }
     .q .hint { display:none; }
-    .padwrap { margin:8px 0 6px; }
-    .stroke-n { margin-top:6px; }
+    .padwrap { margin:4px 0 2px; }
+    .stroke-n { margin-top:4px; }
     .tools { grid-template-columns:repeat(3, 1fr); gap:6px; }
     .tools .btn { padding:10px 6px; }
     /* 判定卡：比對圖佔滿一行、文字在下面一行、按鈕最後——
@@ -298,7 +308,7 @@
     .verdict .btn.grow { flex:0 1 auto; min-width:180px; }
     .verdict .note { line-height:1.5; margin-top:6px; }
     /* 橫式左欄擠，獎牌說明排成一列、提示句收起來 */
-    .topbar { margin-bottom:10px; }
+    .topbar { margin-bottom:6px; }
     .sheet { align-items:center; }
   }
 
@@ -306,7 +316,7 @@
   @media (orientation:landscape) and (min-width:1280px) {
     .icobtn { width:46px; height:46px; }
     /* 練習頁：格子上限拉高，題目和判定的字也跟著放大 */
-    :root { --padmax:min(calc(100dvh - 318px), calc(100vw - 640px), 940px); }
+    :root { --padmax:min(calc(100dvh - 248px), calc(100vw - 700px), 1000px); }
     #play > .card.q { padding:18px 20px; margin-bottom:12px; }
     .q .bpmf { font-size:2.5rem; }
     .q .word { font-size:2.25rem; }
