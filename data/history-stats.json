@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T03:45:33.250Z",
+  "generatedAt": "2026-09-11T05:50:01.529Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
@@ -60,13 +60,13 @@
     "0056": {
       "name": "元大高股息",
       "from": "2024-02-01",
-      "to": "2026-09-10",
-      "sessions": 630,
+      "to": "2026-09-11",
+      "sessions": 631,
       "splitsApplied": [],
       "breaks": 16,
       "eff": 12,
       "fake": 4,
-      "perYear": 6.27,
+      "perYear": 6.26,
       "deepMed": -1.61,
       "deepQ25": -4.63,
       "deepQ75": -0.67,
