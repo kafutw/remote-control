@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-14T06:05:25.472Z",
-  "generatedAtTaipei": "2026-09-14 14:05:25",
+  "generatedAt": "2026-09-14T08:05:15.920Z",
+  "generatedAtTaipei": "2026-09-14 16:05:15",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -149,11 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 15.84,
+      "price": 17.67,
       "prevClose": 15.84,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 1.83,
+      "pct": 11.553,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -162,10 +161,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 63393.34,
+      "price": 63492.99,
       "prevClose": 64011.34,
-      "change": -618,
-      "pct": -0.9655,
+      "change": -518.35,
+      "pct": -0.8098,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -174,10 +173,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6680.57,
+      "price": 6684.37,
       "prevClose": 6909.91,
-      "change": -229.34,
-      "pct": -3.319,
+      "change": -225.54,
+      "pct": -3.264,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -364,8 +363,8 @@
       "overheat": 13000
     },
     "complete": 30,
-    "incomplete": 22,
-    "latestPartial": false,
+    "incomplete": 23,
+    "latestPartial": true,
     "series": [
       {
         "date": "2026-07-01",
@@ -678,6 +677,12 @@
         "twse": 7622.45,
         "tpex": 1851.81,
         "total": 9474.26
+      },
+      {
+        "date": "2026-09-14",
+        "twse": 6619.77,
+        "tpex": null,
+        "total": null
       }
     ]
   },
