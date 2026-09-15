@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-09-15T08:00:06.759Z",
-  "generatedAtTaipei": "2026-09-15 16:00:06",
+  "generatedAt": "2026-09-15T09:20:34.825Z",
+  "generatedAtTaipei": "2026-09-15 17:20:34",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
   },
-  "ok": 14,
-  "failed": 0,
+  "ok": 13,
+  "failed": 1,
   "crossCheck": {
     "tsmc": {
       "primary": 2385,
@@ -89,21 +89,13 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "REG_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
       "name": "費城半導體",
       "group": "sox",
-      "dp": 2,
-      "via": "cnbc:.SOX",
-      "price": 11131.281,
-      "prevClose": 11131.281,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
-      "marketState": "REG_MKT",
-      "asOf": null
+      "error": "全部來源都失敗｜cnbc:.SOX → 沒有 last 欄位 ｜ twelve:SOX → 沒有設定 TWELVEDATA_KEY（跳過） ｜ stooq:^sox → HTTP 404｜回應開頭「<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-t」 ｜ yahoo:^SOX → HTTP 429"
     },
     "ixic": {
       "name": "納斯達克",
@@ -149,10 +141,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 17.69,
+      "price": 17.93,
       "prevClose": 17.1,
-      "change": 0.59,
-      "pct": 3.4503,
+      "change": 0.83,
+      "pct": 4.8538,
       "marketState": "REG_MKT",
       "asOf": null
     },
