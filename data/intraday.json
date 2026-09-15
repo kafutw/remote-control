@@ -1,12 +1,17 @@
 {
  "date": "2026-09-15",
- "updatedTaipei": "08:14",
+ "updatedTaipei": "08:19",
  "series": {
   "nikkei": {
    "name": "日經 225",
    "dp": 0,
    "prevClose": 63492.99,
-   "points": []
+   "points": [
+    [
+     "08:19",
+     63114.38
+    ]
+   ]
   },
   "kospi": {
    "name": "韓國 KOSPI",
