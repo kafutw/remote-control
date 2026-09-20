@@ -406,6 +406,10 @@
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
   }
   .opt.word .ow { flex: 1; text-align: center; line-height: 1.15; word-break: break-word; }
+  .qrow { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  .qrow .btn { flex: 0 1 auto; }
+  .qtip { font-size: var(--fs-note); color: var(--ink-faint); margin: 8px 0 0; }
+
   /* 喇叭要夠大，小孩才點得準；圈圈和裡面的圖案要一起放大才有用 */
   .opt.word .say {
     flex: 0 0 auto; width: 72px; height: 72px; border-radius: 99px;
@@ -2386,8 +2390,12 @@
     }
     if (q.kind === 'wlisten') {
       body.innerHTML = '<button class="speaker" id="playBtn" aria-label="再聽一次">🔊</button>' +
-        '<button class="btn ghost" id="noHearBtn" style="margin-top:10px">聽不到？換個問法</button>';
+        '<div class="qrow">' +
+        '<button class="btn ghost" id="voiceBtn">🗣️ 換個聲音</button>' +
+        '<button class="btn ghost" id="noHearBtn">聽不到？換個問法</button>' +
+        '</div>';
       $('playBtn').addEventListener('click', function () { sayItem(q.c); });
+      $('voiceBtn').addEventListener('click', openVoice);
       $('noHearBtn').addEventListener('click', function () {
         q.kind = 'wpic';
         renderQuestion(q); paintOptions();
@@ -2398,8 +2406,23 @@
     var L = letterOf(q.c);
     if (q.kind === 'listen') {
       body.innerHTML = '<button class="speaker" id="playBtn" aria-label="再聽一次">🔊</button>' +
-        '<button class="btn ghost" id="noHearBtn" style="margin-top:10px">聽不到？換個問法</button>';
-      $('playBtn').addEventListener('click', function () { sayLetter(q.c); });
+        '<div class="qrow">' +
+        '<button class="btn ghost" id="voiceBtn">🗣️ 換個聲音</button>' +
+        '<button class="btn ghost" id="noHearBtn">聽不到？換個問法</button>' +
+        '</div>' +
+        '<p class="qtip" id="listenTip">再按一次喇叭，會連單字一起念</p>';
+      var heard = 0;
+      $('playBtn').addEventListener('click', function () {
+        heard++;
+        // 第二次之後連單字一起念：「e ・ egg」比單一個字母好認太多
+        if (heard >= 2) {
+          sayFull(q.c);
+          $('listenTip').textContent = '「' + lower(q.c) + ' ・ ' + letterOf(q.c).word + '」';
+        } else {
+          sayLetter(q.c);
+        }
+      });
+      $('voiceBtn').addEventListener('click', openVoice);
       $('noHearBtn').addEventListener('click', function () {
         q.kind = 'case';                 // 換成看得見的題型，不換答案（答案不變）
         renderQuestion(q); paintOptions();
