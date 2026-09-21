@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-21T08:10:22.067Z",
-  "generatedAtTaipei": "2026-09-21 16:10:22",
+  "generatedAt": "2026-09-21T09:49:28.037Z",
+  "generatedAtTaipei": "2026-09-21 17:49:28",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -369,7 +369,7 @@
     "lit": false,
     "reasons": [],
     "ready": true,
-    "last": 10753,
+    "last": 10792.92,
     "reach": {
       "lo": 8101.12,
       "hi": 16104.21,
@@ -730,9 +730,9 @@
       },
       {
         "date": "2026-09-21",
-        "twse": 8628.26,
+        "twse": 8668.18,
         "tpex": 2124.74,
-        "total": 10753
+        "total": 10792.92
       }
     ]
   },
