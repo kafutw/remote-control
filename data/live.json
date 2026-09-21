@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-21T06:09:48.617Z",
-  "generatedAtTaipei": "2026-09-21 14:09:48",
+  "generatedAt": "2026-09-21T08:10:22.067Z",
+  "generatedAtTaipei": "2026-09-21 16:10:22",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -149,11 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 14.81,
+      "price": 14.94,
       "prevClose": 14.81,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 0.13,
+      "pct": 0.8778,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -174,10 +173,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6995.54,
+      "price": 7007.72,
       "prevClose": 6894.23,
-      "change": 101.31,
-      "pct": 1.4695,
+      "change": 113.49,
+      "pct": 1.6462,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -367,26 +366,23 @@
     }
   },
   "volume": {
-    "lit": true,
-    "reasons": [
-      "成交值突破 1.10 兆",
-      "而且已達 1.30 兆過熱區 —— 沒有前置條件可以分辨這是換手還是出貨，要自己看"
-    ],
+    "lit": false,
+    "reasons": [],
     "ready": true,
-    "last": 14097.92,
+    "last": 10753,
     "reach": {
       "lo": 8101.12,
       "hi": 16104.21,
-      "days": 35,
+      "days": 36,
       "fired": 17,
-      "fireRate": 0.4857142857142857,
+      "fireRate": 0.4722222222222222,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 35,
+    "complete": 36,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
@@ -731,6 +727,12 @@
         "twse": 11423.22,
         "tpex": 2674.7,
         "total": 14097.92
+      },
+      {
+        "date": "2026-09-21",
+        "twse": 8628.26,
+        "tpex": 2124.74,
+        "total": 10753
       }
     ]
   },
