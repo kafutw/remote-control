@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T06:04:35.960Z",
+  "generatedAt": "2026-09-24T07:47:09.691Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
@@ -33,13 +33,13 @@
     "0050": {
       "name": "元大台灣 50",
       "from": "2024-02-01",
-      "to": "2026-09-23",
-      "sessions": 634,
+      "to": "2026-09-24",
+      "sessions": 635,
       "splitsApplied": [],
       "breaks": 18,
       "eff": 6,
       "fake": 12,
-      "perYear": 7.01,
+      "perYear": 7,
       "deepMed": -6.65,
       "deepQ25": -11.56,
       "deepQ75": -1.11,
@@ -92,6 +92,6 @@
     }
   },
   "window": "2024/02 ～ 2026/09",
-  "coverageTo": "2026-09-23",
-  "staleDays": 1
+  "coverageTo": "2026-09-24",
+  "staleDays": 0
 }
