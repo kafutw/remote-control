@@ -308,9 +308,10 @@
   .rh { margin: 6px 0 0; font-size: var(--fs-note); color: var(--ink-soft); letter-spacing: .06em; font-weight: 700; }
 
   /* ---------- 設定 ---------- */
-  .sheet-bg { position: fixed; inset: 0; background: rgba(10,20,30,.4); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  /* 設定面板要蓋過地圖上的站點（z 2–4）和週次面板（z 5） */
+  .sheet-bg { position: fixed; inset: 0; z-index: 50; background: rgba(10,20,30,.4); opacity: 0; pointer-events: none; transition: opacity .2s; }
   .sheet {
-    position: fixed; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow: auto;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 51; max-height: 88vh; overflow: auto;
     background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 16px calc(24px + env(safe-area-inset-bottom, 0px));
     transform: translateY(105%); transition: transform .25s;
   }
@@ -662,7 +663,7 @@
     animal: ['animals'], bear: ['bears','bare','bair'], bee: ['be','b','bea','bees'], bird: ['birds','burd'],
     butterfly: ['butterflies'], cat: ['cats','kat'], chicken: ['chickens'], cow: ['cows','kau','cao'],
     dog: ['dogs','doug'], duck: ['ducks','duk'], elephant: ['elephants'], fish: ['fishes'],
-    frog: ['frogs'], hippo: ['hippos','hippopotamus','hipo'], horse: ['horses','hoarse'],
+    frog: ['frogs'], hippo: ['hippos','hippopotamus','hipo','hip','hiphop','hippie'], horse: ['horses','hoarse'],
     koala: ['koalas','coala'], lion: ['lions','lyon'], mouse: [], mice: ['mise'],
     monkey: ['monkeys'], panda: ['pandas'], pet: ['pets'], pig: ['pigs'], rabbit: ['rabbits'],
     sheep: [], goat: ['goats'], snake: ['snakes'], spider: ['spiders'], tiger: ['tigers'],
