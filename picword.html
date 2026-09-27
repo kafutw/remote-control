@@ -713,7 +713,7 @@
     butterfly: ['butterflies'], cat: ['cats','kat'], chicken: ['chickens'], cow: ['cows','kau','cao'],
     dog: ['dogs','doug'], duck: ['ducks','duk'], elephant: ['elephants'], fish: ['fishes'],
     frog: ['frogs'], hippo: ['hippos','hippopotamus','hipo','hip','hiphop','hippie'], horse: ['horses','hoarse'],
-    koala: ['koalas','coala'], lion: ['lions','lyon'], mouse: [], mice: ['mise'],
+    koala: ['koalas','coala'], lion: ['lions','lyon'], mouse: [], mice: ['mise', 'nice', 'mike', 'might', 'mys', 'myce'],
     monkey: ['monkeys'], panda: ['pandas'], pet: ['pets'], pig: ['pigs'], rabbit: ['rabbits'],
     sheep: [], goat: ['goats'], snake: ['snakes'], spider: ['spiders'], tiger: ['tigers'],
     turtle: ['turtles'], whale: ['whales','wale','wail','wales'], zebra: ['zebras'], bag: ['bags'],
@@ -765,7 +765,8 @@
     }
     /* 像幾 %＝「拼字像幾成」和「子音發音像幾成」的平均，過關門檻在設定裡調：
        寬鬆 70%（預設）／標準 80%／嚴格 90%。
-       子音發音：母音不算、l 當 r、v 當 b（台灣小孩最常混的音），所以 flog 對 frog 有 88%。
+       子音發音：母音不算、l 當 r、v 當 b（台灣小孩最常混的音）、n 當 m（Safari 常把 mice 聽成 nice），
+       所以 flog 對 frog 有 88%、nice 對 mice 有 88%。
        2026-09-27 試算：hip→hippo 80%、flog→frog 88%、cut→cat 83%、dog→duck 38%、pet→pig 42%。 */
     var target = compact(en), need = (db.pass || 70) / 100, best = 0, bestHeard = alts[0];
     for (i = 0; i < alts.length; i++) {
@@ -782,7 +783,7 @@
   function simLetters(a, b) { var m = Math.max(a.length, b.length); return m ? 1 - lev(a, b) / m : 0; }
   function soundKey(w) {
     w = w.replace(/wh/g, 'w').replace(/th/g, 's').replace(/ph/g, 'f').replace(/ck/g, 'k').replace(/[cq]/g, 'k')
-         .replace(/x/g, 'ks').replace(/z/g, 's').replace(/l/g, 'r').replace(/v/g, 'b').replace(/(.)\1+/g, '$1');
+         .replace(/x/g, 'ks').replace(/z/g, 's').replace(/l/g, 'r').replace(/v/g, 'b').replace(/n/g, 'm').replace(/(.)\1+/g, '$1');
     return w.charAt(0) + w.slice(1).replace(/[aeiouy]/g, '');
   }
   function likeness(heard, target) {
