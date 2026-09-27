@@ -35,6 +35,10 @@
     --amber: #E3A21A;
     --amber-soft: #FFF3D9;
     --stamp: #3553A8;
+    --zoo: #E3F1DA; --zoo-ink: #4E8A3A;
+    --shop: #F8E7EE; --shop-ink: #B5577A;
+    --road: #EADBBC; --road-dash: #C4A36A;
+    --ring: rgba(255,255,255,.8);
     --shadow: 0 1px 2px rgba(40,90,140,.06), 0 8px 22px rgba(40,90,140,.10);
     --radius: 22px;
     --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
@@ -57,6 +61,8 @@
       --coral: #FF8A77; --coral-ink: #FFA797; --coral-soft: rgba(255,138,119,.15);
       --amber: #FFC45E; --amber-soft: rgba(255,196,94,.15);
       --stamp: #93A9F0;
+      --zoo: #1F3024; --zoo-ink: #8FD08A; --shop: #33232B; --shop-ink: #F0A3C0;
+      --road: #4B4232; --road-dash: #8C7A55; --ring: rgba(255,255,255,.14);
       --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 26px rgba(0,0,0,.3);
     }
   }
@@ -69,6 +75,8 @@
     --coral: #FF8A77; --coral-ink: #FFA797; --coral-soft: rgba(255,138,119,.15);
     --amber: #FFC45E; --amber-soft: rgba(255,196,94,.15);
     --stamp: #93A9F0;
+    --zoo: #1F3024; --zoo-ink: #8FD08A; --shop: #33232B; --shop-ink: #F0A3C0;
+    --road: #4B4232; --road-dash: #8C7A55; --ring: rgba(255,255,255,.14);
     --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 26px rgba(0,0,0,.3);
   }
 
@@ -84,7 +92,9 @@
   button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--key); outline-offset: 2px; }
   .en { font-family: var(--en); }
 
-  .app { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 40px; }
+  .app { margin: 0 auto; padding-inline: 16px; padding-block: 16px 32px; }
+  #learn, #play { max-width: 1100px; margin: 0 auto; }
+  #result { max-width: 760px; margin: 0 auto; }
   .screen { display: none; flex-direction: column; gap: 16px; }
   .screen.on { display: flex; }
 
@@ -104,48 +114,82 @@
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   .grow { flex: 1 1 0; }
 
-  /* ---------- 首頁 ---------- */
-  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-  h1 { margin: 0; font-size: var(--fs-title); line-height: 1.25; text-wrap: balance; }
-  .sub { margin: 2px 0 0; color: var(--ink-soft); font-size: var(--fs-note); letter-spacing: .04em; }
+  /* ---------- 首頁：冒險地圖 ----------
+     9 週是一條路：前 6 週在動物森林、後 3 週在衣服店（單字表本來就是動物→衣服）。
+     橫放（.wide）地圖填滿、面板浮在右下；直放（.tall）路線由下往上，面板接在地圖下面。 */
+  #home { height: calc(100vh - 48px); height: calc(100dvh - 48px); min-height: 560px; gap: 12px; position: relative; }
+  .map {
+    position: relative; flex: 1 1 auto; min-height: 300px; border-radius: 26px; overflow: hidden;
+    background: linear-gradient(100deg, var(--zoo) 0 57%, var(--shop) 57% 100%);
+  }
+  #home.tall .map { background: linear-gradient(180deg, var(--shop) 0 36%, var(--zoo) 36% 100%); }
+  .road { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .road .base { stroke: var(--road); stroke-width: 30; }
+  .road .dash { stroke: var(--road-dash); stroke-width: 3; stroke-dasharray: 9 9; }
+  .map-top { position: absolute; top: 14px; left: 14px; right: 14px; z-index: 3; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .title-chip { background: var(--surface); padding: 8px 18px; border-radius: 18px; box-shadow: var(--shadow); }
+  .title-chip h1 { margin: 0; font-size: clamp(1.1rem, 2.6vw, 1.6rem); line-height: 1.25; letter-spacing: .06em; }
+  .title-chip .sub { margin: 0; color: var(--ink-soft); font-size: var(--fs-note); letter-spacing: .04em; }
+  .zone {
+    position: absolute; z-index: 1; font-size: var(--fs-note); font-weight: 800; letter-spacing: .08em;
+    padding: 3px 12px; border-radius: 99px; background: var(--surface); opacity: .88;
+  }
+  .zone.a { color: var(--zoo-ink); }
+  .zone.b { color: var(--shop-ink); }
+
+  .stop {
+    --s: clamp(58px, 10.5vmin, 104px);
+    position: absolute; z-index: 2; width: var(--s); height: var(--s); transform: translate(-50%, -50%);
+    border: none; border-radius: 50%; padding: 6px;
+    background: conic-gradient(var(--mint) calc(var(--p) * 1%), var(--ring) 0);
+    box-shadow: 0 4px 12px rgba(0,0,0,.14);
+  }
+  .stop .in {
+    width: 100%; height: 100%; border-radius: 50%; background: var(--surface);
+    display: grid; place-items: center; font-size: calc(var(--s) * .48); line-height: 1;
+  }
+  .stop .in svg { width: .95em; height: .95em; }
+  .stop.new:not(.sel) .in > span { filter: grayscale(1); opacity: .5; }
+  .stop .no {
+    position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); font-size: .8rem; font-weight: 800; padding: 1px 9px; border-radius: 99px;
+  }
+  .stop .flag {
+    position: absolute; top: -6px; right: -14px; background: var(--stamp); color: var(--surface);
+    font: 800 .78rem var(--en); padding: 2px 8px; border-radius: 7px 7px 7px 0; transform: rotate(8deg);
+  }
+  .stop .crown { position: absolute; top: -12px; left: -8px; font-size: calc(var(--s) * .3); }
+  .stop.sel { --s: clamp(78px, 14.5vmin, 138px); z-index: 4; box-shadow: 0 0 0 6px var(--key), 0 0 0 16px var(--key-soft), 0 8px 18px rgba(0,0,0,.2); }
+  .kid {
+    position: absolute; left: 50%; bottom: 86%; font-size: calc(var(--s) * .46); line-height: 1;
+    transform: translateX(-50%); animation: hop .5s ease-out; pointer-events: none;
+  }
+  @keyframes hop {
+    0% { transform: translate(-50%, 50%) scale(.5); opacity: 0; }
+    60% { transform: translate(-50%, -22%) scale(1.05); opacity: 1; }
+    100% { transform: translate(-50%, 0); }
+  }
+
+  .panel { background: var(--surface); border-radius: 22px; box-shadow: var(--shadow); padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  #home.wide .panel { position: absolute; right: 14px; bottom: 14px; z-index: 5; width: min(440px, 40%); }
+  .p-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .p-h b { font-size: 1.5rem; }
+  .okchip { font: 800 var(--fs-note) var(--en); color: var(--stamp); border: 2px dashed var(--stamp); border-radius: 99px; padding: 0 10px; }
+  .stars { margin-left: auto; font-size: 1.35rem; letter-spacing: 2px; white-space: nowrap; }
+  .st { font-style: normal; color: var(--track); }
+  .st.on { color: #F2B63A; }
+  .st.half { background: linear-gradient(90deg, #F2B63A 50%, var(--track) 50%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .p-e { display: flex; justify-content: space-around; align-items: center; font-size: clamp(2rem, 4.4vw, 3rem); line-height: 1.2; border-radius: 16px; padding: 6px 8px; background: var(--zoo); }
+  .p-e.shop { background: var(--shop); }
+  .p-e svg { width: 1em; height: 1em; display: block; }
+  .p-w { margin: 0; text-align: center; font-family: var(--en); color: var(--ink-soft); }
+  .p-act { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; }
+  .p-act .btn { min-height: 60px; font-size: 1.2rem; }
   .notice {
-    margin: 0; padding: 10px 14px; border-radius: 14px;
+    margin: 0; padding: 8px 12px; border-radius: 12px;
     background: var(--amber-soft); color: var(--ink); font-size: var(--fs-note);
   }
   .notice b { color: var(--amber); }
-  .notice.okay { background: var(--mint-soft); }
-  .notice.okay b { color: var(--mint-ink); }
-
-  .weeks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  @media (max-width: 520px) { .weeks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .wk {
-    position: relative; text-align: left; display: flex; flex-direction: column; gap: 6px;
-    padding: 12px 12px 10px; border-radius: 18px; border: 2px solid var(--line);
-    background: var(--surface); min-height: 118px;
-  }
-  .wk[aria-pressed="true"] { border-color: var(--key); background: var(--key-soft); box-shadow: 0 0 0 2px var(--key) inset; }
-  .wk-h { display: flex; align-items: baseline; gap: 6px; font-weight: 800; }
-  .wk-h small { font-weight: 600; color: var(--ink-soft); font-size: var(--fs-note); }
-  .wk-pics { font-size: 1.5rem; line-height: 1.15; letter-spacing: 1px; display: flex; flex-wrap: wrap; gap: 2px; }
-  .wk-pics svg { width: 1.4rem; height: 1.4rem; vertical-align: -3px; }
-  .wk-words { font-family: var(--en); font-size: var(--fs-note); color: var(--ink-soft); line-height: 1.35; }
-  .dots { display: flex; gap: 4px; margin-top: auto; }
-  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--track); }
-  .dot.l0 { background: var(--coral-soft); box-shadow: 0 0 0 2px var(--coral) inset; }
-  .dot.l1 { background: linear-gradient(90deg, var(--mint) 50%, var(--track) 50%); }
-  .dot.l2 { background: var(--mint); }
-  .stamp {
-    position: absolute; top: 8px; right: 8px; width: 38px; height: 38px; border-radius: 50%;
-    border: 2px dashed var(--stamp); color: var(--stamp); font: 800 .72rem/34px var(--en);
-    text-align: center; transform: rotate(-12deg); opacity: .85;
-  }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--ink-soft); font-size: var(--fs-note); }
-  .legend span { display: inline-flex; align-items: center; gap: 5px; }
-
-  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .actions .wide { grid-column: 1 / -1; }
-  .actions .btn { min-height: 64px; font-size: 1.3rem; }
-  .pick-info { color: var(--ink-soft); font-size: var(--fs-note); margin: 0; }
 
   /* ---------- 題目畫面 ---------- */
   .bar { display: flex; align-items: center; gap: 12px; }
@@ -154,7 +198,8 @@
   .count { font-variant-numeric: tabular-nums; color: var(--ink-soft); font-weight: 700; min-width: 4.5em; text-align: right; }
 
   .card {
-    position: relative; align-self: center; width: min(100%, 360px); aspect-ratio: 1; max-width: 100%;
+    position: relative; align-self: center; width: min(100%, 52vh, 520px); aspect-ratio: 1; max-width: 100%;
+    container-type: inline-size;
     border-radius: 28px; background: var(--surface); box-shadow: var(--shadow);
     display: grid; place-items: center; overflow: hidden;
   }
@@ -165,14 +210,25 @@
     position: absolute; top: 12px; left: 12px; padding: 2px 10px; border-radius: 99px;
     background: var(--amber-soft); color: var(--amber); font-size: var(--fs-note); font-weight: 700;
   }
-  .pic { font-size: clamp(110px, 32vw, 180px); line-height: 1; user-select: none; }
-  .pic.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: clamp(64px, 17vw, 96px); }
-  .pic.trio { display: flex; gap: 4px; font-size: clamp(64px, 18vw, 100px); }
+  /* 圖跟著卡片大小走（cqw＝卡片寬度的 1%） */
+  .pic { font-size: 58cqw; line-height: 1; user-select: none; }
+  .pic.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2cqw 6cqw; font-size: 30cqw; }
+  .pic.trio { display: flex; gap: 1cqw; font-size: 29cqw; }
   .pic.trio span:nth-child(2) { transform: translateY(-18%) scale(.9); }
-  .pic svg { width: clamp(150px, 42vw, 240px); height: auto; display: block; }
-  .house { position: relative; width: clamp(170px, 48vw, 270px); aspect-ratio: 1; }
+  .pic svg { width: 70cqw; height: auto; display: block; }
+  .house { position: relative; width: 78cqw; aspect-ratio: 1; }
   .house svg { width: 100%; height: 100%; }
-  .house .in { position: absolute; left: 0; right: 0; bottom: 14%; display: flex; justify-content: center; gap: 2px; font-size: clamp(52px, 14vw, 80px); }
+  .house .in { position: absolute; left: 0; right: 0; bottom: 14%; display: flex; justify-content: center; gap: 1cqw; font-size: 23cqw; }
+  .side { display: flex; flex-direction: column; gap: 14px; }
+  @media (min-width: 820px) and (orientation: landscape) {
+    #learn.on, #play.on {
+      display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+      column-gap: 36px; row-gap: 16px; min-height: calc(100vh - 48px); min-height: calc(100dvh - 48px);
+    }
+    #learn .bar, #play .bar { grid-column: 1 / -1; }
+    #learn .card, #play .card { width: min(100%, calc(100vh - 150px)); width: min(100%, calc(100dvh - 150px)); justify-self: center; }
+    .side { justify-content: center; }
+  }
 
   .word { text-align: center; font-family: var(--en); font-weight: 700; font-size: var(--fs-word); line-height: 1.1; margin: 0; letter-spacing: .02em; }
   .zh { text-align: center; margin: 0; color: var(--ink-soft); font-size: var(--fs-head); }
@@ -259,41 +315,42 @@
 
   <!-- ================= 首頁 ================= -->
   <section class="screen on" id="home">
-    <div class="top">
-      <div>
-        <h1>看圖說單字</h1>
-        <p class="sub">115 上・每週英語單字表・44 個字</p>
+    <div class="map" id="map">
+      <svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <path class="base" id="roadBase" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+        <path class="dash" id="roadDash" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <span class="zone a" id="zoneA">動物森林・第 1–6 週</span>
+      <span class="zone b" id="zoneB">衣服店・第 7–9 週</span>
+      <div id="stops"></div>
+      <div class="map-top">
+        <div class="title-chip"><h1>看圖說單字</h1><p class="sub">115 上・每週英語單字</p></div>
+        <button class="btn small" id="setBtn" type="button">設定</button>
       </div>
-      <button class="btn small ghost" id="setBtn" type="button">設定</button>
     </div>
 
-    <p class="notice" id="micNote" hidden></p>
-
-    <div class="weeks" id="weeks"></div>
-
-    <div class="legend">
-      <span><i class="dot"></i>還沒考過</span>
-      <span><i class="dot l0"></i>說不出來</span>
-      <span><i class="dot l1"></i>說對一次</span>
-      <span><i class="dot l2"></i>會了</span>
-    </div>
-
-    <p class="pick-info" id="pickInfo"></p>
-    <div class="actions">
-      <button class="btn" id="learnBtn" type="button">📖 先學一學</button>
-      <button class="btn primary" id="testBtn" type="button">🎤 考一考</button>
-      <button class="btn wide" id="weakBtn" type="button">🔁 還不熟的</button>
+    <div class="panel" id="panel">
+      <div class="p-h"><b id="hWk"></b><span class="okchip" id="hStamp" hidden>OK 老師蓋章了</span><span class="stars" id="hStars"></span></div>
+      <div class="p-e" id="hEm"></div>
+      <p class="p-w" id="hWords"></p>
+      <div class="p-act">
+        <button class="btn" id="learnBtn" type="button">📖 學一學</button>
+        <button class="btn primary" id="testBtn" type="button">🎤 出發考一考</button>
+      </div>
+      <button class="btn small" id="weakBtn" type="button">🔁 還不熟的</button>
+      <p class="notice" id="micNote" hidden></p>
     </div>
   </section>
 
   <!-- ================= 學一學 ================= -->
   <section class="screen" id="learn">
     <div class="bar">
-      <button class="btn small ghost" data-home type="button">‹ 回首頁</button>
+      <button class="btn small ghost" data-home type="button">‹ 回地圖</button>
       <div class="prog"><i id="lProg"></i></div>
       <span class="count" id="lCount"></span>
     </div>
     <div class="card" id="lCard"></div>
+    <div class="side">
     <p class="word" id="lWord"></p>
     <p class="zh" id="lZh"></p>
     <div class="tools">
@@ -306,6 +363,7 @@
       <button class="btn grow" id="lPrev" type="button">‹ 上一個</button>
       <button class="btn primary grow" id="lNext" type="button">下一個 ›</button>
     </div>
+    </div>
   </section>
 
   <!-- ================= 考一考（id 跟其他大考驗一樣，之後接樂園的橋接不用改） ================= -->
@@ -316,6 +374,7 @@
       <span class="count" id="pCount"></span>
     </div>
     <div class="card" id="pCard"></div>
+    <div class="side">
     <p class="word" id="pWord" hidden></p>
     <div class="hint" id="pHint" hidden><span class="pat en" id="pPat"></span><span class="z" id="pZh"></span></div>
     <p class="fb info" id="pFb">看圖，按麥克風說出英文</p>
@@ -338,6 +397,7 @@
       <button class="btn small ok" id="pOk" type="button">✓ 說對了</button>
       <button class="btn small no" id="pNo" type="button">✗ 沒說對</button>
     </div>
+    </div>
   </section>
 
   <!-- ================= 結算 ================= -->
@@ -350,7 +410,7 @@
     <p class="rh" id="rH2">要再練的</p>
     <div class="rlist" id="rMiss"></div>
     <div class="row">
-      <button class="btn grow" data-home type="button">回首頁</button>
+      <button class="btn grow" data-home type="button">回地圖</button>
       <button class="btn primary grow" id="redoBtn" type="button">🔁 錯的再練一次</button>
     </div>
   </section>
@@ -661,49 +721,96 @@
   function goHome() { stopListen(); hush(); clearAuto(); renderHome(); show('home'); }
   Array.prototype.forEach.call(document.querySelectorAll('[data-home]'), function (b) { b.addEventListener('click', goHome); });
 
-  /* ---------- 首頁 ---------- */
-  function selWords() { return WORDS.filter(function (w) { return db.sel.indexOf(w.wk) >= 0; }); }
+  /* ---------- 首頁：冒險地圖 ---------- */
+  /* 每一站的座標（地圖寬高的百分比）。橫放避開右下角的面板，直放由下往上走 */
+  var PTS = {
+    wide: [[8, 80], [19, 60], [31, 75], [42, 53], [30, 33], [45, 18], [62, 21], [76, 38], [90, 18]],
+    tall: [[22, 91], [55, 85], [80, 73], [52, 63], [22, 53], [46, 43], [78, 30], [54, 18], [26, 10]]
+  };
+  var ZONE = {
+    wide: { a: 'left:14px;bottom:14px', b: 'left:59%;top:78px' },
+    tall: { a: 'right:14px;bottom:14px', b: 'right:14px;top:78px' }
+  };
+  var REP = { 1: '🐻', 2: '🐱', 3: '🐸', 4: '🦁', 5: '🐼', 6: '🐯', 7: '🐳', 8: '🧥', 9: '👕' };
+  function curWk() { return db.sel[0] || 1; }
+  if (db.sel.length > 1) db.sel = [db.sel[0]];
+  function weekOf(wk) { return WORDS.filter(function (w) { return w.wk === wk; }); }
+  function selWords() { return weekOf(curWk()); }
   function weakWords() { return WORDS.filter(function (w) { var r = db.m[w.en]; return r && r.lv < 2; }); }
+  function mapMode() { return window.innerWidth >= 820 && window.innerWidth / window.innerHeight >= 1.15 ? 'wide' : 'tall'; }
+  function roadPath(pts) {
+    var d = 'M ' + pts[0][0] + ' ' + pts[0][1];
+    for (var i = 1; i < pts.length; i++) {
+      var a = pts[i - 1], b = pts[i];
+      /* 每一段往旁邊彎一點，看起來像山路不像折線 */
+      var cx = (a[0] + b[0]) / 2 + (b[1] - a[1]) * 0.25, cy = (a[1] + b[1]) / 2 - (b[0] - a[0]) * 0.25;
+      d += ' Q ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + b[0] + ' ' + b[1];
+    }
+    return d;
+  }
+  function starHTML(ws) {
+    return ws.map(function (w) {
+      var l = lv(w.en);
+      return '<i class="st' + (l >= 2 ? ' on' : l === 1 ? ' half' : '') + '">★</i>';
+    }).join('');
+  }
   function renderHome() {
+    var mode = mapMode(), pts = PTS[mode], cur = curWk();
+    var home = $('home');
+    home.classList.toggle('wide', mode === 'wide');
+    home.classList.toggle('tall', mode === 'tall');
+    var d = roadPath(pts);
+    $('roadBase').setAttribute('d', d); $('roadDash').setAttribute('d', d);
+    $('zoneA').style.cssText = ZONE[mode].a; $('zoneB').style.cssText = ZONE[mode].b;
+
     var html = '';
     for (var wk = 1; wk <= 9; wk++) {
-      var ws = WORDS.filter(function (w) { return w.wk === wk; });
-      var on = db.sel.indexOf(wk) >= 0;
-      var known = ws.filter(function (w) { return lv(w.en) >= 2; }).length;
-      html += '<button type="button" class="wk" data-wk="' + wk + '" aria-pressed="' + on + '">' +
-        (db.stamps.indexOf(wk) >= 0 ? '<span class="stamp" aria-label="老師已蓋章">OK</span>' : '') +
-        '<span class="wk-h">第 ' + wk + ' 週 <small>會了 ' + known + '/' + ws.length + '</small></span>' +
-        '<span class="wk-pics">' + ws.map(function (w) { return '<span>' + picMini(w.en) + '</span>'; }).join('') + '</span>' +
-        '<span class="wk-words">' + ws.map(function (w) { return esc(w.en); }).join(' · ') + '</span>' +
-        '<span class="dots">' + ws.map(function (w) {
-          var l = lv(w.en); return '<i class="dot' + (l < 0 ? '' : ' l' + Math.min(l, 2)) + '"></i>';
-        }).join('') + '</span></button>';
+      var ws = weekOf(wk), stamped = db.stamps.indexOf(wk) >= 0;
+      var score = 0, seen = 0, known = 0;
+      ws.forEach(function (w) { var l = lv(w.en); if (l >= 0) seen++; if (l >= 2) known++; score += Math.max(0, Math.min(l, 2)); });
+      var pct = Math.round(score / (ws.length * 2) * 100);
+      var cls = 'stop' + (wk === cur ? ' sel' : '') + (!seen && !stamped ? ' new' : '');
+      html += '<button type="button" class="' + cls + '" data-wk="' + wk + '" style="left:' + pts[wk - 1][0] + '%;top:' + pts[wk - 1][1] + '%;--p:' + pct + '"' +
+        ' aria-label="第 ' + wk + ' 週，會了 ' + known + ' 個' + (stamped ? '，老師蓋章了' : '') + '"' + (wk === cur ? ' aria-current="true"' : '') + '>' +
+        '<span class="in"><span>' + REP[wk] + '</span></span><span class="no">' + wk + '</span>' +
+        (stamped ? '<span class="flag">OK</span>' : '') +
+        (known === ws.length ? '<span class="crown">👑</span>' : '') +
+        (wk === cur ? '<span class="kid">🧒</span>' : '') + '</button>';
     }
-    $('weeks').innerHTML = html;
+    $('stops').innerHTML = html;
 
-    var n = selWords().length;
-    $('pickInfo').textContent = n ? '選了 ' + db.sel.length + ' 週、' + n + ' 個單字。點週次可以多選。' : '先點一個週次';
-    $('learnBtn').disabled = $('testBtn').disabled = !n;
+    var cws = weekOf(cur);
+    $('hWk').textContent = '第 ' + cur + ' 週';
+    $('hStamp').hidden = db.stamps.indexOf(cur) < 0;
+    $('hStars').innerHTML = starHTML(cws);
+    $('hEm').className = 'p-e' + (cur >= 7 ? ' shop' : '');
+    $('hEm').innerHTML = cws.map(function (w) { return '<span>' + picMini(w.en) + '</span>'; }).join('');
+    $('hWords').textContent = cws.map(function (w) { return w.en; }).join(' · ');
     var weak = weakWords().length;
-    $('weakBtn').textContent = '🔁 還不熟的（' + weak + ' 個）';
+    $('weakBtn').textContent = weak ? '🔁 還不熟的 ' + weak + ' 個（每一週混在一起）' : '🔁 還不熟的：目前沒有';
     $('weakBtn').disabled = !weak;
 
     var note = $('micNote');
     if (db.judge === 'parent') {
-      note.hidden = false; note.className = 'notice';
+      note.hidden = false;
       note.innerHTML = '<b>爸媽聽模式</b>：孩子看圖唸出來，爸媽按「說對了／沒說對」。';
     } else if (micBlocked) {
-      note.hidden = false; note.className = 'notice';
+      note.hidden = false;
       note.innerHTML = '<b>' + esc(micWhy) + '</b>，所以改成爸媽聽：孩子唸，爸媽按對錯。';
     } else {
       note.hidden = true;
     }
   }
-  $('weeks').addEventListener('click', function (e) {
-    var b = e.target.closest('.wk'); if (!b) return;
-    var wk = +b.getAttribute('data-wk'), i = db.sel.indexOf(wk);
-    if (i >= 0) db.sel.splice(i, 1); else db.sel.push(wk);
-    db.sel.sort(); save(); renderHome();
+  $('stops').addEventListener('click', function (e) {
+    var b = e.target.closest('.stop'); if (!b) return;
+    var wk = +b.getAttribute('data-wk');
+    if (wk === curWk()) return;
+    db.sel = [wk]; save(); renderHome();
+  });
+  var rsT = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(rsT);
+    rsT = setTimeout(function () { if ($('home').classList.contains('on')) renderHome(); }, 120);
   });
 
   /* ---------- 學一學 ---------- */
