@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
+     role="img" aria-label="看圖說單字">
+  <!--
+    白色對話框裡一隻青蛙，紫底。
+    這支 app 是「看圖 → 說出英文」：對話框是「說」，青蛙是老師舉例的那一題（frog）。
+
+    為什麼紫色：家族裡藍（乘法、時鐘）、橘（ABC）、綠（國語）、磚紅（寫字）都用掉了，
+    紫色放在一起最好認。青蛙的綠在紫底白框裡對比也夠。
+
+    ⚠️ 內容全部在中央 76%（約 [112, 400]）以內，maskable 切成圓形也不會被裁。
+    底色滿版，遮罩後不會露出透明角。
+  -->
+  <defs>
+    <radialGradient id="bg" cx="28%" cy="18%" r="95%">
+      <stop offset="0" stop-color="#9C82F2"/>
+      <stop offset="1" stop-color="#6644C6"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- 對話框：圓角框＋左下的尾巴 -->
+  <path d="M176 118 H336 A72 72 0 0 1 408 190 V290 A72 72 0 0 1 336 362 H236 L150 404 L170 362 H176 A72 72 0 0 1 104 290 V190 A72 72 0 0 1 176 118 Z"
+        fill="#FFFFFF"/>
+
+  <!-- 青蛙 -->
+  <g>
+    <circle cx="202" cy="196" r="40" fill="#3DB866"/>
+    <circle cx="310" cy="196" r="40" fill="#3DB866"/>
+    <ellipse cx="256" cy="262" rx="104" ry="70" fill="#3DB866"/>
+    <circle cx="202" cy="192" r="25" fill="#FFFFFF"/>
+    <circle cx="310" cy="192" r="25" fill="#FFFFFF"/>
+    <circle cx="207" cy="188" r="13" fill="#2A2140"/>
+    <circle cx="315" cy="188" r="13" fill="#2A2140"/>
+    <circle cx="186" cy="276" r="13" fill="#FF9EB5" fill-opacity=".85"/>
+    <circle cx="326" cy="276" r="13" fill="#FF9EB5" fill-opacity=".85"/>
+    <path d="M214 270 Q256 306 298 270" fill="none" stroke="#1E7A43" stroke-width="11" stroke-linecap="round"/>
+  </g>
+</svg>

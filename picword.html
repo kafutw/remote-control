@@ -7,6 +7,10 @@
 <meta name="theme-color" content="#F5F9FD">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="看圖說單字">
+<link rel="apple-touch-icon" sizes="180x180" href="picword-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="picword-icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="picword-icon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
@@ -230,6 +234,28 @@
     .side { justify-content: center; }
   }
 
+  /* 答對的獎勵：星星從圖上噴出來、圖彈一下、上面的星星數跳一下 */
+  .spark {
+    position: absolute; left: 50%; top: 50%; font-size: 9cqw; line-height: 1; pointer-events: none;
+    transform: translate(-50%, -50%) scale(.3); animation: spark 1s ease-out forwards;
+  }
+  @keyframes spark {
+    0% { transform: translate(-50%, -50%) scale(.3); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.15); opacity: 0; }
+  }
+  .card.ok .pic, .card.ok .house { animation: pop .5s ease-out; }
+  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
+  .stars-n {
+    font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap;
+    padding: 2px 12px; border-radius: 99px; background: var(--amber-soft); color: var(--ink);
+  }
+  .stars-n.pop { animation: pop .5s ease-out; }
+  .fb.ok { font-size: 1.45rem; }
+  .fb .combo { display: inline-block; margin-top: 4px; font-size: var(--fs-body); color: var(--coral-ink); }
+  .title-chip .total { font-weight: 800; color: var(--amber); margin-left: 6px; font-size: .95rem; letter-spacing: 0; }
+  .earn { display: inline-block; margin-top: 6px; padding: 2px 14px; border-radius: 99px; background: var(--amber-soft); }
+
   .word { text-align: center; font-family: var(--en); font-weight: 700; font-size: var(--fs-word); line-height: 1.1; margin: 0; letter-spacing: .02em; }
   .zh { text-align: center; margin: 0; color: var(--ink-soft); font-size: var(--fs-head); }
   .hint {
@@ -302,10 +328,17 @@
   select, input[type=range] { width: 100%; }
   select { min-height: 44px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); padding: 0 10px; font: inherit; }
   .hintline { margin: 0; color: var(--ink-soft); font-size: var(--fs-note); }
+  .heardlog { max-height: 180px; overflow: auto; border: 2px solid var(--line); border-radius: 12px; padding: 6px 10px; font-size: var(--fs-note); }
+  .heardlog div { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--line); }
+  .heardlog div:last-child { border-bottom: none; }
+  .heardlog b { font-family: var(--en); min-width: 5.5em; }
+  .heardlog span { font-family: var(--en); color: var(--ink-soft); flex: 1; }
+  .heardlog i { font-style: normal; font-weight: 800; }
+  .heardlog .y { color: var(--mint-ink); } .heardlog .n { color: var(--coral-ink); }
 
   @media (prefers-reduced-motion: reduce) {
     .mic.live { animation: none; box-shadow: 0 0 0 6px var(--coral-soft); }
-    .card.bad { animation: none; }
+    .card.bad, .card.ok .pic, .card.ok .house, .stars-n.pop { animation: none; }
     .sheet, .sheet-bg, .prog i { transition: none; }
   }
 </style>
@@ -324,7 +357,7 @@
       <span class="zone b" id="zoneB">衣服店・第 7–9 週</span>
       <div id="stops"></div>
       <div class="map-top">
-        <div class="title-chip"><h1>看圖說單字</h1><p class="sub">115 上・每週英語單字</p></div>
+        <div class="title-chip"><h1>看圖說單字<span class="total" id="hTotal"></span></h1><p class="sub">115 上・每週英語單字</p></div>
         <button class="btn small" id="setBtn" type="button">設定</button>
       </div>
     </div>
@@ -372,6 +405,7 @@
       <button class="btn small ghost" id="quitBtn" type="button">✕ 結束</button>
       <div class="prog"><i id="pProg"></i></div>
       <span class="count" id="pCount"></span>
+      <span class="stars-n" id="pStars" aria-label="這一輪拿到的星星">⭐ 0</span>
     </div>
     <div class="card" id="pCard"></div>
     <div class="side">
@@ -427,6 +461,17 @@
       <button type="button" data-v="parent">👂 爸媽聽</button>
     </div>
     <p class="hintline" id="judgeHint"></p>
+
+    <h3>辨識寬鬆度</h3>
+    <div class="seg" id="sensSeg">
+      <button type="button" data-v="strict">嚴格</button>
+      <button type="button" data-v="std">標準</button>
+      <button type="button" data-v="loose">寬鬆</button>
+    </div>
+    <p class="hintline" id="sensHint"></p>
+
+    <h3>最近聽到什麼</h3>
+    <div class="heardlog" id="heardLog"></div>
 
     <h3>唸單字的聲音</h3>
     <select id="voiceSel" aria-label="聲音"></select>
@@ -578,18 +623,34 @@
     }).join('') : '<option>用系統預設</option>';
   }
   if (canSpeak) { loadVoices(); try { speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {} }
+  /* 考試時麥克風是一直開著的，App 自己唸字時一定要先關，
+     不然會把 App 唸的 hippo 當成孩子說對了。speakHold＝「正在唸或馬上要唸」，唸完才放麥克風回來。 */
+  var speakHold = false, quietAt = 0, holdT = null, spTok = 0;
+  function holdSpeech() { speakHold = true; clearTimeout(holdT); holdT = setTimeout(releaseSpeech, 6000); }
+  function releaseSpeech() { speakHold = false; quietAt = Date.now(); clearTimeout(holdT); quizResume(); }
   function say(text, rate) {
     if (!canSpeak) return;
+    if (rec) stopListen();
+    var tok = ++spTok;
     try {
       speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.lang = 'en-US'; if (voice) u.voice = voice;
       u.rate = rate || db.rate; u.pitch = 1.05;
+      u.onend = u.onerror = function () { if (tok === spTok) releaseSpeech(); };
+      holdSpeech();
       speechSynthesis.speak(u);
-    } catch (e) {}
+    } catch (e) { releaseSpeech(); }
   }
-  function sayLater(text, rate) { setTimeout(function () { say(text, rate || undefined); }, 450); }
-  function hush() { try { if (canSpeak) speechSynthesis.cancel(); } catch (e) {} }
+  /* 麥克風剛關，iPad 的音訊還在切換，馬上唸常會被吃掉或變很小聲，等一下再唸 */
+  function sayLater(text, rate, delay) {
+    if (!canSpeak) return;
+    if (rec) stopListen();
+    var tok = ++spTok;
+    holdSpeech();
+    setTimeout(function () { if (tok === spTok) say(text, rate || undefined); }, delay || 450);
+  }
+  function hush() { spTok++; try { if (canSpeak) speechSynthesis.cancel(); } catch (e) {} speakHold = false; }
 
   /* ---------- 判斷唸得對不對 ----------
      語音辨識對小孩的發音不太準，所以：
@@ -637,8 +698,10 @@
       d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
     return d[a.length][b.length];
   }
+  /* 麥克風一直開著，孩子想答案時的「嗯…」「呃」會被聽到，這些不算答錯 */
+  var FILLER = /^(?:(?:u+m+|u+h+|h+m+|m+|a+h+|o+h+|e+r+|e+h+|huh|mhm|uh huh)\s*)+$/;
   function judge(en, alts) {
-    alts = alts.filter(function (a) { return norm(a); });
+    alts = alts.filter(function (a) { var n = norm(a); return n && !FILLER.test(n); });
     if (!alts.length) return { kind: 'silent' };
     var i;
     /* shirt 與 T-shirt 互相包含，要先分開 */
@@ -650,12 +713,25 @@
         if (o !== en && hits(o, alts[i])) return { kind: 'other', other: o, heard: alts[i] };
       }
     }
-    var target = compact(en), limit = target.length >= 7 ? 2 : 1;
-    for (i = 0; i < alts.length; i++) {
+    /* 寬鬆度（設定裡調）：
+       嚴格＝只收正確拼法和同音字；差一點點只說「好接近了」。
+       標準＝差一個字母也算對（hippa、hipo）；7 個字母以上的字差兩個也算。
+       寬鬆＝再加上「發音骨架」一樣也算：去掉母音、l 當 r（heapo、flog 都算）。 */
+    var target = compact(en), limit = target.length >= 7 ? 2 : 1, sens = db.sens || 'std';
+    var near = null;
+    for (i = 0; i < alts.length && !near; i++) {
       var ps = pieces(alts[i]);
-      for (var p = 0; p < ps.length; p++) if (lev(ps[p], target) <= limit) return { kind: 'near', heard: alts[i] };
+      for (var p = 0; p < ps.length; p++) {
+        if (lev(ps[p], target) <= limit) { near = alts[i]; break; }
+        if (sens === 'loose' && target.length >= 3 && ps[p].length >= 2 && skel(ps[p]) === skel(target)) { near = alts[i]; break; }
+      }
     }
+    if (near) return sens === 'strict' ? { kind: 'near', heard: near } : { kind: 'ok', heard: near, loose: true };
     return { kind: 'no', heard: alts[0] };
+  }
+  function skel(w) {
+    w = w.replace(/l/g, 'r').replace(/(.)\1+/g, '$1');
+    return w.charAt(0) + w.slice(1).replace(/[aeiouy]/g, '');
   }
 
   /* 說成單字表裡另一個字時的提示，不透露答案的英文 */
@@ -684,14 +760,15 @@
 
   /* ---------- 語音辨識 ---------- */
   var rec = null;
-  function listen(en, onLive, done) {
+  function listen(en, onLive, done, onStart) {
     hush();
     var r;
     try { r = new SR(); } catch (e) { done({ err: 'start' }); return; }
     rec = r;
     r.lang = 'en-US'; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
     var alts = [], err = '', finished = false;
-    var timer = setTimeout(function () { try { r.stop(); } catch (e) {} }, 6000);
+    var timer = setTimeout(function () { try { r.stop(); } catch (e) {} }, 8000);
+    r.onstart = function () { if (onStart) onStart(); };
     r.onresult = function (e) {
       for (var i = e.resultIndex; i < e.results.length; i++) {
         var res = e.results[i];
@@ -705,12 +782,13 @@
     r.onend = function () {
       clearTimeout(timer);
       if (finished) return;
-      finished = true; rec = null;
+      finished = true; if (rec === r) rec = null;
+      if (r._killed) { done({ killed: true, alts: [] }); return; }   /* 是我們自己關的，不算答案 */
       done({ alts: alts, err: err });
     };
     try { r.start(); } catch (e) { clearTimeout(timer); finished = true; rec = null; done({ err: 'start' }); }
   }
-  function stopListen() { if (rec) { try { rec.abort(); } catch (e) {} rec = null; } }
+  function stopListen() { if (rec) { rec._killed = true; try { rec.abort(); } catch (e) {} rec = null; } }
 
   /* ---------- 畫面切換 ---------- */
   var screens = ['home', 'learn', 'play', 'result'];
@@ -718,7 +796,7 @@
     screens.forEach(function (s) { $(s).classList.toggle('on', s === id); });
     window.scrollTo(0, 0);
   }
-  function goHome() { stopListen(); hush(); clearAuto(); renderHome(); show('home'); }
+  function goHome() { if (typeof AUTO !== 'undefined') autoOff(); stopListen(); hush(); clearAuto(); renderHome(); show('home'); }
   Array.prototype.forEach.call(document.querySelectorAll('[data-home]'), function (b) { b.addEventListener('click', goHome); });
 
   /* ---------- 首頁：冒險地圖 ---------- */
@@ -779,6 +857,7 @@
     }
     $('stops').innerHTML = html;
 
+    $('hTotal').textContent = db.stars ? '⭐ ' + db.stars : '';
     var cws = weekOf(cur);
     $('hWk').textContent = '第 ' + cur + ' 週';
     $('hStamp').hidden = db.stamps.indexOf(cur) < 0;
@@ -843,6 +922,7 @@
     btn.textContent = '🔴 聽你說…（再按一下停）'; fb.className = 'fb info'; fb.textContent = '';
     listen(w.en, function (t) { fb.innerHTML = '<span class="heard">' + esc(t) + '</span>'; }, function (r) {
       btn.textContent = '🎤 換我說';
+      if (r.killed) return;
       if (r.err === 'not-allowed' || r.err === 'service-not-allowed') { blockMic(); renderLearn(false); fb.textContent = '沒拿到麥克風權限'; return; }
       var j = judge(w.en, r.alts || []);
       if (j.kind === 'ok') { fb.className = 'fb ok'; fb.textContent = '✓ 說得很好！'; $('lCard').className = 'card ok'; sayLater(w.en); }
@@ -857,11 +937,123 @@
      第二次以後放慢唸。還沒開口前可以按💡先看中文和第一個字母。 */
   var R = null, autoT = null, autoN = 0;
   function startTest(list) {
-    R = { list: shuffle(list), total: list.length, i: 0, res: {}, again: {} };
+    R = { list: shuffle(list), total: list.length, i: 0, res: {}, again: {}, stars: 0, streak: 0 };
+    AUTO.on = autoOn(); AUTO.tap = false; AUTO.fails = 0;
+    unlockAudio();
+    $('pStars').textContent = '⭐ 0';
     show('play');
-    ask();
+    ask(true);   /* 按「出發考一考」的這一下直接開麥克風，iPad 要有按按鈕才准開 */
   }
-  function ask() {
+
+  /* ---------- 考試時麥克風自動開 ----------
+     按一次進考試之後，每一題都自動聽，不用再按。
+     沒聲音、只有「嗯」就繼續聽；答錯先唸正確的字，唸完再自動開。
+     iPad 有時不准沒按按鈕就重開麥克風，那時麥克風鈕會顯示「按一下繼續聽」。 */
+  var AUTO = { on: false, ok: false, tap: false, fails: 0, token: 0, t: null };
+  function canAutoListen() {
+    return autoOn() && AUTO.on && !AUTO.tap && !!R && !!R.q && !R.q.solved && !rec &&
+      $('play').classList.contains('on') && !document.hidden;
+  }
+  function autoListen(delay) {
+    clearTimeout(AUTO.t);
+    var tk = ++AUTO.token;
+    AUTO.t = setTimeout(function wait() {
+      if (tk !== AUTO.token || !canAutoListen()) return;
+      if (speakHold || (canSpeak && speechSynthesis.speaking) || Date.now() - quietAt < 400) { AUTO.t = setTimeout(wait, 150); return; }
+      quizListen();
+    }, delay || 0);
+  }
+  /* 每次辨識的結果記下來（最近 40 筆），設定裡看得到，哪個字常被判錯一看就知道是聽成什麼 */
+  function logHeard(en, alts, kind) {
+    var seen = {}, list = [];
+    alts.forEach(function (a) { var n = norm(a); if (n && !seen[n]) { seen[n] = 1; list.push(n); } });
+    if (!list.length) return;
+    db.log = (db.log || []).concat([{ w: en, h: list.slice(0, 4), k: kind }]).slice(-40);
+    save();
+  }
+  function quizResume() { if (canAutoListen()) autoListen(0); }
+  function autoOff() { AUTO.on = false; AUTO.token++; clearTimeout(AUTO.t); stopListen(); }
+  function micIdle() {
+    $('micBtn').classList.remove('live');
+    $('micLbl').textContent = AUTO.tap ? '按一下繼續聽' : AUTO.on ? '準備聽…' : '按我開始聽';
+  }
+  function quizListen() {
+    if (!R || !R.q || R.q.solved || rec) return;
+    var q = R.q, en = q.w.en;
+    $('micBtn').classList.add('live'); $('micLbl').textContent = '聽你說…';
+    listen(en, function (t) {
+      if (R.q === q && !q.solved) setFb('info', '<span class="heard">' + esc(t) + '</span>');
+    }, function (r) {
+      if (!rec) micIdle();
+      if (r.killed || !R || R.q !== q || q.solved) return;
+      if (r.err === 'not-allowed' || r.err === 'service-not-allowed' || r.err === 'audio-capture') {
+        if (AUTO.ok && r.err === 'not-allowed') {   /* 之前開得起來，現在不行＝iPad 要按一下才准重開 */
+          AUTO.tap = true; micIdle(); setFb('info', '按一下麥克風，繼續說'); return;
+        }
+        blockMic(); layoutJudge();
+        setFb('info', '這台裝置沒給麥克風權限，改成爸媽聽：孩子唸，爸媽按對錯');
+        return;
+      }
+      if (r.err && r.err !== 'no-speech' && r.err !== 'aborted' && !(r.alts || []).length) {
+        if (++AUTO.fails >= 3) { AUTO.tap = true; micIdle(); setFb('info', '麥克風停下來了，按一下繼續'); return; }
+        autoListen(1200); return;
+      }
+      AUTO.fails = 0;
+      var j = judge(en, r.alts || []);
+      logHeard(en, r.alts || [], j.kind);
+      if (j.kind === 'ok') onRight();
+      else if (j.kind === 'silent') {
+        if (AUTO.on) { if (!$('pFb').classList.contains('bad')) setFb('info', '看圖，直接說出英文'); autoListen(100); }
+        else setFb('info', '沒聽到聲音，按一下麥克風再大聲說');
+      }
+      else onWrong(j);
+    }, function () { AUTO.ok = true; AUTO.fails = 0; });
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) stopListen(); else quizResume();
+  });
+
+  /* ---------- 答對的獎勵 ---------- */
+  var AC = null;
+  function unlockAudio() {
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (AC.state === 'suspended') AC.resume();
+    } catch (e) { AC = null; }
+  }
+  /* 叮咚：一次就對是往上爬的四個音，提示後說對是兩個音 */
+  function chime(big) {
+    if (!AC) return;
+    try {
+      var notes = big ? [523.25, 659.25, 783.99, 1046.5] : [659.25, 880], t0 = AC.currentTime + 0.02;
+      notes.forEach(function (f, i) {
+        var o = AC.createOscillator(), g = AC.createGain(), t = t0 + i * 0.09;
+        o.type = 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.28, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+        o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.42);
+      });
+    } catch (e) {}
+  }
+  function burst(big) {
+    try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+    var card = $('pCard'), n = big ? 14 : 7, E = big ? ['⭐', '✨', '🌟', '🎉'] : ['✨', '⭐'];
+    for (var i = 0; i < n; i++) {
+      var sp = document.createElement('span'), a = i / n * 2 * Math.PI + Math.random() * 0.4, d = 34 + Math.random() * 14;
+      sp.className = 'spark'; sp.textContent = E[i % E.length];
+      sp.style.setProperty('--dx', (Math.cos(a) * d).toFixed(1) + 'cqw');
+      sp.style.setProperty('--dy', (Math.sin(a) * d).toFixed(1) + 'cqw');
+      sp.style.animationDelay = Math.round(Math.random() * 90) + 'ms';
+      card.appendChild(sp);
+      setTimeout(function (el) { return function () { if (el.parentNode) el.parentNode.removeChild(el); }; }(sp), 1300);
+    }
+  }
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  var PRAISE_ZH = ['太棒了！', '好厲害！', '答對了！', '完全正確！', '你好會！'];
+  var PRAISE_EN = ['Great job!', 'Awesome!', 'You got it!', 'Excellent!', 'Well done!'];
+
+  function ask(now) {
     clearAuto();
     if (R.i >= R.list.length) { finish(); return; }
     var w = R.list[R.i];
@@ -872,8 +1064,9 @@
     $('pCount').textContent = (R.i + 1) + ' / ' + R.list.length;
     $('pProg').style.width = (R.i / R.list.length * 100) + '%';
     $('sayBtn').hidden = true; $('nextBtn').hidden = true; $('hintBtn').hidden = false;
-    setFb('info', autoOn() ? '看圖，按麥克風說出英文' : '看圖，大聲說出英文');
-    layoutJudge();
+    setFb('info', !autoOn() ? '看圖，大聲說出英文' : AUTO.on ? '看圖，直接說出英文' : '看圖，按麥克風說出英文');
+    layoutJudge(); micIdle();
+    if (autoOn() && AUTO.on) { if (now && !speakHold) { hush(); quizListen(); } else autoListen(250); }
   }
   function layoutJudge() {
     var auto = autoOn();
@@ -916,22 +1109,33 @@
     }
   }
 
+  /* 答對：叮咚＋星星噴出來＋唸單字再誇一句。一次就對才拿星星，星星會一直累積。 */
   function onRight() {
     if (R.q.solved) return;
     R.q.solved = true;
-    stopListen();
+    clearTimeout(AUTO.t); stopListen();
     var first = R.q.tries === 0 && !R.q.helped;
     markDone(first ? 'first' : 'help');
-    $('pCard').classList.add('ok');
+    $('pCard').classList.remove('ok'); void $('pCard').offsetWidth; $('pCard').classList.add('ok');
     $('pWord').textContent = R.q.w.en; $('pWord').hidden = false; $('pHint').hidden = true;
-    setFb('ok', first ? '✓ 答對了！' : '✓ 說對了！');
+    chime(first); burst(first);
+    if (first) {
+      R.stars++; R.streak++;
+      db.stars = (db.stars || 0) + 1; save();
+      var ps = $('pStars'); ps.textContent = '⭐ ' + R.stars;
+      ps.classList.remove('pop'); void ps.offsetWidth; ps.classList.add('pop');
+      setFb('ok', '⭐ ' + pick(PRAISE_ZH) + ' 拿到一顆星' +
+        (R.streak >= 3 ? '<br><span class="combo">🔥 連續答對 ' + R.streak + ' 題</span>' : ''));
+    } else {
+      R.streak = 0;
+      setFb('ok', '✓ 說對了！記住囉');
+    }
     $('hintBtn').hidden = true; $('sayBtn').hidden = false; $('parentRow').hidden = true;
     $('micWrap').hidden = true;
-    sayLater(R.q.w.en);
+    sayLater(R.q.w.en + '! ' + (first ? pick(PRAISE_EN) : 'Good!'), null, 650);
     startAuto();
   }
-  /* 唸錯：每一次都把正確的字秀出來、唸給他聽，再讓他按麥克風跟著說。
-     不自動開麥克風——剛唸完的聲音會被麥克風收進去，把 App 自己的聲音當成孩子答對。 */
+  /* 唸錯：每一次都把正確的字秀出來、唸給他聽，唸完麥克風自動再開，讓他跟著說。 */
   function onWrong(j) {
     var q = R.q, w = q.w;
     q.tries++;
@@ -941,31 +1145,20 @@
              : j.kind === 'near' ? heard + '好接近了！<br>'
              : heard;
     var tail = q.tries >= 3 ? '沒關係，聽清楚再跟著說一次，或按下一題' : '聽一次，跟著說！';
+    if (!AUTO.on && autoOn()) tail += '（按麥克風）';
+    R.streak = 0;
     setFb('bad', lead + tail);
     reveal(q.tries >= 2 ? 0.6 : 0);
+    if (AUTO.on) autoListen(0);   /* 會等唸完才開 */
   }
 
+  /* 麥克風鈕：聽的時候按＝暫停；停著的時候按＝開始（之後每題又會自動聽） */
   $('micBtn').addEventListener('click', function () {
     if (!R || R.q.solved) return;
-    if (rec) { stopListen(); return; }
-    var btn = $('micBtn'), en = R.q.w.en;
-    clearAuto();
-    btn.classList.add('live'); $('micLbl').textContent = '聽你說…';
-    setFb('info', '請說');
-    listen(en, function (t) { setFb('info', '<span class="heard">' + esc(t) + '</span>'); }, function (r) {
-      btn.classList.remove('live'); $('micLbl').textContent = '按我說';
-      if (!R || R.q.solved) return;
-      if (r.err === 'not-allowed' || r.err === 'service-not-allowed' || r.err === 'audio-capture') {
-        blockMic(); layoutJudge();
-        setFb('info', '這台裝置沒給麥克風權限，改成爸媽聽：孩子唸，爸媽按對錯');
-        return;
-      }
-      if (r.err === 'aborted' && !(r.alts || []).length) { setFb('info', '看圖，按麥克風說出英文'); return; }
-      var j = judge(en, r.alts || []);
-      if (j.kind === 'ok') onRight();
-      else if (j.kind === 'silent') setFb('info', '沒聽到聲音，按一下麥克風再大聲說');
-      else onWrong(j);
-    });
+    if (rec) { autoOff(); micIdle(); setFb('info', '暫停了，按麥克風繼續'); return; }
+    unlockAudio();
+    AUTO.on = true; AUTO.tap = false; AUTO.fails = 0;
+    hush(); quizListen();
   });
   $('pOk').addEventListener('click', function () { onRight(); });
   $('pNo').addEventListener('click', function () { stopListen(); if (!R.q.solved) onWrong({ kind: 'no' }); });
@@ -975,11 +1168,11 @@
   });
   $('sayBtn').addEventListener('click', function () { clearAuto(); say(R.q.w.en); });
   $('nextBtn').addEventListener('click', function () {
-    if (!R.q.solved) markDone('miss');
-    R.i++; ask();
+    if (!R.q.solved) { markDone('miss'); R.streak = 0; }
+    R.i++; ask(true);
   });
   $('quitBtn').addEventListener('click', function () {
-    stopListen(); clearAuto();
+    autoOff(); hush(); clearAuto();
     if (Object.keys(R.res).length) finish(); else goHome();
   });
 
@@ -1000,7 +1193,7 @@
   }
 
   function finish() {
-    clearAuto(); stopListen();
+    clearAuto(); autoOff();
     var ens = Object.keys(R.res);
     var first = ens.filter(function (en) { return R.res[en] === 'first'; });
     var rest = ens.filter(function (en) { return R.res[en] !== 'first'; });
@@ -1008,8 +1201,10 @@
     $('rScore').innerHTML = first.length + '<small>/ ' + total + '</small>';
     var pct = total ? first.length / total : 0;
     $('rMedal').textContent = pct === 1 ? '🏆' : pct >= 0.8 ? '🌟' : pct >= 0.5 ? '👍' : '💪';
-    $('rMsg').textContent = pct === 1 ? '全部一次就說對，可以去給老師蓋章了！'
-      : pct >= 0.8 ? '好厲害，只差一點點！' : '再練幾次就會了';
+    $('rMsg').innerHTML = esc(pct === 1 ? '全部一次就說對，可以去給老師蓋章了！'
+      : pct >= 0.8 ? '好厲害，只差一點點！' : '再練幾次就會了') +
+      '<br><span class="earn">這一輪拿到 ⭐ ×' + R.stars + '，總共 ' + (db.stars || 0) + ' 顆</span>';
+    if (pct === 1) chime(true);
     function item(en) {
       var t = { first: '一次就對', help: '提示後說對', miss: '還不會' }[R.res[en]];
       return '<div class="ri ' + R.res[en] + '"><span class="p">' + picMini(en) + '</span><span class="w">' + esc(en) + '</span><span class="t">' + t + '</span></div>';
@@ -1038,8 +1233,22 @@
     });
     $('judgeHint').textContent = micBlocked
       ? micWhy + '，現在不管選哪個都是爸媽聽。'
-      : db.judge === 'auto' ? '孩子按麥克風說，App 判斷。辨識聽錯時爸媽還是可以直接按對錯。'
+      : db.judge === 'auto' ? '進考試就自動開麥克風，每題直接說，不用再按。辨識聽錯時爸媽還是可以直接按對錯。'
       : '孩子唸出來，爸媽按對錯。辨識常聽不準的時候用這個。';
+    var sens = db.sens || 'std';
+    Array.prototype.forEach.call($('sensSeg').children, function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === sens));
+    });
+    $('sensHint').textContent = {
+      strict: '只收正確的字和同音字（bee＝be）。差一點點會說「好接近了」，要再說一次。',
+      std: '差一個字母也算對，例如 hippo 聽成 hippa、hipo 都過。建議用這個。',
+      loose: '發音大致像就算對，例如 heapo、flog（frog）都過。孩子一直過不了的時候用。'
+    }[sens];
+    var log = (db.log || []).slice().reverse();
+    $('heardLog').innerHTML = log.length ? log.map(function (x) {
+      var ok = x.k === 'ok';
+      return '<div><b>' + esc(x.w) + '</b><span>' + esc(x.h.join(' / ')) + '</span><i class="' + (ok ? 'y' : 'n') + '">' + (ok ? '✓' : '✗') + '</i></div>';
+    }).join('') : '<p class="hintline">考過之後，這裡會列出每一題 App 聽到的字。</p>';
     $('rate').value = db.rate; $('rateV').textContent = db.rate <= 0.6 ? '很慢' : db.rate <= 0.8 ? '慢一點' : '正常';
     var h = '';
     for (var wk = 1; wk <= 9; wk++) h += '<button type="button" class="chip" data-wk="' + wk + '" aria-pressed="' + (db.stamps.indexOf(wk) >= 0) + '">' + wk + '</button>';
@@ -1052,6 +1261,10 @@
   $('judgeSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     db.judge = b.getAttribute('data-v'); save(); renderSheet();
+  });
+  $('sensSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    db.sens = b.getAttribute('data-v'); save(); renderSheet();
   });
   $('voiceSel').addEventListener('change', function () {
     db.voiceURI = this.value; save(); loadVoices(); say('frog');
@@ -1067,7 +1280,7 @@
   $('resetBtn').addEventListener('click', function () {
     var b = this;
     if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = '確定要清除？再按一次'; return; }
-    db.m = {}; save(); b.dataset.arm = ''; b.textContent = '已清除';
+    db.m = {}; db.stars = 0; save(); b.dataset.arm = ''; b.textContent = '已清除';
   });
 
   renderHome();
