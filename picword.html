@@ -43,6 +43,7 @@
     --shop: #F8E7EE; --shop-ink: #B5577A;
     --road: #EADBBC; --road-dash: #C4A36A;
     --ring: rgba(255,255,255,.8);
+    --heart: #F0607A; --heart-off: rgba(46,58,70,.14);
     --shadow: 0 1px 2px rgba(40,90,140,.06), 0 8px 22px rgba(40,90,140,.10);
     --radius: 22px;
     --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
@@ -67,6 +68,7 @@
       --stamp: #93A9F0;
       --zoo: #1F3024; --zoo-ink: #8FD08A; --shop: #33232B; --shop-ink: #F0A3C0;
       --road: #4B4232; --road-dash: #8C7A55; --ring: rgba(255,255,255,.14);
+      --heart: #FF7C93; --heart-off: rgba(255,255,255,.16);
       --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 26px rgba(0,0,0,.3);
     }
   }
@@ -81,6 +83,7 @@
     --stamp: #93A9F0;
     --zoo: #1F3024; --zoo-ink: #8FD08A; --shop: #33232B; --shop-ink: #F0A3C0;
     --road: #4B4232; --road-dash: #8C7A55; --ring: rgba(255,255,255,.14);
+    --heart: #FF7C93; --heart-off: rgba(255,255,255,.16);
     --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 26px rgba(0,0,0,.3);
   }
 
@@ -179,14 +182,19 @@
   .p-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .p-h b { font-size: 1.5rem; }
   .okchip { font: 800 var(--fs-note) var(--en); color: var(--stamp); border: 2px dashed var(--stamp); border-radius: 99px; padding: 0 10px; }
-  .stars { margin-left: auto; font-size: 1.35rem; letter-spacing: 2px; white-space: nowrap; }
-  .st { font-style: normal; color: var(--track); }
-  .st.on { color: #F2B63A; }
-  .st.half { background: linear-gradient(90deg, #F2B63A 50%, var(--track) 50%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .p-e { display: flex; justify-content: space-around; align-items: center; font-size: clamp(2rem, 4.4vw, 3rem); line-height: 1.2; border-radius: 16px; padding: 6px 8px; background: var(--zoo); }
+  .known { margin-left: auto; font-size: var(--fs-note); font-weight: 800; color: var(--ink-soft); }
+  /* 每個字：圖、英文、三顆心。心＝這個字多熟（0–3），不是獎勵星星 */
+  .p-e { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; border-radius: 16px; padding: 8px 6px; background: var(--zoo); }
   .p-e.shop { background: var(--shop); }
-  .p-e svg { width: 1em; height: 1em; display: block; }
-  .p-w { margin: 0; text-align: center; font-family: var(--en); color: var(--ink-soft); }
+  .pw { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+  .pw .em { font-size: clamp(2rem, 4.2vw, 2.9rem); line-height: 1.15; }
+  .pw .em svg { width: 1em; height: 1em; display: block; }
+  .pw .w { font-family: var(--en); font-weight: 700; font-size: .9rem; color: var(--ink); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hearts { display: inline-flex; gap: 1px; }
+  .hearts svg { width: 17px; height: 17px; display: block; fill: var(--heart-off); }
+  .hearts svg.on { fill: var(--heart); }
+  .p-legend { margin: 0; text-align: center; font-size: var(--fs-note); color: var(--ink-soft); }
+  .p-legend svg { width: 12px; height: 12px; fill: var(--heart); vertical-align: -1px; }
   .p-act { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; }
   .p-act .btn { min-height: 60px; font-size: 1.2rem; }
   .notice {
@@ -308,7 +316,7 @@
   .ri { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 14px; background: var(--surface); border: 2px solid var(--line); }
   .ri .p { font-size: 1.9rem; line-height: 1; width: 2.2rem; text-align: center; }
   .ri .p svg { width: 2rem; height: 2rem; }
-  .ri .w { font-family: var(--en); font-weight: 700; font-size: 1.15rem; }
+  .ri .w { font-family: var(--en); font-weight: 700; font-size: 1.15rem; display: flex; flex-direction: column; gap: 2px; line-height: 1.1; }
   .ri .t { margin-left: auto; font-size: var(--fs-note); font-weight: 700; }
   .ri.first .t { color: var(--mint-ink); }
   .ri.help .t { color: var(--amber); }
@@ -372,9 +380,9 @@
     </div>
 
     <div class="panel" id="panel">
-      <div class="p-h"><b id="hWk"></b><span class="okchip" id="hStamp" hidden>OK 老師蓋章了</span><span class="stars" id="hStars"></span></div>
+      <div class="p-h"><b id="hWk"></b><span class="okchip" id="hStamp" hidden>OK 老師蓋章了</span><span class="known" id="hKnown"></span></div>
       <div class="p-e" id="hEm"></div>
-      <p class="p-w" id="hWords"></p>
+      <p class="p-legend" id="hLegend"></p>
       <div class="p-act">
         <button class="btn" id="learnBtn" type="button">📖 學一學</button>
         <button class="btn primary" id="testBtn" type="button">🎤 出發考一考</button>
@@ -853,11 +861,12 @@
     }
     return d;
   }
-  function starHTML(ws) {
-    return ws.map(function (w) {
-      var l = lv(w.en);
-      return '<i class="st' + (l >= 2 ? ' on' : l === 1 ? ' half' : '') + '">★</i>';
-    }).join('');
+  /* 三顆心＝熟練度 0–3：一次就答對 +1、唸錯後才說對 −1，兩顆以上就是「會了」 */
+  var HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.4-4.5-9.4-9.2C1.2 8.4 3.4 5 6.9 5c2.1 0 3.6 1.2 5.1 3 1.5-1.8 3-3 5.1-3 3.5 0 5.7 3.4 4.3 6.8C19.4 16.5 12 21 12 21z"/></svg>';
+  function heartsHTML(en) {
+    var l = Math.max(0, lv(en)), h = '';
+    for (var i = 0; i < 3; i++) h += HEART.replace('<svg ', '<svg class="' + (i < l ? 'on' : '') + '" ');
+    return '<span class="hearts" aria-label="熟練度 ' + l + ' / 3">' + h + '</span>';
   }
   function renderHome() {
     var mode = mapMode(), pts = PTS[mode], cur = curWk();
@@ -888,10 +897,13 @@
     var cws = weekOf(cur);
     $('hWk').textContent = '第 ' + cur + ' 週';
     $('hStamp').hidden = db.stamps.indexOf(cur) < 0;
-    $('hStars').innerHTML = starHTML(cws);
+    var nKnown = cws.filter(function (w) { return lv(w.en) >= 2; }).length;
+    $('hKnown').textContent = '會了 ' + nKnown + ' / ' + cws.length;
     $('hEm').className = 'p-e' + (cur >= 7 ? ' shop' : '');
-    $('hEm').innerHTML = cws.map(function (w) { return '<span>' + picMini(w.en) + '</span>'; }).join('');
-    $('hWords').textContent = cws.map(function (w) { return w.en; }).join(' · ');
+    $('hEm').innerHTML = cws.map(function (w) {
+      return '<div class="pw"><span class="em">' + picMini(w.en) + '</span><span class="w">' + esc(w.en) + '</span>' + heartsHTML(w.en) + '</div>';
+    }).join('');
+    $('hLegend').innerHTML = HEART + ' 一次就答對加一顆，唸錯後才說對扣一顆，兩顆以上就是會了';
     var weak = weakWords().length;
     $('weakBtn').textContent = weak ? '🔁 還不熟的 ' + weak + ' 個（每一週混在一起）' : '🔁 還不熟的：目前沒有';
     $('weakBtn').disabled = !weak;
@@ -1271,7 +1283,7 @@
     if (pct === 1) chime(true);
     function item(en) {
       var t = { first: '一次就對', help: '提示後說對', miss: '還不會' }[R.res[en]];
-      return '<div class="ri ' + R.res[en] + '"><span class="p">' + picMini(en) + '</span><span class="w">' + esc(en) + '</span><span class="t">' + t + '</span></div>';
+      return '<div class="ri ' + R.res[en] + '"><span class="p">' + picMini(en) + '</span><span class="w">' + esc(en) + heartsHTML(en) + '</span><span class="t">' + t + '</span></div>';
     }
     $('rFirst').innerHTML = first.map(item).join('');
     $('rMiss').innerHTML = rest.map(item).join('');
