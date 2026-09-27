@@ -463,11 +463,11 @@
     </div>
     <p class="hintline" id="judgeHint"></p>
 
-    <h3>辨識寬鬆度</h3>
+    <h3>唸得多像才算過</h3>
     <div class="seg" id="sensSeg">
-      <button type="button" data-v="strict">嚴格</button>
-      <button type="button" data-v="std">標準</button>
-      <button type="button" data-v="loose">寬鬆</button>
+      <button type="button" data-v="70">寬鬆 70%</button>
+      <button type="button" data-v="80">標準 80%</button>
+      <button type="button" data-v="90">嚴格 90%</button>
     </div>
     <p class="hintline" id="sensHint"></p>
 
@@ -707,33 +707,41 @@
     var i;
     /* shirt 與 T-shirt 互相包含，要先分開 */
     if (en === 'shirt') for (i = 0; i < alts.length; i++) if (tshirtIn(alts[i])) return { kind: 'other', other: 'T-shirt', heard: alts[i] };
-    for (i = 0; i < alts.length; i++) if (hits(en, alts[i])) return { kind: 'ok', heard: alts[i] };
+    for (i = 0; i < alts.length; i++) if (hits(en, alts[i])) return { kind: 'ok', heard: alts[i], score: 1 };
     for (i = 0; i < alts.length; i++) {
       for (var k = 0; k < WORDS.length; k++) {
         var o = WORDS[k].en;
         if (o !== en && hits(o, alts[i])) return { kind: 'other', other: o, heard: alts[i] };
       }
     }
-    /* 寬鬆度（設定裡調）：
-       嚴格＝只收正確拼法和同音字；差一點點只說「好接近了」。
-       標準＝差一個字母也算對（hippa、hipo）；7 個字母以上的字差兩個也算。
-       寬鬆＝再加上「發音骨架」一樣也算：去掉母音、l 當 r（heapo、flog 都算）。 */
-    var target = compact(en), limit = target.length >= 7 ? 2 : 1, sens = db.sens || 'std';
-    var near = null;
-    for (i = 0; i < alts.length && !near; i++) {
+    /* 像幾 %＝「拼字像幾成」和「子音發音像幾成」的平均，過關門檻在設定裡調：
+       寬鬆 70%（預設）／標準 80%／嚴格 90%。
+       子音發音：母音不算、l 當 r、v 當 b（台灣小孩最常混的音），所以 flog 對 frog 有 88%。
+       2026-09-27 試算：hip→hippo 80%、flog→frog 88%、cut→cat 83%、dog→duck 38%、pet→pig 42%。 */
+    var target = compact(en), need = (db.pass || 70) / 100, best = 0, bestHeard = alts[0];
+    for (i = 0; i < alts.length; i++) {
       var ps = pieces(alts[i]);
       for (var p = 0; p < ps.length; p++) {
-        if (lev(ps[p], target) <= limit) { near = alts[i]; break; }
-        if (sens === 'loose' && target.length >= 3 && ps[p].length >= 2 && skel(ps[p]) === skel(target)) { near = alts[i]; break; }
+        if (ps[p].length < 2 && target.length > 2) continue;
+        var sc = likeness(ps[p], target);
+        if (sc > best) { best = sc; bestHeard = alts[i]; }
       }
     }
-    if (near) return sens === 'strict' ? { kind: 'near', heard: near } : { kind: 'ok', heard: near, loose: true };
-    return { kind: 'no', heard: alts[0] };
+    if (best >= need) return { kind: 'ok', heard: bestHeard, score: best };
+    return { kind: best >= 0.5 ? 'near' : 'no', heard: bestHeard, score: best };
   }
-  function skel(w) {
-    w = w.replace(/l/g, 'r').replace(/(.)\1+/g, '$1');
+  function simLetters(a, b) { var m = Math.max(a.length, b.length); return m ? 1 - lev(a, b) / m : 0; }
+  function soundKey(w) {
+    w = w.replace(/wh/g, 'w').replace(/th/g, 's').replace(/ph/g, 'f').replace(/ck/g, 'k').replace(/[cq]/g, 'k')
+         .replace(/x/g, 'ks').replace(/z/g, 's').replace(/l/g, 'r').replace(/v/g, 'b').replace(/(.)\1+/g, '$1');
     return w.charAt(0) + w.slice(1).replace(/[aeiouy]/g, '');
   }
+  function likeness(heard, target) {
+    var l = simLetters(heard, target), tk = soundKey(target);
+    if (tk.length < 2) return l;          /* bee 這種只剩一個子音的，只看拼字 */
+    return (l + simLetters(soundKey(heard), tk)) / 2;
+  }
+  function pct(x) { return Math.round((x || 0) * 100) + '%'; }
 
   /* 說成單字表裡另一個字時的提示，不透露答案的英文 */
   function otherMsg(en, other) {
@@ -965,11 +973,11 @@
     }, delay || 0);
   }
   /* 每次辨識的結果記下來（最近 40 筆），設定裡看得到，哪個字常被判錯一看就知道是聽成什麼 */
-  function logHeard(en, alts, kind) {
+  function logHeard(en, alts, kind, score) {
     var seen = {}, list = [];
     alts.forEach(function (a) { var n = norm(a); if (n && !seen[n]) { seen[n] = 1; list.push(n); } });
     if (!list.length) return;
-    db.log = (db.log || []).concat([{ w: en, h: list.slice(0, 4), k: kind }]).slice(-40);
+    db.log = (db.log || []).concat([{ w: en, h: list.slice(0, 4), k: kind, s: score }]).slice(-40);
     save();
   }
   function quizResume() { if (canAutoListen()) autoListen(0); }
@@ -1001,7 +1009,7 @@
       }
       AUTO.fails = 0;
       var j = judge(en, r.alts || []);
-      logHeard(en, r.alts || [], j.kind);
+      logHeard(en, r.alts || [], j.kind, j.score);
       if (j.kind === 'ok') onRight();
       else if (j.kind === 'silent') {
         if (AUTO.on) { if (!$('pFb').classList.contains('bad')) setFb('info', '看圖，直接說出英文'); autoListen(100); }
@@ -1143,7 +1151,7 @@
     $('pCard').classList.remove('bad'); void $('pCard').offsetWidth; $('pCard').classList.add('bad');
     var heard = j.heard ? '我聽到 <span class="heard">' + esc(j.heard) + '</span>。' : '';
     var lead = j.kind === 'other' ? esc(otherMsg(w.en, j.other)) + '<br>'
-             : j.kind === 'near' ? heard + '好接近了！<br>'
+             : j.kind === 'near' ? heard + '有 ' + pct(j.score) + ' 像，好接近了！<br>'
              : heard;
     var tail = q.tries >= 3 ? '沒關係，聽清楚再跟著說一次，或按下一題' : '聽一次，跟著說！';
     if (!AUTO.on && autoOn()) tail += '（按麥克風）';
@@ -1236,19 +1244,20 @@
       ? micWhy + '，現在不管選哪個都是爸媽聽。'
       : db.judge === 'auto' ? '進考試就自動開麥克風，每題直接說，不用再按。辨識聽錯時爸媽還是可以直接按對錯。'
       : '孩子唸出來，爸媽按對錯。辨識常聽不準的時候用這個。';
-    var sens = db.sens || 'std';
+    var pass = String(db.pass || 70);
     Array.prototype.forEach.call($('sensSeg').children, function (b) {
-      b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === sens));
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === pass));
     });
     $('sensHint').textContent = {
-      strict: '只收正確的字和同音字（bee＝be）。差一點點會說「好接近了」，要再說一次。',
-      std: '差一個字母也算對，例如 hippo 聽成 hippa、hipo 都過。建議用這個。',
-      loose: '發音大致像就算對，例如 heapo、flog（frog）都過。孩子一直過不了的時候用。'
-    }[sens];
+      '70': '有 7 成像就過：flog（frog）88%、hip（hippo）80%、cut（cat）83% 都算。小學生建議用這個。',
+      '80': '有 8 成像才過：flog、hip、cut 還是過；house（horse）73% 就不過了。',
+      '90': '要 9 成像才過，接近老師考試的標準：flog 88%、hip 80% 都不過。考前模擬用。'
+    }[pass] + ' 像幾 %＝拼字和子音發音的平均，母音不算、l 和 r 算一樣。';
     var log = (db.log || []).slice().reverse();
     $('heardLog').innerHTML = log.length ? log.map(function (x) {
       var ok = x.k === 'ok';
-      return '<div><b>' + esc(x.w) + '</b><span>' + esc(x.h.join(' / ')) + '</span><i class="' + (ok ? 'y' : 'n') + '">' + (ok ? '✓' : '✗') + '</i></div>';
+      return '<div><b>' + esc(x.w) + '</b><span>' + esc(x.h.join(' / ')) + '</span><i class="' + (ok ? 'y' : 'n') + '">' +
+        (x.s != null ? pct(x.s) + ' ' : '') + (ok ? '✓' : '✗') + '</i></div>';
     }).join('') : '<p class="hintline">考過之後，這裡會列出每一題 App 聽到的字。</p>';
     $('rate').value = db.rate; $('rateV').textContent = db.rate <= 0.6 ? '很慢' : db.rate <= 0.8 ? '慢一點' : '正常';
     var h = '';
@@ -1265,7 +1274,7 @@
   });
   $('sensSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
-    db.sens = b.getAttribute('data-v'); save(); renderSheet();
+    db.pass = +b.getAttribute('data-v'); save(); renderSheet();
   });
   $('voiceSel').addEventListener('change', function () {
     db.voiceURI = this.value; save(); loadVoices(); say('frog');
