@@ -661,8 +661,15 @@
   var speakHold = false, quietAt = 0, holdT = null, spTok = 0;
   function holdSpeech() { speakHold = true; clearTimeout(holdT); holdT = setTimeout(releaseSpeech, 6000); }
   function releaseSpeech() { speakHold = false; quietAt = Date.now(); clearTimeout(holdT); quizResume(); }
+  /* 語音唸不準的字，唸的時候換成拆開的拼法（畫面上的字不變）。
+     koala：Apple 語音常吃掉一個音節唸成「誇啦」，拆成 ko-ah-la 逼它唸三拍（2026-09-27 使用者反映）。 */
+  var SAY_AS = { koala: 'ko-ah-la' };
+  function sayFix(text) {
+    return String(text).replace(/[A-Za-z][A-Za-z-]*/g, function (w) { return SAY_AS[w.toLowerCase()] || w; });
+  }
   function say(text, rate) {
     if (!canSpeak) return;
+    text = sayFix(text);
     if (rec) stopListen();
     var tok = ++spTok;
     try {
