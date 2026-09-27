@@ -506,6 +506,15 @@
     </div>
     <p class="hintline">時間到還沒唸對就算錯，App 會唸正確的給他聽，再給一次同樣的時間跟著說，唸對才能到下一題。真的卡住時爸媽按「說對了」。App 唸字或麥克風暫停時不計時。</p>
 
+    <h3>koala 唸法（美式：口-阿-了，重音在中間）</h3>
+    <div class="chips" id="sayKoala">
+      <button type="button" class="chip" data-v="koala">原本</button>
+      <button type="button" class="chip" data-v="ko-ah-la">ko-ah-la</button>
+      <button type="button" class="chip" data-v="koh-AH-luh">koh-AH-luh</button>
+      <button type="button" class="chip" data-v="co ahla">co ahla</button>
+    </div>
+    <p class="hintline">點一下會唸給你聽，選聽起來最像美式的那個，之後 App 都這樣唸。</p>
+
     <h3>唸單字的聲音</h3>
     <select id="voiceSel" aria-label="聲音"></select>
     <label class="hintline" for="rate">速度：<b id="rateV"></b></label>
@@ -665,7 +674,8 @@
      koala：Apple 語音常吃掉一個音節唸成「誇啦」，拆成 ko-ah-la 逼它唸三拍（2026-09-27 使用者反映）。 */
   var SAY_AS = { koala: 'ko-ah-la' };
   function sayFix(text) {
-    return String(text).replace(/[A-Za-z][A-Za-z-]*/g, function (w) { return SAY_AS[w.toLowerCase()] || w; });
+    var mine = db.sayas || {};
+    return String(text).replace(/[A-Za-z][A-Za-z-]*/g, function (w) { var k = w.toLowerCase(); return mine[k] || SAY_AS[k] || w; });
   }
   function say(text, rate) {
     if (!canSpeak) return;
@@ -1363,6 +1373,10 @@
       ? micWhy + '，現在不管選哪個都是爸媽聽。'
       : db.judge === 'auto' ? '進考試就自動開麥克風，每題直接說，不用再按。辨識聽錯時爸媽還是可以直接按對錯。'
       : '孩子唸出來，爸媽按對錯。辨識常聽不準的時候用這個。';
+    var kv = (db.sayas && db.sayas.koala) || SAY_AS.koala;
+    Array.prototype.forEach.call($('sayKoala').children, function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === kv));
+    });
     var lim = String(db.limit == null ? 15 : db.limit);
     Array.prototype.forEach.call($('limitSeg').children, function (b) {
       b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === lim));
@@ -1394,6 +1408,11 @@
   $('judgeSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     db.judge = b.getAttribute('data-v'); save(); renderSheet();
+  });
+  $('sayKoala').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    db.sayas = db.sayas || {}; db.sayas.koala = b.getAttribute('data-v'); save(); renderSheet();
+    say('koala');
   });
   $('limitSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
