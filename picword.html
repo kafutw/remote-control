@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>看圖說單字</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F9FD">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<style>
+  /* 看圖說單字：115 上每週英語單字表（44 字、9 週）。
+     老師的考法是「看圖 → 唸出英文」，所以考的時候畫面上只有圖，不給字、不給中文。
+     配色沿用 ABC 字母大考驗的家族色，主色換成英文科的藍，孩子一眼分得出是哪一支。 */
+  :root {
+    --bg: #F5F9FD;
+    --bg-2: #E6F0FA;
+    --surface: #FFFFFF;
+    --track: #DCE8F4;
+    --ink: #2E3A46;
+    --ink-soft: #66788A;
+    --ink-faint: #A7B6C4;
+    --line: #DAE5F0;
+    --key: #3E86C9;
+    --key-deep: #2A6AA6;
+    --key-soft: #E3EFFA;
+    --mint: #2FB48C;
+    --mint-ink: #178A69;
+    --mint-soft: #DFF5EE;
+    --coral: #EE6B57;
+    --coral-ink: #C94A36;
+    --coral-soft: #FDE8E4;
+    --amber: #E3A21A;
+    --amber-soft: #FFF3D9;
+    --stamp: #3553A8;
+    --shadow: 0 1px 2px rgba(40,90,140,.06), 0 8px 22px rgba(40,90,140,.10);
+    --radius: 22px;
+    --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
+            "Microsoft JhengHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    /* 英文字用單層 a 的字體，跟學校單字表印的字形一樣 */
+    --en: "Andika", "Chalkboard SE", "Comic Sans MS", "Trebuchet MS", Verdana, sans-serif;
+    --fs-title: 1.5rem;
+    --fs-head: 1.2rem;
+    --fs-body: .95rem;
+    --fs-note: .78rem;
+    --fs-word: clamp(2.6rem, 11vw, 4rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #172029; --bg-2: #1F2B36; --surface: #23303C; --track: #1B2631;
+      --ink: #E8F0F7; --ink-soft: #A6B7C7; --ink-faint: #6D8194; --line: #34455A;
+      --key: #7CB8F0; --key-deep: #A5D0F7; --key-soft: rgba(124,184,240,.16);
+      --mint: #52D1AA; --mint-ink: #86E3C6; --mint-soft: rgba(82,209,170,.15);
+      --coral: #FF8A77; --coral-ink: #FFA797; --coral-soft: rgba(255,138,119,.15);
+      --amber: #FFC45E; --amber-soft: rgba(255,196,94,.15);
+      --stamp: #93A9F0;
+      --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 26px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #172029; --bg-2: #1F2B36; --surface: #23303C; --track: #1B2631;
+    --ink: #E8F0F7; --ink-soft: #A6B7C7; --ink-faint: #6D8194; --line: #34455A;
+    --key: #7CB8F0; --key-deep: #A5D0F7; --key-soft: rgba(124,184,240,.16);
+    --mint: #52D1AA; --mint-ink: #86E3C6; --mint-soft: rgba(82,209,170,.15);
+    --coral: #FF8A77; --coral-ink: #FFA797; --coral-soft: rgba(255,138,119,.15);
+    --amber: #FFC45E; --amber-soft: rgba(255,196,94,.15);
+    --stamp: #93A9F0;
+    --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 26px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font); font-size: var(--fs-body); line-height: 1.55;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--key); outline-offset: 2px; }
+  .en { font-family: var(--en); }
+
+  .app { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 40px; }
+  .screen { display: none; flex-direction: column; gap: 16px; }
+  .screen.on { display: flex; }
+
+  /* ---------- 共用按鈕 ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 52px; padding: 0 20px; border-radius: 16px;
+    border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+    font-size: var(--fs-head); font-weight: 700;
+  }
+  .btn.primary { background: var(--key); border-color: var(--key); color: var(--surface); }
+  .btn.ghost { background: transparent; }
+  .btn.small { min-height: 40px; font-size: var(--fs-body); padding: 0 14px; border-radius: 12px; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.ok { background: var(--mint-soft); border-color: var(--mint); color: var(--mint-ink); }
+  .btn.no { background: var(--coral-soft); border-color: var(--coral); color: var(--coral-ink); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .grow { flex: 1 1 0; }
+
+  /* ---------- 首頁 ---------- */
+  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  h1 { margin: 0; font-size: var(--fs-title); line-height: 1.25; text-wrap: balance; }
+  .sub { margin: 2px 0 0; color: var(--ink-soft); font-size: var(--fs-note); letter-spacing: .04em; }
+  .notice {
+    margin: 0; padding: 10px 14px; border-radius: 14px;
+    background: var(--amber-soft); color: var(--ink); font-size: var(--fs-note);
+  }
+  .notice b { color: var(--amber); }
+  .notice.okay { background: var(--mint-soft); }
+  .notice.okay b { color: var(--mint-ink); }
+
+  .weeks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 520px) { .weeks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .wk {
+    position: relative; text-align: left; display: flex; flex-direction: column; gap: 6px;
+    padding: 12px 12px 10px; border-radius: 18px; border: 2px solid var(--line);
+    background: var(--surface); min-height: 118px;
+  }
+  .wk[aria-pressed="true"] { border-color: var(--key); background: var(--key-soft); box-shadow: 0 0 0 2px var(--key) inset; }
+  .wk-h { display: flex; align-items: baseline; gap: 6px; font-weight: 800; }
+  .wk-h small { font-weight: 600; color: var(--ink-soft); font-size: var(--fs-note); }
+  .wk-pics { font-size: 1.5rem; line-height: 1.15; letter-spacing: 1px; display: flex; flex-wrap: wrap; gap: 2px; }
+  .wk-pics svg { width: 1.4rem; height: 1.4rem; vertical-align: -3px; }
+  .wk-words { font-family: var(--en); font-size: var(--fs-note); color: var(--ink-soft); line-height: 1.35; }
+  .dots { display: flex; gap: 4px; margin-top: auto; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--track); }
+  .dot.l0 { background: var(--coral-soft); box-shadow: 0 0 0 2px var(--coral) inset; }
+  .dot.l1 { background: linear-gradient(90deg, var(--mint) 50%, var(--track) 50%); }
+  .dot.l2 { background: var(--mint); }
+  .stamp {
+    position: absolute; top: 8px; right: 8px; width: 38px; height: 38px; border-radius: 50%;
+    border: 2px dashed var(--stamp); color: var(--stamp); font: 800 .72rem/34px var(--en);
+    text-align: center; transform: rotate(-12deg); opacity: .85;
+  }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--ink-soft); font-size: var(--fs-note); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .actions .wide { grid-column: 1 / -1; }
+  .actions .btn { min-height: 64px; font-size: 1.3rem; }
+  .pick-info { color: var(--ink-soft); font-size: var(--fs-note); margin: 0; }
+
+  /* ---------- 題目畫面 ---------- */
+  .bar { display: flex; align-items: center; gap: 12px; }
+  .prog { flex: 1; height: 10px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .prog i { display: block; height: 100%; width: 0; background: var(--key); border-radius: 99px; transition: width .3s; }
+  .count { font-variant-numeric: tabular-nums; color: var(--ink-soft); font-weight: 700; min-width: 4.5em; text-align: right; }
+
+  .card {
+    position: relative; align-self: center; width: min(100%, 360px); aspect-ratio: 1; max-width: 100%;
+    border-radius: 28px; background: var(--surface); box-shadow: var(--shadow);
+    display: grid; place-items: center; overflow: hidden;
+  }
+  .card.ok { box-shadow: 0 0 0 5px var(--mint), var(--shadow); }
+  .card.bad { animation: shake .35s; }
+  @keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+  .again-tag {
+    position: absolute; top: 12px; left: 12px; padding: 2px 10px; border-radius: 99px;
+    background: var(--amber-soft); color: var(--amber); font-size: var(--fs-note); font-weight: 700;
+  }
+  .pic { font-size: clamp(110px, 32vw, 180px); line-height: 1; user-select: none; }
+  .pic.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: clamp(64px, 17vw, 96px); }
+  .pic.trio { display: flex; gap: 4px; font-size: clamp(64px, 18vw, 100px); }
+  .pic.trio span:nth-child(2) { transform: translateY(-18%) scale(.9); }
+  .pic svg { width: clamp(150px, 42vw, 240px); height: auto; display: block; }
+  .house { position: relative; width: clamp(170px, 48vw, 270px); aspect-ratio: 1; }
+  .house svg { width: 100%; height: 100%; }
+  .house .in { position: absolute; left: 0; right: 0; bottom: 14%; display: flex; justify-content: center; gap: 2px; font-size: clamp(52px, 14vw, 80px); }
+
+  .word { text-align: center; font-family: var(--en); font-weight: 700; font-size: var(--fs-word); line-height: 1.1; margin: 0; letter-spacing: .02em; }
+  .zh { text-align: center; margin: 0; color: var(--ink-soft); font-size: var(--fs-head); }
+  .hint {
+    align-self: center; text-align: center; padding: 10px 18px; border-radius: 16px;
+    background: var(--amber-soft); display: flex; flex-direction: column; gap: 2px;
+  }
+  .hint .pat { font-family: var(--en); font-size: 2rem; letter-spacing: .18em; font-weight: 700; }
+  .hint .z { color: var(--ink-soft); }
+
+  .fb { min-height: 2.9em; text-align: center; margin: 0; font-size: var(--fs-head); font-weight: 700; text-wrap: balance; }
+  .fb.ok { color: var(--mint-ink); }
+  .fb.bad { color: var(--coral-ink); }
+  .fb.info { color: var(--ink-soft); font-weight: 600; }
+  .fb .heard { font-family: var(--en); color: var(--ink); background: var(--track); padding: 0 8px; border-radius: 8px; }
+
+  .mic {
+    align-self: center; width: 128px; height: 128px; border-radius: 50%;
+    border: none; background: var(--key); color: var(--surface);
+    display: grid; place-items: center; box-shadow: 0 8px 20px rgba(40,100,170,.28);
+    position: relative;
+  }
+  .mic svg { width: 54px; height: 54px; }
+  .mic .lbl { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap; color: var(--ink-soft); font-size: var(--fs-body); font-weight: 700; }
+  .mic.live { background: var(--coral); box-shadow: 0 0 0 0 var(--coral); animation: pulse 1.1s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(238,107,87,.55); } 100% { box-shadow: 0 0 0 26px rgba(238,107,87,0); } }
+  .mic-wrap { display: flex; flex-direction: column; align-items: center; padding-block: 4px 34px; }
+  .tools { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .parent {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+    padding: 10px 12px; border-radius: 16px; border: 2px dashed var(--line);
+  }
+  .parent .lab { color: var(--ink-soft); font-size: var(--fs-note); font-weight: 700; letter-spacing: .04em; }
+  .parent.big .btn { min-height: 64px; min-width: 150px; font-size: 1.3rem; }
+
+  /* ---------- 結算 ---------- */
+  .medal { font-size: 72px; text-align: center; line-height: 1; }
+  #rScore { text-align: center; font-size: 4rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  #rScore small { font-size: 1.6rem; color: var(--ink-soft); font-weight: 700; }
+  .rmsg { text-align: center; margin: 0; font-size: var(--fs-head); font-weight: 700; }
+  .rlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .ri { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 14px; background: var(--surface); border: 2px solid var(--line); }
+  .ri .p { font-size: 1.9rem; line-height: 1; width: 2.2rem; text-align: center; }
+  .ri .p svg { width: 2rem; height: 2rem; }
+  .ri .w { font-family: var(--en); font-weight: 700; font-size: 1.15rem; }
+  .ri .t { margin-left: auto; font-size: var(--fs-note); font-weight: 700; }
+  .ri.first .t { color: var(--mint-ink); }
+  .ri.help .t { color: var(--amber); }
+  .ri.miss .t { color: var(--coral-ink); }
+  .rh { margin: 6px 0 0; font-size: var(--fs-note); color: var(--ink-soft); letter-spacing: .06em; font-weight: 700; }
+
+  /* ---------- 設定 ---------- */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(10,20,30,.4); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow: auto;
+    background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(105%); transition: transform .25s;
+  }
+  .sheet > div { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  body.sheet-open .sheet-bg { opacity: 1; pointer-events: auto; }
+  body.sheet-open .sheet { transform: translateY(0); }
+  .sheet h2 { margin: 0; font-size: var(--fs-head); }
+  .sheet h3 { margin: 6px 0 0; font-size: var(--fs-body); color: var(--ink-soft); letter-spacing: .04em; }
+  .seg { display: flex; border: 2px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .seg button { flex: 1; min-height: 46px; border: none; background: transparent; font-weight: 700; }
+  .seg button[aria-pressed="true"] { background: var(--key); color: var(--surface); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { min-width: 48px; min-height: 42px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); font-weight: 700; }
+  .chip[aria-pressed="true"] { border-color: var(--stamp); color: var(--stamp); background: var(--key-soft); }
+  select, input[type=range] { width: 100%; }
+  select { min-height: 44px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); padding: 0 10px; font: inherit; }
+  .hintline { margin: 0; color: var(--ink-soft); font-size: var(--fs-note); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mic.live { animation: none; box-shadow: 0 0 0 6px var(--coral-soft); }
+    .card.bad { animation: none; }
+    .sheet, .sheet-bg, .prog i { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= 首頁 ================= -->
+  <section class="screen on" id="home">
+    <div class="top">
+      <div>
+        <h1>看圖說單字</h1>
+        <p class="sub">115 上・每週英語單字表・44 個字</p>
+      </div>
+      <button class="btn small ghost" id="setBtn" type="button">設定</button>
+    </div>
+
+    <p class="notice" id="micNote" hidden></p>
+
+    <div class="weeks" id="weeks"></div>
+
+    <div class="legend">
+      <span><i class="dot"></i>還沒考過</span>
+      <span><i class="dot l0"></i>說不出來</span>
+      <span><i class="dot l1"></i>說對一次</span>
+      <span><i class="dot l2"></i>會了</span>
+    </div>
+
+    <p class="pick-info" id="pickInfo"></p>
+    <div class="actions">
+      <button class="btn" id="learnBtn" type="button">📖 先學一學</button>
+      <button class="btn primary" id="testBtn" type="button">🎤 考一考</button>
+      <button class="btn wide" id="weakBtn" type="button">🔁 還不熟的</button>
+    </div>
+  </section>
+
+  <!-- ================= 學一學 ================= -->
+  <section class="screen" id="learn">
+    <div class="bar">
+      <button class="btn small ghost" data-home type="button">‹ 回首頁</button>
+      <div class="prog"><i id="lProg"></i></div>
+      <span class="count" id="lCount"></span>
+    </div>
+    <div class="card" id="lCard"></div>
+    <p class="word" id="lWord"></p>
+    <p class="zh" id="lZh"></p>
+    <div class="tools">
+      <button class="btn small" id="lSay" type="button">🔊 再聽一次</button>
+      <button class="btn small" id="lSlow" type="button">🐢 慢慢唸</button>
+      <button class="btn small" id="lTry" type="button">🎤 換我說</button>
+    </div>
+    <p class="fb info" id="lFb"></p>
+    <div class="row">
+      <button class="btn grow" id="lPrev" type="button">‹ 上一個</button>
+      <button class="btn primary grow" id="lNext" type="button">下一個 ›</button>
+    </div>
+  </section>
+
+  <!-- ================= 考一考（id 跟其他大考驗一樣，之後接樂園的橋接不用改） ================= -->
+  <section class="screen" id="play">
+    <div class="bar">
+      <button class="btn small ghost" id="quitBtn" type="button">✕ 結束</button>
+      <div class="prog"><i id="pProg"></i></div>
+      <span class="count" id="pCount"></span>
+    </div>
+    <div class="card" id="pCard"></div>
+    <p class="word" id="pWord" hidden></p>
+    <div class="hint" id="pHint" hidden><span class="pat en" id="pPat"></span><span class="z" id="pZh"></span></div>
+    <p class="fb info" id="pFb">看圖，按麥克風說出英文</p>
+
+    <div class="mic-wrap" id="micWrap">
+      <button class="mic" id="micBtn" type="button" aria-label="按我說">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+        <span class="lbl" id="micLbl">按我說</span>
+      </button>
+    </div>
+
+    <div class="tools">
+      <button class="btn small" id="hintBtn" type="button">💡 提示</button>
+      <button class="btn small" id="sayBtn" type="button" hidden>🔊 聽一次</button>
+      <button class="btn small primary" id="nextBtn" type="button" hidden>下一題 ›</button>
+    </div>
+
+    <div class="parent" id="parentRow">
+      <span class="lab">爸媽聽到了</span>
+      <button class="btn small ok" id="pOk" type="button">✓ 說對了</button>
+      <button class="btn small no" id="pNo" type="button">✗ 沒說對</button>
+    </div>
+  </section>
+
+  <!-- ================= 結算 ================= -->
+  <section class="screen" id="result">
+    <div class="medal" id="rMedal"></div>
+    <div id="rScore"></div>
+    <p class="rmsg" id="rMsg"></p>
+    <p class="rh" id="rH1">一次就說對</p>
+    <div class="rlist" id="rFirst"></div>
+    <p class="rh" id="rH2">要再練的</p>
+    <div class="rlist" id="rMiss"></div>
+    <div class="row">
+      <button class="btn grow" data-home type="button">回首頁</button>
+      <button class="btn primary grow" id="redoBtn" type="button">🔁 錯的再練一次</button>
+    </div>
+  </section>
+</div>
+
+<!-- ================= 設定 ================= -->
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="設定">
+  <div>
+    <h2>設定</h2>
+    <h3>誰來判斷說得對不對</h3>
+    <div class="seg" id="judgeSeg">
+      <button type="button" data-v="auto">🎤 App 自動聽</button>
+      <button type="button" data-v="parent">👂 爸媽聽</button>
+    </div>
+    <p class="hintline" id="judgeHint"></p>
+
+    <h3>唸單字的聲音</h3>
+    <select id="voiceSel" aria-label="聲音"></select>
+    <label class="hintline" for="rate">速度：<b id="rateV"></b></label>
+    <input type="range" id="rate" min="0.5" max="1" step="0.05">
+
+    <h3>老師已經蓋 OK 章的週次</h3>
+    <div class="chips" id="stampChips"></div>
+    <p class="hintline">蓋過章的週次首頁會標 OK，選單字時預設跳過。</p>
+
+    <h3>重來</h3>
+    <button class="btn small no" id="resetBtn" type="button">清除所有練習紀錄</button>
+
+    <button class="btn primary" id="sheetDone" type="button">好了</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- 單字表：照學校發的紙本，週次／英文／中文 ---------- */
+  var RAW = [
+    [1,'animal','動物'],[1,'bear','熊'],[1,'bee','蜜蜂'],[1,'bird','鳥'],[1,'butterfly','蝴蝶'],
+    [2,'cat','貓'],[2,'chicken','雞'],[2,'cow','乳牛'],[2,'dog','狗'],[2,'duck','鴨子'],
+    [3,'elephant','大象'],[3,'fish','魚'],[3,'frog','青蛙'],[3,'hippo','河馬'],[3,'horse','馬'],
+    [4,'koala','無尾熊'],[4,'lion','獅子'],[4,'mouse','老鼠'],[4,'mice','老鼠（很多隻）'],[4,'monkey','猴子'],
+    [5,'panda','大熊貓'],[5,'pet','寵物'],[5,'pig','豬'],[5,'rabbit','兔子'],[5,'sheep','綿羊'],
+    [6,'goat','山羊'],[6,'snake','蛇'],[6,'spider','蜘蛛'],[6,'tiger','老虎'],[6,'turtle','烏龜'],
+    [7,'whale','鯨魚'],[7,'zebra','斑馬'],[7,'bag','袋子'],[7,'cap','棒球帽'],[7,'clothes','衣服'],
+    [8,'coat','外套／大衣'],[8,'jacket','外套／夾克'],[8,'dress','洋裝'],[8,'glasses','眼鏡'],[8,'hat','帽子'],
+    [9,'pants','長褲'],[9,'pocket','口袋'],[9,'shirt','襯衫'],[9,'T-shirt','T 恤']
+  ];
+  var WORDS = RAW.map(function (r) { return { wk: r[0], en: r[1], zh: r[2] }; });
+  var BY = {}; WORDS.forEach(function (w) { BY[w.en] = w; });
+  var ANIMALS = WORDS.filter(function (w) { return w.wk <= 7 && ['animal','pet','bag','cap','clothes'].indexOf(w.en) < 0; })
+                     .map(function (w) { return w.en; });
+
+  /* ---------- 圖 ----------
+     大部分用 iPad 內建的 emoji。容易跟別的字撞在一起的另外處理：
+     mouse 一隻／mice 三隻；coat 用長大衣、jacket 自己畫短拉鍊款；
+     pocket 沒有 emoji，畫一個圈起來的口袋；animal、clothes、pet 用一組圖合起來表示。 */
+  var SVG_JACKET =
+    '<svg viewBox="0 0 200 200" aria-hidden="true">' +
+    '<path d="M50 62 L24 142 L44 149 L64 98 Z" fill="#3F7CC0"/>' +
+    '<path d="M150 62 L176 142 L156 149 L136 98 Z" fill="#3F7CC0"/>' +
+    '<path d="M72 44 L128 44 L150 62 L150 160 L50 160 L50 62 Z" fill="#4F92DA"/>' +
+    '<rect x="50" y="150" width="100" height="14" rx="3" fill="#2F639D"/>' +
+    '<path d="M74 44 Q100 76 126 44 L118 36 Q100 58 82 36 Z" fill="#2F639D"/>' +
+    '<line x1="100" y1="60" x2="100" y2="160" stroke="#E7EEF6" stroke-width="3"/>' +
+    '<rect x="96" y="68" width="8" height="14" rx="2" fill="#E7EEF6"/>' +
+    '<path d="M64 112 L76 138" stroke="#2F639D" stroke-width="4" stroke-linecap="round"/>' +
+    '<path d="M136 112 L124 138" stroke="#2F639D" stroke-width="4" stroke-linecap="round"/>' +
+    '<rect x="21" y="138" width="24" height="12" rx="3" transform="rotate(18 33 144)" fill="#2F639D"/>' +
+    '<rect x="155" y="138" width="24" height="12" rx="3" transform="rotate(-18 167 144)" fill="#2F639D"/>' +
+    '</svg>';
+  var SVG_POCKET =
+    '<svg viewBox="0 0 200 200" aria-hidden="true">' +
+    '<rect x="14" y="14" width="172" height="172" rx="18" fill="#5C88BC"/>' +
+    '<rect x="22" y="22" width="156" height="156" rx="13" fill="none" stroke="#F2C14E" stroke-width="2" stroke-dasharray="6 5"/>' +
+    '<circle cx="124" cy="62" r="17" fill="#F4C542"/><circle cx="124" cy="62" r="10" fill="none" stroke="#D9A21C" stroke-width="3"/>' +
+    '<path d="M56 66 L144 66 L144 128 L100 152 L56 128 Z" fill="#4A74A6"/>' +
+    '<path d="M62 72 L138 72 L138 124 L100 145 L62 124 Z" fill="none" stroke="#F2C14E" stroke-width="2.5" stroke-dasharray="6 5"/>' +
+    '<ellipse cx="100" cy="108" rx="66" ry="60" fill="none" stroke="#EE6B57" stroke-width="5" stroke-dasharray="14 9"/>' +
+    '</svg>';
+  var SVG_HOUSE =
+    '<svg viewBox="0 0 200 200" aria-hidden="true">' +
+    '<path d="M100 22 L182 92 L164 92 L164 180 L36 180 L36 92 L18 92 Z" fill="#FBE3C6" stroke="#D9894A" stroke-width="7" stroke-linejoin="round"/>' +
+    '<circle cx="100" cy="72" r="11" fill="#EE6B57"/>' +
+    '</svg>';
+
+  var PIC = {
+    animal: { grid: ['🐶','🐱','🐰','🐤'] }, bear: '🐻', bee: '🐝', bird: '🐦', butterfly: '🦋',
+    cat: '🐱', chicken: '🐔', cow: '🐄', dog: '🐶', duck: '🦆',
+    elephant: '🐘', fish: '🐟', frog: '🐸', hippo: '🦛', horse: '🐴',
+    koala: '🐨', lion: '🦁', mouse: '🐭', mice: { trio: ['🐭','🐭','🐭'] }, monkey: '🐵',
+    panda: '🐼', pet: { house: ['🐶','🐱'] }, pig: '🐷', rabbit: '🐰', sheep: '🐑',
+    goat: '🐐', snake: '🐍', spider: '🕷️', tiger: '🐯', turtle: '🐢',
+    whale: '🐳', zebra: '🦓', bag: '👜', cap: '🧢', clothes: { grid: ['👕','👖','👗','🧦'] },
+    coat: '🧥', jacket: { svg: SVG_JACKET }, dress: '👗', glasses: '👓', hat: '👒',
+    pants: '👖', pocket: { svg: SVG_POCKET }, shirt: '👔', 'T-shirt': '👕'
+  };
+  function span(s) { return '<span>' + s + '</span>'; }
+  function picBig(en) {
+    var p = PIC[en];
+    if (typeof p === 'string') return '<div class="pic">' + p + '</div>';
+    if (p.grid) return '<div class="pic grid">' + p.grid.map(span).join('') + '</div>';
+    if (p.trio) return '<div class="pic trio">' + p.trio.map(span).join('') + '</div>';
+    if (p.house) return '<div class="house">' + SVG_HOUSE + '<div class="in">' + p.house.map(span).join('') + '</div></div>';
+    return '<div class="pic">' + p.svg + '</div>';
+  }
+  function picMini(en) {
+    var p = PIC[en];
+    if (typeof p === 'string') return p;
+    if (p.grid) return p.grid[0];
+    if (p.trio) return '🐭';
+    if (p.house) return '🏠';
+    return p.svg;
+  }
+
+  /* ---------- 存檔（只存在這台裝置） ---------- */
+  var KEY = 'kafu-picword-v1';
+  var db = { sel: null, judge: 'auto', rate: 0.8, voiceURI: '', stamps: [1, 2], m: {} };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) for (var k in saved) db[k] = saved[k]; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
+  if (!db.sel) {
+    var firstOpen = 1;
+    for (var wk = 1; wk <= 9; wk++) if (db.stamps.indexOf(wk) < 0) { firstOpen = wk; break; }
+    db.sel = [firstOpen];
+  }
+  function lv(en) { var r = db.m[en]; return r ? r.lv : -1; }
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  /* ---------- 麥克風能不能用 ----------
+     Safari（iPad／iPhone）與 Chrome 有內建語音辨識。
+     被別的網站用 iframe 包起來（例如預覽頁）時瀏覽器不給麥克風，一律改成爸媽判定。 */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  var crossFrame = false;
+  try { crossFrame = window.top !== window.self && !window.top.location.href; } catch (e) { crossFrame = true; }
+  var micBlocked = !SR || crossFrame;
+  var micWhy = !SR ? '這個瀏覽器沒有語音辨識（iPad 請用 Safari 開）'
+             : crossFrame ? '這個預覽頁不給開麥克風' : '';
+  function autoOn() { return db.judge === 'auto' && !micBlocked; }
+
+  /* ---------- 朗讀 ---------- */
+  var canSpeak = 'speechSynthesis' in window;
+  var voices = [], voice = null;
+  var NOVELTY = /zarvox|bad news|good news|bubbles|bells|boing|cellos|jester|organ|superstar|trinoids|whisper|wobble|albert|fred|junior|ralph|kathy|hysterical|deranged|bahh/i;
+  function voiceScore(v) {
+    var s = (v.voiceURI || '') + ' ' + v.name, n = 0;
+    if (/premium/i.test(s)) n -= 30; else if (/enhanced/i.test(s)) n -= 20;
+    if (/samantha/i.test(s)) n -= 5;
+    if (/google/i.test(s)) n -= 3;
+    return n;
+  }
+  function loadVoices() {
+    if (!canSpeak) return;
+    var vs = [];
+    try { vs = speechSynthesis.getVoices() || []; } catch (e) {}
+    voices = vs.filter(function (v) { return /^en[-_]US/i.test(v.lang) && !NOVELTY.test(v.name); })
+               .sort(function (a, b) { return voiceScore(a) - voiceScore(b); });
+    voice = voices.filter(function (v) { return v.voiceURI === db.voiceURI; })[0] || voices[0] || null;
+    var sel = $('voiceSel');
+    sel.innerHTML = voices.length ? voices.map(function (v) {
+      return '<option value="' + esc(v.voiceURI) + '"' + (voice === v ? ' selected' : '') + '>' + esc(v.name) + '</option>';
+    }).join('') : '<option>用系統預設</option>';
+  }
+  if (canSpeak) { loadVoices(); try { speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {} }
+  function say(text, rate) {
+    if (!canSpeak) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US'; if (voice) u.voice = voice;
+      u.rate = rate || db.rate; u.pitch = 1.05;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function sayLater(text, rate) { setTimeout(function () { say(text, rate || undefined); }, 450); }
+  function hush() { try { if (canSpeak) speechSynthesis.cancel(); } catch (e) {} }
+
+  /* ---------- 判斷唸得對不對 ----------
+     語音辨識對小孩的發音不太準，所以：
+     1. 5 個候選答案、連同過程中的暫定結果都拿來比，任何一個對就算對。
+     2. 同音字算對（bee 常被聽成 be、clothes 常被聽成 close）。
+     3. 聽成單字表裡的另一個字（例如 pet 說成 dog），給針對性的提示，不直接判錯。
+     4. 差一兩個字母（frog 聽成 flog）算「很接近」，鼓勵再說一次。 */
+  var ALT = {
+    animal: ['animals'], bear: ['bears','bare','bair'], bee: ['be','b','bea','bees'], bird: ['birds','burd'],
+    butterfly: ['butterflies'], cat: ['cats','kat'], chicken: ['chickens'], cow: ['cows','kau','cao'],
+    dog: ['dogs','doug'], duck: ['ducks','duk'], elephant: ['elephants'], fish: ['fishes'],
+    frog: ['frogs'], hippo: ['hippos','hippopotamus','hipo'], horse: ['horses','hoarse'],
+    koala: ['koalas','coala'], lion: ['lions','lyon'], mouse: [], mice: ['mise'],
+    monkey: ['monkeys'], panda: ['pandas'], pet: ['pets'], pig: ['pigs'], rabbit: ['rabbits'],
+    sheep: [], goat: ['goats'], snake: ['snakes'], spider: ['spiders'], tiger: ['tigers'],
+    turtle: ['turtles'], whale: ['whales','wale','wail','wales'], zebra: ['zebras'], bag: ['bags'],
+    cap: ['caps'], clothes: ['close','cloths','clothe'], coat: ['coats','cote'], jacket: ['jackets'],
+    dress: ['dresses'], glasses: [], hat: ['hats'], pants: [], pocket: ['pockets'], shirt: ['shirts'],
+    'T-shirt': ['tshirt','teeshirt','teashirt','tshirts','teeshirts']
+  };
+  function compact(s) { return s.toLowerCase().replace(/[^a-z]/g, ''); }
+  var ACCEPT = {};
+  WORDS.forEach(function (w) { ACCEPT[w.en] = [compact(w.en)].concat((ALT[w.en] || []).map(compact)); });
+
+  function norm(s) { return String(s || '').toLowerCase().replace(/[’']/g, '').replace(/[^a-z\- ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+  function pieces(text) {
+    var t = norm(text).replace(/-/g, ' '), tok = t ? t.split(' ') : [], out = [compact(t)];
+    for (var i = 0; i < tok.length; i++) {
+      out.push(compact(tok[i]));
+      if (i + 1 < tok.length) out.push(compact(tok[i] + tok[i + 1]));
+    }
+    return out.filter(Boolean);
+  }
+  function hits(en, text) {
+    var acc = ACCEPT[en], ps = pieces(text);
+    for (var i = 0; i < ps.length; i++) if (acc.indexOf(ps[i]) >= 0) return true;
+    return false;
+  }
+  function tshirtIn(text) { return /\b(t|tee|tea)\s*-?\s*shirts?\b/.test(norm(text)) || /tshirt/.test(compact(text)); }
+  function lev(a, b) {
+    var d = [], i, j;
+    for (i = 0; i <= a.length; i++) d[i] = [i];
+    for (j = 0; j <= b.length; j++) d[0][j] = j;
+    for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length];
+  }
+  function judge(en, alts) {
+    alts = alts.filter(function (a) { return norm(a); });
+    if (!alts.length) return { kind: 'silent' };
+    var i;
+    /* shirt 與 T-shirt 互相包含，要先分開 */
+    if (en === 'shirt') for (i = 0; i < alts.length; i++) if (tshirtIn(alts[i])) return { kind: 'other', other: 'T-shirt', heard: alts[i] };
+    for (i = 0; i < alts.length; i++) if (hits(en, alts[i])) return { kind: 'ok', heard: alts[i] };
+    for (i = 0; i < alts.length; i++) {
+      for (var k = 0; k < WORDS.length; k++) {
+        var o = WORDS[k].en;
+        if (o !== en && hits(o, alts[i])) return { kind: 'other', other: o, heard: alts[i] };
+      }
+    }
+    var target = compact(en), limit = target.length >= 7 ? 2 : 1;
+    for (i = 0; i < alts.length; i++) {
+      var ps = pieces(alts[i]);
+      for (var p = 0; p < ps.length; p++) if (lev(ps[p], target) <= limit) return { kind: 'near', heard: alts[i] };
+    }
+    return { kind: 'no', heard: alts[0] };
+  }
+
+  /* 說成單字表裡另一個字時的提示，不透露答案的英文 */
+  function otherMsg(en, other) {
+    var key = en + '|' + other;
+    var SPECIAL = {
+      'mice|mouse': '一隻才是 mouse，這裡有好多隻喔！',
+      'mouse|mice': '這裡只有一隻喔！',
+      'coat|jacket': '這件長長的，是大衣喔！',
+      'jacket|coat': '這件短短的、有拉鍊喔！',
+      'hat|cap': '這頂有一整圈帽簷，不是棒球帽喔！',
+      'cap|hat': '這頂是棒球帽喔！',
+      'shirt|T-shirt': '這件有領子、有領帶，不是 T 恤喔！',
+      'T-shirt|shirt': '很接近了！前面還有一個字母喔！',
+      'pocket|pants': '看紅色圈起來的那個地方！',
+      'pocket|shirt': '看紅色圈起來的那個地方！',
+      'pocket|T-shirt': '看紅色圈起來的那個地方！',
+      'bag|pocket': '這是袋子，不是口袋喔！'
+    };
+    if (SPECIAL[key]) return SPECIAL[key];
+    if (en === 'animal' && ANIMALS.indexOf(other) >= 0) return other + ' 也是一種動物！這些合起來叫什麼？';
+    if (en === 'pet' && (other === 'dog' || other === 'cat')) return '牠們是養在家裡的，這種動物叫什麼？';
+    if (en === 'clothes' && ['shirt','T-shirt','pants','dress'].indexOf(other) >= 0) return '全部加起來叫什麼？';
+    return '你說的是 ' + other + '（' + BY[other].zh + '），再看一次圖！';
+  }
+
+  /* ---------- 語音辨識 ---------- */
+  var rec = null;
+  function listen(en, onLive, done) {
+    hush();
+    var r;
+    try { r = new SR(); } catch (e) { done({ err: 'start' }); return; }
+    rec = r;
+    r.lang = 'en-US'; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
+    var alts = [], err = '', finished = false;
+    var timer = setTimeout(function () { try { r.stop(); } catch (e) {} }, 6000);
+    r.onresult = function (e) {
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var res = e.results[i];
+        for (var j = 0; j < res.length; j++) if (res[j].transcript) alts.push(res[j].transcript);
+        if (res[0] && res[0].transcript) onLive(res[0].transcript);
+      }
+      /* 暫定結果就已經對了，不用等它自己停，孩子比較不會急 */
+      if (judge(en, alts).kind === 'ok') { try { r.stop(); } catch (e2) {} }
+    };
+    r.onerror = function (e) { err = e.error || 'error'; };
+    r.onend = function () {
+      clearTimeout(timer);
+      if (finished) return;
+      finished = true; rec = null;
+      done({ alts: alts, err: err });
+    };
+    try { r.start(); } catch (e) { clearTimeout(timer); finished = true; rec = null; done({ err: 'start' }); }
+  }
+  function stopListen() { if (rec) { try { rec.abort(); } catch (e) {} rec = null; } }
+
+  /* ---------- 畫面切換 ---------- */
+  var screens = ['home', 'learn', 'play', 'result'];
+  function show(id) {
+    screens.forEach(function (s) { $(s).classList.toggle('on', s === id); });
+    window.scrollTo(0, 0);
+  }
+  function goHome() { stopListen(); hush(); clearAuto(); renderHome(); show('home'); }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-home]'), function (b) { b.addEventListener('click', goHome); });
+
+  /* ---------- 首頁 ---------- */
+  function selWords() { return WORDS.filter(function (w) { return db.sel.indexOf(w.wk) >= 0; }); }
+  function weakWords() { return WORDS.filter(function (w) { var r = db.m[w.en]; return r && r.lv < 2; }); }
+  function renderHome() {
+    var html = '';
+    for (var wk = 1; wk <= 9; wk++) {
+      var ws = WORDS.filter(function (w) { return w.wk === wk; });
+      var on = db.sel.indexOf(wk) >= 0;
+      var known = ws.filter(function (w) { return lv(w.en) >= 2; }).length;
+      html += '<button type="button" class="wk" data-wk="' + wk + '" aria-pressed="' + on + '">' +
+        (db.stamps.indexOf(wk) >= 0 ? '<span class="stamp" aria-label="老師已蓋章">OK</span>' : '') +
+        '<span class="wk-h">第 ' + wk + ' 週 <small>會了 ' + known + '/' + ws.length + '</small></span>' +
+        '<span class="wk-pics">' + ws.map(function (w) { return '<span>' + picMini(w.en) + '</span>'; }).join('') + '</span>' +
+        '<span class="wk-words">' + ws.map(function (w) { return esc(w.en); }).join(' · ') + '</span>' +
+        '<span class="dots">' + ws.map(function (w) {
+          var l = lv(w.en); return '<i class="dot' + (l < 0 ? '' : ' l' + Math.min(l, 2)) + '"></i>';
+        }).join('') + '</span></button>';
+    }
+    $('weeks').innerHTML = html;
+
+    var n = selWords().length;
+    $('pickInfo').textContent = n ? '選了 ' + db.sel.length + ' 週、' + n + ' 個單字。點週次可以多選。' : '先點一個週次';
+    $('learnBtn').disabled = $('testBtn').disabled = !n;
+    var weak = weakWords().length;
+    $('weakBtn').textContent = '🔁 還不熟的（' + weak + ' 個）';
+    $('weakBtn').disabled = !weak;
+
+    var note = $('micNote');
+    if (db.judge === 'parent') {
+      note.hidden = false; note.className = 'notice';
+      note.innerHTML = '<b>爸媽聽模式</b>：孩子看圖唸出來，爸媽按「說對了／沒說對」。';
+    } else if (micBlocked) {
+      note.hidden = false; note.className = 'notice';
+      note.innerHTML = '<b>' + esc(micWhy) + '</b>，所以改成爸媽聽：孩子唸，爸媽按對錯。';
+    } else {
+      note.hidden = true;
+    }
+  }
+  $('weeks').addEventListener('click', function (e) {
+    var b = e.target.closest('.wk'); if (!b) return;
+    var wk = +b.getAttribute('data-wk'), i = db.sel.indexOf(wk);
+    if (i >= 0) db.sel.splice(i, 1); else db.sel.push(wk);
+    db.sel.sort(); save(); renderHome();
+  });
+
+  /* ---------- 學一學 ---------- */
+  var L = { list: [], i: 0 };
+  function startLearn(list) { L.list = list; L.i = 0; show('learn'); renderLearn(true); }
+  function renderLearn(speak) {
+    var w = L.list[L.i];
+    $('lCard').innerHTML = picBig(w.en);
+    $('lWord').textContent = w.en;
+    $('lZh').textContent = w.zh;
+    $('lCount').textContent = (L.i + 1) + ' / ' + L.list.length;
+    $('lProg').style.width = ((L.i + 1) / L.list.length * 100) + '%';
+    $('lFb').textContent = ''; $('lFb').className = 'fb info';
+    $('lPrev').disabled = L.i === 0;
+    $('lNext').textContent = L.i === L.list.length - 1 ? '學完了，去考一考 ›' : '下一個 ›';
+    $('lTry').hidden = !autoOn();
+    $('lCard').className = 'card';
+    if (speak) say(w.en);
+  }
+  $('lSay').addEventListener('click', function () { say(L.list[L.i].en); });
+  $('lSlow').addEventListener('click', function () { say(L.list[L.i].en, 0.5); });
+  $('lPrev').addEventListener('click', function () { if (L.i > 0) { L.i--; renderLearn(true); } });
+  $('lNext').addEventListener('click', function () {
+    if (L.i < L.list.length - 1) { L.i++; renderLearn(true); }
+    else startTest(L.list);
+  });
+  $('lTry').addEventListener('click', function () {
+    var w = L.list[L.i], fb = $('lFb'), btn = $('lTry');
+    if (rec) { stopListen(); return; }
+    btn.textContent = '🔴 聽你說…（再按一下停）'; fb.className = 'fb info'; fb.textContent = '';
+    listen(w.en, function (t) { fb.innerHTML = '<span class="heard">' + esc(t) + '</span>'; }, function (r) {
+      btn.textContent = '🎤 換我說';
+      if (r.err === 'not-allowed' || r.err === 'service-not-allowed') { blockMic(); renderLearn(false); fb.textContent = '沒拿到麥克風權限'; return; }
+      var j = judge(w.en, r.alts || []);
+      if (j.kind === 'ok') { fb.className = 'fb ok'; fb.textContent = '✓ 說得很好！'; $('lCard').className = 'card ok'; sayLater(w.en); }
+      else if (j.kind === 'silent') { fb.className = 'fb info'; fb.textContent = '沒聽到聲音，靠近一點再說一次'; }
+      else { fb.className = 'fb bad'; fb.innerHTML = '我聽到 <span class="heard">' + esc(j.heard) + '</span>，聽一次，跟著唸'; sayLater(w.en); }
+    });
+  });
+
+  /* ---------- 考一考 ----------
+     一輪：每個字出一次；沒一次答對的字，這輪最後會再出一次（不重複計分）。
+     唸錯一次就秀出正確的字並唸給他聽，他跟著說對才過（算「提示後說對」，不計分）；
+     第二次以後放慢唸。還沒開口前可以按💡先看中文和第一個字母。 */
+  var R = null, autoT = null, autoN = 0;
+  function startTest(list) {
+    R = { list: shuffle(list), total: list.length, i: 0, res: {}, again: {} };
+    show('play');
+    ask();
+  }
+  function ask() {
+    clearAuto();
+    if (R.i >= R.list.length) { finish(); return; }
+    var w = R.list[R.i];
+    R.q = { w: w, tries: 0, helped: false, solved: false, again: !!R.again[w.en] && R.res[w.en] !== undefined };
+    $('pCard').className = 'card';
+    $('pCard').innerHTML = picBig(w.en) + (R.q.again ? '<span class="again-tag">再挑戰一次</span>' : '');
+    $('pWord').hidden = true; $('pHint').hidden = true;
+    $('pCount').textContent = (R.i + 1) + ' / ' + R.list.length;
+    $('pProg').style.width = (R.i / R.list.length * 100) + '%';
+    $('sayBtn').hidden = true; $('nextBtn').hidden = true; $('hintBtn').hidden = false;
+    setFb('info', autoOn() ? '看圖，按麥克風說出英文' : '看圖，大聲說出英文');
+    layoutJudge();
+  }
+  function layoutJudge() {
+    var auto = autoOn();
+    $('micWrap').hidden = !auto;
+    var pr = $('parentRow');
+    pr.classList.toggle('big', !auto);
+    pr.querySelector('.lab').textContent = auto ? '聽錯時爸媽按' : '爸媽聽到了';
+    pr.hidden = R && R.q && R.q.solved;
+  }
+  function setFb(kind, html) { var f = $('pFb'); f.className = 'fb ' + kind; f.innerHTML = html; }
+  function showHint() {
+    var w = R.q.w;
+    R.q.helped = true;
+    var pat = w.en.split('').map(function (c, i) { return i === 0 ? c : (c === '-' ? '-' : '_'); }).join(' ');
+    $('pPat').textContent = pat;
+    $('pZh').textContent = w.zh;
+    $('pHint').hidden = false;
+  }
+  function reveal(slow) {
+    var w = R.q.w;
+    R.q.helped = true;
+    $('pHint').hidden = true;
+    $('pWord').textContent = w.en; $('pWord').hidden = false;
+    $('sayBtn').hidden = false; $('hintBtn').hidden = true;
+    $('nextBtn').hidden = false; $('nextBtn').textContent = '下一題 ›';
+    sayLater(w.en, slow);
+  }
+
+  function markDone(outcome) {
+    var en = R.q.w.en;
+    if (R.res[en] === undefined) {
+      R.res[en] = outcome;
+      var r = db.m[en] || { lv: 0, n: 0, ok: 0 };
+      r.n++; r.t = Date.now();
+      if (outcome === 'first') { r.ok++; r.lv = Math.min(3, r.lv + 1); }
+      else if (outcome === 'help') r.lv = Math.max(0, r.lv - 1);
+      else r.lv = 0;
+      db.m[en] = r; save();
+      if (outcome !== 'first' && !R.again[en]) { R.again[en] = true; R.list.push(R.q.w); }
+    }
+  }
+
+  function onRight() {
+    if (R.q.solved) return;
+    R.q.solved = true;
+    stopListen();
+    var first = R.q.tries === 0 && !R.q.helped;
+    markDone(first ? 'first' : 'help');
+    $('pCard').classList.add('ok');
+    $('pWord').textContent = R.q.w.en; $('pWord').hidden = false; $('pHint').hidden = true;
+    setFb('ok', first ? '✓ 答對了！' : '✓ 說對了！');
+    $('hintBtn').hidden = true; $('sayBtn').hidden = false; $('parentRow').hidden = true;
+    $('micWrap').hidden = true;
+    sayLater(R.q.w.en);
+    startAuto();
+  }
+  /* 唸錯：每一次都把正確的字秀出來、唸給他聽，再讓他按麥克風跟著說。
+     不自動開麥克風——剛唸完的聲音會被麥克風收進去，把 App 自己的聲音當成孩子答對。 */
+  function onWrong(j) {
+    var q = R.q, w = q.w;
+    q.tries++;
+    $('pCard').classList.remove('bad'); void $('pCard').offsetWidth; $('pCard').classList.add('bad');
+    var heard = j.heard ? '我聽到 <span class="heard">' + esc(j.heard) + '</span>。' : '';
+    var lead = j.kind === 'other' ? esc(otherMsg(w.en, j.other)) + '<br>'
+             : j.kind === 'near' ? heard + '好接近了！<br>'
+             : heard;
+    var tail = q.tries >= 3 ? '沒關係，聽清楚再跟著說一次，或按下一題' : '聽一次，跟著說！';
+    setFb('bad', lead + tail);
+    reveal(q.tries >= 2 ? 0.6 : 0);
+  }
+
+  $('micBtn').addEventListener('click', function () {
+    if (!R || R.q.solved) return;
+    if (rec) { stopListen(); return; }
+    var btn = $('micBtn'), en = R.q.w.en;
+    clearAuto();
+    btn.classList.add('live'); $('micLbl').textContent = '聽你說…';
+    setFb('info', '請說');
+    listen(en, function (t) { setFb('info', '<span class="heard">' + esc(t) + '</span>'); }, function (r) {
+      btn.classList.remove('live'); $('micLbl').textContent = '按我說';
+      if (!R || R.q.solved) return;
+      if (r.err === 'not-allowed' || r.err === 'service-not-allowed' || r.err === 'audio-capture') {
+        blockMic(); layoutJudge();
+        setFb('info', '這台裝置沒給麥克風權限，改成爸媽聽：孩子唸，爸媽按對錯');
+        return;
+      }
+      if (r.err === 'aborted' && !(r.alts || []).length) { setFb('info', '看圖，按麥克風說出英文'); return; }
+      var j = judge(en, r.alts || []);
+      if (j.kind === 'ok') onRight();
+      else if (j.kind === 'silent') setFb('info', '沒聽到聲音，按一下麥克風再大聲說');
+      else onWrong(j);
+    });
+  });
+  $('pOk').addEventListener('click', function () { onRight(); });
+  $('pNo').addEventListener('click', function () { stopListen(); if (!R.q.solved) onWrong({ kind: 'no' }); });
+  $('hintBtn').addEventListener('click', function () {
+    if (!$('pHint').hidden) { reveal(0); setFb('info', '聽一次，跟著說！'); }
+    else { showHint(); setFb('info', '提示在上面，想想看'); }
+  });
+  $('sayBtn').addEventListener('click', function () { clearAuto(); say(R.q.w.en); });
+  $('nextBtn').addEventListener('click', function () {
+    if (!R.q.solved) markDone('miss');
+    R.i++; ask();
+  });
+  $('quitBtn').addEventListener('click', function () {
+    stopListen(); clearAuto();
+    if (Object.keys(R.res).length) finish(); else goHome();
+  });
+
+  /* 答對後倒數 4 秒自動跳下一題；按「聽一次」就停下來讓他多看一下 */
+  function startAuto() {
+    clearAuto();
+    autoN = 4;
+    var nb = $('nextBtn'); nb.hidden = false;
+    nb.textContent = '下一題 › ' + autoN;
+    autoT = setInterval(function () {
+      autoN--;
+      if (autoN <= 0) { clearAuto(); R.i++; ask(); return; }
+      nb.textContent = '下一題 › ' + autoN;
+    }, 1000);
+  }
+  function clearAuto() {
+    if (autoT) { clearInterval(autoT); autoT = null; if ($('nextBtn')) $('nextBtn').textContent = '下一題 ›'; }
+  }
+
+  function finish() {
+    clearAuto(); stopListen();
+    var ens = Object.keys(R.res);
+    var first = ens.filter(function (en) { return R.res[en] === 'first'; });
+    var rest = ens.filter(function (en) { return R.res[en] !== 'first'; });
+    var total = ens.length;
+    $('rScore').innerHTML = first.length + '<small>/ ' + total + '</small>';
+    var pct = total ? first.length / total : 0;
+    $('rMedal').textContent = pct === 1 ? '🏆' : pct >= 0.8 ? '🌟' : pct >= 0.5 ? '👍' : '💪';
+    $('rMsg').textContent = pct === 1 ? '全部一次就說對，可以去給老師蓋章了！'
+      : pct >= 0.8 ? '好厲害，只差一點點！' : '再練幾次就會了';
+    function item(en) {
+      var t = { first: '一次就對', help: '提示後說對', miss: '還不會' }[R.res[en]];
+      return '<div class="ri ' + R.res[en] + '"><span class="p">' + picMini(en) + '</span><span class="w">' + esc(en) + '</span><span class="t">' + t + '</span></div>';
+    }
+    $('rFirst').innerHTML = first.map(item).join('');
+    $('rMiss').innerHTML = rest.map(item).join('');
+    $('rH1').hidden = !first.length; $('rH2').hidden = !rest.length;
+    $('redoBtn').hidden = !rest.length;
+    $('redoBtn').onclick = function () { startTest(rest.map(function (en) { return BY[en]; })); };
+    show('result');
+  }
+
+  /* ---------- 首頁按鈕 ---------- */
+  $('learnBtn').addEventListener('click', function () { startLearn(selWords()); });
+  $('testBtn').addEventListener('click', function () { startTest(selWords()); });
+  $('weakBtn').addEventListener('click', function () { startTest(weakWords()); });
+
+  function blockMic() { micBlocked = true; micWhy = '這台裝置沒給麥克風權限'; }
+
+  /* ---------- 設定 ---------- */
+  function openSheet() { renderSheet(); document.body.classList.add('sheet-open'); }
+  function closeSheet() { document.body.classList.remove('sheet-open'); renderHome(); }
+  function renderSheet() {
+    Array.prototype.forEach.call($('judgeSeg').children, function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === db.judge));
+    });
+    $('judgeHint').textContent = micBlocked
+      ? micWhy + '，現在不管選哪個都是爸媽聽。'
+      : db.judge === 'auto' ? '孩子按麥克風說，App 判斷。辨識聽錯時爸媽還是可以直接按對錯。'
+      : '孩子唸出來，爸媽按對錯。辨識常聽不準的時候用這個。';
+    $('rate').value = db.rate; $('rateV').textContent = db.rate <= 0.6 ? '很慢' : db.rate <= 0.8 ? '慢一點' : '正常';
+    var h = '';
+    for (var wk = 1; wk <= 9; wk++) h += '<button type="button" class="chip" data-wk="' + wk + '" aria-pressed="' + (db.stamps.indexOf(wk) >= 0) + '">' + wk + '</button>';
+    $('stampChips').innerHTML = h;
+    $('resetBtn').textContent = '清除所有練習紀錄'; $('resetBtn').dataset.arm = '';
+  }
+  $('setBtn').addEventListener('click', openSheet);
+  $('sheetDone').addEventListener('click', closeSheet);
+  $('sheetBg').addEventListener('click', closeSheet);
+  $('judgeSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    db.judge = b.getAttribute('data-v'); save(); renderSheet();
+  });
+  $('voiceSel').addEventListener('change', function () {
+    db.voiceURI = this.value; save(); loadVoices(); say('frog');
+  });
+  $('rate').addEventListener('input', function () { db.rate = +this.value; save(); renderSheet(); });
+  $('rate').addEventListener('change', function () { say('butterfly'); });
+  $('stampChips').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    var wk = +b.getAttribute('data-wk'), i = db.stamps.indexOf(wk);
+    if (i >= 0) db.stamps.splice(i, 1); else db.stamps.push(wk);
+    save(); renderSheet();
+  });
+  $('resetBtn').addEventListener('click', function () {
+    var b = this;
+    if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = '確定要清除？再按一次'; return; }
+    db.m = {}; save(); b.dataset.arm = ''; b.textContent = '已清除';
+  });
+
+  renderHome();
+})();
+</script>
+</body>
+</html>
