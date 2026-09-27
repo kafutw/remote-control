@@ -234,6 +234,14 @@
     .side { justify-content: center; }
   }
 
+  /* 每題倒數：條會縮短，剩三分之一變橘 */
+  .tbar { display: flex; align-items: center; gap: 10px; align-self: stretch; }
+  .ttrack { flex: 1; height: 12px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .ttrack i { display: block; height: 100%; width: 100%; background: var(--mint); border-radius: 99px; transition: width .2s linear; }
+  .tbar.low .ttrack i { background: var(--amber); }
+  .tbar span { min-width: 3.4em; text-align: right; font-weight: 800; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .tbar.low span { color: var(--amber); }
+
   /* 答對的獎勵：星星從圖上噴出來、圖彈一下、上面的星星數跳一下 */
   .spark {
     position: absolute; left: 50%; top: 50%; font-size: 9cqw; line-height: 1; pointer-events: none;
@@ -412,6 +420,7 @@
     <div class="side">
     <p class="word" id="pWord" hidden></p>
     <div class="hint" id="pHint" hidden><span class="pat en" id="pPat"></span><span class="z" id="pZh"></span></div>
+    <div class="tbar" id="tBar" hidden><div class="ttrack"><i id="tFill"></i></div><span id="tSec"></span></div>
     <p class="fb info" id="pFb">看圖，按麥克風說出英文</p>
 
     <div class="mic-wrap" id="micWrap">
@@ -473,6 +482,15 @@
 
     <h3>最近聽到什麼</h3>
     <div class="heardlog" id="heardLog"></div>
+
+    <h3>每題幾秒</h3>
+    <div class="seg" id="limitSeg">
+      <button type="button" data-v="10">10 秒</button>
+      <button type="button" data-v="15">15 秒</button>
+      <button type="button" data-v="20">20 秒</button>
+      <button type="button" data-v="0">不限</button>
+    </div>
+    <p class="hintline">時間到還沒唸對就算錯，App 會唸正確的給他聽，再給一次同樣的時間跟著說，唸對才能到下一題。真的卡住時爸媽按「說對了」。App 唸字或麥克風暫停時不計時。</p>
 
     <h3>唸單字的聲音</h3>
     <select id="voiceSel" aria-label="聲音"></select>
@@ -1022,6 +1040,42 @@
     if (document.hidden) stopListen(); else quizResume();
   });
 
+  /* ---------- 每題倒數 ----------
+     只在「孩子可以開口」的時候計時：App 在唸字、麥克風暫停、等人按「繼續聽」、切到背景都不算。 */
+  var TM = { el: 0, last: Date.now() };
+  function limitMs() { return (db.limit == null ? 15 : db.limit) * 1000; }
+  function timerReset() { TM.el = 0; TM.last = Date.now(); drawTimer(); }
+  function timerCounting() {
+    if (!R || !R.q || R.q.solved || !$('play').classList.contains('on') || document.hidden) return false;
+    if (speakHold || (canSpeak && speechSynthesis.speaking)) return false;
+    if (autoOn() && (!AUTO.on || AUTO.tap)) return false;
+    return true;
+  }
+  function drawTimer() {
+    var lim = limitMs(), bar = $('tBar');
+    if (!lim || !R || !R.q || R.q.solved) { bar.hidden = true; return; }
+    var left = Math.max(0, 1 - TM.el / lim);
+    bar.hidden = false;
+    $('tFill').style.width = (left * 100) + '%';
+    bar.classList.toggle('low', left <= 1 / 3);
+    $('tSec').textContent = Math.ceil((lim - TM.el) / 1000) + ' 秒';
+  }
+  setInterval(function () {
+    var now = Date.now(), dt = now - TM.last;
+    TM.last = now;
+    if (!limitMs() || !timerCounting()) { if (R && $('play').classList.contains('on')) drawTimer(); return; }
+    TM.el += dt;
+    if (TM.el >= limitMs()) { TM.el = 0; onTimeout(); }
+    drawTimer();
+  }, 200);
+  /* 時間到＝算錯：唸正確的給他聽，再給一次時間跟著說。唸對才放他過，不會自己跳下一題
+     （真的卡住，爸媽按「說對了」）。 */
+  function onTimeout() {
+    if (R.q.solved) return;
+    stopListen();
+    onWrong({ kind: 'timeout' });
+  }
+
   /* ---------- 答對的獎勵 ---------- */
   var AC = null;
   function unlockAudio() {
@@ -1074,7 +1128,7 @@
     $('pProg').style.width = (R.i / R.list.length * 100) + '%';
     $('sayBtn').hidden = true; $('nextBtn').hidden = true; $('hintBtn').hidden = false;
     setFb('info', !autoOn() ? '看圖，大聲說出英文' : AUTO.on ? '看圖，直接說出英文' : '看圖，按麥克風說出英文');
-    layoutJudge(); micIdle();
+    layoutJudge(); micIdle(); timerReset();
     if (autoOn() && AUTO.on) { if (now && !speakHold) { hush(); quizListen(); } else autoListen(250); }
   }
   function layoutJudge() {
@@ -1100,7 +1154,7 @@
     $('pHint').hidden = true;
     $('pWord').textContent = w.en; $('pWord').hidden = false;
     $('sayBtn').hidden = false; $('hintBtn').hidden = true;
-    $('nextBtn').hidden = false; $('nextBtn').textContent = '下一題 ›';
+    $('nextBtn').hidden = true;   /* 唸對才放過，不給跳 */
     sayLater(w.en, slow);
   }
 
@@ -1140,7 +1194,7 @@
       setFb('ok', '✓ 說對了！記住囉');
     }
     $('hintBtn').hidden = true; $('sayBtn').hidden = false; $('parentRow').hidden = true;
-    $('micWrap').hidden = true;
+    $('micWrap').hidden = true; drawTimer();
     sayLater(R.q.w.en + '! ' + (first ? pick(PRAISE_EN) : 'Good!'), null, 650);
     startAuto();
   }
@@ -1150,12 +1204,13 @@
     q.tries++;
     $('pCard').classList.remove('bad'); void $('pCard').offsetWidth; $('pCard').classList.add('bad');
     var heard = j.heard ? '我聽到 <span class="heard">' + esc(j.heard) + '</span>。' : '';
-    var lead = j.kind === 'other' ? esc(otherMsg(w.en, j.other)) + '<br>'
+    var lead = j.kind === 'timeout' ? '時間到！<br>'
+             : j.kind === 'other' ? esc(otherMsg(w.en, j.other)) + '<br>'
              : j.kind === 'near' ? heard + '有 ' + pct(j.score) + ' 像，好接近了！<br>'
              : heard;
-    var tail = q.tries >= 3 ? '沒關係，聽清楚再跟著說一次，或按下一題' : '聽一次，跟著說！';
+    var tail = q.tries >= 3 ? '沒關係，聽清楚，再跟著說一次' : '聽一次，跟著說！';
     if (!AUTO.on && autoOn()) tail += '（按麥克風）';
-    R.streak = 0;
+    R.streak = 0; timerReset();
     setFb('bad', lead + tail);
     reveal(q.tries >= 2 ? 0.6 : 0);
     if (AUTO.on) autoListen(0);   /* 會等唸完才開 */
@@ -1244,6 +1299,10 @@
       ? micWhy + '，現在不管選哪個都是爸媽聽。'
       : db.judge === 'auto' ? '進考試就自動開麥克風，每題直接說，不用再按。辨識聽錯時爸媽還是可以直接按對錯。'
       : '孩子唸出來，爸媽按對錯。辨識常聽不準的時候用這個。';
+    var lim = String(db.limit == null ? 15 : db.limit);
+    Array.prototype.forEach.call($('limitSeg').children, function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === lim));
+    });
     var pass = String(db.pass || 70);
     Array.prototype.forEach.call($('sensSeg').children, function (b) {
       b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === pass));
@@ -1271,6 +1330,10 @@
   $('judgeSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     db.judge = b.getAttribute('data-v'); save(); renderSheet();
+  });
+  $('limitSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    db.limit = +b.getAttribute('data-v'); save(); renderSheet();
   });
   $('sensSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
