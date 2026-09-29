@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-09-29T04:57:53.330Z",
+  "generatedAt": "2026-09-29T06:48:06.940Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
     "2330": {
       "name": "台積電",
       "from": "2024-02-01",
-      "to": "2026-09-24",
-      "sessions": 640,
+      "to": "2026-09-29",
+      "sessions": 641,
       "splitsApplied": [],
       "breaks": 17,
       "eff": 7,
       "fake": 10,
-      "perYear": 6.56,
+      "perYear": 6.55,
       "deepMed": -6.22,
       "deepQ25": -11.73,
       "deepQ75": -0.8,
@@ -33,13 +33,13 @@
     "0050": {
       "name": "元大台灣 50",
       "from": "2024-02-01",
-      "to": "2026-09-24",
-      "sessions": 635,
+      "to": "2026-09-29",
+      "sessions": 636,
       "splitsApplied": [],
       "breaks": 18,
       "eff": 6,
       "fake": 12,
-      "perYear": 7,
+      "perYear": 6.99,
       "deepMed": -6.65,
       "deepQ25": -11.56,
       "deepQ75": -1.11,
@@ -60,13 +60,13 @@
     "0056": {
       "name": "元大高股息",
       "from": "2024-02-01",
-      "to": "2026-09-24",
-      "sessions": 640,
+      "to": "2026-09-29",
+      "sessions": 641,
       "splitsApplied": [],
       "breaks": 16,
       "eff": 12,
       "fake": 4,
-      "perYear": 6.18,
+      "perYear": 6.17,
       "deepMed": -1.61,
       "deepQ25": -4.63,
       "deepQ75": -0.67,
@@ -92,6 +92,6 @@
     }
   },
   "window": "2024/02 ～ 2026/09",
-  "coverageTo": "2026-09-24",
-  "staleDays": 5
+  "coverageTo": "2026-09-29",
+  "staleDays": 0
 }
