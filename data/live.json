@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-29T06:48:06.889Z",
-  "generatedAtTaipei": "2026-09-29 14:48:06",
+  "generatedAt": "2026-09-29T08:57:21.490Z",
+  "generatedAtTaipei": "2026-09-29 16:57:21",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -21,6 +21,13 @@
       "twse": 112.4,
       "agree": null,
       "note": "跳過對帳：mis:0050 是 2026-09-29、證交所是 2026-09-24，不同交易日"
+    },
+    "e0056": {
+      "primary": 56.55,
+      "via": "mis:0056",
+      "twse": 56.65,
+      "agree": null,
+      "note": "跳過對帳：mis:0056 是 2026-09-29、證交所是 2026-09-24，不同交易日"
     }
   },
   "data": {
@@ -65,16 +72,13 @@
       "name": "元大高股息",
       "group": "e0056",
       "dp": 2,
-      "via": "twseStock:0056",
-      "price": 56.65,
-      "prevClose": 56.6,
-      "change": 0.05,
-      "pct": 0.0883,
+      "via": "mis:0056",
+      "price": 56.55,
+      "prevClose": 56.65,
+      "change": -0.1,
+      "pct": -0.1765,
       "marketState": "CLOSED",
-      "asOf": "2026-09-24",
-      "triedBefore": [
-        "mis:0056 → MIS 沒有可用價格（z/pz/五檔都是空的）"
-      ]
+      "asOf": "2026-09-29"
     },
     "adr": {
       "name": "台積電 ADR",
@@ -86,7 +90,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "REG_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -146,11 +150,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 16.07,
+      "price": 16.08,
       "prevClose": 16.07,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 0.01,
+      "pct": 0.0622,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -171,10 +174,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6864.96,
+      "price": 6870.81,
       "prevClose": 6889.74,
-      "change": -24.78,
-      "pct": -0.3597,
+      "change": -18.93,
+      "pct": -0.2748,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -391,29 +394,23 @@
     "lit": false,
     "reasons": [],
     "ready": true,
-    "last": 9704.48,
+    "last": 10000.5,
     "reach": {
       "lo": 8101.12,
       "hi": 16104.21,
-      "days": 39,
+      "days": 40,
       "fired": 19,
-      "fireRate": 0.48717948717948717,
+      "fireRate": 0.475,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 39,
+    "complete": 40,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-07-02",
-        "twse": 10835.83,
-        "tpex": null,
-        "total": null
-      },
       {
         "date": "2026-07-03",
         "twse": 10780.28,
@@ -767,6 +764,12 @@
         "twse": 7755.91,
         "tpex": 1948.57,
         "total": 9704.48
+      },
+      {
+        "date": "2026-09-29",
+        "twse": 8246.92,
+        "tpex": 1753.58,
+        "total": 10000.5
       }
     ]
   },
