@@ -5,6 +5,11 @@
   1. 台灣銀行牌告匯率 CSV(即期買入/賣出的中價)— 最接近實際換匯會拿到的價格
   2. open.er-api.com(國際中價)— 台銀抓不到時的備援
 
+⚠️ 日期以「資料本身的時間」為準,不是排程跑的時間(2026-09-30 修):
+  GitHub 排程常延遲 5 小時以上,17:30 那班曾拖到隔天 00:04 才跑。當時 open.er-api
+  還是前一天 08:02 的數字,卻被記成新的一天(9/30 那筆其實是 9/29 的匯率)。
+  現在每筆都記 asof(資料時間,台北)與 fetched(抓取時間),date 取 asof 的日期。
+
 執行結果:
   - 一律更新 history.json(每天保留一筆最新觀測值,供「N 日新高/新低」判斷)
   - 若有規則觸發且不在冷卻期內,寫出 alert_title.txt 與 alert_body.md,
@@ -52,7 +57,11 @@ def fetch_bot_taiwan() -> dict:
     if "USD" not in spot or "JPY" not in spot:
         raise RuntimeError("台銀 CSV 缺少 USD 或 JPY 的即期匯率")
     usd_twd, jpy_twd = spot["USD"], spot["JPY"]
+    # 台銀 CSV 沒有時間欄。牌告 09:00 前還是前一個營業日的價格,所以 09:00 前算前一天
+    now = datetime.now(TAIPEI)
+    asof = now if now.hour >= 9 else (now - timedelta(days=1)).replace(hour=16, minute=0, second=0)
     return {
+        "asof": asof,
         "usd_twd": round(usd_twd, 4),
         "jpy_twd": round(jpy_twd, 5),
         "usd_jpy": round(usd_twd / jpy_twd, 3),
@@ -66,7 +75,10 @@ def fetch_erapi() -> dict:
         raise RuntimeError(f"open.er-api.com 回應異常: {data.get('result')}")
     twd = float(data["rates"]["TWD"])
     jpy = float(data["rates"]["JPY"])
+    # 一天只更新一次(約台北 08:00),以它自己標的更新時間為準
+    asof = datetime.fromtimestamp(int(data["time_last_update_unix"]), TAIPEI)
     return {
+        "asof": asof,
         "usd_twd": round(twd, 4),
         "usd_jpy": round(jpy, 3),
         "jpy_twd": round(twd / jpy, 5),
@@ -99,6 +111,8 @@ def update_history(history: dict, today: str, rates: dict, keep: int = 400) -> N
         "usd_jpy": rates["usd_jpy"],
         "jpy_twd": rates["jpy_twd"],
         "source": rates["source"],
+        "asof": rates["asof"].strftime("%Y-%m-%d %H:%M"),
+        "fetched": datetime.now(TAIPEI).strftime("%Y-%m-%d %H:%M"),
     })
     obs.sort(key=lambda o: o["date"])
     history["observations"] = obs[-keep:]
@@ -166,13 +180,13 @@ def build_alert(hits: list, rates: dict, today: str) -> tuple:
 
 def main() -> int:
     now = datetime.now(TAIPEI)
-    today = now.strftime("%Y-%m-%d")
 
     config = load_json(BASE / "config.json", {})
     history = load_json(BASE / "history.json", {"observations": [], "last_alerts": {}})
 
     rates = fetch_rates()
-    print(f"[{today}] USD/TWD={rates['usd_twd']} USD/JPY={rates['usd_jpy']} "
+    today = rates["asof"].strftime("%Y-%m-%d")   # 資料的日期,不是排程跑的日期
+    print(f"[{today}|資料時間 {rates['asof']:%m/%d %H:%M}|抓取 {now:%m/%d %H:%M}] USD/TWD={rates['usd_twd']} USD/JPY={rates['usd_jpy']} "
           f"JPY/TWD={rates['jpy_twd']}({rates['source']})")
 
     hits = check_rolling_rules(config, rates, history, today)

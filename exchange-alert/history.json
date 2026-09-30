@@ -2102,10 +2102,12 @@
     },
     {
       "date": "2026-09-30",
-      "usd_twd": 31.8116,
-      "usd_jpy": 157.315,
-      "jpy_twd": 0.20222,
-      "source": "open.er-api.com(國際中價)"
+      "usd_twd": 31.8407,
+      "usd_jpy": 157.389,
+      "jpy_twd": 0.20231,
+      "source": "open.er-api.com(國際中價)",
+      "asof": "2026-09-30 08:02",
+      "fetched": "2026-09-30 14:55"
     }
   ],
   "last_alerts": {
