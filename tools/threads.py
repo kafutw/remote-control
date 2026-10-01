@@ -4,13 +4,16 @@
 用法：
   python3 tools/threads.py <threads 連結> [...]      # 輸出 Markdown
   python3 tools/threads.py --json <threads 連結>      # 輸出 JSON
+  python3 tools/threads.py --save <資料夾> <連結>     # 打包：文字、圖片影片、網頁、zip
 
 支援 threads.com / threads.net 的 /share/xxx 短連結與 /@user/post/CODE 連結。
 只用標準函式庫，免安裝套件。
 """
 import html
 import json
+import os
 import re
+import shutil
 import sys
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -21,9 +24,14 @@ TPE = timezone(timedelta(hours=8))
 POST_RE = re.compile(r"threads\.(?:com|net)/@([\w.]+)/post/([\w-]+)")
 
 
-def fetch(url):
+# Threads 對未登入的瀏覽器有時會導去 error=invalid_post，
+# 社群預覽爬蟲的 UA 通常仍拿得到完整頁面，所以輪流試。
+CRAWLER_UA = "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
+
+
+def fetch(url, ua=UA):
     req = urllib.request.Request(url, headers={
-        "User-Agent": UA,
+        "User-Agent": ua,
         "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.8",
         "Accept": "text/html,application/xhtml+xml",
     })
@@ -100,33 +108,73 @@ def embedded_posts(page):
     return sorted(posts, key=lambda p: p["time"] or "")
 
 
+def from_embed(page):
+    """解析 /embed 頁面（官方嵌入用，不需登入）。"""
+    m = re.search(r'class="[^"]*BodyText[^"]*"[^>]*>(.*?)</(?:span|div)>', page, re.S)
+    if not m:
+        return None
+    text = re.sub(r"<br\s*/?>", "\n", m.group(1))
+    text = html.unescape(re.sub(r"<[^>]+>", "", text)).strip()
+    media = []
+    for src in re.findall(r'<(?:img|video|source)[^>]+src="([^"]+)"', page):
+        src = html.unescape(src)
+        # 排除頭像（小尺寸）
+        if re.search(r"(cdninstagram|fbcdn)", src) and not re.search(r"s150x150|_s\d{2,3}x\d{2,3}|profile", src):
+            kind = "video" if ".mp4" in src else "image"
+            if not any(x["url"] == src for x in media):
+                media.append({"type": kind, "url": src})
+    return text, media
+
+
 def parse(url):
     final, page = fetch(url)
     m = POST_RE.search(final) or POST_RE.search(page)
-    username, code = (m.group(1), m.group(2)) if m else (None, None)
-    canonical = f"https://www.threads.com/@{username}/post/{code}" if m else final
+    if not m:
+        raise ValueError("找不到貼文網址（連結可能失效或貼文已刪除）")
+    username, code = m.group(1), m.group(2)
+    canonical = f"https://www.threads.com/@{username}/post/{code}"
 
+    pages = [page]
     posts = embedded_posts(page)
     main = next((p for p in posts if p["code"] == code), None)
-    # 同作者、緊接在主文之後的是串文（續篇），其他作者的是回覆
-    thread, replies = [], []
-    for p in posts:
-        if p is main:
+    for ua in (UA, CRAWLER_UA):
+        if main:
+            break
+        try:
+            _, page = fetch(canonical, ua)
+        except Exception:  # noqa: BLE001
             continue
-        (thread if p["username"] == username else replies).append(p)
+        pages.append(page)
+        posts = embedded_posts(page)
+        main = next((p for p in posts if p["code"] == code), None)
 
-    if not main:  # 抓不到內嵌 JSON 時，退回 og: 標籤
-        title = meta(page, "og:title") or ""
-        img = meta(page, "og:image")
-        main = {
-            "username": username,
-            "code": code,
-            "time": None,
-            "text": meta(page, "og:description") or meta(page, "description"),
-            "likes": None, "replies": None, "reposts": None, "quotes": None,
-            "media": [{"type": "image", "url": img}] if img else [],
-            "display_name": title.split(" (@")[0] or None,
-        }
+    thread, replies = [], []
+    if main:
+        # 同作者的是串文（續篇），其他作者的是回覆
+        for p in posts:
+            if p is not main:
+                (thread if p["username"] == username else replies).append(p)
+    else:
+        main = {"username": username, "code": code, "time": None, "text": None,
+                "likes": None, "replies": None, "reposts": None, "quotes": None, "media": []}
+        try:  # 官方嵌入頁
+            _, epage = fetch(canonical + "/embed")
+            got = from_embed(epage)
+            if got:
+                main["text"], main["media"] = got
+        except Exception:  # noqa: BLE001
+            pass
+        if not main["text"]:  # 最後退回 og: 標籤
+            for pg in reversed(pages):
+                desc = meta(pg, "og:description")
+                if desc:
+                    main["text"] = desc
+                    img = meta(pg, "og:image")
+                    if img and not main["media"]:
+                        main["media"] = [{"type": "image", "url": img}]
+                    break
+        if not main["text"] and not main["media"]:
+            raise ValueError("抓不到貼文內容（可能需要登入才能看，或 Threads 改版）")
     return {"url": canonical, "post": main, "thread": thread, "replies": replies}
 
 
@@ -156,16 +204,100 @@ def to_markdown(r):
     return "\n".join(lines)
 
 
+def download(url, path):
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=60) as r, open(path, "wb") as f:
+        shutil.copyfileobj(r, f)
+
+
+def save_package(r, outdir):
+    """打包成資料夾 + zip：貼文.html（含圖）、貼文.txt、data.json、media/。"""
+    p = r["post"]
+    name = f"{p['username']}_{p['code']}"
+    folder = os.path.join(outdir, name)
+    os.makedirs(os.path.join(folder, "media"), exist_ok=True)
+
+    n = 0
+    for post in [p] + r["thread"]:
+        for m in post["media"]:
+            n += 1
+            ext = ".mp4" if m["type"] == "video" else ".jpg"
+            em = re.search(r"\.(jpe?g|png|webp|heic|mp4|mov)(?:\?|$)", m["url"])
+            if em:
+                ext = "." + em.group(1)
+            m["file"] = f"media/{n:02d}{ext}"
+            try:
+                download(m["url"], os.path.join(folder, m["file"]))
+            except Exception as e:  # noqa: BLE001
+                m["file"] = None
+                print(f"⚠️ 媒體下載失敗：{m['url']}（{e}）", file=sys.stderr)
+
+    with open(os.path.join(folder, "貼文.txt"), "w", encoding="utf-8") as f:
+        f.write(to_markdown(r) + "\n")
+    with open(os.path.join(folder, "data.json"), "w", encoding="utf-8") as f:
+        json.dump(r, f, ensure_ascii=False, indent=2)
+    with open(os.path.join(folder, "貼文.html"), "w", encoding="utf-8") as f:
+        f.write(to_html(r))
+
+    zip_path = shutil.make_archive(folder, "zip", outdir, name)
+    return folder, zip_path
+
+
+def to_html(r):
+    e = html.escape
+    p = r["post"]
+
+    def block(post, title=None):
+        out = [f"<h2>{e(title)}</h2>"] if title else []
+        out.append(f'<div class="text">{e(post.get("text") or "")}</div>')
+        for m in post["media"]:
+            src = m.get("file") or m["url"]
+            out.append(f'<video src="{e(src)}" controls></video>' if m["type"] == "video"
+                       else f'<img src="{e(src)}" loading="lazy">')
+        return "\n".join(out)
+
+    label = {"likes": "讚", "replies": "回覆", "reposts": "轉發", "quotes": "引用"}
+    stats = "・".join(f"{v} {p[k]}" for k, v in label.items() if p.get(k) is not None)
+    body = [f"<h1>@{e(p['username'] or '')}</h1>",
+            f'<p class="meta"><a href="{e(r["url"])}">{e(r["url"])}</a><br>'
+            f'{e(p.get("time") or "")}{"（台北）" if p.get("time") else ""} {e(stats)}</p>',
+            block(p)]
+    for i, t in enumerate(r["thread"], 2):
+        body.append(block(t, f"串文 {i}"))
+    if r["replies"]:
+        body.append("<h2>回覆</h2><ul>" + "".join(
+            f"<li><b>@{e(c['username'] or '')}</b>：{e((c.get('text') or '').strip())}</li>"
+            for c in r["replies"]) + "</ul>")
+    return f"""<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>@{e(p['username'] or '')} 的 Threads 貼文</title><style>
+body{{max-width:640px;margin:0 auto;padding:24px 16px;font:17px/1.7 -apple-system,"PingFang TC",sans-serif;color:#222;background:#fff}}
+.meta{{color:#777;font-size:14px}} .text{{white-space:pre-wrap;margin:16px 0}}
+img,video{{width:100%;border-radius:12px;margin:8px 0}} h2{{font-size:18px;margin-top:32px}}
+@media (prefers-color-scheme:dark){{body{{background:#111;color:#eee}} a{{color:#8ab4f8}}}}
+</style></head><body>{"".join(body)}</body></html>"""
+
+
 def main(argv):
     as_json = "--json" in argv
+    outdir = None
+    if "--save" in argv:
+        i = argv.index("--save")
+        outdir = os.path.expanduser(argv[i + 1])
+        argv = argv[:i] + argv[i + 2:]
     failed = 0
-    urls = [a for a in argv if not a.startswith("--")]
+    # 允許一個參數裡用空白／換行放多個連結（桌面 App 會整段丟進來）
+    urls = [u for a in argv if not a.startswith("--") for u in a.split()]
     if not urls:
         print(__doc__)
         return 1
     for u in urls:
         try:
             r = parse(u)
+            if outdir:
+                folder, zip_path = save_package(r, outdir)
+                print(f"✅ {folder}")
+                continue
         except Exception as e:  # noqa: BLE001
             print(f"❌ 無法解析 {u}：{e}", file=sys.stderr)
             failed += 1
