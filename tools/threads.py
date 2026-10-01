@@ -21,7 +21,8 @@ from datetime import datetime, timedelta, timezone
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/130.0 Safari/537.36")
 TPE = timezone(timedelta(hours=8))
-POST_RE = re.compile(r"threads\.(?:com|net)/@([\w.]+)/post/([\w-]+)")
+# 也接受相對路徑（/@user/post/CODE），頁面 JSON 裡常是這種寫法
+POST_RE = re.compile(r"/@([\w.]+)/post/([\w-]+)")
 
 
 # Threads 對未登入的瀏覽器有時會導去 error=invalid_post，
@@ -141,11 +142,30 @@ def from_embed(page):
     return text, media
 
 
+def resolve(url):
+    """短連結 → 貼文網址。Threads 對不同 UA 給的轉址不同，輪流試。"""
+    m = POST_RE.search(url)
+    if m:
+        return m, "", []
+    tried = []
+    for ua in (UA, "curl/8.4.0", CRAWLER_UA):
+        try:
+            chain, page = fetch(url, ua)
+        except Exception as e:  # noqa: BLE001
+            tried.append(f"{ua.split('/')[0]}: {e}")
+            continue
+        tried.append(f"{ua.split('/')[0]}: " + " → ".join(chain))
+        for text in chain + [page]:
+            m = POST_RE.search(text.replace("\\/", "/"))
+            if m:
+                return m, page, tried
+    return None, "", tried
+
+
 def parse(url):
-    chain, page = fetch(url)
-    m = next(filter(None, map(POST_RE.search, chain)), None) or POST_RE.search(page)
+    m, page, tried = resolve(url)
     if not m:
-        raise ValueError("找不到貼文網址（連結可能失效或貼文已刪除）")
+        raise ValueError("找不到貼文網址（連結可能失效或貼文已刪除）\n" + "\n".join(tried))
     username, code = m.group(1), m.group(2)
     canonical = f"https://www.threads.com/@{username}/post/{code}"
 
