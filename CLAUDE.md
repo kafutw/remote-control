@@ -8,6 +8,8 @@
 python3 tools/threads.py <連結>          # 可一次放多個連結；要 JSON 就加 --json
 ```
 
+Windows 若沒有 `python3` 指令，改用 `python` 或 `py`。
+
 把輸出整理給使用者：作者、時間、全文、圖片/影片連結、互動數、串文與回覆。使用者沒要求就不要翻譯或改寫貼文內容。
 
 - 若出現 `Tunnel connection failed: 403`：代表雲端環境的網路政策擋住了 threads.com。請使用者到環境設定（標題列的雲端環境選單 → Edit → Network access）把 `www.threads.com`、`threads.com`、`www.threads.net` 加進允許清單，或改成更寬的存取等級。
