@@ -25,8 +25,8 @@ TPE = timezone(timedelta(hours=8))
 POST_RE = re.compile(r"/@([\w.]+)/post/([\w-]+)")
 
 
-# Threads 對未登入的瀏覽器有時會導去 error=invalid_post，
-# 社群預覽爬蟲的 UA 通常仍拿得到完整頁面，所以輪流試。
+# Threads 對未登入的瀏覽器 UA 只回一頁 JS 空殼（短連結不轉址、/embed 也是空的），
+# 社群預覽爬蟲的 UA 才拿得到完整頁面，所以先試爬蟲、再試瀏覽器。
 CRAWLER_UA = "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
 
 
@@ -125,21 +125,45 @@ def embedded_posts(page):
 
 
 def from_embed(page):
-    """解析 /embed 頁面（官方嵌入用，不需登入）。"""
-    m = re.search(r'class="[^"]*BodyText[^"]*"[^>]*>(.*?)</(?:span|div)>', page, re.S)
-    if not m:
+    """解析 /embed 頁面（官方嵌入用，不需登入）。2026-10 起貼文頁不再內嵌 JSON，這是主要來源。"""
+    i = page.find('class="BodyTextContainer"')
+    if i < 0:
         return None
-    text = re.sub(r"<br\s*/?>", "\n", m.group(1))
+    body = page[i:]
+    end = body.find('class="PostDateContainer"')
+    body = body[:end] if end > 0 else body
+    # 全文在 BodyTextContainer 裡、第一個 <div 之前（內文的連結／標籤是 <a><span>，不能只抓到第一個 </span>）
+    text = body[body.index(">") + 1:].split("<div", 1)[0]
+    text = re.sub(r"<br\s*/?>", "\n", text)
     text = html.unescape(re.sub(r"<[^>]+>", "", text)).strip()
+    # 媒體只取正文區塊內的，頭像在前面的 AvatarContainer，自然排除
+    posters = {html.unescape(u) for u in re.findall(r'poster="([^"]+)"', body)}
     media = []
-    for src in re.findall(r'<(?:img|video|source)[^>]+src="([^"]+)"', page):
+    for tag, src in re.findall(r'<(img|video|source)[^>]+src="([^"]+)"', body):
         src = html.unescape(src)
-        # 排除頭像（小尺寸）
-        if re.search(r"(cdninstagram|fbcdn)", src) and not re.search(r"s150x150|_s\d{2,3}x\d{2,3}|profile", src):
-            kind = "video" if ".mp4" in src else "image"
-            if not any(x["url"] == src for x in media):
-                media.append({"type": kind, "url": src})
-    return text, media
+        kind = "image" if tag == "img" else "video"
+        if src in posters or any(x["url"] == src for x in media):
+            continue
+        media.append({"type": kind, "url": src})
+    counts = [int(c.replace(",", "")) if re.fullmatch(r"[\d,]+", c) else c  # 「1,538」轉數字，「1.5K」照留
+              for c in re.findall(r'class="ActionBarCount">([^<]*)<', page)]
+    stats = dict(zip(("likes", "replies", "reposts", "shares"), counts))
+    return {"text": text or None, "media": media, **stats}
+
+
+SHORTCODE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
+
+def time_from_code(code):
+    """貼文代碼是 Instagram 系的流水號：前 41 位元是 2011-08-24 起算的毫秒數。"""
+    try:
+        pk = 0
+        for c in code:
+            pk = pk * 64 + SHORTCODE.index(c)
+        ms = (pk >> 23) + 1314220021721
+        return datetime.fromtimestamp(ms / 1000, TPE).strftime("%Y-%m-%d %H:%M")
+    except (ValueError, OverflowError, OSError):
+        return None
 
 
 def resolve(url):
@@ -148,7 +172,8 @@ def resolve(url):
     if m:
         return m, "", []
     tried = []
-    for ua in (UA, "curl/8.4.0", CRAWLER_UA):
+    # 瀏覽器 UA 只拿到 JS 空殼（200、不轉址），放最後；爬蟲與 curl 會 302 到貼文
+    for ua in (CRAWLER_UA, "curl/8.4.0", UA):
         try:
             chain, page = fetch(url, ua)
         except Exception as e:  # noqa: BLE001
@@ -172,7 +197,7 @@ def parse(url):
     pages = [page]
     posts = embedded_posts(page)
     main = next((p for p in posts if p["code"] == code), None)
-    for ua in (UA, CRAWLER_UA):
+    for ua in (CRAWLER_UA, UA):
         if main:
             break
         try:
@@ -190,15 +215,17 @@ def parse(url):
             if p is not main:
                 (thread if p["username"] == username else replies).append(p)
     else:
-        main = {"username": username, "code": code, "time": None, "text": None,
+        main = {"username": username, "code": code, "time": time_from_code(code), "text": None,
                 "likes": None, "replies": None, "reposts": None, "quotes": None, "media": []}
-        try:  # 官方嵌入頁
-            _, epage = fetch(canonical + "/embed")
+        for ua in (CRAWLER_UA, UA):  # 官方嵌入頁（只有主文，串文與回覆要登入才看得到）
+            try:
+                _, epage = fetch(canonical + "/embed", ua)
+            except Exception:  # noqa: BLE001
+                continue
             got = from_embed(epage)
             if got:
-                main["text"], main["media"] = got
-        except Exception:  # noqa: BLE001
-            pass
+                main.update(got)
+                break
         if not main["text"]:  # 最後退回 og: 標籤
             for pg in reversed(pages):
                 desc = meta(pg, "og:description")
@@ -213,14 +240,15 @@ def parse(url):
     return {"url": canonical, "post": main, "thread": thread, "replies": replies}
 
 
+LABEL = {"likes": "讚", "replies": "回覆", "reposts": "轉發", "quotes": "引用", "shares": "分享"}
+
+
 def to_markdown(r):
     p = r["post"]
     lines = [f"## @{p['username']} 的 Threads 貼文", "", f"- 連結：{r['url']}"]
     if p.get("time"):
         lines.append(f"- 時間：{p['time']}（台北）")
-    stats = [(k, p.get(k)) for k in ("likes", "replies", "reposts", "quotes")]
-    label = {"likes": "讚", "replies": "回覆", "reposts": "轉發", "quotes": "引用"}
-    s = "・".join(f"{label[k]} {v}" for k, v in stats if v is not None)
+    s = "・".join(f"{v} {p[k]}" for k, v in LABEL.items() if p.get(k) is not None)
     if s:
         lines.append(f"- 互動：{s}")
     lines += ["", p.get("text") or "（無文字）"]
@@ -291,8 +319,7 @@ def to_html(r):
                        else f'<img src="{e(src)}" loading="lazy">')
         return "\n".join(out)
 
-    label = {"likes": "讚", "replies": "回覆", "reposts": "轉發", "quotes": "引用"}
-    stats = "・".join(f"{v} {p[k]}" for k, v in label.items() if p.get(k) is not None)
+    stats = "・".join(f"{v} {p[k]}" for k, v in LABEL.items() if p.get(k) is not None)
     body = [f"<h1>@{e(p['username'] or '')}</h1>",
             f'<p class="meta"><a href="{e(r["url"])}">{e(r["url"])}</a><br>'
             f'{e(p.get("time") or "")}{"（台北）" if p.get("time") else ""} {e(stats)}</p>',
