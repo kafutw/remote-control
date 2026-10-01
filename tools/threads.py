@@ -29,14 +29,29 @@ POST_RE = re.compile(r"threads\.(?:com|net)/@([\w.]+)/post/([\w-]+)")
 CRAWLER_UA = "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
 
 
+class _Track(urllib.request.HTTPRedirectHandler):
+    """記下每一站轉址：短連結常是 share → /@user/post/CODE → ?error=invalid_post，
+    貼文網址只出現在中間那站。"""
+
+    def __init__(self, chain):
+        self.chain = chain
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        self.chain.append(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def fetch(url, ua=UA):
+    """回傳（轉址路線上所有網址, 最終頁面 HTML）。"""
+    chain = [url]
+    opener = urllib.request.build_opener(_Track(chain))
     req = urllib.request.Request(url, headers={
         "User-Agent": ua,
         "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.8",
         "Accept": "text/html,application/xhtml+xml",
     })
-    with urllib.request.urlopen(req, timeout=20) as r:
-        return r.geturl(), r.read().decode("utf-8", "replace")
+    with opener.open(req, timeout=20) as r:
+        return chain, r.read().decode("utf-8", "replace")
 
 
 def meta(page, prop):
@@ -127,8 +142,8 @@ def from_embed(page):
 
 
 def parse(url):
-    final, page = fetch(url)
-    m = POST_RE.search(final) or POST_RE.search(page)
+    chain, page = fetch(url)
+    m = next(filter(None, map(POST_RE.search, chain)), None) or POST_RE.search(page)
     if not m:
         raise ValueError("找不到貼文網址（連結可能失效或貼文已刪除）")
     username, code = m.group(1), m.group(2)
