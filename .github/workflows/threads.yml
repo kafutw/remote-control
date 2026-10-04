@@ -1,0 +1,53 @@
+name: Threads 解析
+
+# 雲端 Claude 的網路連不到 threads.com 時，改由 GitHub 的伺服器代抓。
+# Claude 用 workflow_dispatch 觸發，再讀 job log（===== 之間）取得結果。
+run-name: Threads 解析 ${{ inputs.url }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Threads 連結（多個用空白隔開）'
+        required: true
+      save:
+        description: '打包（文字＋圖片影片＋網頁，放在這次執行的 Artifacts）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: tools/threads.py
+          sparse-checkout-cone-mode: false
+
+      - name: 解析
+        env:
+          URLS: ${{ inputs.url }}
+        run: |
+          set -o pipefail
+          echo "===== THREADS MARKDOWN BEGIN ====="
+          python3 tools/threads.py "$URLS" 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "===== THREADS MARKDOWN END ====="
+          echo "===== THREADS JSON BEGIN ====="
+          python3 tools/threads.py --json "$URLS" 2>&1 || true
+          echo "===== THREADS JSON END ====="
+
+      - name: 打包
+        if: ${{ inputs.save }}
+        env:
+          URLS: ${{ inputs.url }}
+        run: python3 tools/threads.py --save out "$URLS"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.save }}
+        with:
+          name: threads
+          path: out/*.zip
