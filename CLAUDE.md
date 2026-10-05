@@ -16,7 +16,14 @@ Mac 桌面 App：`bash tools/install-mac-app.sh` 會在桌面建立「Threads �
 
 iPhone 捷徑：在 Mac 上跑 `bash tools/install-iphone-shortcut.sh`（產生器是 `tools/build-threads-shortcut.py`），桌面會出現已簽章的「Threads 解析.shortcut」，AirDrop 到 iPhone 加入。在 Threads 按「分享」選它（或複製連結後執行）：顯示全文、作者、時間、互動數，圖片影片存到相簿，全文存成備忘錄。捷徑的解析邏輯是照 `threads.py` 的 `from_embed`／`time_from_code` 寫的，改其中一邊時另一邊也要跟著改。
 
-claude.ai Skill：`skills/threads-parser/`（`scripts/threads.py` 是 `tools/threads.py` 的複本），打包成 `skills/threads-parser.skill` 上傳到 claude.ai。改了 `tools/threads.py` 就複製過去，再用 skill-creator 的 `package_skill` 重新打包。
+claude.ai Skill（**手機 claude.ai 聊天用的主路線，2026-10-05 已安裝並實測可用**）：`skills/threads-parser/`（`scripts/threads.py` 是 `tools/threads.py` 的複本），打包成 `skills/threads-parser.skill` 上傳到 claude.ai。
+- 已安裝在 claude.ai「Customize → Skills → Yours」的 `threads-parser`，啟用中。
+- 網路設定（設定 → Capabilities → Code execution and file creation → Allow network egress 開著、Domain allowlist 維持「Package managers only」）的 Additional allowed domains 已加：`www.threads.com`、`threads.com`、`www.threads.net`、`threads.net`、`*.cdninstagram.com`、`*.fbcdn.net`。個人 Max 帳號就有這個欄位，不需要組織管理員。設定跟著帳號走，手機自動同步。
+- 實測：新對話只貼 `https://www.threads.com/share/BAHax6OPkA/`，Claude 自己叫用 skill 跑腳本，給出作者、時間、互動數、全文、串文、回覆；接著說「我也想做類似的圖」會下載圖片與影片實際看過再分析（圖片網域也通）。
+- 更新流程：改了 `tools/threads.py` 就複製到 `skills/threads-parser/scripts/`，用 skill-creator 的 `package_skill` 重新打包，再到 claude.ai 該 skill 頁面上傳新版（同名 skill 會變成新版本，不用先刪）。
+- 若沒觸發（Claude 改用 web_fetch 說無法解析）：改 `SKILL.md` 的 description，把「只貼連結也要用、不要用 web_fetch」講得更明確再打包上傳。
+
+iPhone 捷徑是備用路線（路線 B），skill 能用就不用它；捷徑還沒實機測過。
 
 把輸出整理給使用者：作者、時間、全文、圖片/影片連結、互動數、串文與回覆。使用者沒要求就不要翻譯或改寫貼文內容。
 
