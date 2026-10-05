@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-05T06:52:33.872Z",
-  "generatedAtTaipei": "2026-10-05 14:52:33",
+  "generatedAt": "2026-10-05T09:32:41.276Z",
+  "generatedAtTaipei": "2026-10-05 17:32:41",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "REG_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -149,11 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 15.31,
+      "price": 16.26,
       "prevClose": 15.31,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 0.95,
+      "pct": 6.2051,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -409,32 +408,27 @@
   "volume": {
     "lit": true,
     "reasons": [
-      "成交值突破 1.10 兆"
+      "成交值突破 1.10 兆",
+      "而且已達 1.30 兆過熱區 —— 沒有前置條件可以分辨這是換手還是出貨，要自己看"
     ],
     "ready": true,
-    "last": 12112.14,
+    "last": 15321.3,
     "reach": {
       "lo": 8101.12,
       "hi": 16104.21,
-      "days": 43,
-      "fired": 22,
-      "fireRate": 0.5116279069767442,
+      "days": 44,
+      "fired": 23,
+      "fireRate": 0.5227272727272727,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 43,
+    "complete": 44,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-07-08",
-        "twse": 10045.6,
-        "tpex": null,
-        "total": null
-      },
       {
         "date": "2026-07-09",
         "twse": 9967.89,
@@ -788,6 +782,12 @@
         "twse": 9382.22,
         "tpex": 2729.92,
         "total": 12112.14
+      },
+      {
+        "date": "2026-10-05",
+        "twse": 12110.41,
+        "tpex": 3210.89,
+        "total": 15321.3
       }
     ]
   },
