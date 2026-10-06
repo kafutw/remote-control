@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-06T05:35:23.828Z",
-  "generatedAtTaipei": "2026-10-06 13:35:23",
+  "generatedAt": "2026-10-06T07:28:49.992Z",
+  "generatedAtTaipei": "2026-10-06 15:28:49",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -149,10 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 15.52,
-      "prevClose": 15.31,
-      "change": 0.21,
-      "pct": 1.3717,
+      "price": 15.5,
+      "prevClose": 15.52,
+      "change": -0.02,
+      "pct": -0.1289,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -161,10 +161,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 70558.39,
+      "price": 70683.98,
       "prevClose": 69946.86,
-      "change": 611.53,
-      "pct": 0.8743,
+      "change": 737.12,
+      "pct": 1.0538,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -173,10 +173,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 6925.12,
+      "price": 6941.39,
       "prevClose": 7003.74,
-      "change": -78.62,
-      "pct": -1.1225,
+      "change": -62.35,
+      "pct": -0.8902,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -185,10 +185,10 @@
       "group": "txf",
       "dp": 0,
       "via": "taifex:TXF",
-      "price": 50083,
+      "price": 50060,
       "prevClose": 49944,
-      "change": 139,
-      "pct": 0.2783,
+      "change": 116,
+      "pct": 0.2323,
       "marketState": null,
       "asOf": null,
       "contract": "臺指期106"
@@ -412,33 +412,26 @@
   "volume": {
     "lit": true,
     "reasons": [
-      "成交值突破 1.10 兆",
-      "而且已達 1.30 兆過熱區 —— 沒有前置條件可以分辨這是換手還是出貨，要自己看"
+      "成交值突破 1.10 兆"
     ],
     "ready": true,
-    "last": 15321.3,
+    "last": 12990.41,
     "reach": {
       "lo": 8101.12,
       "hi": 16104.21,
-      "days": 44,
-      "fired": 23,
-      "fireRate": 0.5227272727272727,
+      "days": 45,
+      "fired": 24,
+      "fireRate": 0.5333333333333333,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 44,
+    "complete": 45,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-07-09",
-        "twse": 9967.89,
-        "tpex": null,
-        "total": null
-      },
       {
         "date": "2026-07-13",
         "twse": 10676.62,
@@ -792,6 +785,12 @@
         "twse": 12110.41,
         "tpex": 3210.89,
         "total": 15321.3
+      },
+      {
+        "date": "2026-10-06",
+        "twse": 10217.23,
+        "tpex": 2773.18,
+        "total": 12990.41
       }
     ]
   },
