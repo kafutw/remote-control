@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-09T05:17:26.769Z",
-  "generatedAtTaipei": "2026-10-09 13:17:26",
+  "generatedAt": "2026-10-09T07:19:39.356Z",
+  "generatedAtTaipei": "2026-10-09 15:19:39",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -88,10 +88,11 @@
       "dp": 2,
       "via": "cnbc:TSM",
       "price": 457.99,
-      "prevClose": 472.2,
-      "change": -14.21,
-      "pct": -3.0093,
-      "marketState": "POST_MKT",
+      "prevClose": 457.99,
+      "change": null,
+      "pct": null,
+      "noSessionData": true,
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -151,10 +152,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 15.41,
-      "prevClose": 15.08,
-      "change": 0.33,
-      "pct": 2.1883,
+      "price": 15.3,
+      "prevClose": 15.41,
+      "change": -0.11,
+      "pct": -0.7138,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -163,10 +164,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 69001.81,
+      "price": 69030.92,
       "prevClose": 69042.11,
-      "change": -40.3,
-      "pct": -0.0584,
+      "change": -11.19,
+      "pct": -0.0162,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -812,7 +813,7 @@
     "converted": 2927.72,
     "fxAsOf": "2026-10-09",
     "premiumPct": 14.81,
-    "impliedOpen": 2473,
+    "impliedOpen": null,
     "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
 }
