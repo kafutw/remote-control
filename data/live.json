@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-12T09:39:32.728Z",
-  "generatedAtTaipei": "2026-10-12 17:39:32",
+  "generatedAt": "2026-10-12T11:49:13.861Z",
+  "generatedAtTaipei": "2026-10-12 19:49:13",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
