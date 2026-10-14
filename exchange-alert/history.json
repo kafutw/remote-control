@@ -2189,10 +2189,19 @@
       "source": "open.er-api.com(國際中價)",
       "asof": "2026-10-13 07:57",
       "fetched": "2026-10-14 01:04"
+    },
+    {
+      "date": "2026-10-14",
+      "usd_twd": 32.1416,
+      "usd_jpy": 158.308,
+      "jpy_twd": 0.20303,
+      "source": "open.er-api.com(國際中價)",
+      "asof": "2026-10-14 08:02",
+      "fetched": "2026-10-14 14:33"
     }
   ],
   "last_alerts": {
-    "usdtwd_high": "2026-08-14",
+    "usdtwd_high": "2026-10-14",
     "jpy_cheap": "2026-09-02"
   },
   "backfilled": true
