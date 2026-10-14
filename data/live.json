@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-14T07:57:38.138Z",
-  "generatedAtTaipei": "2026-10-14 15:57:38",
+  "generatedAt": "2026-10-14T09:24:56.622Z",
+  "generatedAtTaipei": "2026-10-14 17:24:56",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -90,7 +90,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "REG_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -150,10 +150,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 15.2,
+      "price": 15.21,
       "prevClose": 15.27,
-      "change": -0.07,
-      "pct": -0.4584,
+      "change": -0.06,
+      "pct": -0.3929,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -440,7 +440,7 @@
       "成交值突破 1.10 兆"
     ],
     "ready": true,
-    "last": 11942.43,
+    "last": 12058.12,
     "reach": {
       "lo": 8101.12,
       "hi": 16104.21,
@@ -813,9 +813,9 @@
       },
       {
         "date": "2026-10-14",
-        "twse": 9665.68,
+        "twse": 9781.37,
         "tpex": 2276.75,
-        "total": 11942.43
+        "total": 12058.12
       }
     ]
   },
