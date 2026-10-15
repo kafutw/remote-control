@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-15T05:48:38.731Z",
-  "generatedAtTaipei": "2026-10-15 13:48:38",
+  "generatedAt": "2026-10-15T07:41:41.928Z",
+  "generatedAtTaipei": "2026-10-15 15:41:41",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -149,10 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 16.87,
-      "prevClose": 15.27,
-      "change": 1.6,
-      "pct": 10.4781,
+      "price": 17.46,
+      "prevClose": 16.87,
+      "change": 0.59,
+      "pct": 3.4973,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -161,10 +161,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 64607.23,
+      "price": 64425.95,
       "prevClose": 67744.29,
-      "change": -3137.06,
-      "pct": -4.6307,
+      "change": -3318.34,
+      "pct": -4.8983,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -173,10 +173,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 5520.59,
+      "price": 5554.22,
       "prevClose": 6008.81,
-      "change": -488.22,
-      "pct": -8.1251,
+      "change": -454.59,
+      "pct": -7.5654,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -440,32 +440,27 @@
   "volume": {
     "lit": true,
     "reasons": [
-      "成交值突破 1.10 兆"
+      "成交值突破 1.10 兆",
+      "而且已達 1.30 兆過熱區 —— 沒有前置條件可以分辨這是換手還是出貨，要自己看"
     ],
     "ready": true,
-    "last": 12058.12,
+    "last": 16756.05,
     "reach": {
       "lo": 8101.12,
-      "hi": 16104.21,
-      "days": 50,
-      "fired": 29,
-      "fireRate": 0.58,
+      "hi": 16756.05,
+      "days": 51,
+      "fired": 30,
+      "fireRate": 0.5882352941176471,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 50,
+    "complete": 51,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-07-20",
-        "twse": 10414.57,
-        "tpex": null,
-        "total": null
-      },
       {
         "date": "2026-07-21",
         "twse": 8662.52,
@@ -819,6 +814,12 @@
         "twse": 9781.37,
         "tpex": 2276.75,
         "total": 12058.12
+      },
+      {
+        "date": "2026-10-15",
+        "twse": 14312.84,
+        "tpex": 2443.21,
+        "total": 16756.05
       }
     ]
   },
