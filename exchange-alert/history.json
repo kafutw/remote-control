@@ -2207,10 +2207,19 @@
       "source": "open.er-api.com(國際中價)",
       "asof": "2026-10-15 08:02",
       "fetched": "2026-10-15 22:18"
+    },
+    {
+      "date": "2026-10-16",
+      "usd_twd": 32.3603,
+      "usd_jpy": 158.087,
+      "jpy_twd": 0.2047,
+      "source": "open.er-api.com(國際中價)",
+      "asof": "2026-10-16 08:02",
+      "fetched": "2026-10-16 14:12"
     }
   ],
   "last_alerts": {
-    "usdtwd_high": "2026-10-14",
+    "usdtwd_high": "2026-10-16",
     "jpy_cheap": "2026-09-02"
   },
   "backfilled": true
