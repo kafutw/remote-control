@@ -1,24 +1,24 @@
 {
-  "generatedAt": "2026-10-20T05:54:46.511Z",
+  "generatedAt": "2026-10-20T07:53:16.837Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
     "2330": {
       "name": "台積電",
       "from": "2024-02-01",
-      "to": "2026-10-19",
-      "sessions": 654,
+      "to": "2026-10-20",
+      "sessions": 655,
       "splitsApplied": [],
       "breaks": 18,
-      "eff": 7,
-      "fake": 11,
-      "perYear": 6.8,
-      "deepMed": -6.22,
-      "deepQ25": -11.73,
-      "deepQ75": -0.8,
+      "eff": 8,
+      "fake": 10,
+      "perYear": 6.79,
+      "deepMed": -1.18,
+      "deepQ25": -7.22,
+      "deepQ75": -0.68,
       "backMed": 3,
       "backMax": 51,
-      "neverBack": 0,
+      "neverBack": 1,
       "r60Med": 6.57,
       "win": 60,
       "events": [
@@ -28,18 +28,18 @@
         -8.47,
         29.02
       ],
-      "pending": 2
+      "pending": 3
     },
     "0050": {
       "name": "元大台灣 50",
       "from": "2024-02-01",
-      "to": "2026-10-19",
-      "sessions": 649,
+      "to": "2026-10-20",
+      "sessions": 650,
       "splitsApplied": [],
       "breaks": 18,
       "eff": 6,
       "fake": 12,
-      "perYear": 6.85,
+      "perYear": 6.84,
       "deepMed": -6.65,
       "deepQ25": -11.56,
       "deepQ75": -1.11,
@@ -92,6 +92,6 @@
     }
   },
   "window": "2024/02 ～ 2026/10",
-  "coverageTo": "2026-10-19",
-  "staleDays": 1
+  "coverageTo": "2026-10-20",
+  "staleDays": 0
 }
