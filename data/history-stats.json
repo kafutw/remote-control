@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T03:54:19.345Z",
+  "generatedAt": "2026-10-21T05:55:47.267Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
@@ -33,29 +33,30 @@
     "0050": {
       "name": "元大台灣 50",
       "from": "2024-02-01",
-      "to": "2026-10-20",
-      "sessions": 650,
+      "to": "2026-10-21",
+      "sessions": 651,
       "splitsApplied": [],
       "breaks": 18,
       "eff": 6,
       "fake": 12,
-      "perYear": 6.84,
+      "perYear": 6.83,
       "deepMed": -6.65,
       "deepQ25": -11.56,
       "deepQ75": -1.11,
       "backMed": 8,
       "backMax": 51,
       "neverBack": 0,
-      "r60Med": 3.49,
-      "win": 60,
+      "r60Med": 5.31,
+      "win": 67,
       "events": [
         9.04,
         5.31,
         3.49,
         -0.16,
-        -6.71
+        -6.71,
+        6.34
       ],
-      "pending": 1
+      "pending": 0
     },
     "0056": {
       "name": "元大高股息",
