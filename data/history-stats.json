@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T03:54:08.980Z",
+  "generatedAt": "2026-10-22T05:59:35.382Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
@@ -33,13 +33,13 @@
     "0050": {
       "name": "元大台灣 50",
       "from": "2024-02-01",
-      "to": "2026-10-21",
-      "sessions": 651,
+      "to": "2026-10-22",
+      "sessions": 652,
       "splitsApplied": [],
-      "breaks": 18,
+      "breaks": 19,
       "eff": 6,
-      "fake": 12,
-      "perYear": 6.83,
+      "fake": 13,
+      "perYear": 7.2,
       "deepMed": -6.65,
       "deepQ25": -11.56,
       "deepQ75": -1.11,
