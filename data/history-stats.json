@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-10-22T05:59:35.382Z",
+  "generatedAt": "2026-10-22T07:53:46.975Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
     "2330": {
       "name": "台積電",
       "from": "2024-02-01",
-      "to": "2026-10-21",
-      "sessions": 656,
+      "to": "2026-10-22",
+      "sessions": 657,
       "splitsApplied": [],
       "breaks": 18,
       "eff": 8,
       "fake": 10,
-      "perYear": 6.78,
-      "deepMed": -1.18,
+      "perYear": 6.77,
+      "deepMed": -1.58,
       "deepQ25": -7.22,
-      "deepQ75": -0.68,
+      "deepQ75": -0.8,
       "backMed": 3,
       "backMax": 51,
       "neverBack": 1,
@@ -61,8 +61,8 @@
     "0056": {
       "name": "元大高股息",
       "from": "2024-02-01",
-      "to": "2026-10-21",
-      "sessions": 656,
+      "to": "2026-10-22",
+      "sessions": 657,
       "splitsApplied": [],
       "breaks": 16,
       "eff": 12,
@@ -93,6 +93,6 @@
     }
   },
   "window": "2024/02 ～ 2026/10",
-  "coverageTo": "2026-10-21",
-  "staleDays": 1
+  "coverageTo": "2026-10-22",
+  "staleDays": 0
 }
