@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-10-27T04:17:21.093Z",
+  "generatedAt": "2026-10-27T06:10:46.482Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
     "2330": {
       "name": "台積電",
       "from": "2024-02-01",
-      "to": "2026-10-22",
-      "sessions": 657,
+      "to": "2026-10-27",
+      "sessions": 658,
       "splitsApplied": [],
       "breaks": 18,
       "eff": 8,
       "fake": 10,
-      "perYear": 6.77,
+      "perYear": 6.76,
       "deepMed": -1.58,
       "deepQ25": -7.22,
       "deepQ75": -0.8,
@@ -20,26 +20,27 @@
       "backMax": 51,
       "neverBack": 1,
       "r60Med": 6.57,
-      "win": 60,
+      "win": 67,
       "events": [
         13.51,
         6.57,
         0,
         -8.47,
-        29.02
+        29.02,
+        5.26
       ],
-      "pending": 3
+      "pending": 2
     },
     "0050": {
       "name": "元大台灣 50",
       "from": "2024-02-01",
-      "to": "2026-10-22",
-      "sessions": 652,
+      "to": "2026-10-27",
+      "sessions": 653,
       "splitsApplied": [],
       "breaks": 19,
       "eff": 6,
       "fake": 13,
-      "perYear": 7.2,
+      "perYear": 7.19,
       "deepMed": -6.65,
       "deepQ25": -11.56,
       "deepQ75": -1.11,
@@ -61,21 +62,21 @@
     "0056": {
       "name": "元大高股息",
       "from": "2024-02-01",
-      "to": "2026-10-22",
-      "sessions": 657,
+      "to": "2026-10-27",
+      "sessions": 658,
       "splitsApplied": [],
       "breaks": 16,
       "eff": 12,
       "fake": 4,
-      "perYear": 6.02,
+      "perYear": 6.01,
       "deepMed": -1.61,
       "deepQ25": -4.63,
       "deepQ75": -0.67,
       "backMed": 7,
       "backMax": 79,
       "neverBack": 0,
-      "r60Med": 1.45,
-      "win": 55,
+      "r60Med": 2.37,
+      "win": 58,
       "events": [
         -4.32,
         -4.16,
@@ -87,12 +88,13 @@
         3.92,
         6.12,
         7.02,
-        35.93
+        35.93,
+        17.35
       ],
-      "pending": 1
+      "pending": 0
     }
   },
   "window": "2024/02 ～ 2026/10",
-  "coverageTo": "2026-10-22",
-  "staleDays": 5
+  "coverageTo": "2026-10-27",
+  "staleDays": 0
 }
