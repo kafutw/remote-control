@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-29T10:48:56.824Z",
-  "generatedAtTaipei": "2026-10-29 18:48:56",
+  "generatedAt": "2026-10-29T11:45:20.014Z",
+  "generatedAtTaipei": "2026-10-29 19:45:20",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
   },
-  "ok": 14,
-  "failed": 0,
+  "ok": 13,
+  "failed": 1,
   "crossCheck": {
     "tsmc": {
       "primary": 2415,
@@ -149,10 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 17.04,
+      "price": 17.1,
       "prevClose": 16.91,
-      "change": 0.13,
-      "pct": 0.7688,
+      "change": 0.19,
+      "pct": 1.1236,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -183,15 +183,7 @@
     "txf": {
       "name": "台指期",
       "group": "txf",
-      "dp": 0,
-      "via": "taifex:TXF",
-      "price": 46577,
-      "prevClose": 47249,
-      "change": -672,
-      "pct": -1.4223,
-      "marketState": null,
-      "asOf": null,
-      "contract": "臺指期116"
+      "error": "全部來源都失敗｜taifex:TXF → HTTP 403｜<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <!"
     },
     "usdtwd": {
       "name": "USD／TWD",
