@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-29T06:57:37.967Z",
-  "generatedAtTaipei": "2026-10-29 14:57:37",
+  "generatedAt": "2026-10-29T08:49:53.787Z",
+  "generatedAtTaipei": "2026-10-29 16:49:53",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "REG_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -149,11 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 16.91,
+      "price": 17.28,
       "prevClose": 16.91,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 0.37,
+      "pct": 2.1881,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -468,29 +467,23 @@
     "lit": false,
     "reasons": [],
     "ready": true,
-    "last": 9129.35,
+    "last": 10294.83,
     "reach": {
       "lo": 8101.12,
       "hi": 16800.76,
-      "days": 58,
+      "days": 59,
       "fired": 33,
-      "fireRate": 0.5689655172413793,
+      "fireRate": 0.559322033898305,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 58,
+    "complete": 59,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-07-30",
-        "twse": 11469.38,
-        "tpex": null,
-        "total": null
-      },
       {
         "date": "2026-07-31",
         "twse": 8877.32,
@@ -844,6 +837,12 @@
         "twse": 7503.41,
         "tpex": 1625.94,
         "total": 9129.35
+      },
+      {
+        "date": "2026-10-29",
+        "twse": 8213.76,
+        "tpex": 2081.07,
+        "total": 10294.83
       }
     ]
   },
