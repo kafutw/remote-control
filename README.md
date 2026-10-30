@@ -274,4 +274,5 @@ node tools/check-chinese-bank.mjs /tmp/moe.json      # 核對
 - 自動跳出：iPhone 捷徑 →「自動化」→「抵達」頭城交流道（北上）／坪林交流道（南下）→ 打開 `snowtunnel.html?dir=N&speak=1`（或 `dir=S`）。頁面內「快到隧道時自動跳出來」有步驟。
 - 頁面開著就每 90 秒自動更新（切到背景暫停）。免金鑰每天 50 次（以 IP 計），所以建議到 tdx.transportdata.tw 免費註冊，把 Client Id／Secret 填在頁面的「設定」；「複製家人設定連結」可以把金鑰帶到家人手機（金鑰只存在手機上，連結只傳給家人）。
 - 隧道範圍寫在頁面最上面的 `TUNNEL`（約 15.2K–28.1K），第一次用時打開頁面最下面的「資料檢查」確認偵測器里程與車道數。
+- [`snowtunnel-probe.html`](https://kafutw.github.io/remote-control/snowtunnel-probe.html)：在台灣用手機打開，測高公局原始資料（tisvcloud）網頁讀不讀得到、比 TDX 新幾分鐘。
 - `?demo` 用假資料看畫面。`.github/workflows/snowtunnel.yml` 是手動探測資料格式用的（需要 repo secrets `TDX_CLIENT_ID`、`TDX_CLIENT_SECRET`）。
