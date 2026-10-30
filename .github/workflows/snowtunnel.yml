@@ -1,22 +1,24 @@
 name: 雪隧車道
 
-# 雲端 Claude 連不到高公局，由 GitHub 的 runner 代抓。
+# snowtunnel.html 是從手機直接抓 TDX，平常不需要這個 workflow。
+# 這裡只是手動探測：印出國 5 偵測器與隧道顯示板的實際格式，給調整頁面時對照。
+# 需要 repo secrets：TDX_CLIENT_ID、TDX_CLIENT_SECRET（tdx.transportdata.tw 免費註冊）。
 on:
   workflow_dispatch:
-    inputs:
-      probe:
-        description: '探測資料來源格式（只印 log）'
-        type: boolean
-        default: true
 
 permissions:
   contents: read
 
 jobs:
   probe:
-    if: inputs.probe
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - run: python3 -u tools/snowtunnel.py --probe
+        with:
+          sparse-checkout: tools/snowtunnel.py
+          sparse-checkout-cone-mode: false
+      - env:
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: python3 -u tools/snowtunnel.py --probe

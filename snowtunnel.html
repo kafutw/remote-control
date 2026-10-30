@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121418">
+<title>雪隧車道</title>
+<link rel="icon" type="image/svg+xml" href="icons/snowtunnel.svg">
+<link rel="apple-touch-icon" href="icons/snowtunnel-180.png">
+<link rel="manifest" href="snowtunnel.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="雪隧車道">
+<style>
+/* 開車時看的頁面：字要大、一眼看完、深色為預設（夜間不刺眼），淺色跟隨系統。
+   速度色用固定的狀態色（good/warning/serious/critical），一律附數字，不靠顏色單獨表意。 */
+:root{
+  --paper:#121418; --sheet:#1B1E24; --ink:#EEF0F3; --ink2:#AEB4BE; --ink3:#7A818C;
+  --rule:#2A2E36; --rule2:#3A3F49;
+  --inner:#3987e5; --outer:#d95926;           /* 車道身分色：內＝藍、外＝橘 */
+  --pick:#3DD68C; --pickBg:#10291C;
+  --warnBg:#2A2210; --warnLine:#8A6D1F; --warnInk:#F2C14E;
+  --s-good:#0ca30c; --s-warn:#fab219; --s-serious:#ec835a; --s-crit:#d03b3b; --s-none:#4A505B;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --paper:#F3F4F6; --sheet:#FFFFFF; --ink:#111418; --ink2:#4A515C; --ink3:#7C8490;
+    --rule:#E1E4E8; --rule2:#C9CED6;
+    --inner:#2a78d6; --outer:#eb6834;
+    --pick:#0B7A44; --pickBg:#E6F6EC;
+    --warnBg:#FFF7E0; --warnLine:#E3B341; --warnInk:#7A5B12;
+    --s-none:#C4C9D1;
+  }
+}
+:root[data-theme="light"]{
+  --paper:#F3F4F6; --sheet:#FFFFFF; --ink:#111418; --ink2:#4A515C; --ink3:#7C8490;
+  --rule:#E1E4E8; --rule2:#C9CED6;
+  --inner:#2a78d6; --outer:#eb6834;
+  --pick:#0B7A44; --pickBg:#E6F6EC;
+  --warnBg:#FFF7E0; --warnLine:#E3B341; --warnInk:#7A5B12;
+  --s-none:#C4C9D1;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--paper)}
+body{
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top) 0 calc(40px + env(safe-area-inset-bottom));
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+button{font:inherit;color:inherit}
+
+/* 方向切換 */
+.dirs{display:flex;gap:8px;margin-top:14px}
+.dirs button{
+  flex:1;border:1px solid var(--rule2);background:var(--sheet);border-radius:12px;
+  padding:10px 6px;font-size:17px;font-weight:700;cursor:pointer;line-height:1.25
+}
+.dirs button small{display:block;font-size:12px;font-weight:500;color:var(--ink3)}
+.dirs button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+
+/* 結論：最大的字 */
+.hero{
+  margin-top:14px;border-radius:16px;padding:20px 18px 18px;background:var(--sheet);
+  border:1px solid var(--rule);text-align:center
+}
+.hero.go{background:var(--pickBg);border-color:var(--pick)}
+.hero .lead{font-size:15px;color:var(--ink2);font-weight:600}
+.hero .verdict{font-size:46px;font-weight:800;letter-spacing:.02em;line-height:1.15;margin:4px 0 6px}
+.hero.go .verdict{color:var(--pick)}
+.hero .why{font-size:16px;color:var(--ink2)}
+.hero .why b{color:var(--ink)}
+.hero .where{font-size:13px;color:var(--ink3);margin-top:6px}
+
+/* 兩條車道 */
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.lane{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:12px 12px 10px;position:relative}
+.lane.best{border-color:var(--pick);box-shadow:inset 0 0 0 1px var(--pick)}
+.lane .name{display:flex;align-items:center;gap:7px;font-weight:700;font-size:16px}
+.lane .name i{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
+.lane .t{font-size:34px;font-weight:800;line-height:1.1;margin-top:6px}
+.lane .t small{font-size:15px;font-weight:600;color:var(--ink2);margin-left:2px}
+.lane .meta{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.5}
+.lane .meta b{color:var(--ink);font-weight:700}
+.badge{
+  display:inline-block;margin-top:6px;font-size:12.5px;font-weight:700;border-radius:6px;padding:2px 7px;
+  background:var(--warnBg);color:var(--warnInk);border:1px solid var(--warnLine)
+}
+
+/* 隧道示意：入口在左，依行駛方向 */
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:12px;margin-top:10px}
+.card h2{font-size:14px;margin:0 0 8px;color:var(--ink2);font-weight:700;display:flex;justify-content:space-between;gap:8px}
+.card h2 span{font-weight:500;color:var(--ink3)}
+.strip{display:grid;grid-template-columns:48px 1fr;gap:6px 8px;align-items:center}
+.strip .lab{font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px}
+.strip .lab i{width:8px;height:8px;border-radius:2px}
+.bar{display:flex;gap:2px;height:26px}
+.bar div{flex:1 1 0;border-radius:4px;position:relative;cursor:default}
+.bar div.slow::after{
+  content:"🐢";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px
+}
+.ends{grid-column:2;display:flex;justify-content:space-between;font-size:12px;color:var(--ink3)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink2);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:3px}
+.tip{
+  position:fixed;z-index:9;pointer-events:none;background:var(--ink);color:var(--paper);
+  font-size:13px;padding:6px 9px;border-radius:8px;white-space:nowrap;display:none;
+  font-variant-numeric:tabular-nums
+}
+
+.alerts .a{
+  background:var(--warnBg);border:1px solid var(--warnLine);color:var(--warnInk);border-radius:12px;
+  padding:10px 12px;margin-top:10px;font-size:14.5px;line-height:1.5
+}
+.alerts .a b{font-weight:800}
+
+/* 狀態列 */
+.status{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:13px;color:var(--ink3)}
+.status .grow{flex:1}
+.status.stale{color:var(--warnInk)}
+.btn{
+  border:1px solid var(--rule2);background:var(--sheet);border-radius:10px;padding:8px 12px;
+  font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap
+}
+.btn:active{transform:scale(.98)}
+
+details{margin-top:14px;background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:0 14px}
+details summary{padding:12px 0;font-weight:700;font-size:15px;cursor:pointer;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"＋";float:right;color:var(--ink3)}
+details[open] summary::after{content:"－"}
+details .body{padding:0 0 14px;font-size:14.5px;color:var(--ink2)}
+details .body b{color:var(--ink)}
+details ol,details ul{padding-left:20px;margin:6px 0}
+details li{margin:3px 0}
+code{font-size:12.5px;background:var(--paper);border:1px solid var(--rule);border-radius:5px;padding:1px 5px;word-break:break-all}
+label.f{display:block;font-size:13px;margin-top:8px}
+label.f input{
+  display:block;width:100%;margin-top:3px;font:inherit;font-size:15px;padding:8px 10px;border-radius:8px;
+  border:1px solid var(--rule2);background:var(--paper);color:var(--ink)
+}
+pre.diag{white-space:pre-wrap;font-size:11.5px;background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:8px;max-height:320px;overflow:auto;color:var(--ink2)}
+.err{color:var(--warnInk)}
+.demo-flag{
+  margin-top:10px;text-align:center;font-size:13px;font-weight:700;color:var(--warnInk);
+  background:var(--warnBg);border:1px dashed var(--warnLine);border-radius:10px;padding:6px
+}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+table.tbl th,table.tbl td{border-bottom:1px solid var(--rule);padding:4px 3px;text-align:right}
+table.tbl th:first-child,table.tbl td:first-child{text-align:left}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="dirs" role="group" aria-label="行駛方向">
+    <button id="dS" aria-pressed="false" onclick="setDir('S',true)">南下<small>坪林 → 頭城（往宜蘭）</small></button>
+    <button id="dN" aria-pressed="false" onclick="setDir('N',true)">北上<small>頭城 → 坪林（往台北）</small></button>
+  </div>
+
+  <div id="demoFlag" class="demo-flag" hidden>示範資料 — 不是即時路況</div>
+
+  <div id="hero" class="hero" aria-live="polite">
+    <div class="lead">讀取即時路況…</div>
+    <div class="verdict">—</div>
+    <div class="why"></div>
+  </div>
+
+  <div class="lanes" id="lanes"></div>
+
+  <div class="alerts" id="alerts"></div>
+
+  <div class="card" id="stripCard" hidden>
+    <h2>隧道內各段車速 <span id="stripDir"></span></h2>
+    <div class="strip" id="strip"></div>
+    <div class="legend">
+      <span><i style="background:var(--s-good)"></i>80 以上</span>
+      <span><i style="background:var(--s-warn)"></i>60–79</span>
+      <span><i style="background:var(--s-serious)"></i>40–59</span>
+      <span><i style="background:var(--s-crit)"></i>40 以下</span>
+      <span><i style="background:var(--s-none)"></i>沒車／沒資料</span>
+      <span>🐢 慢車</span>
+    </div>
+  </div>
+
+  <div class="status" id="status">
+    <span class="grow" id="stamp">—</span>
+    <button class="btn" onclick="speak(true)" aria-label="唸出建議">🔊 唸出來</button>
+    <button class="btn" onclick="refresh(true)">更新</button>
+  </div>
+
+  <details>
+    <summary>怎麼算的、準不準</summary>
+    <div class="body">
+      <p>資料來自交通部 TDX 的<b>高公局車輛偵測器（VD）</b>：隧道內沿線每隔一段就有一組，每分鐘回報<b>每條車道</b>的車速、車流量，以及小型車／大型車／聯結車各自的速度。</p>
+      <p>雪隧<b>禁止變換車道</b>，你最快也只能跟前面最慢的那台車一起出隧道。所以每條車道的預估時間取兩者較慢的：</p>
+      <ol>
+        <li>以速限 90 km/h、遇到慢的路段就照該段車速，一段一段加總。</li>
+        <li><b>前方慢車（🐢）</b>：某處偵測到比速限慢的車，就假設它照那個速度開到出口；你在同一條車道上不可能比它早出來。所以<b>越靠近入口的慢車影響越大</b>，快到出口的慢車你追不上，影響很小。</li>
+      </ol>
+      <p>有定位時，會把你開到入口所需的時間也算進去：這段時間裡，前方的慢車也在往前走。</p>
+      <p>兩條車道預估相差不到 20 秒時顯示「差不多」，選哪條都可以。</p>
+      <p><b>看不到的部分</b>：跟你差不多同時進隧道的車會選哪一條、偵測器之間的個別慢車，以及資料約有 1–2 分鐘的延遲。所以這是「目前最好的猜測」，不是保證。</p>
+      <p>高公局在隧道內設有<b>慢速車示警系統</b>（在顯示板上打出慢速車車牌）。如果 TDX 的顯示板訊息裡出現車牌或「慢速」，會列在上方的黃色提示裡。</p>
+      <p class="err">開車時請勿操作手機，請由乘客操作，或使用下面的自動開啟＋語音。</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>快到隧道時自動跳出來（iPhone 捷徑自動化）</summary>
+    <div class="body">
+      <p>先在 Safari 打開這頁 →「分享」→「加入主畫面」。接著設定兩個自動化，經過時就會自動打開對的方向：</p>
+      <ol>
+        <li>打開「捷徑」App →「自動化」→ 右上角「＋」→「抵達」。</li>
+        <li><b>北上</b>：位置選「頭城交流道」附近，半徑約 1 公里；時間選「任何時間」；勾「立即執行」。</li>
+        <li>動作加「打開 URL」，網址填：<br><code id="urlN"></code></li>
+        <li>再做一個<b>南下</b>的：位置選「坪林交流道」（出彭山隧道後就會進到範圍），網址填：<br><code id="urlS"></code></li>
+      </ol>
+      <p>網址後面的 <code>&amp;speak=1</code> 會在打開時自動唸出建議；iOS 有時會擋掉沒按過按鈕的語音，那時按一下「🔊 唸出來」就好。</p>
+      <p>頁面開著時每 90 秒自動更新，開了 15 分鐘後會停止自動更新（省免費額度），按「更新」就會繼續。</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>設定（TDX 金鑰，可不填）</summary>
+    <div class="body">
+      <p>不填也能用：TDX 讓瀏覽器每天免金鑰呼叫 50 次。手機網路的 IP 有時和別人共用，額度可能被用掉；遇到這種情況，到 <b>tdx.transportdata.tw</b> 免費註冊會員，在「會員中心 → API 金鑰」拿 Client Id 與 Client Secret 貼到這裡。金鑰只存在這支手機上。</p>
+      <label class="f">Client Id<input id="cid" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <label class="f">Client Secret<input id="csec" type="password" autocomplete="off"></label>
+      <p><button class="btn" onclick="saveKey()">儲存</button> <span id="keyMsg"></span></p>
+    </div>
+  </details>
+
+  <details id="diagBox">
+    <summary>資料檢查</summary>
+    <div class="body">
+      <p>第一次使用時打開這裡截圖，可以確認抓到哪些偵測器、車道對應對不對。</p>
+      <div id="diagTable"></div>
+      <pre class="diag" id="diag">尚未讀取</pre>
+    </div>
+  </details>
+
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+/* ───────── 設定 ───────── */
+// 雪山隧道在國 5 上的大約里程（北口在坪林端、南口在頭城端），全長約 12.9 km。
+// 實際用哪些偵測器，以「資料檢查」裡列出來的為準；若偵測器里程超出這個範圍再調。
+const TUNNEL = { start: 15.2, end: 28.1 };
+const VFREE = 90;              // 隧道速限，區間測速
+const SAME_SEC = 20;           // 差不到這麼多秒就算「差不多」
+const REFRESH_MS = 90 * 1000;  // 自動更新間隔
+const AUTO_STOP_MS = 15 * 60 * 1000;
+// 提示範圍（用里程判斷）：南下＝出彭山隧道後到雪隧北口；北上＝頭城交流道到雪隧南口
+const ZONE = { S: [9.5, TUNNEL.start], N: [TUNNEL.end, 31.5] };
+const API = "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/";
+const AUTH = "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token";
+const PAGE = location.origin + location.pathname;
+const params = new URLSearchParams(location.search);
+const DEMO = params.has("demo");
+
+let dir = null, lastData = null, lastFetchAt = 0, openedAt = Date.now(), timer = null;
+let userMile = null, prevMile = null, spokenOnce = false;
+
+/* ───────── 小工具 ───────── */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
+  del(k){ try { localStorage.removeItem(k); } catch(e){} }
+};
+function fmtMinSec(min){
+  if (min == null || !isFinite(min)) return "—";
+  const s = Math.round(min * 60);
+  return Math.floor(s / 60) + "<small>分</small>" + String(s % 60).padStart(2, "0") + "<small>秒</small>";
+}
+function fmtDiff(sec){
+  sec = Math.round(Math.abs(sec));
+  if (sec < 60) return sec + " 秒";
+  const m = Math.floor(sec / 60), r = sec % 60;
+  return r ? m + " 分 " + r + " 秒" : m + " 分鐘";
+}
+function hhmm(d){ return d ? d.toLocaleTimeString("zh-TW", {hour:"2-digit", minute:"2-digit", hour12:false}) : "—"; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// "15K+380" → 15.38；也接受 VDID 裡的 "15.380"
+function parseMile(s){
+  if (s == null) return null;
+  s = String(s);
+  let m = s.match(/(\d+)\s*K\s*\+?\s*(\d+)?/i);
+  if (m) return +m[1] + (m[2] ? +m[2] / 1000 : 0);
+  m = s.match(/^\d+(\.\d+)?$/);
+  return m ? +s : null;
+}
+// VDID 例："VD-N5-S-15.380-M-LOOP"：第 2 段是道路、第 3 段方向、第 4 段里程
+function parseId(id){
+  const p = String(id).split("-");
+  return { road: p[1], dir: p[2], mile: parseMile(p[3]) };
+}
+
+/* ───────── TDX ───────── */
+async function token(){
+  const cid = store.get("st.cid"), sec = store.get("st.csec");
+  if (!cid || !sec) return null;
+  const cached = JSON.parse(store.get("st.tok") || "null");
+  if (cached && cached.exp > Date.now() + 60000) return cached.t;
+  const r = await fetch(AUTH, {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams({grant_type: "client_credentials", client_id: cid, client_secret: sec})
+  });
+  if (!r.ok) throw new Error("TDX 金鑰驗證失敗（" + r.status + "）");
+  const j = await r.json();
+  store.set("st.tok", JSON.stringify({t: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000}));
+  return j.access_token;
+}
+async function tdx(path, filter){
+  const q = new URLSearchParams({"$format": "JSON"});
+  if (filter) q.set("$filter", filter);
+  const t = await token();
+  const r = await fetch(API + path + "?" + q.toString(), {
+    headers: t ? {Authorization: "Bearer " + t} : {}, cache: "no-store"
+  });
+  if (r.status === 429) throw new Error("今天的免費查詢次數用完了（TDX 限制每天 50 次）。可到「設定」填免費金鑰。");
+  if (r.status === 401 || r.status === 403) throw new Error("TDX 拒絕查詢（" + r.status + "）。可到「設定」填免費金鑰。");
+  if (!r.ok) throw new Error("TDX 回應 " + r.status);
+  return r.json();
+}
+
+// 偵測器位置（給定位用）一週抓一次
+async function vdStatic(){
+  const c = JSON.parse(store.get("st.vd") || "null");
+  if (c && c.at > Date.now() - 7 * 864e5) return c.list;
+  const j = await tdx("VD/Freeway", "contains(VDID,'-N5-')");
+  const list = (j.VDs || []).map(v => ({
+    id: v.VDID, lat: +v.PositionLat, lon: +v.PositionLon,
+    mile: parseMile(v.LocationMile) ?? parseId(v.VDID).mile,
+    dir: (v.DetectionLinks && v.DetectionLinks[0] && v.DetectionLinks[0].RoadDirection) || parseId(v.VDID).dir
+  })).filter(v => isFinite(v.lat) && v.mile != null);
+  store.set("st.vd", JSON.stringify({at: Date.now(), list}));
+  return list;
+}
+
+/* ───────── 計算 ───────── */
+// 一個偵測器、一條車道 → {speed, slowSpeed, volume, big}
+function laneReading(ln){
+  const sp = +ln.Speed, vehs = ln.Vehicles || [];
+  let vol = 0, big = 0, slow = null;
+  for (const v of vehs){
+    const n = +v.Volume || 0, s = +v.Speed;
+    vol += n;
+    if (v.VehicleType && v.VehicleType !== "S") big += n;
+    if (n > 0 && s > 0 && s < 200) slow = slow == null ? s : Math.min(slow, s);
+  }
+  if (!vehs.length && sp > 0) vol = null;   // 沒有分車種資料時不知道車流量
+  const valid = sp >= 0 && sp < 200;
+  return { speed: valid && sp > 0 ? sp : (valid ? 0 : null), slow, vol, big, occ: +ln.Occupancy };
+}
+
+// 把 VDLive 整理成：dir → [{mile, lanes:{inner, outer}, id, time}]
+function organize(live){
+  const out = {S: [], N: []}, approach = {S: [], N: []};
+  const raw = [];
+  for (const v of live.VDLives || []){
+    const id = parseId(v.VDID);
+    if (id.road !== "N5" || (id.dir !== "S" && id.dir !== "N") || id.mile == null) continue;
+    const lanes = [];
+    for (const lf of v.LinkFlows || []) for (const ln of lf.Lanes || []){
+      if (ln.LaneType != null && +ln.LaneType !== 1) continue;   // 只要一般車道
+      lanes.push({id: +ln.LaneID, r: laneReading(ln)});
+    }
+    lanes.sort((a, b) => a.id - b.id);
+    const ok = +v.Status === 0 || v.Status == null;
+    const rec = {
+      id: v.VDID, mile: id.mile, ok, time: v.DataCollectTime,
+      inner: lanes.length ? lanes[0].r : null,                 // LaneID 0 ＝ 最內側
+      outer: lanes.length > 1 ? lanes[lanes.length - 1].r : null,
+      nl: lanes.length
+    };
+    raw.push(rec);
+    const inTunnel = id.mile >= TUNNEL.start - 0.15 && id.mile <= TUNNEL.end + 0.15;
+    if (inTunnel) out[id.dir].push(rec);
+    else if (id.dir === "S" ? id.mile >= TUNNEL.start - 3 && id.mile < TUNNEL.start
+                            : id.mile > TUNNEL.end && id.mile <= TUNNEL.end + 3) approach[id.dir].push(rec);
+  }
+  // 依行駛方向排：南下里程遞增、北上遞減；x ＝ 距入口幾公里
+  for (const d of ["S", "N"]){
+    const sorter = d === "S" ? (a, b) => a.mile - b.mile : (a, b) => b.mile - a.mile;
+    out[d].sort(sorter); approach[d].sort(sorter);
+    for (const r of out[d]) r.x = d === "S" ? r.mile - TUNNEL.start : TUNNEL.end - r.mile;
+  }
+  return {tunnel: out, approach, raw};
+}
+
+// 一條車道的預估通過時間（分鐘），從你進隧道那一刻算起
+//   leadMin：你還要多久才到入口（這段時間前方的車也在往前走）
+function laneTime(points, key, leadMin){
+  const L = TUNNEL.end - TUNNEL.start;
+  const pts = points.filter(p => p.ok && p[key] && p[key].speed != null);
+  if (pts.length < 2) return null;
+  // ①分段加總：每個偵測器管到前後兩點的中點
+  let seg = 0;
+  for (let i = 0; i < pts.length; i++){
+    const a = i === 0 ? 0 : (pts[i - 1].x + pts[i].x) / 2;
+    const b = i === pts.length - 1 ? L : (pts[i].x + pts[i + 1].x) / 2;
+    const r = pts[i][key];
+    const v = r.speed > 0 ? Math.min(r.speed, VFREE) : VFREE;   // 0＝這一分鐘沒車
+    seg += Math.max(0, b - a) / v * 60;
+  }
+  // ②前方慢車：它開到出口的時間就是你的下限
+  let platoon = L / VFREE * 60, worst = null;
+  for (const p of pts){
+    const r = p[key];
+    const s = r.slow != null ? Math.min(r.slow, r.speed || r.slow) : r.speed;
+    if (!(s > 0) || s >= VFREE - 5) continue;
+    const t = (L - p.x) / s * 60 - leadMin;
+    if (t > platoon){ platoon = t; }
+    if (s < VFREE - 15 && (!worst || t > worst.t)) worst = {t, x: p.x, s};
+  }
+  const minSpeed = Math.min(...pts.map(p => p[key].speed > 0 ? p[key].speed : VFREE));
+  const big = pts.reduce((n, p) => n + (p[key].big || 0), 0);
+  return {min: Math.max(seg, platoon), seg, platoon, slow: worst, minSpeed, big, n: pts.length};
+}
+
+/* ───────── 顯示板（慢速車車牌） ───────── */
+function cmsAlerts(cms, d){
+  const out = [];
+  const plate = /[A-Z0-9]{2,4}-[A-Z0-9]{2,4}/;
+  for (const c of (cms && cms.CMSLives) || []){
+    const id = parseId(c.CMSID);
+    if (id.road && id.road !== "N5") continue;
+    if (id.dir && (id.dir === "S" || id.dir === "N") && id.dir !== d) continue;
+    const texts = [];
+    (function walk(o){
+      if (o == null) return;
+      if (typeof o === "string") { if (o.trim()) texts.push(o.trim()); return; }
+      if (Array.isArray(o)) return o.forEach(walk);
+      if (typeof o === "object") for (const k in o) if (!/ID|Time|Code|Status/i.test(k)) walk(o[k]);
+    })(c.Messages || c.Message || c);
+    const t = texts.join(" ");
+    if (!plate.test(t) && !/慢速|速度過慢|請加速|請勿慢/.test(t)) continue;
+    const lane = /內(側)?車道/.test(t) ? "inner" : /外(側)?車道/.test(t) ? "outer" : null;
+    out.push({mile: id.mile, text: t, lane});
+  }
+  return out;
+}
+
+/* ───────── 畫面 ───────── */
+function speedColor(r){
+  if (!r || r.speed == null) return "var(--s-none)";
+  const s = r.speed;
+  if (s === 0) return "var(--s-none)";
+  return s >= 80 ? "var(--s-good)" : s >= 60 ? "var(--s-warn)" : s >= 40 ? "var(--s-serious)" : "var(--s-crit)";
+}
+
+function render(){
+  if (!lastData) return;
+  const {org, cms, fetchedAt, srcTime} = lastData;
+  const pts = org.tunnel[dir];
+  const lead = leadMinutes();
+  const inner = laneTime(pts, "inner", lead), outer = laneTime(pts, "outer", lead);
+  const alerts = cmsAlerts(cms, dir);
+  // 顯示板點名的車道：視為前方有一台 65 km/h 的慢車
+  for (const a of alerts){
+    if (!a.lane || a.mile == null) continue;
+    const res = a.lane === "inner" ? inner : outer;
+    if (!res) continue;
+    const x = dir === "S" ? a.mile - TUNNEL.start : TUNNEL.end - a.mile;
+    const t = (TUNNEL.end - TUNNEL.start - x) / 65 * 60 - lead;
+    if (t > res.min) res.min = t;
+    res.cms = true;
+  }
+
+  const hero = $("hero");
+  hero.className = "hero";
+  let say = "";
+  if (!inner || !outer){
+    hero.innerHTML = `<div class="lead">${dir === "S" ? "南下" : "北上"}</div><div class="verdict">資料不足</div>
+      <div class="why">隧道內偵測器回報不夠，這次沒辦法比較。可以打開最下面的「資料檢查」看看。</div>`;
+    say = "資料不足，沒辦法比較";
+  } else {
+    const diffSec = (outer.min - inner.min) * 60;
+    const best = Math.abs(diffSec) < SAME_SEC ? null : diffSec > 0 ? "inner" : "outer";
+    const name = best === "inner" ? "內車道" : "外車道";
+    if (best){
+      hero.classList.add("go");
+      hero.innerHTML = `<div class="lead">${dir === "S" ? "南下 往宜蘭" : "北上 往台北"}，建議走</div>
+        <div class="verdict">${name}</div>
+        <div class="why">預估快 <b class="num">${fmtDiff(diffSec)}</b></div>`;
+      say = `建議走${name}，大約快${fmtDiff(diffSec)}`;
+    } else {
+      hero.innerHTML = `<div class="lead">${dir === "S" ? "南下 往宜蘭" : "北上 往台北"}</div>
+        <div class="verdict">兩條差不多</div>
+        <div class="why">預估相差 <b class="num">${fmtDiff(diffSec)}</b> 以內，選哪條都可以</div>`;
+      say = "兩條車道差不多，選哪條都可以";
+    }
+    if (userMile != null && lead > 0)
+      hero.innerHTML += `<div class="where">依你目前位置（距入口約 ${dirDist().toFixed(1)} 公里）推算</div>`;
+    lastData.best = best;
+  }
+  lastData.say = say;
+
+  // 車道卡
+  const card = (key, label, res) => {
+    const best = lastData.best === key;
+    if (!res) return `<div class="lane"><div class="name"><i style="background:var(--${key})"></i>${label}</div>
+      <div class="t">—</div><div class="meta">沒有資料</div></div>`;
+    let meta = `最慢 <b class="num">${Math.round(res.minSpeed)}</b> km/h`;
+    if (res.big) meta += `<br>大型車 <b class="num">${res.big}</b> 輛／分`;
+    let badge = "";
+    if (res.cms) badge = `<span class="badge">⚠️ 顯示板點名慢速車</span>`;
+    else if (res.slow) badge = `<span class="badge">🐢 距入口 ${res.slow.x.toFixed(1)} km 有 ${Math.round(res.slow.s)} km/h 慢車</span>`;
+    return `<div class="lane${best ? " best" : ""}">
+      <div class="name"><i style="background:var(--${key})"></i>${label}${best ? " ✓" : ""}</div>
+      <div class="t num">${fmtMinSec(res.min)}</div>
+      <div class="meta">${meta}</div>${badge}</div>`;
+  };
+  $("lanes").innerHTML = card("inner", "內車道", inner) + card("outer", "外車道", outer);
+
+  // 顯示板
+  $("alerts").innerHTML = alerts.map(a =>
+    `<div class="a">⚠️ <b>隧道顯示板</b>${a.mile != null ? `（${a.mile.toFixed(1)}K）` : ""}：${esc(a.text)}</div>`).join("");
+
+  // 隧道示意
+  const strip = $("strip");
+  if (pts.length){
+    $("stripCard").hidden = false;
+    $("stripDir").textContent = dir === "S" ? "坪林 → 頭城" : "頭城 → 坪林";
+    const row = (key, label) => `<div class="lab"><i style="background:var(--${key})"></i>${label}</div>
+      <div class="bar">${pts.map(p => {
+        const r = p[key];
+        const slow = r && r.slow != null && r.slow < VFREE - 15;
+        const txt = `${p.mile.toFixed(1)}K（距入口 ${p.x.toFixed(1)} km）${label}：` +
+          (!p.ok || !r || r.speed == null ? "沒有資料" : r.speed === 0 ? "這一分鐘沒車" :
+           `${Math.round(r.speed)} km/h` + (r.vol != null ? `，${r.vol} 輛` : "") +
+           (slow ? `，最慢車種 ${Math.round(r.slow)} km/h` : ""));
+        return `<div class="${slow ? "slow" : ""}" style="background:${p.ok ? speedColor(r) : "var(--s-none)"}" data-tip="${esc(txt)}" aria-label="${esc(txt)}"></div>`;
+      }).join("")}</div>`;
+    strip.innerHTML = row("inner", "內") + row("outer", "外") +
+      `<div class="ends"><span>入口 ${dir === "S" ? "坪林" : "頭城"}</span><span>出口 ${dir === "S" ? "頭城" : "坪林"}</span></div>`;
+  } else $("stripCard").hidden = true;
+
+  renderStamp();
+  renderDiag(inner, outer, alerts);
+  if (params.get("speak") === "1" && !spokenOnce){ spokenOnce = true; speak(false); }
+}
+
+function renderStamp(){
+  if (!lastData) return;
+  const src = lastData.srcTime ? new Date(lastData.srcTime) : null;
+  const age = src ? (Date.now() - src) / 60000 : null;
+  const st = $("status");
+  st.classList.toggle("stale", age != null && age > 6);
+  let t = `路況 ${hhmm(src)}`;
+  if (age != null) t += age < 1 ? "（剛剛）" : `（${Math.round(age)} 分鐘前）`;
+  if (!timer) t += "・自動更新已停，按「更新」";
+  $("stamp").textContent = t;
+}
+
+function renderDiag(inner, outer, alerts){
+  const {org, cms} = lastData;
+  const rows = org.tunnel[dir].map(p => {
+    const f = r => !r ? "—" : r.speed == null ? "×" : `${Math.round(r.speed)}${r.slow != null && r.slow < r.speed ? "/" + Math.round(r.slow) : ""}`;
+    return `<tr><td>${esc(p.id)}</td><td>${p.mile.toFixed(2)}</td><td>${p.nl}</td><td>${f(p.inner)}</td><td>${f(p.outer)}</td><td>${p.ok ? "" : "異常"}</td></tr>`;
+  }).join("");
+  $("diagTable").innerHTML = `<table class="tbl"><tr><th>偵測器</th><th>里程</th><th>車道數</th><th>內</th><th>外</th><th></th></tr>${rows}</table>`;
+  const lines = [];
+  lines.push(`方向 ${dir}；隧道範圍 ${TUNNEL.start}–${TUNNEL.end}K；隧道內偵測器 ${org.tunnel[dir].length} 組`);
+  lines.push(`入口前偵測器：${org.approach[dir].map(p => p.id).join("、") || "無"}`);
+  lines.push(`國5 全部偵測器（${org.raw.length}）：` + org.raw.map(p => `${p.id}(${p.nl}道)`).join(" "));
+  lines.push(`內車道：${inner ? JSON.stringify({min: +inner.min.toFixed(2), seg: +inner.seg.toFixed(2), platoon: +inner.platoon.toFixed(2)}) : "—"}`);
+  lines.push(`外車道：${outer ? JSON.stringify({min: +outer.min.toFixed(2), seg: +outer.seg.toFixed(2), platoon: +outer.platoon.toFixed(2)}) : "—"}`);
+  lines.push(`定位：${userMile != null ? userMile.toFixed(2) + "K" : "未取得"}；距入口 ${leadMinutes().toFixed(1)} 分`);
+  const cl = (cms && cms.CMSLives) || [];
+  lines.push(`國5 顯示板 ${cl.length} 面；符合慢速車的訊息 ${alerts.length} 則`);
+  for (const c of cl.slice(0, 40)) lines.push("  " + JSON.stringify(c).slice(0, 220));
+  if (org.raw[0]) lines.push("範例原始資料：" + JSON.stringify(lastData.sample).slice(0, 1200));
+  $("diag").textContent = lines.join("\n");
+}
+
+/* ───────── 定位 ───────── */
+function dirDist(){
+  if (userMile == null) return 0;
+  return Math.max(0, dir === "S" ? TUNNEL.start - userMile : userMile - TUNNEL.end);
+}
+function leadMinutes(){ return dirDist() / 80 * 60; }
+
+async function locate(){
+  if (DEMO || !navigator.geolocation) return;
+  let vds;
+  try { vds = await vdStatic(); } catch(e){ return; }
+  navigator.geolocation.watchPosition(pos => {
+    const {latitude: la, longitude: lo} = pos.coords;
+    let best = null, bd = Infinity;
+    for (const v of vds){
+      const d = (v.lat - la) ** 2 + ((v.lon - lo) * Math.cos(la * Math.PI / 180)) ** 2;
+      if (d < bd){ bd = d; best = v; }
+    }
+    if (!best || Math.sqrt(bd) * 111 > 2){ userMile = null; return; }   // 不在國 5 上
+    prevMile = userMile; userMile = best.mile;
+    // 在提示範圍內就自動選方向；有移動時用里程增減判斷
+    if (!params.get("dir") && !store.get("st.dirManual")){
+      let d = null;
+      if (prevMile != null && Math.abs(userMile - prevMile) > 0.3) d = userMile > prevMile ? "S" : "N";
+      else if (userMile >= ZONE.S[0] && userMile <= ZONE.S[1]) d = "S";
+      else if (userMile >= ZONE.N[0] && userMile <= ZONE.N[1]) d = "N";
+      if (d && d !== dir) setDir(d, false);
+    }
+    render();
+  }, () => {}, {enableHighAccuracy: true, maximumAge: 15000, timeout: 20000});
+}
+
+/* ───────── 語音 ───────── */
+function speak(user){
+  if (!lastData || !lastData.say || !("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(lastData.say);
+  u.lang = "zh-TW"; u.rate = 1.0;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+
+/* ───────── 流程 ───────── */
+function setDir(d, manual){
+  dir = d;
+  $("dS").setAttribute("aria-pressed", d === "S");
+  $("dN").setAttribute("aria-pressed", d === "N");
+  store.set("st.dir", d);
+  if (manual){ store.set("st.dirManual", "1"); setTimeout(() => store.del("st.dirManual"), 30 * 60 * 1000); }
+  render();
+}
+
+async function refresh(manual){
+  if (manual){ openedAt = Date.now(); schedule(); }
+  try {
+    let live, cms;
+    if (DEMO){ ({live, cms} = demoData()); }
+    else {
+      const [l, c] = await Promise.allSettled([
+        tdx("Live/VD/Freeway", "contains(VDID,'-N5-')"),
+        tdx("Live/CMS/Freeway", "contains(CMSID,'N5')")
+      ]);
+      if (l.status === "rejected") throw l.reason;
+      live = l.value; cms = c.status === "fulfilled" ? c.value : null;
+    }
+    const org = organize(live);
+    const sample = (live.VDLives || []).find(v => parseId(v.VDID).road === "N5");
+    lastData = {org, cms, fetchedAt: Date.now(), srcTime: live.SrcUpdateTime || live.UpdateTime || (sample && sample.DataCollectTime), sample};
+    lastFetchAt = Date.now();
+    render();
+  } catch(e){
+    const hero = $("hero");
+    if (!lastData){
+      hero.className = "hero";
+      hero.innerHTML = `<div class="lead">讀不到路況</div><div class="verdict">—</div><div class="why err">${esc(e.message || e)}</div>`;
+    } else {
+      $("alerts").insertAdjacentHTML("afterbegin", `<div class="a">更新失敗：${esc(e.message || e)}（畫面是上一次的資料）</div>`);
+    }
+    $("diag").textContent = "錯誤：" + (e.stack || e);
+  }
+}
+
+function schedule(){
+  clearInterval(timer);
+  timer = setInterval(() => {
+    if (document.hidden) return;
+    if (Date.now() - openedAt > AUTO_STOP_MS){ clearInterval(timer); timer = null; renderStamp(); return; }
+    refresh(false);
+  }, REFRESH_MS);
+}
+
+function saveKey(){
+  const cid = $("cid").value.trim(), sec = $("csec").value.trim();
+  if (cid && sec){ store.set("st.cid", cid); store.set("st.csec", sec); }
+  else { store.del("st.cid"); store.del("st.csec"); }
+  store.del("st.tok");
+  $("keyMsg").textContent = cid && sec ? "已儲存" : "已清除，改用免金鑰";
+  refresh(true);
+}
+
+/* ───────── 示範資料（?demo） ───────── */
+function demoData(){
+  const now = new Date();
+  const VDLives = [];
+  const miles = [14.2, 14.9, 15.6, 16.8, 18.1, 19.4, 20.6, 21.9, 23.2, 24.5, 25.8, 27.0, 27.9, 28.6, 29.5];
+  for (const d of ["S", "N"]) for (const m of miles){
+    const x = d === "S" ? m - TUNNEL.start : TUNNEL.end - m;
+    const lane = (id, base) => {
+      let sp = base, slow = null;
+      // 南下：外車道離入口 1–3 km 有台 62 km/h 的車；北上：內車道在 26K 附近變慢
+      if (d === "S" && id === 1 && x > 0.8 && x < 3.2){ sp = 66; slow = 62; }
+      if (d === "N" && id === 0 && m > 25 && m < 27.5){ sp = 71; slow = 68; }
+      const vS = {VehicleType: "S", Volume: 14, Speed: sp};
+      const vL = {VehicleType: "L", Volume: slow ? 1 : 0, Speed: slow || 0};
+      return {LaneID: id, LaneType: 1, Speed: sp, Occupancy: 8, Vehicles: [vS, vL, {VehicleType: "T", Volume: 0, Speed: 0}]};
+    };
+    VDLives.push({VDID: `VD-N5-${d}-${m.toFixed(3)}-M-LOOP`, Status: 0, DataCollectTime: now.toISOString(),
+      LinkFlows: [{LinkID: "demo", Lanes: [lane(0, 86), lane(1, 83)]}]});
+  }
+  const cms = {CMSLives: [{CMSID: "CMS-N5-N-26.6-M", Messages: [{Text: "內車道 ABC-1234 請加速"}]}]};
+  return {live: {SrcUpdateTime: now.toISOString(), VDLives}, cms};
+}
+
+/* ───────── 啟動 ───────── */
+(function init(){
+  $("urlN").textContent = PAGE + "?dir=N&speak=1";
+  $("urlS").textContent = PAGE + "?dir=S&speak=1";
+  $("cid").value = store.get("st.cid") || "";
+  $("csec").value = store.get("st.csec") || "";
+  if (DEMO) $("demoFlag").hidden = false;
+  const d = params.get("dir");
+  setDir(d === "N" || d === "S" ? d : (store.get("st.dir") || "S"), false);
+  schedule();
+  refresh(false);
+  locate();
+  setInterval(renderStamp, 20000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && Date.now() - lastFetchAt > 60000){ openedAt = Date.now(); schedule(); refresh(false); }
+  });
+  // 色塊的提示
+  const tip = $("tip");
+  document.addEventListener("pointerover", e => {
+    const t = e.target.closest && e.target.closest("[data-tip]");
+    if (!t){ tip.style.display = "none"; return; }
+    tip.textContent = t.dataset.tip; tip.style.display = "block";
+    const r = t.getBoundingClientRect();
+    const w = tip.offsetWidth;
+    tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px";
+    tip.style.top = (r.top - tip.offsetHeight - 6) + "px";
+  });
+})();
+</script>
+</body>
+</html>

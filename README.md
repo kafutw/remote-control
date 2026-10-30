@@ -262,3 +262,16 @@ node tools/check-chinese-bank.mjs /tmp/moe.json      # 核對
 其餘（歷史紀錄、每天練幾輪、最熟／最需加強的字、用眼提醒）跟 ABC 字母大考驗一模一樣。有鍵盤的話按 **1～4** 可以直接選選項。
 
 畫面最下面會印**版本日期**；開起來的時候會不吃快取重抓一次自己比對版本，有新版就跳一條綠色的「點一下更新」出來 —— 加到主畫面的 iPad 很容易把舊的 HTML 留著不放，這樣就不用猜到底更新到了沒有。
+
+---
+
+## 🚇 雪隧車道
+
+進雪山隧道前，看內車道、外車道哪條比較快 → [`snowtunnel.html`](https://kafutw.github.io/remote-control/snowtunnel.html)（手機加到主畫面）。
+
+- 資料：交通部 TDX 的高公局車輛偵測器（VD），每分鐘、分車道的車速與車種；加上隧道顯示板的慢速車訊息。手機直接抓 TDX，不經過任何伺服器。
+- 算法：雪隧禁止變換車道，所以每條車道的預估時間 = max（照各段車速一段段加總，前方每台慢車以它的速度開到出口的時間）。越靠近入口的慢車影響越大。差不到 20 秒顯示「差不多」。
+- 自動跳出：iPhone 捷徑 →「自動化」→「抵達」頭城交流道（北上）／坪林交流道（南下）→ 打開 `snowtunnel.html?dir=N&speak=1`（或 `dir=S`）。頁面內「快到隧道時自動跳出來」有步驟。
+- 免金鑰每天 50 次（以 IP 計）；不夠用就到 tdx.transportdata.tw 免費註冊，把 Client Id／Secret 填在頁面的「設定」。
+- 隧道範圍寫在頁面最上面的 `TUNNEL`（約 15.2K–28.1K），第一次用時打開頁面最下面的「資料檢查」確認偵測器里程與車道數。
+- `?demo` 用假資料看畫面。`.github/workflows/snowtunnel.yml` 是手動探測資料格式用的（需要 repo secrets `TDX_CLIENT_ID`、`TDX_CLIENT_SECRET`）。

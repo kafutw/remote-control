@@ -1,0 +1,16 @@
+{
+  "name": "雪隧車道",
+  "short_name": "雪隧車道",
+  "description": "進雪山隧道前，看內外車道哪條比較快",
+  "start_url": "./snowtunnel.html",
+  "scope": "./snowtunnel.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121418",
+  "theme_color": "#121418",
+  "lang": "zh-Hant",
+  "icons": [
+    {"src": "icons/snowtunnel-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/snowtunnel-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

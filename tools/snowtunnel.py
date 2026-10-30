@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """雪山隧道車道選擇：探測交通部 TDX 的國 5 VD（車輛偵測器）資料。
 
-高公局 tisvcloud 從 GitHub runner（美國機房）連不上；TDX 連得上、免金鑰、
-回 Access-Control-Allow-Origin: *，所以頁面可以直接從手機抓 TDX。
-這支只用來印出格式，給寫頁面時對照。
+高公局 tisvcloud 從 GitHub runner（美國機房）連不上；TDX 連得上，回
+Access-Control-Allow-Origin: *。TDX 的免金鑰額度只給瀏覽器（每 IP 每天 50 次），
+所以 snowtunnel.html 從手機直接抓；這支在 runner 上跑，要用會員金鑰：
+repo secrets 設 TDX_CLIENT_ID、TDX_CLIENT_SECRET（tdx.transportdata.tw 免費註冊）。
+這支只用來印出格式，給調整頁面時對照。
 """
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -13,13 +16,27 @@ import urllib.parse
 import urllib.request
 
 TDX = "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/"
+AUTH = "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token"
+TOKEN = None
+
+
+def login():
+    cid, sec = os.environ.get("TDX_CLIENT_ID"), os.environ.get("TDX_CLIENT_SECRET")
+    if not cid or not sec:
+        sys.exit("沒有 TDX_CLIENT_ID / TDX_CLIENT_SECRET：到 repo 的 Settings → Secrets and variables → Actions 加上")
+    body = urllib.parse.urlencode({"grant_type": "client_credentials", "client_id": cid,
+                                   "client_secret": sec}).encode()
+    req = urllib.request.Request(AUTH, data=body,
+                                 headers={"Content-Type": "application/x-www-form-urlencoded"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.load(r)["access_token"]
 
 
 def get(path, **params):
     params.setdefault("$format", "JSON")
     url = TDX + path + "?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote, safe="$,'()")
     t0 = time.time()
-    req = urllib.request.Request(url, headers={"Origin": "https://kafutw.github.io"})
+    req = urllib.request.Request(url, headers={"Authorization": "Bearer " + TOKEN})
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
             body = r.read()
@@ -50,6 +67,8 @@ def lanes_of(v):
 
 
 def probe():
+    global TOKEN
+    TOKEN = login()
     vd = get("VD/Freeway", **{"$filter": "contains(VDID,'-N5-')"})
     vds = items(vd, "VDs")
     print("國5 VD 數量:", len(vds))
