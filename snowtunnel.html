@@ -208,7 +208,7 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
         <li>以速限 90 km/h、遇到慢的路段就照該段車速，一段一段加總。</li>
         <li><b>前方慢車（🐢）</b>：某處偵測到比速限慢的車，就假設它照那個速度開到出口；你在同一條車道上不可能比它早出來。所以<b>越靠近入口的慢車影響越大</b>，快到出口的慢車你追不上，影響很小。</li>
       </ol>
-      <p>有定位時，會把你開到入口所需的時間也算進去：這段時間裡，前方的慢車也在往前走。</p>
+      <p>有定位時，會把你開到入口所需的時間也算進去：這段時間裡，前方的慢車也在往前走。資料本身的延遲也一樣算進去：高公局的資料經過交通部 TDX 發布，通常比現在晚 3–5 分鐘，這幾分鐘慢車也往前開了，預估時會把它推前。</p>
       <p>車道下方的「約 XX km/h」是<b>預估你走這條的時速</b>（隧道長 ÷ 預估時間），已經算進跟在慢車後面，所以會比偵測器的平均低。高公局偵測器各點的直接平均列在「隧道內各段車速」的標題下。</p>
       <p>畫面上的 🐢 是實際偵測到比速限慢 15 km/h 以上的位置，旁邊數字是那裡<b>最慢車種</b>（常是大客車、貨車）的時速，越小隻代表越深入隧道。</p>
       <p>兩條車道預估相差不到 20 秒時顯示「差不多」，選哪條都可以。</p>
@@ -560,7 +560,7 @@ function render(){
   if (!lastData) return;
   const {org, cms, fetchedAt, srcTime} = lastData;
   const pts = org.tunnel[dir];
-  const lead = leadMinutes();
+  const lead = leadMinutes() + dataAgeMin();
   const inner = laneTime(pts, "inner", lead), outer = laneTime(pts, "outer", lead);
   const alerts = cmsAlerts(cms, dir);
   // 顯示板點名的車道：視為前方有一台 65 km/h 的慢車
@@ -601,7 +601,7 @@ function render(){
       r.cms ? `🐢 ${label}：顯示板點名慢速車` :
       r.slow ? `🐢 ${label}：距入口 ${r.slow.x.toFixed(1)} km 有 ${Math.round(r.slow.s)} km/h 的車` : "").filter(Boolean);
     if (slowTxt.length) hero.innerHTML += `<div class="slow">${slowTxt.join("<br>")}</div>`;
-    if (userMile != null && lead > 0)
+    if (userMile != null && dirDist() > 0)
       hero.innerHTML += `<div class="where">依你目前位置（距入口約 ${dirDist().toFixed(1)} 公里）推算</div>`;
   }
   lastData.best = best;
@@ -638,14 +638,20 @@ function render(){
   if (params.get("speak") === "1" && !spokenOnce){ spokenOnce = true; speak(false); }
 }
 
-// 路況時間＝高公局偵測器資料的時間（不是手機抓的時間）；超過 3 分鐘轉黃、6 分鐘轉紅
+// 路況時間＝高公局偵測器資料的時間（不是手機抓的時間）。
+// 高公局→TDX 本身就有 3–5 分鐘延遲，所以 8 分鐘內算正常；8–12 轉黃、超過 12 轉紅
+const STALE_WARN = 8, STALE_OLD = 12;
+function dataAgeMin(){
+  if (!lastData || !lastData.srcTime) return 0;
+  return Math.max(0, (Date.now() - new Date(lastData.srcTime)) / 60000);
+}
 function renderStamp(){
   const st = $("status");
   if (!lastData){ return; }
   const src = lastData.srcTime ? new Date(lastData.srcTime) : null;
   const age = src ? (Date.now() - src) / 60000 : null;
-  st.classList.toggle("warn", age != null && age >= 3 && age < 6);
-  st.classList.toggle("old", age != null && age >= 6);
+  st.classList.toggle("warn", age != null && age >= STALE_WARN && age < STALE_OLD);
+  st.classList.toggle("old", age != null && age >= STALE_OLD);
   let main = `路況 ${hhmm(src)}`;
   if (age != null) main += age < 1 ? "・剛剛" : `・${Math.floor(age)} 分鐘前`;
   $("stampMain").textContent = main;
@@ -653,10 +659,10 @@ function renderStamp(){
   if (loading) sub = "更新中…";
   else {
     const left = Math.max(0, Math.round((lastFetchAt + REFRESH_MS - Date.now()) / 1000));
-    sub = `每 90 秒自動更新・${left} 秒後`;
+    sub = `${hhmm(new Date(lastFetchAt))} 抓取・${left} 秒後再抓`;
   }
   if (keyNote && keyNote !== "金鑰") sub = keyNote;
-  if (age != null && age >= 6) sub = "資料可能過時・" + sub;
+  if (age != null && age >= STALE_OLD) sub = "資料源延遲過久・" + sub;
   $("stampSub").textContent = sub;
 }
 
@@ -755,7 +761,11 @@ async function refresh(manual){
     }
     const org = organize(live);
     const sample = (live.VDLives || []).find(v => parseId(v.VDID).road === "N5");
-    lastData = {org, cms, fetchedAt: Date.now(), srcTime: live.SrcUpdateTime || live.UpdateTime || (sample && sample.DataCollectTime), sample};
+    // 每個偵測器各有資料時間，取國 5 最新的那個；比整批的 SrcUpdateTime 新就用它
+    let newest = live.SrcUpdateTime || live.UpdateTime || null;
+    for (const v of live.VDLives || [])
+      if (v.DataCollectTime && parseId(v.VDID).road === "N5" && (!newest || new Date(v.DataCollectTime) > new Date(newest))) newest = v.DataCollectTime;
+    lastData = {org, cms, fetchedAt: Date.now(), srcTime: newest, sample};
     lastFetchAt = Date.now();
     render();
   } catch(e){
