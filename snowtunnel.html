@@ -193,6 +193,7 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
         <li><b>前方慢車（🐢）</b>：某處偵測到比速限慢的車，就假設它照那個速度開到出口；你在同一條車道上不可能比它早出來。所以<b>越靠近入口的慢車影響越大</b>，快到出口的慢車你追不上，影響很小。</li>
       </ol>
       <p>有定位時，會把你開到入口所需的時間也算進去：這段時間裡，前方的慢車也在往前走。</p>
+      <p>車道下方的「平均」是隧道內各偵測器這一分鐘量到的車速平均（這一分鐘沒車經過的偵測器不算）。畫面上的 🐢 是實際偵測到比速限慢 15 km/h 以上的位置，旁邊數字是它的時速，越小隻代表越深入隧道。</p>
       <p>兩條車道預估相差不到 20 秒時顯示「差不多」，選哪條都可以。</p>
       <p><b>看不到的部分</b>：跟你差不多同時進隧道的車會選哪一條、偵測器之間的個別慢車，以及資料約有 1–2 分鐘的延遲。所以這是「目前最好的猜測」，不是保證。</p>
       <p>高公局在隧道內設有<b>慢速車示警系統</b>（在顯示板上打出慢速車車牌）。如果 TDX 的顯示板訊息裡出現車牌或「慢速」，會列在上方的黃色提示裡。</p>
@@ -400,17 +401,23 @@ function laneTime(points, key, leadMin){
   }
   // ②前方慢車：它開到出口的時間就是你的下限
   let platoon = L / VFREE * 60, worst = null;
+  const slows = [];
   for (const p of pts){
     const r = p[key];
     const s = r.slow != null ? Math.min(r.slow, r.speed || r.slow) : r.speed;
     if (!(s > 0) || s >= VFREE - 5) continue;
     const t = (L - p.x) / s * 60 - leadMin;
     if (t > platoon){ platoon = t; }
-    if (s < VFREE - 15 && (!worst || t > worst.t)) worst = {t, x: p.x, s};
+    if (s < VFREE - 15){
+      slows.push({x: p.x, s});
+      if (!worst || t > worst.t) worst = {t, x: p.x, s};
+    }
   }
   const minSpeed = Math.min(...pts.map(p => p[key].speed > 0 ? p[key].speed : VFREE));
+  const moving = pts.map(p => p[key].speed).filter(v => v > 0);   // 這一分鐘有車經過的偵測器
+  const avgSpeed = moving.length ? moving.reduce((a, b) => a + b, 0) / moving.length : null;
   const big = pts.reduce((n, p) => n + (p[key].big || 0), 0);
-  return {min: Math.max(seg, platoon), seg, platoon, slow: worst, minSpeed, big, n: pts.length};
+  return {min: Math.max(seg, platoon), seg, platoon, slow: worst, slows, minSpeed, avgSpeed, big, n: pts.length};
 }
 
 /* ───────── 顯示板（慢速車車牌） ───────── */
@@ -453,6 +460,33 @@ function plainMinSec(r){
   const s = Math.round(r.min * 60);
   return Math.floor(s / 60) + "分" + String(s % 60).padStart(2, "0") + "秒";
 }
+// 車道中線在畫面上的 x（y 越小越深入隧道）
+function laneX(k, y){
+  const t = (380 - y) / 158;
+  return k === "inner" ? (6 + 177 + t * (162 + 178.5 - 6 - 177)) / 2
+                       : (183 + 354 + t * (181.5 + 198 - 183 - 354)) / 2;
+}
+// 實際偵測到的慢車：照距入口的位置畫在該車道上，越遠越小；
+// 比較慢的那條如果沒有偵測到具體的慢車，就在洞口放一隻代表
+function turtles(res, slowLane){
+  const L = TUNNEL.end - TUNNEL.start, out = [];
+  for (const k of ["inner", "outer"]){
+    // 從最慢的開始挑；2 公里內已經有一隻就不再疊上去，最多三隻
+    const list = [];
+    for (const c of ((res[k] && res[k].slows) || []).slice().sort((a, b) => (a.s ?? 65) - (b.s ?? 65)))
+      if (list.length < 3 && list.every(o => Math.abs(o.x - c.x) >= 2)) list.push(c);
+    for (const c of list){
+      const f = Math.max(0, Math.min(1, c.x / L));
+      const y = 290 - f * 62, size = 30 - f * 16;
+      const x = laneX(k, y);
+      out.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size.toFixed(1)}" text-anchor="middle">🐢</text>`);
+      out.push(`<text x="${(x + (k === "inner" ? -size * .9 : size * .9)).toFixed(1)}" y="${(y - size * .2).toFixed(1)}" font-size="${Math.max(9, size * .45).toFixed(1)}" font-weight="800" fill="#FFE27A" stroke="#07090C" stroke-width="3" paint-order="stroke" text-anchor="middle">${c.cms ? "!" : Math.round(c.s)}</text>`);
+    }
+    if (k === slowLane && !list.length)
+      out.push(`<text x="${laneX(k, 284).toFixed(1)}" y="284" font-size="30" text-anchor="middle">🐢</text>`);
+  }
+  return out.join("");
+}
 function scene(best, inner, outer){
   const D = dir === "N" ? {name: "北上", arrow: "▲", dest: ["坪林", "石碇"]}
                         : {name: "南下", arrow: "▼", dest: ["頭城", "宜蘭"]};
@@ -462,9 +496,11 @@ function scene(best, inner, outer){
   const res = {inner, outer};
   const label = k => {
     const cx = k === "inner" ? 92 : 268, b = best === k;
-    return `<rect x="${cx - 74}" y="302" width="148" height="62" rx="12" fill="${b ? GO : "#2A2E36"}" stroke="${b ? GO_INK : "#4A505B"}" stroke-width="2"/>
-      <text x="${cx}" y="325" font-size="16" font-weight="800" fill="${ink(k)}" text-anchor="middle">${k === "inner" ? "內車道" : "外車道"}${b ? " ✓" : ""}</text>
-      <text x="${cx}" y="355" font-size="25" font-weight="900" fill="${ink(k)}" text-anchor="middle">${plainMinSec(res[k])}</text>`;
+    const avg = res[k] && res[k].avgSpeed != null ? `平均 ${Math.round(res[k].avgSpeed)} km/h` : "平均 —";
+    return `<rect x="${cx - 76}" y="298" width="152" height="78" rx="12" fill="${b ? GO : "#2A2E36"}" stroke="${b ? GO_INK : "#4A505B"}" stroke-width="2"/>
+      <text x="${cx}" y="318" font-size="15" font-weight="800" fill="${ink(k)}" text-anchor="middle">${k === "inner" ? "內車道" : "外車道"}${b ? " ✓" : ""}</text>
+      <text x="${cx}" y="346" font-size="25" font-weight="900" fill="${ink(k)}" text-anchor="middle">${plainMinSec(res[k])}</text>
+      <text x="${cx}" y="367" font-size="14" font-weight="700" fill="${ink(k)}" opacity=".85" text-anchor="middle">${avg}</text>`;
   };
   return `<svg viewBox="0 0 360 380" role="img" aria-label="${D.name}，往${D.dest.join("、")}">
     <rect width="360" height="380" fill="#16202B"/>
@@ -491,8 +527,8 @@ function scene(best, inner, outer){
     <polygon points="183,380 354,380 198,222 181.5,222" fill="${fill("outer")}"/>
     <line x1="177" y1="380" x2="179" y2="222" stroke="#fff" stroke-width="2.5"/>
     <line x1="183" y1="380" x2="181" y2="222" stroke="#fff" stroke-width="2.5"/>
-    ${best ? `<text x="${best === "inner" ? 150 : 210}" y="290" font-size="30" font-weight="900" fill="${GO_INK}" text-anchor="middle">▲</text>` : ""}
-    ${slow ? `<text x="${slow === "inner" ? 146 : 214}" y="286" font-size="32" text-anchor="middle">🐢</text>` : ""}
+    ${best ? `<text x="${best === "inner" ? 118 : 242}" y="290" font-size="26" font-weight="900" fill="${GO_INK}" text-anchor="middle">▲</text>` : ""}
+    ${turtles(res, slow)}
     ${label("inner")}${label("outer")}
   </svg>`;
 }
@@ -513,6 +549,7 @@ function render(){
     const t = (TUNNEL.end - TUNNEL.start - x) / 65 * 60 - lead;
     if (t > res.min) res.min = t;
     res.cms = true;
+    res.slows.push({x, s: null, cms: true});
   }
 
   const hero = $("hero");
