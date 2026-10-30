@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-30T04:57:56.281Z",
-  "generatedAtTaipei": "2026-10-30 12:57:56",
+  "generatedAt": "2026-10-30T06:59:47.894Z",
+  "generatedAtTaipei": "2026-10-30 14:59:47",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -9,21 +9,21 @@
   "failed": 0,
   "crossCheck": {
     "tsmc": {
-      "primary": 2377.5,
+      "primary": 2370,
       "via": "mis:2330",
       "twse": 2415,
       "agree": null,
       "note": "跳過對帳：mis:2330 是 2026-10-30、證交所是 2026-10-29，不同交易日"
     },
     "e0050": {
-      "primary": 105.225,
+      "primary": 104.95,
       "via": "mis:0050",
       "twse": 107.25,
       "agree": null,
       "note": "跳過對帳：mis:0050 是 2026-10-30、證交所是 2026-10-29，不同交易日"
     },
     "e0056": {
-      "primary": 56.05,
+      "primary": 55.85,
       "via": "mis:0056",
       "twse": 56.9,
       "agree": null,
@@ -36,11 +36,11 @@
       "group": "twii",
       "dp": 2,
       "via": "mis:t00",
-      "price": 45419.94,
+      "price": 45211.83,
       "prevClose": 46368.33,
-      "change": -948.39,
-      "pct": -2.0453,
-      "marketState": "REG_MKT",
+      "change": -1156.5,
+      "pct": -2.4942,
+      "marketState": "CLOSED",
       "asOf": "2026-10-30"
     },
     "tsmc": {
@@ -48,11 +48,11 @@
       "group": "tsmc",
       "dp": 2,
       "via": "mis:2330",
-      "price": 2377.5,
+      "price": 2370,
       "prevClose": 2415,
-      "change": -37.5,
-      "pct": -1.5528,
-      "marketState": "REG_MKT",
+      "change": -45,
+      "pct": -1.8634,
+      "marketState": "CLOSED",
       "asOf": "2026-10-30"
     },
     "e0050": {
@@ -60,11 +60,11 @@
       "group": "e0050",
       "dp": 2,
       "via": "mis:0050",
-      "price": 105.225,
+      "price": 104.95,
       "prevClose": 107.25,
-      "change": -2.025,
-      "pct": -1.8881,
-      "marketState": "REG_MKT",
+      "change": -2.3,
+      "pct": -2.1445,
+      "marketState": "CLOSED",
       "asOf": "2026-10-30"
     },
     "e0056": {
@@ -72,11 +72,11 @@
       "group": "e0056",
       "dp": 2,
       "via": "mis:0056",
-      "price": 56.05,
+      "price": 55.85,
       "prevClose": 56.9,
-      "change": -0.85,
-      "pct": -1.4938,
-      "marketState": "REG_MKT",
+      "change": -1.05,
+      "pct": -1.8453,
+      "marketState": "CLOSED",
       "asOf": "2026-10-30"
     },
     "adr": {
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -150,9 +150,10 @@
       "dp": 2,
       "via": "cnbc:.VIX",
       "price": 17.2,
-      "prevClose": 16.91,
-      "change": 0.29,
-      "pct": 1.715,
+      "prevClose": 17.2,
+      "change": null,
+      "pct": null,
+      "noSessionData": true,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -161,10 +162,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 63132.27,
+      "price": 63290.11,
       "prevClose": 64659.47,
-      "change": -1527.2,
-      "pct": -2.3619,
+      "change": -1369.36,
+      "pct": -2.1178,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -173,10 +174,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 5753.5,
+      "price": 5730.74,
       "prevClose": 5937.66,
-      "change": -184.16,
-      "pct": -3.1016,
+      "change": -206.92,
+      "pct": -3.4849,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -185,10 +186,10 @@
       "group": "txf",
       "dp": 0,
       "via": "taifex:TXF",
-      "price": 45499,
+      "price": 45301,
       "prevClose": 46569,
-      "change": -1070,
-      "pct": -2.2977,
+      "change": -1268,
+      "pct": -2.7228,
       "marketState": null,
       "asOf": null,
       "contract": "臺指期116"
@@ -847,7 +848,7 @@
   "adrPremium": {
     "converted": 2811.24,
     "fxAsOf": "2026-10-30",
-    "premiumPct": 18.24,
+    "premiumPct": 18.62,
     "impliedOpen": null,
     "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
