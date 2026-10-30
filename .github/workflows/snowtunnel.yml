@@ -1,0 +1,22 @@
+name: 雪隧車道
+
+# 雲端 Claude 連不到高公局，由 GitHub 的 runner 代抓。
+on:
+  workflow_dispatch:
+    inputs:
+      probe:
+        description: '探測資料來源格式（只印 log）'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: inputs.probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/snowtunnel.py --probe
