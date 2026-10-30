@@ -1,127 +1,89 @@
 #!/usr/bin/env python3
-"""雪山隧道車道選擇：抓高公局 VD（車輛偵測器）分車道車速。
+"""雪山隧道車道選擇：探測交通部 TDX 的國 5 VD（車輛偵測器）資料。
 
-目前只有 --probe：印出資料來源的格式與 CORS 標頭，給寫解析邏輯時對照。
+高公局 tisvcloud 從 GitHub runner（美國機房）連不上；TDX 連得上、免金鑰、
+回 Access-Control-Allow-Origin: *，所以頁面可以直接從手機抓 TDX。
+這支只用來印出格式，給寫頁面時對照。
 """
-import gzip
-import io
+import json
 import sys
+import time
+import urllib.error
+import urllib.parse
 import urllib.request
-import xml.etree.ElementTree as ET
 
-BASE = "https://tisvcloud.freeway.gov.tw/history/motc20/"
-ORIGIN = "https://kafutw.github.io"
+TDX = "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/"
 
 
-def fetch(url, timeout=90):
-    req = urllib.request.Request(url, headers={"Origin": ORIGIN, "User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        body = r.read()
-        headers = dict(r.headers)
-    if body[:2] == b"\x1f\x8b":
-        body = gzip.decompress(body)
-    return body, headers
+def get(path, **params):
+    params.setdefault("$format", "JSON")
+    url = TDX + path + "?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote, safe="$,'()")
+    t0 = time.time()
+    req = urllib.request.Request(url, headers={"Origin": "https://kafutw.github.io"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            body = r.read()
+            h = {k: v for k, v in r.headers.items()
+                 if k.lower().startswith(("x-", "access-control", "ratelimit", "retry", "cache"))}
+            print(f"\n### {url}\n    {r.status} {len(body)} bytes {time.time()-t0:.1f}s headers={h}")
+            return json.loads(body)
+    except urllib.error.HTTPError as e:
+        print(f"\n### {url}\n    HTTP {e.code} {e.read()[:500]!r} headers={dict(e.headers)}")
+    except Exception as e:
+        print(f"\n### {url}\n    {e!r}")
+    return None
 
 
-def strip_ns(root):
-    for el in root.iter():
-        if "}" in el.tag:
-            el.tag = el.tag.split("}", 1)[1]
-    return root
+def items(d, key):
+    if isinstance(d, dict):
+        return d.get(key, [])
+    return d or []
 
 
-def show(el, limit=3000):
-    s = ET.tostring(el, encoding="unicode")
-    print(s[:limit])
+def lanes_of(v):
+    out = []
+    for lf in v.get("LinkFlows", []):
+        for ln in lf.get("Lanes", []):
+            out.append((ln.get("LaneID"), ln.get("LaneType"), ln.get("Speed"), ln.get("Occupancy"),
+                        [(x.get("VehicleType"), x.get("Volume"), x.get("Speed")) for x in ln.get("Vehicles", [])]))
+    return out
 
 
 def probe():
-    import time
-    urls = [BASE + n for n in ["VD.xml", "VDLive.xml", "VDLive.xml.gz", "Section.xml", "LiveTraffic.xml"]]
-    urls += ["http://tisvcloud.freeway.gov.tw/history/motc20/LiveTraffic.xml",
-             "https://tisvcloud.freeway.gov.tw/"]
-    ok = set()
-    for url in urls:
-        name = url
-        t0 = time.time()
-        try:
-            body, h = fetch(url, timeout=20)
-            print(f"  ({time.time()-t0:.1f}s)", end="")
-            ok.add(url)
-            print(f"✓ {name}: {len(body)} bytes, type={h.get('Content-Type')}, "
-                  f"ACAO={h.get('Access-Control-Allow-Origin')}, cache={h.get('Cache-Control')}, "
-                  f"last-mod={h.get('Last-Modified')}")
-        except Exception as e:
-            print(f"  ({time.time()-t0:.1f}s)✗ {name}: {e!r}")
-    for url in ["https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/Freeway?$top=1&$format=JSON"]:
-        try:
-            body, h = fetch(url)
-            print(f"✓ TDX: {body[:300]!r} ACAO={h.get('Access-Control-Allow-Origin')}")
-        except Exception as e:
-            print(f"✗ TDX: {e}")
+    vd = get("VD/Freeway", **{"$filter": "contains(VDID,'-N5-')"})
+    vds = items(vd, "VDs")
+    print("國5 VD 數量:", len(vds))
+    if vds:
+        print(json.dumps(vds[0], ensure_ascii=False)[:2500])
+    for v in sorted(vds, key=lambda v: (v.get("RoadDirection") or "", v.get("VDID"))):
+        print("VD", v.get("VDID"), "|", v.get("RoadDirection"), "|", v.get("LocationMile"), "|",
+              v.get("PositionLat"), v.get("PositionLon"), "|", json.dumps(v.get("RoadSection"), ensure_ascii=False),
+              "| type", v.get("VDType"), "| lanes", [(d.get("LinkID"), d.get("LaneNum")) for d in v.get("DetectionLinks", [])][:2])
 
-    if BASE + "VD.xml" not in ok:
-        print("VD.xml 抓不到，不往下解析")
-        return
-    print("\n===== VD.xml：國5 的 VD =====")
-    vd = strip_ns(ET.fromstring(fetch(BASE + "VD.xml")[0]))
-    print("root:", vd.tag, [c.tag for c in vd][:8])
-    n5 = []
-    for v in vd.iter("VD"):
-        text = ET.tostring(v, encoding="unicode")
-        if "國道5號" in text or "-N5-" in (v.findtext("VDID") or ""):
-            n5.append(v)
-    print("國5 VD 數量:", len(n5))
-    if n5:
-        show(n5[0])
-    for v in n5:
-        print(v.findtext("VDID"), "|", v.findtext("RoadDirection"), "|", v.findtext("LocationMile"),
-              "|", v.findtext("RoadSection/Start"), "→", v.findtext("RoadSection/End"),
-              "| lanes:", [ (l.findtext("LaneID"), l.findtext("LaneType")) for l in v.iter("Lane")],
-              "| links:", [l.findtext("LinkID") for l in v.iter("DetectionLink")][:3],
-              "| bidir", v.findtext("BiDirectional"))
-    ids = {v.findtext("VDID") for v in n5}
+    live = get("Live/VD/Freeway", **{"$filter": "contains(VDID,'-N5-')"})
+    lives = items(live, "VDLives")
+    print("國5 VDLive 數量:", len(lives), "UpdateTime", isinstance(live, dict) and live.get("UpdateTime"),
+          "SrcUpdateTime", isinstance(live, dict) and live.get("SrcUpdateTime"))
+    if lives:
+        print(json.dumps(lives[0], ensure_ascii=False)[:3000])
+    for v in sorted(lives, key=lambda v: v.get("VDID")):
+        print("LIVE", v.get("VDID"), v.get("Status"), v.get("DataCollectTime"), lanes_of(v))
 
-    print("\n===== VDLive.xml：國5 =====")
-    live = strip_ns(ET.fromstring(fetch(BASE + "VDLive.xml")[0]))
-    print("root:", live.tag, [c.tag for c in live][:8])
-    for child in live:
-        if child.tag not in ("VDLives",):
-            print(child.tag, "=", (child.text or "").strip()[:80])
-    shown = 0
-    for v in live.iter("VDLive"):
-        vid = v.findtext("VDID")
-        if vid not in ids:
-            continue
-        if shown < 2:
-            show(v)
-            shown += 1
-        lanes = []
-        for ln in v.iter("Lane"):
-            vols = [(x.findtext("VehicleType"), x.findtext("Volume"), x.findtext("Speed")) for x in ln.iter("Vehicle")]
-            lanes.append((ln.findtext("LaneID"), ln.findtext("LaneType"), ln.findtext("Speed"), ln.findtext("Occupancy"), vols))
-        print(vid, v.findtext("Status"), v.findtext("DataCollectTime"), lanes)
+    sel = get("Live/VD/Freeway", **{"$filter": "contains(VDID,'-N5-')", "$select": "VDID,LinkFlows,DataCollectTime"})
+    print("加 $select 後:", len(json.dumps(sel)) if sel else None)
 
-    print("\n===== Section.xml：國5 =====")
-    sec = strip_ns(ET.fromstring(fetch(BASE + "Section.xml")[0]))
-    secs = [s for s in sec.iter("Section") if "國道5號" in ET.tostring(s, encoding="unicode")]
+    sec = get("Section/Freeway", **{"$filter": "contains(SectionName,'坪林') or contains(SectionName,'頭城')"})
+    secs = items(sec, "Sections")
     if secs:
-        show(secs[0])
+        print(json.dumps(secs[0], ensure_ascii=False)[:1500])
     for s in secs:
-        print(s.findtext("SectionID"), s.findtext("SectionName"), s.findtext("RoadDirection"),
-              s.findtext("SectionMile/StartKM"), s.findtext("SectionMile/EndKM"), s.findtext("SectionLength"))
-    sids = {s.findtext("SectionID") for s in secs}
-
-    print("\n===== LiveTraffic.xml：國5 =====")
-    lt = strip_ns(ET.fromstring(fetch(BASE + "LiveTraffic.xml")[0]))
-    shown = 0
-    for t in lt.iter("LiveTraffic"):
-        if t.findtext("SectionID") in sids:
-            if shown < 1:
-                show(t)
-                shown += 1
-            print(t.findtext("SectionID"), t.findtext("TravelTime"), t.findtext("TravelSpeed"),
-                  t.findtext("CongestionLevel"), t.findtext("DataCollectTime"))
+        print("SEC", s.get("SectionID"), s.get("SectionName"), s.get("RoadDirection"),
+              json.dumps(s.get("SectionMile"), ensure_ascii=False), s.get("SectionLength"))
+    ids = [s.get("SectionID") for s in secs]
+    if ids:
+        lt = get("Live/Freeway", **{"$filter": " or ".join(f"SectionID eq '{i}'" for i in ids)})
+        for t in items(lt, "LiveTraffics"):
+            print("LT", json.dumps(t, ensure_ascii=False))
 
 
 if __name__ == "__main__":
