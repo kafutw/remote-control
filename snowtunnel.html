@@ -483,7 +483,8 @@ function turtles(res, slowLane){
       const y = 292 - f * 58, size = 46 - f * 20;
       const x = laneX(k, y);
       out.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size.toFixed(1)}" text-anchor="middle">🐢</text>`);
-      out.push(`<text x="${(x + (k === "inner" ? -size * .9 : size * .9)).toFixed(1)}" y="${(y - size * .2).toFixed(1)}" font-size="${Math.max(12, size * .42).toFixed(1)}" font-weight="800" fill="#FFE27A" stroke="#07090C" stroke-width="3" paint-order="stroke" text-anchor="middle">${c.cms ? "!" : Math.round(c.s)}</text>`);
+      const fs = Math.max(20, size * .66);
+      out.push(`<text x="${(x + (k === "inner" ? -size * .62 : size * .62)).toFixed(1)}" y="${(y - size * .12).toFixed(1)}" font-size="${fs.toFixed(1)}" font-weight="900" fill="#FFE27A" stroke="#07090C" stroke-width="4" paint-order="stroke" text-anchor="${k === "inner" ? "end" : "start"}">${c.cms ? "!" : Math.round(c.s)}</text>`);
     }
     if (k === slowLane && !list.length)
       out.push(`<text x="${laneX(k, 290).toFixed(1)}" y="290" font-size="46" text-anchor="middle">🐢</text>`);
