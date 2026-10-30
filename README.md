@@ -272,6 +272,6 @@ node tools/check-chinese-bank.mjs /tmp/moe.json      # 核對
 - 資料：交通部 TDX 的高公局車輛偵測器（VD），每分鐘、分車道的車速與車種；加上隧道顯示板的慢速車訊息。手機直接抓 TDX，不經過任何伺服器。
 - 算法：雪隧禁止變換車道，所以每條車道的預估時間 = max（照各段車速一段段加總，前方每台慢車以它的速度開到出口的時間）。越靠近入口的慢車影響越大。差不到 20 秒顯示「差不多」。
 - 自動跳出：iPhone 捷徑 →「自動化」→「抵達」頭城交流道（北上）／坪林交流道（南下）→ 打開 `snowtunnel.html?dir=N&speak=1`（或 `dir=S`）。頁面內「快到隧道時自動跳出來」有步驟。
-- 免金鑰每天 50 次（以 IP 計）；不夠用就到 tdx.transportdata.tw 免費註冊，把 Client Id／Secret 填在頁面的「設定」。
+- 頁面開著就每 90 秒自動更新（切到背景暫停）。免金鑰每天 50 次（以 IP 計），所以建議到 tdx.transportdata.tw 免費註冊，把 Client Id／Secret 填在頁面的「設定」；「複製家人設定連結」可以把金鑰帶到家人手機（金鑰只存在手機上，連結只傳給家人）。
 - 隧道範圍寫在頁面最上面的 `TUNNEL`（約 15.2K–28.1K），第一次用時打開頁面最下面的「資料檢查」確認偵測器里程與車道數。
 - `?demo` 用假資料看畫面。`.github/workflows/snowtunnel.yml` 是手動探測資料格式用的（需要 repo secrets `TDX_CLIENT_ID`、`TDX_CLIENT_SECRET`）。

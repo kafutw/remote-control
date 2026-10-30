@@ -229,7 +229,7 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
         <li>再做一個<b>南下</b>的：位置選「坪林交流道」（出彭山隧道後就會進到範圍），網址填：<br><code id="urlS"></code></li>
       </ol>
       <p>網址後面的 <code>&amp;speak=1</code> 會在打開時自動唸出建議；iOS 有時會擋掉沒按過按鈕的語音，那時按一下「🔊 唸出來」就好。</p>
-      <p>頁面開著時每 90 秒自動更新，開了 15 分鐘後會停止自動更新（省免費額度），按最下面的「↻ 重新整理」就會繼續。</p>
+      <p>頁面開著時每 90 秒自動更新，一直更新到你關掉畫面為止；切到別的 App 時會暫停，回來馬上補抓一次。隨時可以按最下面的「↻ 重新整理」。</p>
     </div>
   </details>
 
@@ -240,6 +240,8 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
       <label class="f">Client Id<input id="cid" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
       <label class="f">Client Secret<input id="csec" type="password" autocomplete="off"></label>
       <p><button class="btn" onclick="saveKey()">儲存</button> <span id="keyMsg"></span></p>
+      <p><b>給家人用</b>：存好金鑰後按下面的按鈕，會複製一個「設定連結」。家人用 Safari 打開一次，金鑰就會存進他們的手機，之後跟你一樣不受每天 50 次限制。連結裡有你的金鑰，<b>只傳給家人</b>。</p>
+      <p><button class="btn" onclick="copyFamilyLink()">複製家人設定連結</button> <span id="famMsg"></span></p>
     </div>
   </details>
 
@@ -264,7 +266,6 @@ const TUNNEL = { start: 15.2, end: 28.1 };
 const VFREE = 90;              // 隧道速限，區間測速
 const SAME_SEC = 20;           // 差不到這麼多秒就算「差不多」
 const REFRESH_MS = 90 * 1000;  // 自動更新間隔
-const AUTO_STOP_MS = 15 * 60 * 1000;
 // 提示範圍（用里程判斷）：南下＝出彭山隧道後到雪隧北口；北上＝頭城交流道到雪隧南口
 const ZONE = { S: [9.5, TUNNEL.start], N: [TUNNEL.end, 31.5] };
 const API = "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/";
@@ -273,7 +274,7 @@ const PAGE = location.origin + location.pathname;
 const params = new URLSearchParams(location.search);
 const DEMO = params.has("demo");
 
-let dir = null, lastData = null, lastFetchAt = 0, openedAt = Date.now(), timer = null;
+let dir = null, lastData = null, lastFetchAt = 0, timer = null, refreshCount = 0, keyNote = "";
 let userMile = null, prevMile = null, spokenOnce = false, loading = false;
 
 /* ───────── 小工具 ───────── */
@@ -326,11 +327,13 @@ async function token(){
 async function tdx(path, filter){
   const q = new URLSearchParams({"$format": "JSON"});
   if (filter) q.set("$filter", filter);
-  const t = await token();
+  let t = null;
+  try { t = await token(); keyNote = t ? "金鑰" : ""; }
+  catch(e){ keyNote = "金鑰無法使用，暫用免金鑰（" + (e.message || e) + "）"; }
   const r = await fetch(API + path + "?" + q.toString(), {
     headers: t ? {Authorization: "Bearer " + t} : {}, cache: "no-store"
   });
-  if (r.status === 429) throw new Error("今天的免費查詢次數用完了（TDX 限制每天 50 次）。可到「設定」填免費金鑰。");
+  if (r.status === 429) throw new Error(t ? "TDX 查詢太頻繁，稍等一下再按重新整理。" : "今天的免費查詢次數用完了（TDX 限制每天 50 次）。可到「設定」填免費金鑰。");
   if (r.status === 401 || r.status === 403) throw new Error("TDX 拒絕查詢（" + r.status + "）。可到「設定」填免費金鑰。");
   if (!r.ok) throw new Error("TDX 回應 " + r.status);
   return r.json();
@@ -648,11 +651,11 @@ function renderStamp(){
   $("stampMain").textContent = main;
   let sub;
   if (loading) sub = "更新中…";
-  else if (!timer) sub = "自動更新已暫停，按右邊重新整理";
   else {
     const left = Math.max(0, Math.round((lastFetchAt + REFRESH_MS - Date.now()) / 1000));
     sub = `每 90 秒自動更新・${left} 秒後`;
   }
+  if (keyNote && keyNote !== "金鑰") sub = keyNote;
   if (age != null && age >= 6) sub = "資料可能過時・" + sub;
   $("stampSub").textContent = sub;
 }
@@ -731,7 +734,7 @@ function setDir(d, manual){
 
 async function refresh(manual){
   if (loading) return;
-  if (manual){ openedAt = Date.now(); schedule(); }
+  if (manual) schedule();
   loading = true;
   const btn = $("refreshBtn");
   btn.disabled = true; btn.textContent = "更新中…";
@@ -740,12 +743,15 @@ async function refresh(manual){
     let live, cms;
     if (DEMO){ ({live, cms} = demoData()); }
     else {
+      const hasKey = !!store.get("st.cid");
+      const wantCms = hasKey || manual || refreshCount % 3 === 0 || !lastData;
       const [l, c] = await Promise.allSettled([
         tdx("Live/VD/Freeway", "contains(VDID,'-N5-')"),
-        tdx("Live/CMS/Freeway", "contains(CMSID,'N5')")
+        wantCms ? tdx("Live/CMS/Freeway", "contains(CMSID,'N5')") : Promise.resolve(lastData && lastData.cms)
       ]);
       if (l.status === "rejected") throw l.reason;
       live = l.value; cms = c.status === "fulfilled" ? c.value : null;
+      refreshCount++;
     }
     const org = organize(live);
     const sample = (live.VDLives || []).find(v => parseId(v.VDID).road === "N5");
@@ -774,9 +780,27 @@ function schedule(){
   clearInterval(timer);
   timer = setInterval(() => {
     if (document.hidden) return;
-    if (Date.now() - openedAt > AUTO_STOP_MS){ clearInterval(timer); timer = null; renderStamp(); return; }
     refresh(false);
   }, REFRESH_MS);
+}
+
+function copyFamilyLink(){
+  const cid = store.get("st.cid"), sec = store.get("st.csec");
+  if (!cid || !sec){ $("famMsg").textContent = "請先填好金鑰並儲存"; return; }
+  const link = PAGE + "#tdx=" + encodeURIComponent(btoa(cid + "\n" + sec));
+  const done = () => $("famMsg").textContent = "已複製，貼到 LINE 傳給家人";
+  if (navigator.clipboard) navigator.clipboard.writeText(link).then(done, () => prompt("複製這個連結：", link));
+  else prompt("複製這個連結：", link);
+}
+// 家人打開設定連結：把金鑰存進這支手機，再把網址上的金鑰拿掉
+function importFamilyKey(){
+  const m = location.hash.match(/tdx=([^&]+)/);
+  if (!m) return;
+  try {
+    const [cid, sec] = atob(decodeURIComponent(m[1])).split("\n");
+    if (cid && sec){ store.set("st.cid", cid); store.set("st.csec", sec); store.del("st.tok"); }
+  } catch(e){}
+  history.replaceState(null, "", location.pathname + location.search);
 }
 
 function saveKey(){
@@ -815,6 +839,7 @@ function demoData(){
 (function init(){
   $("urlN").textContent = PAGE + "?dir=N&speak=1";
   $("urlS").textContent = PAGE + "?dir=S&speak=1";
+  importFamilyKey();
   $("cid").value = store.get("st.cid") || "";
   $("csec").value = store.get("st.csec") || "";
   if (DEMO) $("demoFlag").hidden = false;
@@ -825,7 +850,7 @@ function demoData(){
   locate();
   setInterval(renderStamp, 1000);
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && Date.now() - lastFetchAt > 60000){ openedAt = Date.now(); schedule(); refresh(false); }
+    if (!document.hidden && Date.now() - lastFetchAt > 60000){ schedule(); refresh(false); }
   });
   // 色塊的提示
   const tip = $("tip");
