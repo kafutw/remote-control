@@ -64,32 +64,23 @@ button{font:inherit;color:inherit}
 .dirs button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 
 /* 結論：最大的字 */
+/* 洞口畫面：駕駛視角。自己帶夜景底色，亮暗模式都一樣 */
+.scene{margin-top:12px}
+.scene svg{display:block;width:100%;height:auto;border-radius:16px}
+.scene svg text{font-family:inherit}
+
+/* 結論 */
 .hero{
-  margin-top:14px;border-radius:16px;padding:20px 18px 18px;background:var(--sheet);
+  margin-top:10px;border-radius:16px;padding:14px 16px;background:var(--sheet);
   border:1px solid var(--rule);text-align:center
 }
 .hero.go{background:var(--pickBg);border-color:var(--pick)}
-.hero .lead{font-size:15px;color:var(--ink2);font-weight:600}
-.hero .verdict{font-size:46px;font-weight:800;letter-spacing:.02em;line-height:1.15;margin:4px 0 6px}
+.hero .verdict{font-size:clamp(22px,7vw,30px);font-weight:800;letter-spacing:.01em;line-height:1.25;white-space:nowrap}
 .hero.go .verdict{color:var(--pick)}
-.hero .why{font-size:16px;color:var(--ink2)}
+.hero .why{font-size:15px;color:var(--ink2);margin-top:4px}
 .hero .why b{color:var(--ink)}
+.hero .slow{font-size:14px;color:var(--warnInk);margin-top:6px;font-weight:600}
 .hero .where{font-size:13px;color:var(--ink3);margin-top:6px}
-
-/* 兩條車道 */
-.lanes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.lane{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:12px 12px 10px;position:relative}
-.lane.best{border-color:var(--pick);box-shadow:inset 0 0 0 1px var(--pick)}
-.lane .name{display:flex;align-items:center;gap:7px;font-weight:700;font-size:16px}
-.lane .name i{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
-.lane .t{font-size:34px;font-weight:800;line-height:1.1;margin-top:6px}
-.lane .t small{font-size:15px;font-weight:600;color:var(--ink2);margin-left:2px}
-.lane .meta{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.5}
-.lane .meta b{color:var(--ink);font-weight:700}
-.badge{
-  display:inline-block;margin-top:6px;font-size:12.5px;font-weight:700;border-radius:6px;padding:2px 7px;
-  background:var(--warnBg);color:var(--warnInk);border:1px solid var(--warnLine)
-}
 
 /* 隧道示意：入口在左，依行駛方向 */
 .card{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:12px;margin-top:10px}
@@ -165,13 +156,11 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
 
   <div id="demoFlag" class="demo-flag" hidden>示範資料 — 不是即時路況</div>
 
-  <div id="hero" class="hero" aria-live="polite">
-    <div class="lead">讀取即時路況…</div>
-    <div class="verdict">—</div>
-    <div class="why"></div>
-  </div>
+  <div id="scene" class="scene"></div>
 
-  <div class="lanes" id="lanes"></div>
+  <div id="hero" class="hero" aria-live="polite">
+    <div class="verdict">讀取即時路況…</div>
+  </div>
 
   <div class="alerts" id="alerts"></div>
 
@@ -276,11 +265,6 @@ const store = {
   set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
   del(k){ try { localStorage.removeItem(k); } catch(e){} }
 };
-function fmtMinSec(min){
-  if (min == null || !isFinite(min)) return "—";
-  const s = Math.round(min * 60);
-  return Math.floor(s / 60) + "<small>分</small>" + String(s % 60).padStart(2, "0") + "<small>秒</small>";
-}
 function fmtDiff(sec){
   sec = Math.round(Math.abs(sec));
   if (sec < 60) return sec + " 秒";
@@ -460,6 +444,59 @@ function speedColor(r){
   return s >= 80 ? "var(--s-good)" : s >= 60 ? "var(--s-warn)" : s >= 40 ? "var(--s-serious)" : "var(--s-crit)";
 }
 
+/* 洞口畫面（駕駛視角）：上面綠色門架寫往哪裡，下面紅色洞口；
+   內車道在左、外車道在右，建議的那條整條亮綠，比較慢的那條放烏龜。
+   best：'inner'／'outer'／null（差不多）／undefined（沒資料） */
+const SIGN = "#00754A", PORTAL = "#B8352B", PORTAL_D = "#8E271F", GO = "#3DD68C", GO_INK = "#0b2416", ROAD = "#3A3F49";
+function plainMinSec(r){
+  if (!r || !isFinite(r.min)) return "—";
+  const s = Math.round(r.min * 60);
+  return Math.floor(s / 60) + "分" + String(s % 60).padStart(2, "0") + "秒";
+}
+function scene(best, inner, outer){
+  const D = dir === "N" ? {name: "北上", arrow: "▲", dest: ["坪林", "石碇"]}
+                        : {name: "南下", arrow: "▼", dest: ["頭城", "宜蘭"]};
+  const fill = k => best === k ? GO : ROAD;
+  const ink = k => best === k ? GO_INK : "#EEF0F3";
+  const slow = best === "inner" ? "outer" : best === "outer" ? "inner" : null;
+  const res = {inner, outer};
+  const label = k => {
+    const cx = k === "inner" ? 92 : 268, b = best === k;
+    return `<rect x="${cx - 74}" y="302" width="148" height="62" rx="12" fill="${b ? GO : "#2A2E36"}" stroke="${b ? GO_INK : "#4A505B"}" stroke-width="2"/>
+      <text x="${cx}" y="325" font-size="16" font-weight="800" fill="${ink(k)}" text-anchor="middle">${k === "inner" ? "內車道" : "外車道"}${b ? " ✓" : ""}</text>
+      <text x="${cx}" y="355" font-size="25" font-weight="900" fill="${ink(k)}" text-anchor="middle">${plainMinSec(res[k])}</text>`;
+  };
+  return `<svg viewBox="0 0 360 380" role="img" aria-label="${D.name}，往${D.dest.join("、")}">
+    <rect width="360" height="380" fill="#16202B"/>
+    <path d="M0,170 L60,120 L120,150 L190,95 L260,140 L320,110 L360,135 V380 H0Z" fill="#1E2D24"/>
+    <rect x="8" y="58" width="6" height="200" fill="#5B6370"/><rect x="346" y="58" width="6" height="200" fill="#5B6370"/>
+    <rect x="22" y="10" width="316" height="62" rx="6" fill="${SIGN}" stroke="#fff" stroke-width="2.5"/>
+    <g transform="translate(34,21)">
+      <path d="M0,4 Q0,0 4,0 H30 Q34,0 34,4 V22 Q34,34 17,40 Q0,34 0,22 Z" fill="#fff"/>
+      <text x="17" y="13" font-size="8" font-weight="800" fill="${SIGN}" text-anchor="middle">國道</text>
+      <text x="17" y="31" font-size="17" font-weight="900" fill="${SIGN}" text-anchor="middle">5</text>
+    </g>
+    <g transform="translate(76,21)">
+      <rect width="54" height="40" rx="6" fill="#fff"/>
+      <text x="27" y="17" font-size="15" font-weight="900" fill="${SIGN}" text-anchor="middle">${D.arrow}</text>
+      <text x="27" y="34" font-size="14" font-weight="800" fill="${SIGN}" text-anchor="middle">${D.name}</text>
+    </g>
+    <text x="236" y="37" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">${D.dest[0]}</text>
+    <text x="236" y="62" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">${D.dest[1]}</text>
+    <path d="M44,300 L44,196 A136,108 0 0 1 316,196 L316,300 Z" fill="${PORTAL}"/>
+    <path d="M44,300 L44,196 A136,108 0 0 1 316,196" fill="none" stroke="${PORTAL_D}" stroke-width="3"/>
+    <path d="M74,300 L74,204 A106,86 0 0 1 286,204 L286,300 Z" fill="#07090C"/>
+    <text x="180" y="110" font-size="15" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="4">雪山隧道</text>
+    <polygon points="6,380 177,380 178.5,222 162,222" fill="${fill("inner")}"/>
+    <polygon points="183,380 354,380 198,222 181.5,222" fill="${fill("outer")}"/>
+    <line x1="177" y1="380" x2="179" y2="222" stroke="#fff" stroke-width="2.5"/>
+    <line x1="183" y1="380" x2="181" y2="222" stroke="#fff" stroke-width="2.5"/>
+    ${best ? `<text x="${best === "inner" ? 150 : 210}" y="290" font-size="30" font-weight="900" fill="${GO_INK}" text-anchor="middle">▲</text>` : ""}
+    ${slow ? `<text x="${slow === "inner" ? 146 : 214}" y="286" font-size="32" text-anchor="middle">🐢</text>` : ""}
+    ${label("inner")}${label("outer")}
+  </svg>`;
+}
+
 function render(){
   if (!lastData) return;
   const {org, cms, fetchedAt, srcTime} = lastData;
@@ -480,49 +517,36 @@ function render(){
 
   const hero = $("hero");
   hero.className = "hero";
-  let say = "";
+  let say = "", best;
   if (!inner || !outer){
-    hero.innerHTML = `<div class="lead">${dir === "S" ? "南下" : "北上"}</div><div class="verdict">資料不足</div>
+    best = undefined;
+    hero.innerHTML = `<div class="verdict">資料不足</div>
       <div class="why">隧道內偵測器回報不夠，這次沒辦法比較。可以打開最下面的「資料檢查」看看。</div>`;
     say = "資料不足，沒辦法比較";
   } else {
     const diffSec = (outer.min - inner.min) * 60;
-    const best = Math.abs(diffSec) < SAME_SEC ? null : diffSec > 0 ? "inner" : "outer";
+    best = Math.abs(diffSec) < SAME_SEC ? null : diffSec > 0 ? "inner" : "outer";
     const name = best === "inner" ? "內車道" : "外車道";
     if (best){
       hero.classList.add("go");
-      hero.innerHTML = `<div class="lead">${dir === "S" ? "南下 往宜蘭" : "北上 往台北"}，建議走</div>
-        <div class="verdict">${name}</div>
-        <div class="why">預估快 <b class="num">${fmtDiff(diffSec)}</b></div>`;
+      hero.innerHTML = `<div class="verdict">走${name}・快 <span class="num">${fmtDiff(diffSec)}</span></div>`;
       say = `建議走${name}，大約快${fmtDiff(diffSec)}`;
     } else {
-      hero.innerHTML = `<div class="lead">${dir === "S" ? "南下 往宜蘭" : "北上 往台北"}</div>
-        <div class="verdict">兩條差不多</div>
+      hero.innerHTML = `<div class="verdict">兩條差不多</div>
         <div class="why">預估相差 <b class="num">${fmtDiff(diffSec)}</b> 以內，選哪條都可以</div>`;
       say = "兩條車道差不多，選哪條都可以";
     }
+    // 慢車細節：哪條、在哪、多快
+    const slowTxt = [["inner", "內車道", inner], ["outer", "外車道", outer]].map(([k, label, r]) =>
+      r.cms ? `🐢 ${label}：顯示板點名慢速車` :
+      r.slow ? `🐢 ${label}：距入口 ${r.slow.x.toFixed(1)} km 有 ${Math.round(r.slow.s)} km/h 的車` : "").filter(Boolean);
+    if (slowTxt.length) hero.innerHTML += `<div class="slow">${slowTxt.join("<br>")}</div>`;
     if (userMile != null && lead > 0)
       hero.innerHTML += `<div class="where">依你目前位置（距入口約 ${dirDist().toFixed(1)} 公里）推算</div>`;
-    lastData.best = best;
   }
+  lastData.best = best;
   lastData.say = say;
-
-  // 車道卡
-  const card = (key, label, res) => {
-    const best = lastData.best === key;
-    if (!res) return `<div class="lane"><div class="name"><i style="background:var(--${key})"></i>${label}</div>
-      <div class="t">—</div><div class="meta">沒有資料</div></div>`;
-    let meta = `最慢 <b class="num">${Math.round(res.minSpeed)}</b> km/h`;
-    if (res.big) meta += `<br>大型車 <b class="num">${res.big}</b> 輛／分`;
-    let badge = "";
-    if (res.cms) badge = `<span class="badge">⚠️ 顯示板點名慢速車</span>`;
-    else if (res.slow) badge = `<span class="badge">🐢 距入口 ${res.slow.x.toFixed(1)} km 有 ${Math.round(res.slow.s)} km/h 慢車</span>`;
-    return `<div class="lane${best ? " best" : ""}">
-      <div class="name"><i style="background:var(--${key})"></i>${label}${best ? " ✓" : ""}</div>
-      <div class="t num">${fmtMinSec(res.min)}</div>
-      <div class="meta">${meta}</div>${badge}</div>`;
-  };
-  $("lanes").innerHTML = card("inner", "內車道", inner) + card("outer", "外車道", outer);
+  $("scene").innerHTML = scene(best, inner, outer);
 
   // 顯示板
   $("alerts").innerHTML = alerts.map(a =>
@@ -632,6 +656,7 @@ function setDir(d, manual){
   $("dN").setAttribute("aria-pressed", d === "N");
   store.set("st.dir", d);
   if (manual){ store.set("st.dirManual", "1"); setTimeout(() => store.del("st.dirManual"), 30 * 60 * 1000); }
+  if (!lastData) $("scene").innerHTML = scene(undefined, null, null);
   render();
 }
 
@@ -657,7 +682,8 @@ async function refresh(manual){
     const hero = $("hero");
     if (!lastData){
       hero.className = "hero";
-      hero.innerHTML = `<div class="lead">讀不到路況</div><div class="verdict">—</div><div class="why err">${esc(e.message || e)}</div>`;
+      $("scene").innerHTML = scene(undefined, null, null);
+      hero.innerHTML = `<div class="verdict">讀不到路況</div><div class="why err">${esc(e.message || e)}</div>`;
     } else {
       $("alerts").insertAdjacentHTML("afterbegin", `<div class="a">更新失敗：${esc(e.message || e)}（畫面是上一次的資料）</div>`);
     }
