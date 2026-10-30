@@ -16,7 +16,7 @@ jobs:
   probe:
     if: inputs.probe
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/snowtunnel.py --probe
+      - run: python3 -u tools/snowtunnel.py --probe

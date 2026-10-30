@@ -13,9 +13,9 @@ BASE = "https://tisvcloud.freeway.gov.tw/history/motc20/"
 ORIGIN = "https://kafutw.github.io"
 
 
-def fetch(url):
+def fetch(url, timeout=90):
     req = urllib.request.Request(url, headers={"Origin": ORIGIN, "User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=60) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         body = r.read()
         headers = dict(r.headers)
     if body[:2] == b"\x1f\x8b":
@@ -36,16 +36,23 @@ def show(el, limit=3000):
 
 
 def probe():
-    for name in ["VD.xml", "VD.xml.gz", "VDLive.xml", "VDLive.xml.gz", "Section.xml",
-                 "LiveTraffic.xml", "SectionLink.xml"]:
-        url = BASE + name
+    import time
+    urls = [BASE + n for n in ["VD.xml", "VDLive.xml", "VDLive.xml.gz", "Section.xml", "LiveTraffic.xml"]]
+    urls += ["http://tisvcloud.freeway.gov.tw/history/motc20/LiveTraffic.xml",
+             "https://tisvcloud.freeway.gov.tw/"]
+    ok = set()
+    for url in urls:
+        name = url
+        t0 = time.time()
         try:
-            body, h = fetch(url)
+            body, h = fetch(url, timeout=20)
+            print(f"  ({time.time()-t0:.1f}s)", end="")
+            ok.add(url)
             print(f"✓ {name}: {len(body)} bytes, type={h.get('Content-Type')}, "
                   f"ACAO={h.get('Access-Control-Allow-Origin')}, cache={h.get('Cache-Control')}, "
                   f"last-mod={h.get('Last-Modified')}")
         except Exception as e:
-            print(f"✗ {name}: {e}")
+            print(f"  ({time.time()-t0:.1f}s)✗ {name}: {e!r}")
     for url in ["https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/Freeway?$top=1&$format=JSON"]:
         try:
             body, h = fetch(url)
@@ -53,6 +60,9 @@ def probe():
         except Exception as e:
             print(f"✗ TDX: {e}")
 
+    if BASE + "VD.xml" not in ok:
+        print("VD.xml 抓不到，不往下解析")
+        return
     print("\n===== VD.xml：國5 的 VD =====")
     vd = strip_ns(ET.fromstring(fetch(BASE + "VD.xml")[0]))
     print("root:", vd.tag, [c.tag for c in vd][:8])
