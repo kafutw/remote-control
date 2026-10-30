@@ -48,7 +48,7 @@ body{
   color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
   font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
-  padding:env(safe-area-inset-top) 0 calc(40px + env(safe-area-inset-bottom));
+  padding:env(safe-area-inset-top) 0 calc(96px + env(safe-area-inset-bottom));
 }
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
 .wrap{max-width:560px;margin:0 auto;padding:0 16px}
@@ -112,9 +112,20 @@ button{font:inherit;color:inherit}
 .alerts .a b{font-weight:800}
 
 /* 狀態列 */
-.status{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:13px;color:var(--ink3)}
-.status .grow{flex:1}
-.status.stale{color:var(--warnInk)}
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--sheet);
+  border-top:1px solid var(--rule2);padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  box-shadow:0 -6px 18px rgba(0,0,0,.18)
+}
+.dock-in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:8px}
+.dock .when{flex:1;min-width:0;line-height:1.3}
+.dock .when b{display:block;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.dock .when small{display:block;font-size:12.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.dock.warn .when b{color:var(--warnInk)}
+.dock.old .when b{color:var(--s-crit)}
+.btn.primary{background:var(--pick);border-color:var(--pick);color:#0b2416;font-size:17px;font-weight:800;padding:12px 16px;border-radius:12px}
+.btn.primary:disabled{opacity:.6}
+.btn.ghost{font-size:20px;padding:9px 12px;border-radius:12px}
 .btn{
   border:1px solid var(--rule2);background:var(--sheet);border-radius:10px;padding:8px 12px;
   font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap
@@ -179,10 +190,13 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
     </div>
   </div>
 
-  <div class="status" id="status">
-    <span class="grow" id="stamp">—</span>
-    <button class="btn" onclick="speak(true)" aria-label="唸出建議">🔊 唸出來</button>
-    <button class="btn" onclick="refresh(true)">更新</button>
+  <!-- 更新列：固定在畫面最下面，大拇指按得到；路況時間放大 -->
+  <div class="dock" id="status">
+    <div class="dock-in">
+      <div class="when"><b id="stampMain">讀取中…</b><small id="stampSub"></small></div>
+      <button class="btn ghost" onclick="speak(true)" aria-label="唸出建議">🔊</button>
+      <button class="btn primary" id="refreshBtn" onclick="refresh(true)">↻ 重新整理</button>
+    </div>
   </div>
 
   <details>
@@ -215,7 +229,7 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
         <li>再做一個<b>南下</b>的：位置選「坪林交流道」（出彭山隧道後就會進到範圍），網址填：<br><code id="urlS"></code></li>
       </ol>
       <p>網址後面的 <code>&amp;speak=1</code> 會在打開時自動唸出建議；iOS 有時會擋掉沒按過按鈕的語音，那時按一下「🔊 唸出來」就好。</p>
-      <p>頁面開著時每 90 秒自動更新，開了 15 分鐘後會停止自動更新（省免費額度），按「更新」就會繼續。</p>
+      <p>頁面開著時每 90 秒自動更新，開了 15 分鐘後會停止自動更新（省免費額度），按最下面的「↻ 重新整理」就會繼續。</p>
     </div>
   </details>
 
@@ -260,7 +274,7 @@ const params = new URLSearchParams(location.search);
 const DEMO = params.has("demo");
 
 let dir = null, lastData = null, lastFetchAt = 0, openedAt = Date.now(), timer = null;
-let userMile = null, prevMile = null, spokenOnce = false;
+let userMile = null, prevMile = null, spokenOnce = false, loading = false;
 
 /* ───────── 小工具 ───────── */
 const $ = id => document.getElementById(id);
@@ -621,16 +635,26 @@ function render(){
   if (params.get("speak") === "1" && !spokenOnce){ spokenOnce = true; speak(false); }
 }
 
+// 路況時間＝高公局偵測器資料的時間（不是手機抓的時間）；超過 3 分鐘轉黃、6 分鐘轉紅
 function renderStamp(){
-  if (!lastData) return;
+  const st = $("status");
+  if (!lastData){ return; }
   const src = lastData.srcTime ? new Date(lastData.srcTime) : null;
   const age = src ? (Date.now() - src) / 60000 : null;
-  const st = $("status");
-  st.classList.toggle("stale", age != null && age > 6);
-  let t = `路況 ${hhmm(src)}`;
-  if (age != null) t += age < 1 ? "（剛剛）" : `（${Math.round(age)} 分鐘前）`;
-  if (!timer) t += "・自動更新已停，按「更新」";
-  $("stamp").textContent = t;
+  st.classList.toggle("warn", age != null && age >= 3 && age < 6);
+  st.classList.toggle("old", age != null && age >= 6);
+  let main = `路況 ${hhmm(src)}`;
+  if (age != null) main += age < 1 ? "・剛剛" : `・${Math.floor(age)} 分鐘前`;
+  $("stampMain").textContent = main;
+  let sub;
+  if (loading) sub = "更新中…";
+  else if (!timer) sub = "自動更新已暫停，按右邊重新整理";
+  else {
+    const left = Math.max(0, Math.round((lastFetchAt + REFRESH_MS - Date.now()) / 1000));
+    sub = `每 90 秒自動更新・${left} 秒後`;
+  }
+  if (age != null && age >= 6) sub = "資料可能過時・" + sub;
+  $("stampSub").textContent = sub;
 }
 
 function renderDiag(inner, outer, alerts){
@@ -706,7 +730,12 @@ function setDir(d, manual){
 }
 
 async function refresh(manual){
+  if (loading) return;
   if (manual){ openedAt = Date.now(); schedule(); }
+  loading = true;
+  const btn = $("refreshBtn");
+  btn.disabled = true; btn.textContent = "更新中…";
+  renderStamp();
   try {
     let live, cms;
     if (DEMO){ ({live, cms} = demoData()); }
@@ -733,6 +762,11 @@ async function refresh(manual){
       $("alerts").insertAdjacentHTML("afterbegin", `<div class="a">更新失敗：${esc(e.message || e)}（畫面是上一次的資料）</div>`);
     }
     $("diag").textContent = "錯誤：" + (e.stack || e);
+  } finally {
+    loading = false;
+    lastFetchAt = Date.now();
+    btn.disabled = false; btn.textContent = "↻ 重新整理";
+    renderStamp();
   }
 }
 
@@ -789,7 +823,7 @@ function demoData(){
   schedule();
   refresh(false);
   locate();
-  setInterval(renderStamp, 20000);
+  setInterval(renderStamp, 1000);
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden && Date.now() - lastFetchAt > 60000){ openedAt = Date.now(); schedule(); refresh(false); }
   });
