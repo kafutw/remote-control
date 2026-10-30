@@ -85,6 +85,21 @@ def probe():
         for t in items(lt, "LiveTraffics"):
             print("LT", json.dumps(t, ensure_ascii=False))
 
+    # 隧道內的可變資訊標誌（CMS）：高公局會在上面打慢速車的車牌
+    cms = get("CMS/Freeway", **{"$filter": "contains(CMSID,'N5')"})
+    cl = items(cms, "CMSs")
+    print("國5 CMS 數量:", len(cl))
+    if cl:
+        print(json.dumps(cl[0], ensure_ascii=False)[:1500])
+    for c in cl:
+        print("CMS", c.get("CMSID"), c.get("RoadDirection"), c.get("LocationMile"),
+              c.get("PositionLat"), c.get("PositionLon"), json.dumps(c.get("RoadSection"), ensure_ascii=False))
+    cmslive = get("Live/CMS/Freeway", **{"$filter": "contains(CMSID,'N5')"})
+    lv = items(cmslive, "CMSLives")
+    print("國5 CMSLive 數量:", len(lv))
+    for c in lv:
+        print("CMSLIVE", json.dumps(c, ensure_ascii=False)[:600])
+
 
 if __name__ == "__main__":
     if "--probe" in sys.argv:
