@@ -94,6 +94,7 @@ button{font:inherit;color:inherit}
 .bar div.slow::after{
   content:"🐢";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px
 }
+.avgs{font-size:12.5px;color:var(--ink3);margin:-4px 0 8px}
 .ends{grid-column:2;display:flex;justify-content:space-between;font-size:12px;color:var(--ink3)}
 .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink2);margin-top:8px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
@@ -166,6 +167,7 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
 
   <div class="card" id="stripCard" hidden>
     <h2>隧道內各段車速 <span id="stripDir"></span></h2>
+    <div class="avgs" id="stripAvg"></div>
     <div class="strip" id="strip"></div>
     <div class="legend">
       <span><i style="background:var(--s-good)"></i>80 以上</span>
@@ -193,7 +195,8 @@ table.tbl th:first-child,table.tbl td:first-child{text-align:left}
         <li><b>前方慢車（🐢）</b>：某處偵測到比速限慢的車，就假設它照那個速度開到出口；你在同一條車道上不可能比它早出來。所以<b>越靠近入口的慢車影響越大</b>，快到出口的慢車你追不上，影響很小。</li>
       </ol>
       <p>有定位時，會把你開到入口所需的時間也算進去：這段時間裡，前方的慢車也在往前走。</p>
-      <p>車道下方的「平均」是隧道內各偵測器這一分鐘量到的車速平均（這一分鐘沒車經過的偵測器不算）。畫面上的 🐢 是實際偵測到比速限慢 15 km/h 以上的位置，旁邊數字是它的時速，越小隻代表越深入隧道。</p>
+      <p>車道下方的「約 XX km/h」是<b>預估你走這條的時速</b>（隧道長 ÷ 預估時間），已經算進跟在慢車後面，所以會比偵測器的平均低。高公局偵測器各點的直接平均列在「隧道內各段車速」的標題下。</p>
+      <p>畫面上的 🐢 是實際偵測到比速限慢 15 km/h 以上的位置，旁邊數字是那裡<b>最慢車種</b>（常是大客車、貨車）的時速，越小隻代表越深入隧道。</p>
       <p>兩條車道預估相差不到 20 秒時顯示「差不多」，選哪條都可以。</p>
       <p><b>看不到的部分</b>：跟你差不多同時進隧道的車會選哪一條、偵測器之間的個別慢車，以及資料約有 1–2 分鐘的延遲。所以這是「目前最好的猜測」，不是保證。</p>
       <p>高公局在隧道內設有<b>慢速車示警系統</b>（在顯示板上打出慢速車車牌）。如果 TDX 的顯示板訊息裡出現車牌或「慢速」，會列在上方的黃色提示裡。</p>
@@ -471,19 +474,19 @@ function laneX(k, y){
 function turtles(res, slowLane){
   const L = TUNNEL.end - TUNNEL.start, out = [];
   for (const k of ["inner", "outer"]){
-    // 從最慢的開始挑；2 公里內已經有一隻就不再疊上去，最多三隻
+    // 從最慢的開始挑；2.5 公里內已經有一隻就不再疊上去，最多三隻
     const list = [];
     for (const c of ((res[k] && res[k].slows) || []).slice().sort((a, b) => (a.s ?? 65) - (b.s ?? 65)))
-      if (list.length < 3 && list.every(o => Math.abs(o.x - c.x) >= 2)) list.push(c);
+      if (list.length < 3 && list.every(o => Math.abs(o.x - c.x) >= 2.5)) list.push(c);
     for (const c of list){
       const f = Math.max(0, Math.min(1, c.x / L));
-      const y = 290 - f * 62, size = 30 - f * 16;
+      const y = 292 - f * 58, size = 46 - f * 20;
       const x = laneX(k, y);
       out.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size.toFixed(1)}" text-anchor="middle">🐢</text>`);
-      out.push(`<text x="${(x + (k === "inner" ? -size * .9 : size * .9)).toFixed(1)}" y="${(y - size * .2).toFixed(1)}" font-size="${Math.max(9, size * .45).toFixed(1)}" font-weight="800" fill="#FFE27A" stroke="#07090C" stroke-width="3" paint-order="stroke" text-anchor="middle">${c.cms ? "!" : Math.round(c.s)}</text>`);
+      out.push(`<text x="${(x + (k === "inner" ? -size * .9 : size * .9)).toFixed(1)}" y="${(y - size * .2).toFixed(1)}" font-size="${Math.max(12, size * .42).toFixed(1)}" font-weight="800" fill="#FFE27A" stroke="#07090C" stroke-width="3" paint-order="stroke" text-anchor="middle">${c.cms ? "!" : Math.round(c.s)}</text>`);
     }
     if (k === slowLane && !list.length)
-      out.push(`<text x="${laneX(k, 284).toFixed(1)}" y="284" font-size="30" text-anchor="middle">🐢</text>`);
+      out.push(`<text x="${laneX(k, 290).toFixed(1)}" y="290" font-size="46" text-anchor="middle">🐢</text>`);
   }
   return out.join("");
 }
@@ -496,7 +499,9 @@ function scene(best, inner, outer){
   const res = {inner, outer};
   const label = k => {
     const cx = k === "inner" ? 92 : 268, b = best === k;
-    const avg = res[k] && res[k].avgSpeed != null ? `平均 ${Math.round(res[k].avgSpeed)} km/h` : "平均 —";
+    // 預估你的時速：隧道長 ÷ 預估時間（已算進跟在慢車後面），跟上面的時間是同一套
+    const r = res[k], L = TUNNEL.end - TUNNEL.start;
+    const avg = r && r.min > 0 ? `約 ${Math.round(L / r.min * 60)} km/h` : "—";
     return `<rect x="${cx - 76}" y="298" width="152" height="78" rx="12" fill="${b ? GO : "#2A2E36"}" stroke="${b ? GO_INK : "#4A505B"}" stroke-width="2"/>
       <text x="${cx}" y="318" font-size="15" font-weight="800" fill="${ink(k)}" text-anchor="middle">${k === "inner" ? "內車道" : "外車道"}${b ? " ✓" : ""}</text>
       <text x="${cx}" y="346" font-size="25" font-weight="900" fill="${ink(k)}" text-anchor="middle">${plainMinSec(res[k])}</text>
@@ -594,6 +599,8 @@ function render(){
   if (pts.length){
     $("stripCard").hidden = false;
     $("stripDir").textContent = dir === "S" ? "坪林 → 頭城" : "頭城 → 坪林";
+    const a = r => r && r.avgSpeed != null ? Math.round(r.avgSpeed) + " km/h" : "—";
+    $("stripAvg").textContent = `高公局偵測器平均：內 ${a(inner)}・外 ${a(outer)}（各點車速直接平均，不含慢車拖累）`;
     const row = (key, label) => `<div class="lab"><i style="background:var(--${key})"></i>${label}</div>
       <div class="bar">${pts.map(p => {
         const r = p[key];
