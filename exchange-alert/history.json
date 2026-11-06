@@ -2342,6 +2342,15 @@
       "source": "open.er-api.com(國際中價)",
       "asof": "2026-11-05 08:02",
       "fetched": "2026-11-06 01:34"
+    },
+    {
+      "date": "2026-11-06",
+      "usd_twd": 33.0519,
+      "usd_jpy": 157.835,
+      "jpy_twd": 0.20941,
+      "source": "open.er-api.com(國際中價)",
+      "asof": "2026-11-06 08:02",
+      "fetched": "2026-11-06 16:21"
     }
   ],
   "last_alerts": {
