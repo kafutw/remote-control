@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-06T05:45:30.354Z",
-  "generatedAtTaipei": "2026-11-06 13:45:30",
+  "generatedAt": "2026-11-06T07:52:18.765Z",
+  "generatedAtTaipei": "2026-11-06 15:52:18",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -150,9 +150,10 @@
       "dp": 2,
       "via": "cnbc:.VIX",
       "price": 28.18,
-      "prevClose": 16.61,
-      "change": 11.57,
-      "pct": 69.6568,
+      "prevClose": 28.18,
+      "change": null,
+      "pct": null,
+      "noSessionData": true,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -161,10 +162,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 57311.31,
+      "price": 57434.77,
       "prevClose": 61077.9,
-      "change": -3766.59,
-      "pct": -6.1669,
+      "change": -3643.13,
+      "pct": -5.9647,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -173,10 +174,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 5108.79,
+      "price": 5059.69,
       "prevClose": 5383.8,
-      "change": -275.01,
-      "pct": -5.1081,
+      "change": -324.11,
+      "pct": -6.0201,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -464,32 +465,27 @@
   "volume": {
     "lit": true,
     "reasons": [
-      "成交值突破 1.10 兆"
+      "成交值突破 1.10 兆",
+      "而且已達 1.30 兆過熱區 —— 沒有前置條件可以分辨這是換手還是出貨，要自己看"
     ],
     "ready": true,
-    "last": 11656.8,
+    "last": 14763.48,
     "reach": {
       "lo": 8101.12,
       "hi": 16800.76,
-      "days": 64,
-      "fired": 37,
-      "fireRate": 0.578125,
+      "days": 65,
+      "fired": 38,
+      "fireRate": 0.5846153846153846,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 64,
+    "complete": 65,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-08-07",
-        "twse": 8508.15,
-        "tpex": 2060.44,
-        "total": 10568.59
-      },
       {
         "date": "2026-08-10",
         "twse": 8804.41,
@@ -843,6 +839,12 @@
         "twse": 9870.99,
         "tpex": 1785.81,
         "total": 11656.8
+      },
+      {
+        "date": "2026-11-06",
+        "twse": 13125.17,
+        "tpex": 1638.31,
+        "total": 14763.48
       }
     ]
   },
