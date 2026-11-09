@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-06T13:13:37.378Z",
-  "generatedAtTaipei": "2026-11-06 21:13:37",
+  "generatedAt": "2026-11-09T02:00:35.662Z",
+  "generatedAtTaipei": "2026-11-09 10:00:35",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -9,25 +9,25 @@
   "failed": 0,
   "crossCheck": {
     "tsmc": {
-      "primary": 2137.5,
+      "primary": 2252.5,
       "via": "mis:2330",
-      "twse": 2240,
+      "twse": 2135,
       "agree": null,
-      "note": "跳過對帳：mis:2330 是 2026-11-06、證交所是 2026-11-05，不同交易日"
+      "note": "跳過對帳：mis:2330 是 2026-11-09、證交所是 2026-11-06，不同交易日"
     },
     "e0050": {
-      "primary": 92.57499999999999,
+      "primary": 97.625,
       "via": "mis:0050",
-      "twse": 97.15,
+      "twse": 92.5,
       "agree": null,
-      "note": "跳過對帳：mis:0050 是 2026-11-06、證交所是 2026-11-05，不同交易日"
+      "note": "跳過對帳：mis:0050 是 2026-11-09、證交所是 2026-11-06，不同交易日"
     },
     "e0056": {
-      "primary": 49.8,
+      "primary": 52.05,
       "via": "mis:0056",
-      "twse": 51.55,
+      "twse": 49.91,
       "agree": null,
-      "note": "跳過對帳：mis:0056 是 2026-11-06、證交所是 2026-11-05，不同交易日"
+      "note": "跳過對帳：mis:0056 是 2026-11-09、證交所是 2026-11-06，不同交易日"
     }
   },
   "data": {
@@ -36,60 +36,59 @@
       "group": "twii",
       "dp": 2,
       "via": "mis:t00",
-      "price": 39690.74,
-      "prevClose": 41574.72,
-      "change": -1883.98,
-      "pct": -4.5316,
-      "marketState": "CLOSED",
-      "asOf": "2026-11-06"
+      "price": 41861.84,
+      "prevClose": 39701.64,
+      "change": 2160.2,
+      "pct": 5.4411,
+      "marketState": "REG_MKT",
+      "asOf": "2026-11-09"
     },
     "tsmc": {
       "name": "台積電",
       "group": "tsmc",
       "dp": 2,
       "via": "mis:2330",
-      "price": 2137.5,
-      "prevClose": 2240,
-      "change": -102.5,
-      "pct": -4.5759,
-      "marketState": "CLOSED",
-      "asOf": "2026-11-06"
+      "price": 2252.5,
+      "prevClose": 2135,
+      "change": 117.5,
+      "pct": 5.5035,
+      "marketState": "REG_MKT",
+      "asOf": "2026-11-09"
     },
     "e0050": {
       "name": "元大台灣50",
       "group": "e0050",
       "dp": 2,
       "via": "mis:0050",
-      "price": 92.57499999999999,
-      "prevClose": 97.15,
-      "change": -4.575,
-      "pct": -4.7092,
-      "marketState": "CLOSED",
-      "asOf": "2026-11-06"
+      "price": 97.625,
+      "prevClose": 92.5,
+      "change": 5.125,
+      "pct": 5.5405,
+      "marketState": "REG_MKT",
+      "asOf": "2026-11-09"
     },
     "e0056": {
       "name": "元大高股息",
       "group": "e0056",
       "dp": 2,
       "via": "mis:0056",
-      "price": 49.8,
-      "prevClose": 51.55,
-      "change": -1.75,
-      "pct": -3.3948,
-      "marketState": "CLOSED",
-      "asOf": "2026-11-06"
+      "price": 52.05,
+      "prevClose": 49.91,
+      "change": 2.14,
+      "pct": 4.2877,
+      "marketState": "REG_MKT",
+      "asOf": "2026-11-09"
     },
     "adr": {
       "name": "台積電 ADR",
       "group": "adr",
       "dp": 2,
       "via": "cnbc:TSM",
-      "price": 353.1,
+      "price": 375.44,
       "prevClose": 353.1,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
-      "marketState": "PRE_MKT",
+      "change": 22.34,
+      "pct": 6.3268,
+      "marketState": "POST_MKT",
       "asOf": null
     },
     "sox": {
@@ -97,11 +96,10 @@
       "group": "sox",
       "dp": 2,
       "via": "cnbc:.SOX",
-      "price": 9011.137,
+      "price": 9390.25,
       "prevClose": 9011.137,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 379.113,
+      "pct": 4.2072,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -110,11 +108,10 @@
       "group": "ixic",
       "dp": 2,
       "via": "cnbc:.IXIC",
-      "price": 24314.997,
+      "price": 24579.425,
       "prevClose": 24314.997,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 264.428,
+      "pct": 1.0875,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -123,11 +120,10 @@
       "group": "gspc",
       "dp": 2,
       "via": "cnbc:.SPX",
-      "price": 7353.73,
+      "price": 7376.86,
       "prevClose": 7353.73,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": 23.13,
+      "pct": 0.3145,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -136,11 +132,10 @@
       "group": "dji",
       "dp": 2,
       "via": "cnbc:.DJI",
-      "price": 51523.06,
+      "price": 51285.73,
       "prevClose": 51523.06,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "change": -237.33,
+      "pct": -0.4606,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -149,10 +144,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 27.72,
+      "price": 25.64,
       "prevClose": 28.18,
-      "change": -0.46,
-      "pct": -1.6324,
+      "change": -2.54,
+      "pct": -9.0135,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -161,10 +156,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 57434.77,
-      "prevClose": 61077.9,
-      "change": -3643.13,
-      "pct": -5.9647,
+      "price": 59333.49,
+      "prevClose": 57434.77,
+      "change": 1898.72,
+      "pct": 3.3059,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -173,10 +168,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 5059.69,
-      "prevClose": 5383.8,
-      "change": -324.11,
-      "pct": -6.0201,
+      "price": 5111.58,
+      "prevClose": 5059.69,
+      "change": 51.89,
+      "pct": 1.0256,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -185,10 +180,10 @@
       "group": "txf",
       "dp": 0,
       "via": "taifex:TXF",
-      "price": 39786,
-      "prevClose": 41882,
-      "change": -2096,
-      "pct": -5.0045,
+      "price": 41800,
+      "prevClose": 39652,
+      "change": 2148,
+      "pct": 5.4171,
       "marketState": null,
       "asOf": null,
       "contract": "臺指期116"
@@ -198,30 +193,26 @@
       "group": "usdtwd",
       "dp": 3,
       "via": "erapi:TWD",
-      "price": 33.051901,
-      "prevClose": 32.824108,
-      "change": 0.227793,
-      "pct": 0.694,
+      "price": 32.851408,
+      "prevClose": 33.051901,
+      "change": -0.200493,
+      "pct": -0.6066,
       "marketState": null,
-      "asOf": "2026-11-06",
-      "rateUnix": 1793923351,
+      "asOf": "2026-11-09",
+      "rateUnix": 1794182551,
       "asOfVia": "provider",
-      "prevDay": "2026-11-05",
-      "prevGapDays": 1,
+      "prevDay": "2026-11-06",
+      "prevGapDays": 3,
       "signal": {
         "lit": false,
         "reasons": [],
         "ready": true,
-        "have": 70,
+        "have": 71,
         "need": 21,
-        "ma5": 32.7746,
-        "ma20": 32.4834
+        "ma5": 32.8175,
+        "ma20": 32.5278
       },
       "series": [
-        {
-          "date": "2026-08-17",
-          "rate": 31.966724
-        },
         {
           "date": "2026-08-18",
           "rate": 31.8395
@@ -457,6 +448,10 @@
         {
           "date": "2026-11-06",
           "rate": 33.051901
+        },
+        {
+          "date": "2026-11-09",
+          "rate": 32.851408
         }
       ]
     }
@@ -848,10 +843,10 @@
     ]
   },
   "adrPremium": {
-    "converted": 2334.13,
-    "fxAsOf": "2026-11-06",
-    "premiumPct": 9.2,
-    "impliedOpen": null,
+    "converted": 2466.75,
+    "fxAsOf": "2026-11-09",
+    "premiumPct": 9.51,
+    "impliedOpen": 2395,
     "note": "台積電 ADR 長期有一到二成結構性溢價，看溢價率的『變化』而不是絕對值"
   }
 }
