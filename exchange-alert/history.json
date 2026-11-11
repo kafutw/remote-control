@@ -2377,14 +2377,14 @@
       "jpy_twd": 0.20778,
       "source": "open.er-api.com(國際中價)",
       "asof": "2026-11-11 08:02",
-      "fetched": "2026-11-11 16:08"
+      "fetched": "2026-11-12 01:22"
     }
   ],
   "last_alerts": {
-    "usdtwd_high": "2026-11-10",
+    "usdtwd_high": "2026-11-11",
     "jpy_cheap": "2026-09-02",
     "roll_usd_twd_high": "2026-11-06",
-    "usdtwd_very_high": "2026-11-10"
+    "usdtwd_very_high": "2026-11-11"
   },
   "backfilled": true
 }
