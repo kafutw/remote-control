@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-11T11:46:43.918Z",
-  "generatedAtTaipei": "2026-11-11 19:46:43",
+  "generatedAt": "2026-11-11T12:57:29.463Z",
+  "generatedAtTaipei": "2026-11-11 20:57:29",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -149,10 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 18.61,
+      "price": 18.49,
       "prevClose": 19.46,
-      "change": -0.85,
-      "pct": -4.3679,
+      "change": -0.97,
+      "pct": -4.9846,
       "marketState": "REG_MKT",
       "asOf": null
     },
