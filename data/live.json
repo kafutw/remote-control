@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-16T05:33:04.751Z",
-  "generatedAtTaipei": "2026-11-16 13:33:04",
+  "generatedAt": "2026-11-16T07:54:04.129Z",
+  "generatedAtTaipei": "2026-11-16 15:54:04",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -36,10 +36,10 @@
       "group": "twii",
       "dp": 2,
       "via": "mis:t00",
-      "price": 41167.76,
+      "price": 41040.08,
       "prevClose": 43675.12,
-      "change": -2507.36,
-      "pct": -5.7409,
+      "change": -2635.04,
+      "pct": -6.0333,
       "marketState": "CLOSED",
       "asOf": "2026-11-16"
     },
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -150,9 +150,10 @@
       "dp": 2,
       "via": "cnbc:.VIX",
       "price": 19.3,
-      "prevClose": 18.7,
-      "change": 0.6,
-      "pct": 3.2086,
+      "prevClose": 19.3,
+      "change": null,
+      "pct": null,
+      "noSessionData": true,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -161,10 +162,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 59811.52,
+      "price": 59662.02,
       "prevClose": 61142.35,
-      "change": -1330.83,
-      "pct": -2.1766,
+      "change": -1480.33,
+      "pct": -2.4211,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -173,10 +174,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 5095.07,
+      "price": 5100.5,
       "prevClose": 5290.53,
-      "change": -195.46,
-      "pct": -3.6945,
+      "change": -190.03,
+      "pct": -3.5919,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -185,10 +186,10 @@
       "group": "txf",
       "dp": 0,
       "via": "taifex:TXF",
-      "price": 40978,
+      "price": 40885,
       "prevClose": 43839,
-      "change": -2861,
-      "pct": -6.5262,
+      "change": -2954,
+      "pct": -6.7383,
       "marketState": null,
       "asOf": null,
       "contract": "臺指期116"
@@ -462,34 +463,26 @@
     }
   },
   "volume": {
-    "lit": true,
-    "reasons": [
-      "成交值突破 1.10 兆"
-    ],
+    "lit": false,
+    "reasons": [],
     "ready": true,
-    "last": 11698.68,
+    "last": 10626.66,
     "reach": {
       "lo": 8101.12,
       "hi": 16800.76,
-      "days": 70,
+      "days": 71,
       "fired": 41,
-      "fireRate": 0.5857142857142857,
+      "fireRate": 0.5774647887323944,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 70,
+    "complete": 71,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-08-17",
-        "twse": 9810.55,
-        "tpex": 1731.91,
-        "total": 11542.46
-      },
       {
         "date": "2026-08-18",
         "twse": 10078.82,
@@ -843,6 +836,12 @@
         "twse": 9515.8,
         "tpex": 2182.88,
         "total": 11698.68
+      },
+      {
+        "date": "2026-11-16",
+        "twse": 8928.04,
+        "tpex": 1698.62,
+        "total": 10626.66
       }
     ]
   },
