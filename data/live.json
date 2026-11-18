@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-18T06:35:06.673Z",
-  "generatedAtTaipei": "2026-11-18 14:35:06",
+  "generatedAt": "2026-11-18T08:28:14.256Z",
+  "generatedAtTaipei": "2026-11-18 16:28:14",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -149,10 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 25.46,
-      "prevClose": 22.91,
-      "change": 2.55,
-      "pct": 11.1305,
+      "price": 24.07,
+      "prevClose": 25.46,
+      "change": -1.39,
+      "pct": -5.4595,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -161,10 +161,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 59171.63,
+      "price": 59024.28,
       "prevClose": 58860.43,
-      "change": 311.2,
-      "pct": 0.5287,
+      "change": 163.85,
+      "pct": 0.2784,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -173,10 +173,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 5069.45,
+      "price": 5067.44,
       "prevClose": 4968.48,
-      "change": 100.97,
-      "pct": 2.0322,
+      "change": 98.96,
+      "pct": 1.9918,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -467,29 +467,23 @@
       "成交值突破 1.10 兆"
     ],
     "ready": true,
-    "last": 11892.14,
+    "last": 12714.43,
     "reach": {
       "lo": 8101.12,
       "hi": 16800.76,
-      "days": 72,
-      "fired": 42,
-      "fireRate": 0.5833333333333334,
+      "days": 73,
+      "fired": 43,
+      "fireRate": 0.589041095890411,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 72,
+    "complete": 73,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-08-19",
-        "twse": 8902.7,
-        "tpex": 1792.26,
-        "total": 10694.96
-      },
       {
         "date": "2026-08-20",
         "twse": 8344.13,
@@ -843,6 +837,12 @@
         "twse": 10128.68,
         "tpex": 1763.46,
         "total": 11892.14
+      },
+      {
+        "date": "2026-11-18",
+        "twse": 10576.3,
+        "tpex": 2138.13,
+        "total": 12714.43
       }
     ]
   },
