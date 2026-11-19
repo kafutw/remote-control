@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-19T08:39:08.587Z",
-  "generatedAtTaipei": "2026-11-19 16:39:08",
+  "generatedAt": "2026-11-19T10:41:21.274Z",
+  "generatedAtTaipei": "2026-11-19 18:41:21",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "REG_MKT",
+      "marketState": "PRE_MKT",
       "asOf": null
     },
     "sox": {
@@ -136,10 +136,11 @@
       "group": "dji",
       "dp": 2,
       "via": "cnbc:.DJI",
-      "price": 50615.56,
-      "prevClose": 50759.42,
-      "change": -143.86,
-      "pct": -0.2834,
+      "price": 50198.17,
+      "prevClose": 50198.17,
+      "change": null,
+      "pct": null,
+      "noSessionData": true,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -148,10 +149,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 21.85,
+      "price": 22.11,
       "prevClose": 24.56,
-      "change": -2.71,
-      "pct": -11.0342,
+      "change": -2.45,
+      "pct": -9.9756,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -464,7 +465,7 @@
     "lit": false,
     "reasons": [],
     "ready": true,
-    "last": 10637.02,
+    "last": 10757.04,
     "reach": {
       "lo": 8101.12,
       "hi": 16800.76,
@@ -837,9 +838,9 @@
       },
       {
         "date": "2026-11-19",
-        "twse": 9309.87,
+        "twse": 9429.89,
         "tpex": 1327.15,
-        "total": 10637.02
+        "total": 10757.04
       }
     ]
   },
