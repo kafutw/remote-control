@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-19T06:36:35.999Z",
-  "generatedAtTaipei": "2026-11-19 14:36:36",
+  "generatedAt": "2026-11-19T08:39:08.587Z",
+  "generatedAtTaipei": "2026-11-19 16:39:08",
   "sources": {
     "note": "每個標的依序嘗試多個來源，實際採用的記在該標的的 via 欄位",
     "order": "台股：證交所 → Stooq → Yahoo　｜　其他：Stooq → Yahoo"
@@ -89,7 +89,7 @@
       "change": null,
       "pct": null,
       "noSessionData": true,
-      "marketState": "POST_MKT",
+      "marketState": "REG_MKT",
       "asOf": null
     },
     "sox": {
@@ -136,11 +136,10 @@
       "group": "dji",
       "dp": 2,
       "via": "cnbc:.DJI",
-      "price": 50198.17,
-      "prevClose": 50198.17,
-      "change": null,
-      "pct": null,
-      "noSessionData": true,
+      "price": 50615.56,
+      "prevClose": 50759.42,
+      "change": -143.86,
+      "pct": -0.2834,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -149,10 +148,10 @@
       "group": "vix",
       "dp": 2,
       "via": "cnbc:.VIX",
-      "price": 24.56,
-      "prevClose": 25.46,
-      "change": -0.9,
-      "pct": -3.535,
+      "price": 21.85,
+      "prevClose": 24.56,
+      "change": -2.71,
+      "pct": -11.0342,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -161,10 +160,10 @@
       "group": "n225",
       "dp": 2,
       "via": "cnbc:.N225",
-      "price": 59530.29,
+      "price": 59444.21,
       "prevClose": 59024.28,
-      "change": 506.01,
-      "pct": 0.8573,
+      "change": 419.93,
+      "pct": 0.7115,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -173,10 +172,10 @@
       "group": "kospi",
       "dp": 2,
       "via": "cnbc:.KS11",
-      "price": 5086.01,
+      "price": 5137.89,
       "prevClose": 5067.44,
-      "change": 18.57,
-      "pct": 0.3665,
+      "change": 70.45,
+      "pct": 1.3902,
       "marketState": "REG_MKT",
       "asOf": null
     },
@@ -462,34 +461,26 @@
     }
   },
   "volume": {
-    "lit": true,
-    "reasons": [
-      "成交值突破 1.10 兆"
-    ],
+    "lit": false,
+    "reasons": [],
     "ready": true,
-    "last": 12889.87,
+    "last": 10637.02,
     "reach": {
       "lo": 8101.12,
       "hi": 16800.76,
-      "days": 73,
+      "days": 74,
       "fired": 43,
-      "fireRate": 0.589041095890411,
+      "fireRate": 0.581081081081081,
       "breakoutReachable": true
     },
     "thresholds": {
       "breakout": 11000,
       "overheat": 13000
     },
-    "complete": 73,
+    "complete": 74,
     "incomplete": 22,
     "latestPartial": false,
     "series": [
-      {
-        "date": "2026-08-20",
-        "twse": 8344.13,
-        "tpex": 1831.88,
-        "total": 10176.01
-      },
       {
         "date": "2026-08-21",
         "twse": 7549.05,
@@ -843,6 +834,12 @@
         "twse": 10751.74,
         "tpex": 2138.13,
         "total": 12889.87
+      },
+      {
+        "date": "2026-11-19",
+        "twse": 9309.87,
+        "tpex": 1327.15,
+        "total": 10637.02
       }
     ]
   },
