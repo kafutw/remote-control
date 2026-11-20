@@ -2440,14 +2440,14 @@
       "jpy_twd": 0.20649,
       "source": "open.er-api.com(國際中價)",
       "asof": "2026-11-20 08:02",
-      "fetched": "2026-11-20 16:57"
+      "fetched": "2026-11-21 01:55"
     }
   ],
   "last_alerts": {
-    "usdtwd_high": "2026-11-19",
+    "usdtwd_high": "2026-11-20",
     "jpy_cheap": "2026-09-02",
     "roll_usd_twd_high": "2026-11-06",
-    "usdtwd_very_high": "2026-11-19"
+    "usdtwd_very_high": "2026-11-20"
   },
   "backfilled": true
 }
