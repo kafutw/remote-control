@@ -23,6 +23,14 @@ claude.ai Skill（**手機 claude.ai 聊天用的主路線，2026-10-05 已安�
 - 更新流程：改了 `tools/threads.py` 就複製到 `skills/threads-parser/scripts/`，用 skill-creator 的 `package_skill` 重新打包，再到 claude.ai 該 skill 頁面上傳新版（同名 skill 會變成新版本，不用先刪）。
 - 若沒觸發（Claude 改用 web_fetch 說無法解析）：改 `SKILL.md` 的 description，把「只貼連結也要用、不要用 web_fetch」講得更明確再打包上傳。
 
+## 合作案建案（case-intake skill）
+
+使用者（卡夫卡或卡夫人）貼來廠商邀約截圖、email、合約、Brief 時：先分析 → 查競業 → 給確認單 → 使用者說「可以發」才寫進 Notion「卡夫卡-案件主控台」（`collection://ec153b1a-d842-4de6-9089-7a86bfb6c0d3`），並上傳合約／截圖到檔案欄位。完整流程在 `skills/case-intake/SKILL.md`，在這裡（Claude Code）也照它做。
+- 打包：`cd /mnt/skills/examples/skill-creator && python3 -m scripts.package_skill <repo>/skills/case-intake <repo>/skills`，把 `skills/case-intake.skill` 上傳到 claude.ai（Customize → Skills）。
+- claude.ai 網路設定的 Additional allowed domains 要加 `api.notion.com`（上傳檔案用）。
+- 2026-11-21 主控台新增欄位「🔵 競業範圍」（文字），寫「限制什麼＋期間」供新邀約比對。
+- 已實測：`create-file-upload` → `scripts/notion_upload.py` POST → `update-page` 用 `{"type":"file_upload","file_upload":{"id":...}}` 掛到檔案欄位可行（中文檔名 OK、同欄多檔要同一陣列送）。限制：create-pages 的 properties 不能直接放 file_upload id；欄位已有檔案時舊 id 送不回去，會被覆蓋，改放頁面內文。
+
 iPhone 捷徑是備用路線（路線 B），skill 能用就不用它；捷徑還沒實機測過。
 
 把輸出整理給使用者：作者、時間、全文、圖片/影片連結、互動數、串文與回覆。使用者沒要求就不要翻譯或改寫貼文內容。
