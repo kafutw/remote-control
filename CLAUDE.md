@@ -25,7 +25,7 @@ claude.ai Skill（**手機 claude.ai 聊天用的主路線，2026-10-05 已安�
 
 ## 合作案建案（case-intake skill）
 
-使用者（卡夫卡或卡夫人）貼來廠商邀約截圖、email、合約、Brief 時：先分析 → 查競業 → 給確認單 → 使用者說「可以發」才寫進 Notion「卡夫卡-案件主控台」（`collection://ec153b1a-d842-4de6-9089-7a86bfb6c0d3`），並上傳合約／截圖到檔案欄位。完整流程在 `skills/case-intake/SKILL.md`，在這裡（Claude Code）也照它做。
+使用者（卡夫卡或卡夫人）貼來廠商邀約截圖、email、合約、Brief 時：先分析 → 查競業 → 缺的用選擇題問 → 問完直接寫進 Notion（使用者說不用再等「可以發」；只有競業衝突、重複案件、會覆蓋舊值時先問）「卡夫卡-案件主控台」（`collection://ec153b1a-d842-4de6-9089-7a86bfb6c0d3`），並上傳合約／截圖到檔案欄位。完整流程在 `skills/case-intake/SKILL.md`，在這裡（Claude Code）也照它做。
 - 打包：`cd /mnt/skills/examples/skill-creator && python3 -m scripts.package_skill <repo>/skills/case-intake <repo>/skills`，把 `skills/case-intake.skill` 上傳到 claude.ai（Customize → Skills）。
 - claude.ai 網路設定的 Additional allowed domains 要加 `api.notion.com`（上傳檔案用）。
 - 建案不設頁面 icon（使用者說眼花繚亂）。
