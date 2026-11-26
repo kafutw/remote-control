@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T16:04:31.115Z",
+  "generatedAt": "2026-11-26T04:26:40.527Z",
   "ma": 60,
   "confirm": 3,
   "stocks": {
@@ -96,5 +96,5 @@
   },
   "window": "2024/02 ～ 2026/11",
   "coverageTo": "2026-11-25",
-  "staleDays": 0
+  "staleDays": 1
 }
