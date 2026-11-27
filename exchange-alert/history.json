@@ -2468,13 +2468,22 @@
       "source": "open.er-api.com(國際中價)",
       "asof": "2026-11-25 08:02",
       "fetched": "2026-11-26 17:55"
+    },
+    {
+      "date": "2026-11-27",
+      "usd_twd": 32.9484,
+      "usd_jpy": 159.277,
+      "jpy_twd": 0.20686,
+      "source": "open.er-api.com(國際中價)",
+      "asof": "2026-11-27 08:02",
+      "fetched": "2026-11-27 17:59"
     }
   ],
   "last_alerts": {
-    "usdtwd_high": "2026-11-25",
+    "usdtwd_high": "2026-11-27",
     "jpy_cheap": "2026-09-02",
     "roll_usd_twd_high": "2026-11-06",
-    "usdtwd_very_high": "2026-11-25"
+    "usdtwd_very_high": "2026-11-27"
   },
   "backfilled": true
 }
