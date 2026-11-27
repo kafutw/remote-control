@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Notion",
+      "mcp__github__pull_request_read",
+      "mcp__github__actions_list",
+      "mcp__github__actions_run_trigger",
+      "mcp__github__get_job_logs",
+      "mcp__claude-code-remote__send_later",
+      "mcp__claude-code-remote__read_documentation",
+      "WebSearch",
+      "WebFetch",
+      "Bash(python3 tools/threads.py:*)",
+      "Bash(python3 skills/case-intake/scripts/notion_upload.py:*)",
+      "Bash(python3 /home/user/remote-control/skills/case-intake/scripts/notion_upload.py:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)"
+    ],
+    "ask": [
+      "mcp__Notion__notion-delete-pages",
+      "mcp__Notion__notion-delete-databases",
+      "mcp__Notion__notion-update-data-source",
+      "mcp__Notion__notion-move-pages"
+    ]
+  }
+}
